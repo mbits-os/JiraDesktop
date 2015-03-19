@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{6c57aecf-da19-4cae-a896-fb9a846cbd98}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{53b17e6e-522c-43cc-bf85-4ad0a9eda117}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="res">
+      <UniqueIdentifier>{de77a015-796f-4f79-a445-9a10f43d5378}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\apps\Tasks\src\AboutDlg.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\Tasks.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\TasksFrame.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\TasksView.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\apps\Tasks\inc\resource.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\Tasks.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\TasksFrame.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\TasksView.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\AboutDlg.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\apps\Tasks\src\Tasks.rc">
+      <Filter>src</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\apps\Tasks\res\toolbar_old.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="..\..\apps\Tasks\res\toolbar.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="..\..\apps\Tasks\res\Tasks.ico">
+      <Filter>res</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

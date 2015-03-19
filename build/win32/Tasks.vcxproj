@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>Tasks</ProjectName>
+    <ProjectGuid>{37D083DA-69C9-45DE-B9EC-4E05F285FAD9}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)\Solution.props" Condition="exists('$(SolutionDir)\Solution.props')" />
+    <Import Project="$(SolutionDir)\Platform.$(Platform).props" Condition="exists('$(SolutionDir)\Platform.$(Platform).props')" />
+    <Import Project="$(SolutionDir)\Configuration.$(Configuration).props" Condition="exists('$(SolutionDir)\Configuration.$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\Cross.$(Platform).$(Configuration).props" Condition="exists('$(SolutionDir)\Cross.$(Platform).$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\apps.Tasks.props" Condition="exists('$(SolutionDir)\apps.Tasks.props')" />
+    <Import Project="$(SolutionDir)\apps.Tasks.$(Platform).props" Condition="exists('$(SolutionDir)\apps.Tasks.$(Platform).props')" />
+    <Import Project="$(SolutionDir)\apps.Tasks.$(Configuration).props" Condition="exists('$(SolutionDir)\apps.Tasks.$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\apps.Tasks.$(Platform).$(Configuration).props" Condition="exists('$(SolutionDir)\apps.Tasks.$(Platform).$(Configuration).props')" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\apps\Tasks\src\AboutDlg.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\stdafx.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\Tasks.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\TasksFrame.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\TasksView.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\apps\Tasks\src\Tasks.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\apps\Tasks\inc\AboutDlg.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\resource.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\Tasks.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\TasksFrame.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\TasksView.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\apps\Tasks\res\toolbar_old.bmp" />
+    <Image Include="..\..\apps\Tasks\res\toolbar.bmp" />
+    <Image Include="..\..\apps\Tasks\res\Tasks.ico" />
+  </ItemGroup>
+</Project>

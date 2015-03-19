@@ -4,9 +4,9 @@
     <Import Project="WTLRoot.props" />
   </ImportGroup>
   <PropertyGroup>
-    <_PropertySheetDisplayName>Base Property Sheet</_PropertySheetDisplayName>
-    <OutDir>$(SolutionDir)..\bin\$(PlatformName)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)..\int\$(PlatformName)\$(Configuration)\$(TargetName)$(TargetExt)\</IntDir>
+    <_PropertySheetDisplayName>Solution-wide Property Sheet</_PropertySheetDisplayName>
+    <OutDir>$(SolutionDir)..\..\bin\$(PlatformName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\..\int\$(PlatformName)\$(Configuration)\$(TargetName)$(TargetExt)\</IntDir>
     <LibraryPath>$(SolutionDir)..\..\bin\$(PlatformName)\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>

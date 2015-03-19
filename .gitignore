@@ -35,5 +35,6 @@ int
 *.sdf
 *.opensdf
 *.aps
+*.suo
 
 ipch

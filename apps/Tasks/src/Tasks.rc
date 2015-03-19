@@ -71,8 +71,8 @@ END
 // Bitmap
 //
 
-IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
-IDR_MAINFRAME_OLD       BITMAP                  "res\\Toolbar_old.bmp"
+IDR_MAINFRAME           BITMAP                  "..\\res\\toolbar.bmp"
+IDR_MAINFRAME_OLD       BITMAP                  "..\\res\\toolbar_old.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -120,7 +120,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\Tasks.ico"
+IDR_MAINFRAME           ICON                    "..\\res\\Tasks.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
