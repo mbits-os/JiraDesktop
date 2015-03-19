@@ -25,6 +25,59 @@ std::string contents(LPCWSTR path)
 	return out;
 }
 
+class jiraDb {
+public:
+
+	template <typename T>
+	inline void field(const char* name)
+	{
+
+	}
+
+	void field_type(const char* name, const char* type, const char* display)
+	{
+	}
+
+	jiraDb()
+	{
+		field<jira::key>("key");
+		field<jira::string>("string");
+		field<jira::user>("user");
+		field<jira::icon>("icon");
+
+		field_type("key", "key", "Key");
+		field_type("summary", "string", "Summary");
+		field_type("description", "string", "Description");
+		field_type("issuetype", "icon", "Issue Type");
+		field_type("priority", "icon", "Priority");
+		field_type("status", "icon", "Status");
+		field_type("reporter", "user", "Reporter");
+		field_type("creator", "user", "Creator");
+		field_type("assignee", "user", "Assignee");
+	}
+
+	const jira::type* get(const char* column)
+	{
+		return nullptr;
+	}
+
+	template <size_t length>
+	std::string visit(const json::map& object, const std::string& key, const char* (&columns)[length]) const
+	{
+		std::ostringstream o;
+		bool first = true;
+		for (auto& col : columns) {
+			if (first) first = false;
+			else o << " | ";
+			auto col_type = get(col);
+			if (col_type)
+				o << col_type->visit(object, key);
+			else
+				o << "(nullptr)";
+		}
+		return o.str();
+	}
+};
 void CTasksFrame::load(LPCWSTR path)
 {
 	json::map data{ json::from_string(contents(path)) };
@@ -34,6 +87,16 @@ void CTasksFrame::load(LPCWSTR path)
 	json::vector issues{ data["issues"] };
 	o << "Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":\n";
 	OutputDebugStringA(o.str().c_str()); o.str("");
+
+	jiraDb db;
+
+	const char* columns[] = {
+		"assignee",
+		"issuetype",
+		"key",
+		"status",
+		"summary"
+	};
 
 	jira::row row{};
 	row
@@ -48,7 +111,7 @@ void CTasksFrame::load(LPCWSTR path)
 		json::map issue{ v_issue };
 		json::map fields{ issue["fields"] };
 		auto key = issue["key"].as_string();
-		OutputDebugStringA((row.visit(fields, key) + "\n").c_str());
+		OutputDebugStringA((db.visit(fields, key, columns) + "\n").c_str());
 	}
 }
 
