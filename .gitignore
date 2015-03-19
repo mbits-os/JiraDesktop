@@ -26,3 +26,14 @@
 *.exe
 *.out
 *.app
+
+# Directories
+bin
+int
+
+# Visual Studio files and dirs
+*.sdf
+*.opensdf
+*.aps
+
+ipch
