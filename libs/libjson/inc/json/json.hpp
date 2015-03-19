@@ -34,6 +34,25 @@
 
 namespace json
 {
+	class bad_cast : public std::exception {
+	public:
+
+		bad_cast() : std::exception("bad JSON cast", 1)
+		{
+		}
+
+		bad_cast(char const* const msg) : std::exception(msg, 1)
+		{
+		}
+
+	private:
+
+		bad_cast(char const* const msg, int)
+			: std::exception(msg, 1)
+		{
+		}
+	};
+
 	struct value;
 	struct vector;
 	struct map;
@@ -267,7 +286,7 @@ namespace json
 		vector() { use<backend>(); }
 		explicit vector(const value& oth) : value(oth) {
 			if (!is<VECTOR>())
-				throw std::bad_cast("JSON value is not a vector");
+				throw bad_cast("JSON value is not a vector");
 		}
 
 		vector& add(const value& v) { values().push_back(v); return *this; }
@@ -312,7 +331,7 @@ namespace json
 		map() { use<backend>(); }
 		explicit map(const value& oth) : value(oth) {
 			if (!is<MAP>())
-				throw std::bad_cast("JSON value is not a map");
+				throw bad_cast("JSON value is not a map");
 		}
 
 		map& add(const std::string& k, const value& v);
