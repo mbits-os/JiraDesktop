@@ -9,10 +9,21 @@
 #include "AboutDlg.h"
 #include "TasksFrame.h"
 
+#include <shellapi.h>
+
+#include <memory>
+
 CAppModule _Module;
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
+	int argc = 0;
+	LPWSTR * argv = nullptr;
+	std::unique_ptr<LPWSTR, decltype(&LocalFree)> args{ nullptr, LocalFree };
+	args.reset(CommandLineToArgvW(GetCommandLineW(), &argc));
+	if (args) argv = args.get();
+	else argc = 0;
+
 	CMessageLoop theLoop;
 	_Module.AddMessageLoop(&theLoop);
 
@@ -23,6 +34,9 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 		ATLTRACE(_T("Main window creation failed!\n"));
 		return 0;
 	}
+
+	if (argc > 1)
+		wndMain.load(argv[1]);
 
 	wndMain.ShowWindow(nCmdShow);
 

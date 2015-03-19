@@ -17,6 +17,8 @@ public:
 	CCommandBarCtrl m_CmdBar;
 	CFont m_font;
 
+	void load(LPCWSTR path);
+
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();
 

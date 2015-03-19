@@ -9,6 +9,49 @@
 #include "TasksView.h"
 #include "TasksFrame.h"
 
+#include <jira.h>
+
+std::string contents(LPCWSTR path)
+{
+	std::unique_ptr<FILE, decltype(&fclose)> f{ _wfopen(path, L"r"), fclose };
+	if (!f)
+		return std::string();
+
+	std::string out;
+	char buffer[8192];
+	int read = 0;
+	while ((read = fread(buffer, 1, sizeof(buffer), f.get())) > 0)
+		out.append(buffer, buffer + read);
+	return out;
+}
+
+void CTasksFrame::load(LPCWSTR path)
+{
+	json::map data{ json::from_string(contents(path)) };
+	std::ostringstream o;
+	auto startAt = data["startAt"].as_int();
+	auto total = data["total"].as_int();
+	json::vector issues{ data["issues"] };
+	o << "Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":\n";
+	OutputDebugStringA(o.str().c_str()); o.str("");
+
+	jira::row row{};
+	row
+		.column<jira::user>("assignee", nullptr, ",")
+		.column<jira::icon>("issuetype")
+		.column<jira::key>("key", "[", "]")
+		.column<jira::icon>("status")
+		.column<jira::string>("summary", "\"", "\"")
+		;
+
+	for (auto& v_issue : issues) {
+		json::map issue{ v_issue };
+		json::map fields{ issue["fields"] };
+		auto key = issue["key"].as_string();
+		OutputDebugStringA((row.visit(fields, key) + "\n").c_str());
+	}
+}
+
 BOOL CTasksFrame::PreTranslateMessage(MSG* pMsg)
 {
 	if(CFrameWindowImpl<CTasksFrame>::PreTranslateMessage(pMsg))
