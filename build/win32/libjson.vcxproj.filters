@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4C1D9DB0-3861-11E4-9144-002186EC719A}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{4C1D9DB1-3861-11E4-91FA-002186EC719A}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="pch">
+      <UniqueIdentifier>{4C1D9DB2-3861-11E4-9061-002186EC719A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\json">
+      <UniqueIdentifier>{e3cd45a4-7319-4341-9833-1cf1b651824d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\libs\libjson\pch\pch.cpp">
+      <Filter>pch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libjson\src\json.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\libs\libjson\pch\pch.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libjson\inc\json.hpp">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libjson\inc\json\json.hpp">
+      <Filter>inc\json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libjson\inc\json\serdes.hpp">
+      <Filter>inc\json</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

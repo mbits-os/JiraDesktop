@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4C1B2CB0-3861-11E4-A837-002186EC719A}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>libjson</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)\Solution.props" Condition="exists('$(SolutionDir)\Solution.props')" />
+    <Import Project="$(SolutionDir)\Platform.$(Platform).props" Condition="exists('$(SolutionDir)\Platform.$(Platform).props')" />
+    <Import Project="$(SolutionDir)\Configuration.$(Configuration).props" Condition="exists('$(SolutionDir)\Configuration.$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\Cross.$(Platform).$(Configuration).props" Condition="exists('$(SolutionDir)\Cross.$(Platform).$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\libs.libjson.props" Condition="exists('$(SolutionDir)\libs.libjson.props')" />
+    <Import Project="$(SolutionDir)\libs.libjson.$(Platform).props" Condition="exists('$(SolutionDir)\libs.libjson.$(Platform).props')" />
+    <Import Project="$(SolutionDir)\libs.libjson.$(Configuration).props" Condition="exists('$(SolutionDir)\libs.libjson.$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\libs.libjson.$(Platform).$(Configuration).props" Condition="exists('$(SolutionDir)\libs.libjson.$(Platform).$(Configuration).props')" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\libs\libjson\pch\pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libjson\src\json.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\libs\libjson\inc\json.hpp" />
+    <ClInclude Include="..\..\libs\libjson\inc\json\json.hpp" />
+    <ClInclude Include="..\..\libs\libjson\inc\json\serdes.hpp" />
+    <ClInclude Include="..\..\libs\libjson\pch\pch.h" />
+  </ItemGroup>
+</Project>

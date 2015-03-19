@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_PropertySheetDisplayName>libjson API</_PropertySheetDisplayName>
+    <IncludePath>$(SolutionDir)..\..\libs\libjson\inc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemGroup />
+</Project>
