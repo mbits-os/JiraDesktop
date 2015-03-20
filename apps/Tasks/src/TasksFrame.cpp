@@ -63,11 +63,10 @@ void CTasksFrame::load(LPCWSTR path)
 	json::vector issues{ data["issues"] };
 
 	const char* columns[] = {
-		"assignee",
-		"reporter",
-		"issuetype",
-		"key",
 		"status",
+		"assignee",
+		"key",
+		"priority",
 		"summary"
 	};
 
@@ -82,7 +81,7 @@ void CTasksFrame::load(LPCWSTR path)
 		auto key = issue["key"].as_string();
 		auto id = issue["id"].as_string();
 
-		dataset.emplace_back(model.visit(fields, key, id));
+		dataset.push_back(model.visit(fields, key, id));
 	}
 
 	o << "Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":\n";
@@ -112,7 +111,7 @@ a:hover {
 	o << "<p>Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":</p>\n<table>\n";
 	print(f.get(), o.str()); o.str("");
 	for (auto&& row : dataset)
-		print(f.get(), "<tr><td>" + row.html("</td><td>") + "</tr></td>\n");
+		print(f.get(), "  <tr>\n    <td>" + row.html("</td>\n    <td>") + "</td>\n  </tr>\n");
 	print(f.get(), "</table>\n");
 }
 
