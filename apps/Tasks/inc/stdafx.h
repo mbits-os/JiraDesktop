@@ -8,6 +8,12 @@
 // Change these values to use different versions
 #include <SDKDDKVer.h>
 
+#pragma warning(push)
+// warning C4091: 'typedef ': ignored on left of 'tagSTRUCT' when no variable is declared
+// warning C4302: 'type cast' : truncation from 'LPCTSTR' to 'WORD'
+// warning C4458: declaration of 'name' hides class member
+// warning C4838: conversion from 'int' to 'UINT' requires a narrowing conversion
+#pragma warning(disable: 4091 4302 4458 4838)
 #include <atlbase.h>
 #include <atlapp.h>
 
@@ -20,6 +26,7 @@ extern CAppModule _Module;
 #include <atldlgs.h>
 #include <atlctrlw.h>
 #include <atlscrl.h>
+#pragma warning(pop)
 
 #if defined _M_IX86
   #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
