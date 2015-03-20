@@ -27,133 +27,208 @@
 
 #include <json/json.hpp>
 #include <memory>
-#include <sstream>
+#include <string>
+#include <vector>
+#include <map>
 
 namespace jira
 {
+	struct value {
+		virtual ~value() {}
+		virtual std::string text() const = 0;
+		virtual std::string html() const = 0;
+	};
+
+	class record {
+		std::vector<std::shared_ptr<value>> m_values;
+
+		std::string m_uri;
+		std::string m_key;
+		std::string m_id;
+
+	public:
+		record(const record&) = delete;
+		record& operator=(const record&) = delete;
+		record(record&&) = default;
+		record& operator=(record&&) = default;
+
+		record() = default;
+
+		std::string issue_uri() const { return m_uri + "/browse/" + m_key; }
+		void uri(const std::string& val) { m_uri = val; }
+		void issue_key(const std::string& key) { m_key = key; }
+		void issue_id(const std::string& id) { m_id = id; }
+		const std::string& issue_key() const { return m_key; }
+		const std::string& issue_id() const { return m_id; }
+
+		template <typename T, typename... Args>
+		void add(Args&&... args)
+		{
+			m_values.push_back(std::make_shared<T>(std::forward<Args>(args)...));
+		}
+
+		std::string text(const std::string& sep) const;
+		std::string html(const std::string & sep) const;
+	};
+
 	struct type {
-		type(const char* name) : m_name(name) {}
+		type(const std::string& id) : m_id(id) {}
 		virtual ~type() {}
-		virtual const char* key() const { return m_name; }
-		virtual std::string visit(const json::map& object, const std::string& key) const = 0;
+		virtual const std::string& id() const { return m_id; }
+		virtual void visit(record& out, const json::map& object) const = 0;
 	private:
-		const char* m_name;
+		std::string m_id;
 	};
 
-	class key : public type {
-	public:
-		key(const char* k) : type(k) {}
-		std::string visit(const json::map& /*object*/, const std::string& k) const override
-		{
-			return k;
-		}
-	};
+	namespace values {
+		class empty : public value {
+		public:
+			empty();
+			std::string text() const override;
+			std::string html() const override;
+		};
 
-	class string : public type {
-	public:
-		string(const char* key) : type(key) {}
-		std::string visit(const json::map& object, const std::string& /*key*/) const override
-		{
-			auto it = object.find(key());
-			if (it == object.end())
-				return std::string();
+		class icon : public value {
+			std::string m_uri;
+			std::string m_title;
+			std::string m_description;
+		public:
+			icon(const std::string& uri, const std::string& title, const std::string& description);
+			std::string text() const override;
+			std::string html() const override;
+		};
 
-			return it->second.as_string();
-		}
-	};
+		class user : public value {
+			bool m_active;
+			std::string m_display;
+			std::string m_email;
+			std::string m_login;
+			std::map<uint32_t, std::string> m_avatar;
+		public:
+			user(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar);
+			std::string text() const override;
+			std::string html() const override;
+		};
 
-	class user : public type {
-	public:
-		user(const char* key) : type(key) {}
-		std::string visit(const json::map& object, const std::string& /*key*/) const override
-		{
-			auto it = object.find(key());
-			if (it == object.end() || !it->second.is<json::MAP>())
-				return std::string();
+		class label : public value {
+			std::string m_text;
+		public:
+			label(const std::string& text);
+			std::string text() const override;
+			std::string html() const override;
+		};
 
-			json::map data{ it->second };
-			auto display = data["displayName"];
-			if (!display.is<json::STRING>())
-				return "?";
+		class link : public value {
+			std::string m_uri;
+			std::unique_ptr<value> m_content;
+		public:
+			link(const std::string& uri, std::unique_ptr<value>&& content);
+			std::string text() const override;
+			std::string html() const override;
+		};
 
-			return display.as_string();
-		}
-	};
+		class span : public value {
+			std::vector<std::shared_ptr<value>> m_content;
+		public:
+			span();
 
-	class icon : public type {
-	public:
-		icon(const char* key) : type(key) {}
-		std::string visit(const json::map& object, const std::string& /*key*/) const override
-		{
-			auto it = object.find(key());
-			if (it == object.end() || !it->second.is<json::MAP>())
-				return std::string();
-
-			json::map data{ it->second };
-			auto display = data["name"];
-			if (!display.is<json::STRING>())
-				return "?";
-
-			return display.as_string();
-		}
-	};
-
-	class column {
-		std::unique_ptr<type> m_visitor;
-		const char* m_pre;
-		const char* m_post;
-	public:
-		column(std::unique_ptr<type>&& visitor,
-			const char* pre, const char* post)
-			: m_visitor(std::move(visitor))
-			, m_pre(pre)
-			, m_post(post)
-		{
-		}
-
-		std::string visit(const json::map& object, const std::string& key) const
-		{
-			if (!m_pre) {
-				if (!m_post)
-					return m_visitor->visit(object, key);
-				return m_visitor->visit(object, key) + m_post;
+			template <typename T, typename... Args>
+			span& add(Args&&... args)
+			{
+				m_content.push_back(std::make_shared<T>(std::forward<Args>(args)...));
+				return *this;
 			}
-			if (!m_post)
-				return m_pre + m_visitor->visit(object, key);
-			return m_pre + m_visitor->visit(object, key) + m_post;
-		}
+
+			std::string text() const override;
+			std::string html() const override;
+		};
 	};
 
-	class row {
-		std::vector<jira::column> m_cols;
+	namespace fields {
+		class key : public type {
+		public:
+			key(const std::string& id);
+			void visit(record& out, const json::map& /*object*/) const override;
+		};
+
+		class string : public type {
+		public:
+			string(const std::string& id);
+			void visit(record& out, const json::map& object) const override;
+		};
+
+		class summary : public type {
+		public:
+			summary(const std::string & id);
+			void visit(record& out, const json::map& object) const override;
+		};
+
+		class user : public type {
+		public:
+			user(const std::string & id);
+			void visit(record& out, const json::map& object) const override;
+		};
+
+		class icon : public type {
+		public:
+			icon(const std::string& id);
+			void visit(record& out, const json::map& object) const override;
+		};
+	}
+
+	class db;
+	class model {
+		friend class db;
+		std::string m_uri;
+		std::vector<std::unique_ptr<type>> m_cols;
+		model(std::vector<std::unique_ptr<type>>&& cols, const std::string& uri) : m_cols(std::move(cols)), m_uri(uri) {}
 	public:
+		record visit(const json::map& object, const std::string& key, const std::string& id) const;
+	};
+
+	class db {
+
+		struct creator {
+			virtual ~creator() {}
+			virtual std::unique_ptr<type> create(const std::string& name) = 0;
+		};
+
 		template <typename T>
-		row& column(const char* key)
-		{
-			m_cols.emplace_back(
-				std::make_unique<T>(key), nullptr, nullptr
-				);
-			return *this;
-		}
+		struct creator_impl : creator {
+			std::unique_ptr<type> create(const std::string& id) override
+			{
+				return std::make_unique<T>(id);
+			}
+		};
+
+		std::string m_uri;
+		std::map<std::string, std::unique_ptr<creator>> m_types;
+		std::map<std::string, std::string> m_fields;
+
 		template <typename T>
-		row& column(const char* key, const char* pre, const char* post)
+		inline void field(const std::string& type)
 		{
-			m_cols.emplace_back(
-				std::make_unique<T>(key), pre, post
-				);
-			return *this;
+			auto it = m_types.find(type);
+			if (it == m_types.end()) {
+				m_types.emplace(type, std::make_unique<creator_impl<T>>());
+				return;
+			}
+			it->second = std::make_unique<creator_impl<T>>();
 		}
 
-		std::string visit(const json::map& object, const std::string& key) const
+		void field_def(const std::string& id, const std::string& type, const char* /*display*/);
+		std::unique_ptr<type> create(const std::string& id) const;
+
+	public:
+		db(const std::string& uri);
+		template <size_t length>
+		model create_model(const char* (&names)[length])
 		{
-			std::ostringstream o;
-			bool first = true;
-			for (auto& col : m_cols) {
-				if (first) first = false;
-				else o << ' ';
-				o << col.visit(object, key);
-			}
-			return o.str();
+			std::vector<std::unique_ptr<type>> cols;
+			cols.reserve(length);
+			for (auto name : names)
+				cols.push_back(create(name));
+			return{ std::move(cols), m_uri };
 		}
 	};
 }

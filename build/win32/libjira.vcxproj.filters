@@ -20,6 +20,9 @@
     <ClCompile Include="..\..\libs\libjira\pch\pch.cpp">
       <Filter>pch</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\libs\libjira\src\jira.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libs\libjira\pch\pch.h">
