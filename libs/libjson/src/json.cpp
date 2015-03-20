@@ -215,9 +215,17 @@ namespace json
 		};
 
 		struct token_t {
-			token first;
+			token first = JSON_NULL;
 			std::string second;
 			pos_t pos;
+
+			token_t() {}
+			token_t(token t, const pos_t& pos) : first(t), pos(pos) {}
+			token_t(token t, const std::string& s, const pos_t& pos) : first(t), second(s), pos(pos) {}
+			token_t(const token_t&) = default;
+			token_t& operator=(const token_t&) = default;
+			token_t(token_t&&) = default;
+			token_t& operator=(token_t&&) = default;
 		};
 
 		token_t pos_t::err(const char* msg) const {
@@ -225,10 +233,10 @@ namespace json
 			o << "(" << line << ',' << column << "): error: " << msg << "\n";
 			OutputDebugStringA(o.str().c_str());
 			std::cerr << o.str() << std::flush;
-			return{ JSON_ERROR, std::string{}, *this };
+			return tok(JSON_ERROR);
 		}
 
-		token_t pos_t::tok(token t) const { return{ t, std::string{}, *this }; }
+		token_t pos_t::tok(token t) const { return{ t, *this }; }
 		token_t pos_t::str(const std::string& s) const { return{ JSON_STRING, s, *this }; }
 		token_t pos_t::num(const std::string& s) const { return{ JSON_NUMBER, s, *this }; }
 
