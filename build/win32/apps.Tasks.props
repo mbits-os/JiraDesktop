@@ -2,6 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets">
     <Import Project="libs.api.libjson.props" />
+    <Import Project="libs.api.libjira.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -19,7 +20,7 @@
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>$(TargetDir)$(TargetName).map</MapFileName>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libjson.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libjson.lib;libjira.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep />
   </ItemDefinitionGroup>
