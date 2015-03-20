@@ -9,7 +9,7 @@
 #include "TasksView.h"
 #include "TasksFrame.h"
 
-#include <jira.h>
+#include <jira/jira.hpp>
 
 std::string contents(LPCWSTR path)
 {

@@ -25,5 +25,8 @@
     <ClInclude Include="..\..\libs\libjira\pch\pch.h">
       <Filter>pch</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\libs\libjira\inc\jira\jira.hpp">
+      <Filter>inc\jira</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

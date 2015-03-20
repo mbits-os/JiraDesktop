@@ -52,6 +52,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\libs\libjira\inc\jira\jira.hpp" />
     <ClInclude Include="..\..\libs\libjira\pch\pch.h" />
   </ItemGroup>
 </Project>

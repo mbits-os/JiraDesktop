@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef __JIRA_H__
-#define __JIRA_H__
+#ifndef __JIRA_JIRA_HPP__
+#define __JIRA_JIRA_HPP__
 
 #include <json/json.hpp>
 #include <memory>
@@ -158,4 +158,4 @@ namespace jira
 	};
 }
 
-#endif // __JIRA_H__
+#endif // __JIRA_JIRA_HPP__
