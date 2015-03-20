@@ -10,6 +10,15 @@
 #include "TasksFrame.h"
 
 #include <jira/jira.hpp>
+#include <sstream>
+
+std::basic_string<wchar_t> utf8_to_utf16(const std::string& s)
+{
+	auto size = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
+	std::unique_ptr<wchar_t []> out{ new wchar_t[size + 1] };
+	MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, (wchar_t*) out.get(), size + 1);
+	return out.get();
+}
 
 std::string contents(LPCWSTR path)
 {
@@ -25,59 +34,26 @@ std::string contents(LPCWSTR path)
 	return out;
 }
 
-class jiraDb {
-public:
+void print(FILE* f, const std::string& s)
+{
+	fwrite(s.c_str(), 1, s.length(), f);
+}
 
-	template <typename T>
-	inline void field(const char* name)
-	{
+void print(FILE* f, const char* s)
+{
+	if (!s)
+		return;
+	fwrite(s, 1, strlen(s), f);
+}
 
-	}
+template <size_t length>
+void print(FILE* f, const char (&s)[length])
+{
+	if (!s)
+		return;
+	fwrite(s, 1, strlen(s), f);
+}
 
-	void field_type(const char* name, const char* type, const char* display)
-	{
-	}
-
-	jiraDb()
-	{
-		field<jira::key>("key");
-		field<jira::string>("string");
-		field<jira::user>("user");
-		field<jira::icon>("icon");
-
-		field_type("key", "key", "Key");
-		field_type("summary", "string", "Summary");
-		field_type("description", "string", "Description");
-		field_type("issuetype", "icon", "Issue Type");
-		field_type("priority", "icon", "Priority");
-		field_type("status", "icon", "Status");
-		field_type("reporter", "user", "Reporter");
-		field_type("creator", "user", "Creator");
-		field_type("assignee", "user", "Assignee");
-	}
-
-	const jira::type* get(const char* column) const
-	{
-		return nullptr;
-	}
-
-	template <size_t length>
-	std::string visit(const json::map& object, const std::string& key, const char* (&columns)[length]) const
-	{
-		std::ostringstream o;
-		bool first = true;
-		for (auto& col : columns) {
-			if (first) first = false;
-			else o << " | ";
-			auto col_type = get(col);
-			if (col_type)
-				o << col_type->visit(object, key);
-			else
-				o << col << ":(nullptr)";
-		}
-		return o.str();
-	}
-};
 void CTasksFrame::load(LPCWSTR path)
 {
 	json::map data{ json::from_string(contents(path)) };
@@ -85,34 +61,59 @@ void CTasksFrame::load(LPCWSTR path)
 	auto startAt = data["startAt"].as_int();
 	auto total = data["total"].as_int();
 	json::vector issues{ data["issues"] };
-	o << "Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":\n";
-	OutputDebugStringA(o.str().c_str()); o.str("");
-
-	jiraDb db;
 
 	const char* columns[] = {
 		"assignee",
+		"reporter",
 		"issuetype",
 		"key",
 		"status",
 		"summary"
 	};
 
-	jira::row row{};
-	row
-		.column<jira::user>("assignee", nullptr, ",")
-		.column<jira::icon>("issuetype")
-		.column<jira::key>("key", "[", "]")
-		.column<jira::icon>("status")
-		.column<jira::string>("summary", "\"", "\"")
-		;
+	jira::db db{ "https://cam.sprc.samsung.pl" };
+	auto model = db.create_model(columns);
+
+	std::vector<jira::record> dataset;
 
 	for (auto& v_issue : issues) {
 		json::map issue{ v_issue };
 		json::map fields{ issue["fields"] };
 		auto key = issue["key"].as_string();
-		OutputDebugStringA((db.visit(fields, key, columns) + "\n").c_str());
+		auto id = issue["id"].as_string();
+
+		dataset.emplace_back(model.visit(fields, key, id));
 	}
+
+	o << "Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":\n";
+	OutputDebugString(utf8_to_utf16(o.str()).c_str()); o.str("");
+	for (auto&& row: dataset)
+		OutputDebugString(utf8_to_utf16(row.text(" | ") + "\n").c_str());
+
+	std::unique_ptr<FILE, decltype(&fclose)> f{ fopen("issues.html", "w"), fclose };
+	if (!f)
+		return;
+
+	print(f.get(), R"(<style>
+body, td {
+	font-family: Arial, sans-serif;
+	font-size: 12px
+}
+a {
+	color: #3b73af;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+</style>
+)");
+	o << "<p>Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":</p>\n<table>\n";
+	print(f.get(), o.str()); o.str("");
+	for (auto&& row : dataset)
+		print(f.get(), "<tr><td>" + row.html("</td><td>") + "</tr></td>\n");
+	print(f.get(), "</table>\n");
 }
 
 BOOL CTasksFrame::PreTranslateMessage(MSG* pMsg)
