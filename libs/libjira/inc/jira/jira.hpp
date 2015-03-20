@@ -40,7 +40,7 @@ namespace jira
 	};
 
 	class record {
-		std::vector<std::shared_ptr<value>> m_values;
+		std::vector<std::unique_ptr<value>> m_values;
 
 		std::string m_uri;
 		std::string m_key;
@@ -51,7 +51,6 @@ namespace jira
 		record& operator=(const record&) = delete;
 		record(record&&) = default;
 		record& operator=(record&&) = default;
-
 		record() = default;
 
 		std::string issue_uri() const { return m_uri + "/browse/" + m_key; }
@@ -64,7 +63,7 @@ namespace jira
 		template <typename T, typename... Args>
 		void add(Args&&... args)
 		{
-			m_values.push_back(std::make_shared<T>(std::forward<Args>(args)...));
+			m_values.push_back(std::make_unique<T>(std::forward<Args>(args)...));
 		}
 
 		std::string text(const std::string& sep) const;
@@ -79,102 +78,6 @@ namespace jira
 	private:
 		std::string m_id;
 	};
-
-	namespace values {
-		class empty : public value {
-		public:
-			empty();
-			std::string text() const override;
-			std::string html() const override;
-		};
-
-		class icon : public value {
-			std::string m_uri;
-			std::string m_title;
-			std::string m_description;
-		public:
-			icon(const std::string& uri, const std::string& title, const std::string& description);
-			std::string text() const override;
-			std::string html() const override;
-		};
-
-		class user : public value {
-			bool m_active;
-			std::string m_display;
-			std::string m_email;
-			std::string m_login;
-			std::map<uint32_t, std::string> m_avatar;
-		public:
-			user(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar);
-			std::string text() const override;
-			std::string html() const override;
-		};
-
-		class label : public value {
-			std::string m_text;
-		public:
-			label(const std::string& text);
-			std::string text() const override;
-			std::string html() const override;
-		};
-
-		class link : public value {
-			std::string m_uri;
-			std::unique_ptr<value> m_content;
-		public:
-			link(const std::string& uri, std::unique_ptr<value>&& content);
-			std::string text() const override;
-			std::string html() const override;
-		};
-
-		class span : public value {
-			std::vector<std::shared_ptr<value>> m_content;
-		public:
-			span();
-
-			template <typename T, typename... Args>
-			span& add(Args&&... args)
-			{
-				m_content.push_back(std::make_shared<T>(std::forward<Args>(args)...));
-				return *this;
-			}
-
-			std::string text() const override;
-			std::string html() const override;
-		};
-	};
-
-	namespace fields {
-		class key : public type {
-		public:
-			key(const std::string& id);
-			void visit(record& out, const json::map& /*object*/) const override;
-		};
-
-		class string : public type {
-		public:
-			string(const std::string& id);
-			void visit(record& out, const json::map& object) const override;
-		};
-
-		class summary : public type {
-		public:
-			summary(const std::string & id);
-			void visit(record& out, const json::map& object) const override;
-		};
-
-		class user : public type {
-		public:
-			user(const std::string & id);
-			void visit(record& out, const json::map& object) const override;
-		};
-
-		class icon : public type {
-		public:
-			icon(const std::string& id);
-			void visit(record& out, const json::map& object) const override;
-		};
-	}
 
 	class db;
 	class model {
