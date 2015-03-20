@@ -47,7 +47,7 @@ void print(FILE* f, const char* s)
 }
 
 template <size_t length>
-void print(FILE* f, const char (&s)[length])
+void print(FILE* f, const char(&s)[length])
 {
 	if (!s)
 		return;
@@ -62,7 +62,7 @@ void CTasksFrame::load(LPCWSTR path)
 	auto total = data["total"].as_int();
 	json::vector issues{ data["issues"] };
 
-	const char* columns[] = {
+	const char* columns [] = {
 		"status",
 		"assignee",
 		"key",
@@ -86,7 +86,7 @@ void CTasksFrame::load(LPCWSTR path)
 
 	o << "Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":\n";
 	OutputDebugString(utf8_to_utf16(o.str()).c_str()); o.str("");
-	for (auto&& row: dataset)
+	for (auto&& row : dataset)
 		OutputDebugString(utf8_to_utf16(row.text(" | ") + "\n").c_str());
 
 	std::unique_ptr<FILE, decltype(&fclose)> f{ fopen("issues.html", "w"), fclose };
@@ -117,7 +117,7 @@ a:hover {
 
 BOOL CTasksFrame::PreTranslateMessage(MSG* pMsg)
 {
-	if(CFrameWindowImpl<CTasksFrame>::PreTranslateMessage(pMsg))
+	if (CFameSuper::PreTranslateMessage(pMsg))
 		return TRUE;
 
 	return m_view.PreTranslateMessage(pMsg);
@@ -160,9 +160,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	AddSimpleReBarBand(hWndCmdBar);
 	AddSimpleReBarBand(hWndToolBar, NULL, TRUE);
 
-	CreateSimpleStatusBar();
-
-	m_hWndClient = m_view.Create(m_hWnd, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, WS_EX_CLIENTEDGE);
+	m_hWndClient = m_view.Create(m_hWnd, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 	m_font = AtlCreateControlFont();
 	m_view.SetFont(m_font);
 
@@ -175,6 +173,8 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	ATLASSERT(pLoop != NULL);
 	pLoop->AddMessageFilter(this);
 	pLoop->AddIdleHandler(this);
+
+	m_taskIcon.Install(m_hWnd, 1, IDR_MAINFRAME);
 
 	return 0;
 }
@@ -189,6 +189,11 @@ LRESULT CTasksFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 	bHandled = FALSE;
 	return 1;
+}
+
+LRESULT CTasksFrame::OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
+{
+	return 0;
 }
 
 LRESULT CTasksFrame::OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -219,15 +224,6 @@ LRESULT CTasksFrame::OnViewToolBar(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hW
 	int nBandIndex = rebar.IdToIndex(ATL_IDW_BAND_FIRST + 1);	// toolbar is 2nd added band
 	rebar.ShowBand(nBandIndex, bVisible);
 	UISetCheck(ID_VIEW_TOOLBAR, bVisible);
-	UpdateLayout();
-	return 0;
-}
-
-LRESULT CTasksFrame::OnViewStatusBar(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-{
-	BOOL bVisible = !::IsWindowVisible(m_hWndStatusBar);
-	::ShowWindow(m_hWndStatusBar, bVisible ? SW_SHOWNOACTIVATE : SW_HIDE);
-	UISetCheck(ID_VIEW_STATUS_BAR, bVisible);
 	UpdateLayout();
 	return 0;
 }

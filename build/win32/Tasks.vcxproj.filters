@@ -50,6 +50,9 @@
     <ClInclude Include="..\..\apps\Tasks\inc\AboutDlg.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\TaskBarIcon.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\apps\Tasks\src\Tasks.rc">

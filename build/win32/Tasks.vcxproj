@@ -61,6 +61,7 @@
     <ClInclude Include="..\..\apps\Tasks\inc\AboutDlg.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\resource.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\TaskBarIcon.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\Tasks.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksFrame.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksView.h" />
