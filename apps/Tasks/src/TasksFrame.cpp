@@ -56,7 +56,7 @@ public:
 		field_type("assignee", "user", "Assignee");
 	}
 
-	const jira::type* get(const char* column)
+	const jira::type* get(const char* column) const
 	{
 		return nullptr;
 	}
@@ -73,7 +73,7 @@ public:
 			if (col_type)
 				o << col_type->visit(object, key);
 			else
-				o << "(nullptr)";
+				o << col << ":(nullptr)";
 		}
 		return o.str();
 	}
