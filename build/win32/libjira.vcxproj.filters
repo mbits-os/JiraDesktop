@@ -15,6 +15,9 @@
       <UniqueIdentifier>{dbf0c780-bf91-4c08-8fad-a9605783f07b}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="src\win32">
+      <UniqueIdentifier>{1605be2f-edca-4f99-99a3-47f66bada7da}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\libs\libjira\pch\pch.cpp">
@@ -27,6 +30,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\libs\libjira\src\values.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libjira\src\win32\win32_secure.cpp">
+      <Filter>src\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libjira\src\server.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -42,6 +51,9 @@
     </ClInclude>
     <ClInclude Include="..\..\libs\libjira\src\values.hpp">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libjira\inc\jira\server.hpp">
+      <Filter>inc\jira</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
