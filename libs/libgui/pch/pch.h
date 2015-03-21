@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-#ifndef __LIBJSON_PCH_H__
-#define __LIBJSON_PCH_H__
+#ifndef __LIBGUI_PCH_H__
+#define __LIBGUI_PCH_H__
 
 #include "../../../common-pch.h"
 
-#endif //__LIBJSON_PCH_H__
+#endif //__LIBGUI_PCH_H__
