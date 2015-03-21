@@ -41,37 +41,37 @@ namespace settings {
 	{
 	}
 
-	Section Section::group(const std::string& name)
+	Section Section::group(const std::string& name) const
 	{
 		return m_impl->group(name);
 	}
 
-	type Section::getType(const std::string& key)
+	type Section::getType(const std::string& key) const
 	{
 		return m_impl->getType(key);
 	}
 
-	bool Section::contains(const std::string& key)
+	bool Section::contains(const std::string& key) const
 	{
 		return m_impl->getType(key) != None;
 	}
 
-	std::string Section::getString(const std::string& key)
+	std::string Section::getString(const std::string& key) const
 	{
 		return m_impl->getString(key);
 	}
 
-	uint32_t Section::getUInt32(const std::string& key)
+	uint32_t Section::getUInt32(const std::string& key) const
 	{
 		return m_impl->getUInt32(key);
 	}
 
-	uint64_t Section::getUInt64(const std::string& key)
+	uint64_t Section::getUInt64(const std::string& key) const
 	{
 		return m_impl->getUInt64(key);
 	}
 
-	std::vector<uint8_t> Section::getBinary(const std::string& key)
+	std::vector<uint8_t> Section::getBinary(const std::string& key) const
 	{
 		return m_impl->getBinary(key);
 	}

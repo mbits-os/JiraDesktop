@@ -50,15 +50,15 @@ namespace settings {
 		Section& operator=(Section&&) = default;
 		~Section();
 
-		Section group(const std::string& name);
+		Section group(const std::string& name) const;
 
-		type getType(const std::string& key);
-		bool contains(const std::string& key);
+		type getType(const std::string& key) const;
+		bool contains(const std::string& key) const;
 
-		std::string getString(const std::string& key);
-		uint32_t getUInt32(const std::string& key);
-		uint64_t getUInt64(const std::string& key);
-		std::vector<uint8_t> getBinary(const std::string& key);
+		std::string getString(const std::string& key) const;
+		uint32_t getUInt32(const std::string& key) const;
+		uint64_t getUInt64(const std::string& key) const;
+		std::vector<uint8_t> getBinary(const std::string& key) const;
 
 		void setString(const std::string& key, const std::string& value);
 		void setUInt32(const std::string& key, uint32_t value);

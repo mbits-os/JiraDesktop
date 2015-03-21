@@ -51,7 +51,7 @@ namespace settings { namespace win32 {
 			RegCloseKey(m_key);
 	}
 
-	std::shared_ptr<Section::Impl> Win32Impl::group(const std::string& name)
+	std::shared_ptr<Section::Impl> Win32Impl::group(const std::string& name) const
 	{
 		HKEY key = nullptr;
 		auto ret = RegCreateKeyEx(m_key, utf::widen(name).c_str(), 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &key, nullptr);
@@ -59,7 +59,7 @@ namespace settings { namespace win32 {
 		return std::make_shared<win32::Win32Impl>(key);
 	}
 
-	type Win32Impl::getType(const std::string& key)
+	type Win32Impl::getType(const std::string& key) const
 	{
 		DWORD type = 0;
 		if (RegQueryValueEx(m_key, utf::widen(key).c_str(), nullptr, &type, nullptr, nullptr))
@@ -75,7 +75,7 @@ namespace settings { namespace win32 {
 		return None;
 	}
 
-	std::string Win32Impl::getString(const std::string& key)
+	std::string Win32Impl::getString(const std::string& key) const
 	{
 		DWORD size = 0;
 		auto wkey = utf::widen(key);
@@ -103,7 +103,7 @@ namespace settings { namespace win32 {
 		return utf::narrowed(ws);
 	}
 
-	uint32_t Win32Impl::getUInt32(const std::string& key)
+	uint32_t Win32Impl::getUInt32(const std::string& key) const
 	{
 		uint32_t out = 0;
 		DWORD size = sizeof(out);
@@ -111,7 +111,7 @@ namespace settings { namespace win32 {
 		return out;
 	}
 
-	uint64_t Win32Impl::getUInt64(const std::string& key)
+	uint64_t Win32Impl::getUInt64(const std::string& key) const
 	{
 		uint32_t out = 0;
 		DWORD size = sizeof(out);
@@ -119,7 +119,7 @@ namespace settings { namespace win32 {
 		return out;
 	}
 
-	std::vector<uint8_t> Win32Impl::getBinary(const std::string& key)
+	std::vector<uint8_t> Win32Impl::getBinary(const std::string& key) const
 	{
 		DWORD size = 0;
 		if (RegQueryValueEx(m_key, utf::widen(key).c_str(), nullptr, nullptr, nullptr, &size))

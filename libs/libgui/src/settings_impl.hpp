@@ -29,13 +29,13 @@ namespace settings {
 	public:
 		virtual ~Impl() {}
 
-		virtual std::shared_ptr<Impl> group(const std::string& name) = 0;
-		virtual type getType(const std::string& key) = 0;
+		virtual std::shared_ptr<Impl> group(const std::string& name) const = 0;
+		virtual type getType(const std::string& key) const = 0;
 
-		virtual std::string getString(const std::string& key) = 0;
-		virtual uint32_t getUInt32(const std::string& key) = 0;
-		virtual uint64_t getUInt64(const std::string& key) = 0;
-		virtual std::vector<uint8_t> getBinary(const std::string& key) = 0;
+		virtual std::string getString(const std::string& key) const = 0;
+		virtual uint32_t getUInt32(const std::string& key) const = 0;
+		virtual uint64_t getUInt64(const std::string& key) const = 0;
+		virtual std::vector<uint8_t> getBinary(const std::string& key) const = 0;
 
 		virtual void setString(const std::string& key, const std::string& value) = 0;
 		virtual void setUInt32(const std::string& key, uint32_t value) = 0;

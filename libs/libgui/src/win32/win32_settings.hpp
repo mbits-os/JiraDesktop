@@ -35,13 +35,13 @@ namespace settings { namespace win32 {
 		Win32Impl(HKEY key);
 		~Win32Impl();
 
-		std::shared_ptr<Section::Impl> group(const std::string& name) override;
-		type getType(const std::string& key) override;
+		std::shared_ptr<Section::Impl> group(const std::string& name) const override;
+		type getType(const std::string& key) const override;
 
-		std::string getString(const std::string& key) override;
-		uint32_t getUInt32(const std::string& key) override;
-		uint64_t getUInt64(const std::string& key) override;
-		std::vector<uint8_t> getBinary(const std::string& key) override;
+		std::string getString(const std::string& key) const override;
+		uint32_t getUInt32(const std::string& key) const override;
+		uint64_t getUInt64(const std::string& key) const override;
+		std::vector<uint8_t> getBinary(const std::string& key) const override;
 
 		void setString(const std::string& key, const std::string& value) override;
 		void setUInt32(const std::string& key, uint32_t value) override;
