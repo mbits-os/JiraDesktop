@@ -52,5 +52,54 @@ namespace jira
 
 		return{ plain.begin(), plain.end() };
 	}
+
+	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response)
+	{
+		response(404, json::value{});
+	}
+
+	void server::search(const std::string& jql, const std::vector<std::string>& columns,
+		const std::function<void(int, const report&)>& response)
+	{
+		std::string uri = url();
+		if (uri.empty()) {
+			response(404, report{});
+			return;
+		}
+
+		if (uri[uri.length() - 1] != '/')
+			uri.push_back('/');
+		uri += "rest/api/2/search?jql=";
+		uri += jql;
+
+		auto base = url();
+		loadJSON(uri, [response, columns, base](int status, const json::value& data) {
+
+			if ((status / 100) != 2) {
+				response(status, report{});
+				return;
+			}
+
+			jira::db db{ base };
+			auto model = db.create_model(columns);
+
+			report dataset;
+			json::map info{ data };
+			dataset.startAt = info["startAt"].as_int();
+			dataset.total = info["total"].as_int();
+			json::vector issues{ info["issues"] };
+
+			for (auto& v_issue : issues) {
+				json::map issue{ v_issue };
+				json::map fields{ issue["fields"] };
+				auto key = issue["key"].as_string();
+				auto id = issue["id"].as_string();
+
+				dataset.data.push_back(model.visit(fields, key, id));
+			}
+
+			response(status, dataset);
+		});
+	}
 };
 

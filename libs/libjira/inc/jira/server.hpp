@@ -25,9 +25,16 @@
 #ifndef __JIRA_SERVER_HPP__
 #define __JIRA_SERVER_HPP__
 
+#include <jira/jira.hpp>
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
+
+namespace json
+{
+	struct value;
+}
 
 namespace jira
 {
@@ -35,6 +42,12 @@ namespace jira
 		bool crypt(const std::vector<uint8_t>& plain, std::vector<uint8_t>& secret);
 		bool decrypt(const std::vector<uint8_t>& secret, std::vector<uint8_t>& plain);
 	}
+
+	struct report {
+		uint64_t startAt = 0;
+		uint64_t total = 0;
+		std::vector<record> data;
+	};
 
 	class server {
 		std::string m_login;
@@ -51,6 +64,10 @@ namespace jira
 		const std::vector<uint8_t>& password() const { return m_password; }
 		const std::string& login() const { return m_login; }
 		const std::string& url() const { return m_url; }
+
+		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response);
+		void search(const std::string& jql, const std::vector<std::string>& columns,
+			const std::function<void(int, const report&)>& response);
 	};
 }
 

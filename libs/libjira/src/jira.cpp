@@ -106,5 +106,14 @@ namespace jira
 
 		return type->second->create(id);
 	}
+
+	model db::create_model(const std::vector<std::string>& names)
+	{
+		std::vector<std::unique_ptr<type>> cols;
+		cols.reserve(names.size());
+		for (auto name : names)
+			cols.push_back(create(name));
+		return{ std::move(cols), m_uri };
+	}
 };
 

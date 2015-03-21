@@ -25,6 +25,8 @@
 #include "pch.h"
 
 #include "jira/server.hpp"
+
+#include "windows.h"
 #include "wincrypt.h"
 
 namespace jira {

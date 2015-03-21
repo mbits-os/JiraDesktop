@@ -124,15 +124,7 @@ namespace jira
 
 	public:
 		db(const std::string& uri);
-		template <size_t length>
-		model create_model(const char* (&names)[length])
-		{
-			std::vector<std::unique_ptr<type>> cols;
-			cols.reserve(length);
-			for (auto name : names)
-				cols.push_back(create(name));
-			return{ std::move(cols), m_uri };
-		}
+		model create_model(const std::vector<std::string>& names);
 	};
 }
 
