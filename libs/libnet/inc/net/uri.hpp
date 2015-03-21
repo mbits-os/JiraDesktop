@@ -27,6 +27,8 @@
 
 #include <stdint.h>
 #include <net/filesystem.hpp>
+#include <map>
+#include <vector>
 
 class Uri
 {
@@ -281,6 +283,18 @@ public:
 
 		return temp;
 	}
+
+	struct QueryBuilder {
+		std::map<std::string, std::vector<std::string>> m_values;
+	public:
+		QueryBuilder& add(const std::string& name, const std::string& value)
+		{
+			m_values[name].push_back(value);
+			return *this;
+		}
+
+		std::string string() const;
+	};
 };
 
 #endif //__URI_HPP__

@@ -53,7 +53,7 @@ namespace jira
 		record& operator=(record&&) = default;
 		record() = default;
 
-		std::string issue_uri() const { return m_uri + "/browse/" + m_key; }
+		std::string issue_uri() const;
 		void uri(const std::string& val) { m_uri = val; }
 		void issue_key(const std::string& key) { m_key = key; }
 		void issue_id(const std::string& id) { m_id = id; }

@@ -25,6 +25,7 @@
 #include "pch.h"
 
 #include "jira/server.hpp"
+#include <net/uri.hpp>
 
 namespace jira
 {
@@ -55,25 +56,24 @@ namespace jira
 
 	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response)
 	{
+		auto full = Uri::canonical(uri, url());
 		response(404, json::value{});
 	}
 
 	void server::search(const std::string& jql, const std::vector<std::string>& columns,
 		const std::function<void(int, const report&)>& response)
 	{
-		std::string uri = url();
-		if (uri.empty()) {
+		if (url().empty()) {
 			response(404, report{});
 			return;
 		}
 
-		if (uri[uri.length() - 1] != '/')
-			uri.push_back('/');
-		uri += "rest/api/2/search?jql=";
-		uri += jql;
+
+		Uri uri{ "rest/api/2/search" };
+		uri.query(Uri::QueryBuilder{}.add("jql", jql).string());
 
 		auto base = url();
-		loadJSON(uri, [response, columns, base](int status, const json::value& data) {
+		loadJSON(uri.string(), [response, columns, base](int status, const json::value& data) {
 
 			if ((status / 100) != 2) {
 				response(status, report{});

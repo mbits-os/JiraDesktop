@@ -26,10 +26,16 @@
 
 #include "jira/jira.hpp"
 #include "types.hpp"
+#include <net/uri.hpp>
 #include <sstream>
 
 namespace jira
 {
+	std::string record::issue_uri() const
+	{
+		return Uri::canonical("browse/" + m_key, m_uri).string();
+	}
+
 	std::string record::text(const std::string& sep) const
 	{
 		std::ostringstream o;

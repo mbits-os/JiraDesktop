@@ -25,6 +25,9 @@
     <ClCompile Include="..\..\libs\libnet\src\utf8.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\libs\libnet\src\uri.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libs\libnet\pch\pch.h">
