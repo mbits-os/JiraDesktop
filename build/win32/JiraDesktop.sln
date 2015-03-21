@@ -6,11 +6,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tasks", "Tasks.vcxproj", "{
 	ProjectSection(ProjectDependencies) = postProject
 		{2CDE885B-7B1D-418B-B4B1-2C918B75BB67} = {2CDE885B-7B1D-418B-B4B1-2C918B75BB67}
 		{4C1B2CB0-3861-11E4-A837-002186EC719A} = {4C1B2CB0-3861-11E4-A837-002186EC719A}
+		{B086A0EB-1011-4022-B8E4-63635EDE2AD0} = {B086A0EB-1011-4022-B8E4-63635EDE2AD0}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjson", "libjson.vcxproj", "{4C1B2CB0-3861-11E4-A837-002186EC719A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjira", "libjira.vcxproj", "{2CDE885B-7B1D-418B-B4B1-2C918B75BB67}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgui", "libgui.vcxproj", "{B086A0EB-1011-4022-B8E4-63635EDE2AD0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +33,10 @@ Global
 		{2CDE885B-7B1D-418B-B4B1-2C918B75BB67}.Debug|Win32.Build.0 = Debug|Win32
 		{2CDE885B-7B1D-418B-B4B1-2C918B75BB67}.Release|Win32.ActiveCfg = Release|Win32
 		{2CDE885B-7B1D-418B-B4B1-2C918B75BB67}.Release|Win32.Build.0 = Release|Win32
+		{B086A0EB-1011-4022-B8E4-63635EDE2AD0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B086A0EB-1011-4022-B8E4-63635EDE2AD0}.Debug|Win32.Build.0 = Debug|Win32
+		{B086A0EB-1011-4022-B8E4-63635EDE2AD0}.Release|Win32.ActiveCfg = Release|Win32
+		{B086A0EB-1011-4022-B8E4-63635EDE2AD0}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
