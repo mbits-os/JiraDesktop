@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{69162565-2E0A-49C3-A66F-A247D22DB9E3}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>libnet</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)\Solution.props" Condition="exists('$(SolutionDir)\Solution.props')" />
+    <Import Project="$(SolutionDir)\Platform.$(Platform).props" Condition="exists('$(SolutionDir)\Platform.$(Platform).props')" />
+    <Import Project="$(SolutionDir)\Configuration.$(Configuration).props" Condition="exists('$(SolutionDir)\Configuration.$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\Cross.$(Platform).$(Configuration).props" Condition="exists('$(SolutionDir)\Cross.$(Platform).$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\libs.libnet.props" Condition="exists('$(SolutionDir)\libs.libnet.props')" />
+    <Import Project="$(SolutionDir)\libs.libnet.$(Platform).props" Condition="exists('$(SolutionDir)\libs.libnet.$(Platform).props')" />
+    <Import Project="$(SolutionDir)\libs.libnet.$(Configuration).props" Condition="exists('$(SolutionDir)\libs.libnet.$(Configuration).props')" />
+    <Import Project="$(SolutionDir)\libs.libnet.$(Platform).$(Configuration).props" Condition="exists('$(SolutionDir)\libs.libnet.$(Platform).$(Configuration).props')" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\libs\libnet\pch\pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\libs\libnet\pch\pch.h" />
+  </ItemGroup>
+</Project>
