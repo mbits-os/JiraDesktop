@@ -11,7 +11,7 @@
 
 #include <jira/jira.hpp>
 #include <jira/server.hpp>
-#include <gui/utf8.hpp>
+#include <net/utf8.hpp>
 #include <sstream>
 
 #include "AppSettings.h"

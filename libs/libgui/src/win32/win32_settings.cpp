@@ -24,7 +24,7 @@
 
 #include "pch.h"
 #include "win32_settings.hpp"
-#include <gui/utf8.hpp>
+#include <net/utf8.hpp>
 
 namespace settings {
 	std::shared_ptr<Section::Impl> Section::create(const std::string& organization, const std::string& application, const std::string& version)
