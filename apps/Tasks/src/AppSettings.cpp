@@ -55,5 +55,6 @@ std::vector<jira::server> CAppSettings::servers() const
 
 void CAppSettings::servers(const std::vector<jira::server>& list)
 {
-	servers::store(list, group("Servers"));
+	auto servers = group("Servers");
+	servers::store(list, servers);
 }

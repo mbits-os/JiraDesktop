@@ -54,70 +54,6 @@ void print(FILE* f, const char(&s)[length])
 	fwrite(s, 1, strlen(s), f);
 }
 
-void CTasksFrame::load(LPCWSTR path)
-{
-	AppSettings settings;
-	auto servers = settings.servers();
-
-	json::map data{ json::from_string(contents(path)) };
-	std::ostringstream o;
-	auto startAt = data["startAt"].as_int();
-	auto total = data["total"].as_int();
-	json::vector issues{ data["issues"] };
-
-	const char* columns [] = {
-		"status",
-		"assignee",
-		"key",
-		"priority",
-		"summary"
-	};
-
-	jira::db db{ "https://cam.sprc.samsung.pl" };
-	auto model = db.create_model(columns);
-
-	std::vector<jira::record> dataset;
-
-	for (auto& v_issue : issues) {
-		json::map issue{ v_issue };
-		json::map fields{ issue["fields"] };
-		auto key = issue["key"].as_string();
-		auto id = issue["id"].as_string();
-
-		dataset.push_back(model.visit(fields, key, id));
-	}
-
-	o << "Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":\n";
-	OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
-	for (auto&& row : dataset)
-		OutputDebugString(utf::widen(row.text(" | ") + "\n").c_str());
-
-	std::unique_ptr<FILE, decltype(&fclose)> f{ fopen("issues.html", "w"), fclose };
-	if (!f)
-		return;
-
-	print(f.get(), R"(<style>
-body, td {
-	font-family: Arial, sans-serif;
-	font-size: 12px
-}
-a {
-	color: #3b73af;
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-</style>
-)");
-	o << "<p>Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":</p>\n<table>\n";
-	print(f.get(), o.str()); o.str("");
-	for (auto&& row : dataset)
-		print(f.get(), "  <tr>\n    <td>" + row.html("</td>\n    <td>") + "</td>\n  </tr>\n");
-	print(f.get(), "</table>\n");
-}
-
 BOOL CTasksFrame::PreTranslateMessage(MSG* pMsg)
 {
 	if (CFameSuper::PreTranslateMessage(pMsg))
@@ -181,6 +117,61 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	pLoop->AddIdleHandler(this);
 
 	m_taskIcon.Install(m_hWnd, 1, IDR_MAINFRAME);
+
+	auto hwnd = m_hWnd;
+	static const std::string jql{ "assignee=currentUser()" };
+	static const std::vector<std::string> columns{
+		"status",
+		"assignee",
+		"key",
+		"priority",
+		"summary"
+	};
+
+	for (auto& server : m_servers) {
+		auto url = server.url();
+		server.search(jql, columns, [hwnd, url](int status, const jira::report& dataset) {
+			std::ostringstream o;
+			o << "-----------------------------------------------\n"
+				<< "Answer from: " << url << "\n";
+			OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
+			o << "Issues " << (dataset.startAt + 1)
+				<< '-' << (dataset.startAt + dataset.data.size())
+				<< " of " << dataset.total << ":\n";
+			OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
+			for (auto&& row : dataset.data)
+				OutputDebugString(utf::widen(row.text(" | ") + "\n").c_str());
+
+			std::unique_ptr<FILE, decltype(&fclose)> f{ fopen("issues.html", "w"), fclose };
+			if (!f)
+				return;
+
+			print(f.get(), R"(<style>
+body, td {
+	font-family: Arial, sans-serif;
+	font-size: 12px
+}
+a {
+	color: #3b73af;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+</style>
+)");
+			o << "<h1>" << url << "</h1>\n"
+				<< "<p>Responose status: " << status << "</p>\n"
+				<< "<p>Issues " << (dataset.startAt + 1)
+				<< '-' << (dataset.startAt + dataset.data.size())
+				<< " of " << dataset.total << ":</p>\n<table>\n";
+			print(f.get(), o.str()); o.str("");
+			for (auto&& row : dataset.data)
+				print(f.get(), "  <tr>\n    <td>" + row.html("</td>\n    <td>") + "</td>\n  </tr>\n");
+			print(f.get(), "</table>\n");
+		});
+	}
 
 	return 0;
 }

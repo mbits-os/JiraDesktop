@@ -24,8 +24,6 @@ public:
 	CFont m_font;
 	std::vector<jira::server> m_servers;
 
-	void load(LPCWSTR path);
-
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();
 
