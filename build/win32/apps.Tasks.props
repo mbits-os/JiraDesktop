@@ -3,6 +3,7 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="libs.api.libjson.props" />
     <Import Project="libs.api.libjira.props" />
+    <Import Project="libs.api.libgui.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -20,7 +21,7 @@
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>$(TargetDir)$(TargetName).map</MapFileName>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libjson.lib;libjira.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libjson.lib;libjira.lib;libgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep />
   </ItemDefinitionGroup>
