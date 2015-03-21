@@ -30,6 +30,9 @@
     <ClCompile Include="..\..\apps\Tasks\src\TasksView.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\AppSettings.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\apps\Tasks\inc\resource.h">
@@ -51,6 +54,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\apps\Tasks\inc\TaskBarIcon.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\AppSettings.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>

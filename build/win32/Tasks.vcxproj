@@ -47,6 +47,7 @@
   </ImportGroup>
   <ItemGroup>
     <ClCompile Include="..\..\apps\Tasks\src\AboutDlg.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\AppSettings.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -59,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\apps\Tasks\inc\AboutDlg.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\AppSettings.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\resource.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TaskBarIcon.h" />

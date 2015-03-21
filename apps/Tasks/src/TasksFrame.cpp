@@ -10,15 +10,15 @@
 #include "TasksFrame.h"
 
 #include <jira/jira.hpp>
+#include <jira/server.hpp>
+#include <gui/utf8.hpp>
 #include <sstream>
 
-std::basic_string<wchar_t> utf8_to_utf16(const std::string& s)
-{
-	auto size = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
-	std::unique_ptr<wchar_t []> out{ new wchar_t[size + 1] };
-	MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, (wchar_t*) out.get(), size + 1);
-	return out.get();
-}
+#include "AppSettings.h"
+
+#include "wincrypt.h"
+#pragma comment(lib, "crypt32.lib")
+
 
 std::string contents(LPCWSTR path)
 {
@@ -56,6 +56,9 @@ void print(FILE* f, const char(&s)[length])
 
 void CTasksFrame::load(LPCWSTR path)
 {
+	AppSettings settings;
+	auto servers = settings.servers();
+
 	json::map data{ json::from_string(contents(path)) };
 	std::ostringstream o;
 	auto startAt = data["startAt"].as_int();
@@ -85,9 +88,9 @@ void CTasksFrame::load(LPCWSTR path)
 	}
 
 	o << "Issues " << (startAt + 1) << '-' << (startAt + issues.size()) << " of " << total << ":\n";
-	OutputDebugString(utf8_to_utf16(o.str()).c_str()); o.str("");
+	OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
 	for (auto&& row : dataset)
-		OutputDebugString(utf8_to_utf16(row.text(" | ") + "\n").c_str());
+		OutputDebugString(utf::widen(row.text(" | ") + "\n").c_str());
 
 	std::unique_ptr<FILE, decltype(&fclose)> f{ fopen("issues.html", "w"), fclose };
 	if (!f)
@@ -131,6 +134,9 @@ BOOL CTasksFrame::OnIdle()
 
 LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	CAppSettings settings;
+	m_servers = settings.servers();
+
 	// Check if Common Controls 6.0 are used. If yes, use 32-bit (alpha) images
 	// for the toolbar and command bar. If not, use the old, 4-bit images.
 	UINT uResID = IDR_MAINFRAME_OLD;
