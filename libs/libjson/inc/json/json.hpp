@@ -275,6 +275,7 @@ namespace json
 	};
 
 	value from_string(const std::string&);
+	value from_string(const char* data, size_t length);
 
 	struct vector : value {
 		using container_t = std::vector<value>;

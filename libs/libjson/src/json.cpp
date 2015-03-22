@@ -517,5 +517,21 @@ namespace json
 
 		return ret;
 	}
+
+	value from_string(const char* data, size_t length)
+	{
+		bool error = false;
+		parser::input in{ data, data + length };
+		auto tokens = parser::tokenize(in, error);
+		if (error)
+			return value{};
+
+		auto begin = tokens.begin();
+		auto ret = parser::parse(begin, tokens.end(), error);
+		if (error)
+			return value{};
+
+		return ret;
+	}
 };
 
