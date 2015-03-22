@@ -125,7 +125,8 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 		"assignee",
 		"key",
 		"priority",
-		"summary"
+		"summary",
+		"resolution"
 	};
 
 	for (auto& server : m_servers) {
@@ -163,6 +164,7 @@ a:hover {
 )");
 			o << "<h1>" << url << "</h1>\n"
 				<< "<p>Response status: " << status << "</p>\n"
+				<< "<p>Query: <code>" << jql << "</code></p>\n"
 				<< "<p>Issues " << (dataset.startAt + 1)
 				<< '-' << (dataset.startAt + dataset.data.size())
 				<< " of " << dataset.total << ":</p>\n<table>\n";
