@@ -213,6 +213,37 @@ namespace jira
 		{
 			return m_title;
 		}
+
+		array::array(const std::string& id, const std::string& title, std::unique_ptr<type>&& item)
+			: type(id, title)
+			, m_item(std::move(item))
+		{
+		}
+
+		std::unique_ptr<value> array::visit(const record& issue, const json::map& object) const
+		{
+			auto it = object.find(id());
+			if (it == object.end() || !it->second.is<json::vector>())
+				return std::make_unique<values::empty>();
+
+			values::span out;
+
+			bool first = true;
+			auto items = it->second.as<json::vector>();
+			for (auto&& item : items) {
+				if (!item.is<json::map>())
+					continue;
+
+				if (first) first = false;
+				else out.add<values::label>(", ");
+
+				out.addVal(m_item->visit(issue, item.as<json::map>()));
+			}
+			if (first) // no items added to the span, return empty...
+				return std::make_unique<values::empty>();
+
+			return std::make_unique<values::span>(std::move(out));
+		}
 	}
 };
 

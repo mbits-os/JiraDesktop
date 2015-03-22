@@ -69,6 +69,13 @@ namespace jira
 			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
 			const std::string& title() const override;
 		};
+
+		class array : public type {
+			std::unique_ptr<type> m_item;
+		public:
+			array(const std::string& id, const std::string& title, std::unique_ptr<type>&& item);
+			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
+		};
 	}
 }
 

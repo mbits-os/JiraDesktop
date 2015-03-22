@@ -92,23 +92,24 @@ namespace jira
 		field<fields::user>("user");
 		field<fields::icon>("icon");
 
-		field_def("key", "key", "Key");
-		field_def("summary", "summary", "Summary");
-		field_def("description", "string", "Description");
-		field_def("issuetype", "icon", "Issue Type");
-		field_def("priority", "icon", "Priority");
-		field_def("status", "icon", "Status");
-		field_def("reporter", "user", "Reporter");
-		field_def("creator", "user", "Creator");
-		field_def("assignee", "user", "Assignee");
-		field_def("resolution", "resolution", "Resolution");
+		field_def("key", false, "key", "Key");
+		field_def("summary", false, "summary", "Summary");
+		field_def("description", false, "string", "Description");
+		field_def("issuetype", false, "icon", "Issue Type");
+		field_def("priority", false, "icon", "Priority");
+		field_def("status", false, "icon", "Status");
+		field_def("reporter", false, "user", "Reporter");
+		field_def("creator", false, "user", "Creator");
+		field_def("assignee", false, "user", "Assignee");
+		field_def("resolution", false, "resolution", "Resolution");
 	}
 
-	void db::field_def(const std::string& id, const std::string& type, const std::string& display)
+	void db::field_def(const std::string& id, bool is_array, const std::string& type, const std::string& display)
 	{
 		auto& ref = m_fields[id];
-		ref.first = type;
-		ref.second = display;
+		ref.m_type = type;
+		ref.m_display = display;
+		ref.m_array = is_array;
 	}
 
 	std::unique_ptr<type> db::create(const std::string& id) const
@@ -116,10 +117,13 @@ namespace jira
 		auto it = m_fields.find(id);
 		if (it == m_fields.end()) return nullptr;
 
-		auto type = m_types.find(it->second.first);
+		auto type = m_types.find(it->second.m_type);
 		if (type == m_types.end()) return nullptr;
 
-		return type->second->create(id, it->second.second);
+		auto out = type->second->create(id, it->second.m_display);
+		if (it->second.m_array)
+			return std::make_unique<fields::array>(id, it->second.m_display, std::move(out));
+		return out;
 	}
 
 	model db::create_model(const std::vector<std::string>& names)

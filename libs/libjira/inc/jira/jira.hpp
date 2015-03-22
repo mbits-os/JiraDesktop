@@ -112,9 +112,15 @@ namespace jira
 			}
 		};
 
+		struct type_descr {
+			std::string m_type;
+			std::string m_display;
+			bool m_array;
+		};
+
 		std::string m_uri;
 		std::map<std::string, std::unique_ptr<creator>> m_types;
-		std::map<std::string, std::pair<std::string, std::string>> m_fields;
+		std::map<std::string, type_descr> m_fields;
 
 		template <typename T>
 		inline void field(const std::string& type)
@@ -127,12 +133,11 @@ namespace jira
 			it->second = std::make_unique<creator_impl<T>>();
 		}
 
-		void field_def(const std::string& id, const std::string& type, const std::string& display);
 		std::unique_ptr<type> create(const std::string& id) const;
-
 	public:
 		db(const std::string& uri);
 		model create_model(const std::vector<std::string>& names);
+		void field_def(const std::string& id, bool is_array, const std::string& type, const std::string& display);
 	};
 }
 
