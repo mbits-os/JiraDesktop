@@ -122,6 +122,13 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	auto hwnd = m_hWnd;
 
 	for (auto& server : m_servers) {
+		server->loadFields();
+		std::ostringstream o;
+		server->debugDump(o);
+		OutputDebugString(utf::widen(o.str()).c_str());
+	}
+
+	for (auto& server : m_servers) {
 		auto url = server->url();
 		auto jql = server->view().jql().empty() ? jira::search_def::standard.jql() : server->view().jql();
 		server->search([hwnd, url, server, jql](int status, jira::report&& dataset) {
@@ -190,6 +197,7 @@ a:hover {
 			for (auto&& row : dataset.data)
 				print(f.get(), "  <tr>\n    <td>" + row.html("</td>\n    <td>") + "</td>\n  </tr>\n");
 			print(f.get(), "</table>\n");
+
 		});
 	}
 
