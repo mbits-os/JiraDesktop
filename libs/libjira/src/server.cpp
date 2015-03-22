@@ -26,6 +26,7 @@
 
 #include "jira/server.hpp"
 #include <net/uri.hpp>
+#include <net/xhr.hpp>
 
 namespace jira
 {
@@ -54,10 +55,63 @@ namespace jira
 		return{ plain.begin(), plain.end() };
 	}
 
+	static char alphabet(size_t id)
+	{
+		static char alph [] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+		return alph[id];
+	}
+
+	// the output should be at least (len * 8 + 5) DIV 6 long
+	void base64_encode(const void* data, size_t len, char* output)
+	{
+		const unsigned char* p = (const unsigned char*) data;
+		size_t pos = 0;
+		unsigned int bits = 0;
+		unsigned int accu = 0;
+		for (size_t i = 0; i < len; ++i) {
+			accu = (accu << 8) | (p[i] & 0xFF);
+			bits += 8;
+			while (bits >= 6) {
+				bits -= 6;
+				output[pos++] = alphabet((accu >> bits) & 0x3F);
+			}
+		}
+		if (bits > 0) {
+			accu <<= 6 - bits;
+			output[pos++] = alphabet(accu & 0x3F);
+		}
+	}
+
 	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response)
 	{
-		auto full = Uri::canonical(uri, url());
-		response(404, json::value{});
+		auto xhr = net::http::client::create();
+		using namespace net::http::client;
+		xhr->onreadystatechange([xhr, response](XmlHttpRequest* req) {
+			auto state = req->getReadyState();
+			if (state != XmlHttpRequest::DONE)
+				return;
+			if (req->getStatus() / 100 == 2) {
+				auto text = req->getResponseText();
+				auto length = req->getResponseTextLength();
+				response(req->getStatus(), json::from_string(text, length));
+			} else {
+				response(req->getStatus(), json::value{});
+			}
+		});
+
+		xhr->open(HTTP_GET, Uri::canonical(uri, url()).string(), false);
+
+		std::string auth;
+
+		{
+			auto plain = login() + ":" + passwd();
+			auth.resize((plain.length() * 8 + 5) / 6);
+			base64_encode(plain.data(), plain.length(), &auth[0]);
+			plain.clear();
+		}
+
+		xhr->setRequestHeader("Authorization", "Basic " + auth);
+		xhr->send();
 	}
 
 	void server::search(const std::string& jql, const std::vector<std::string>& columns,
@@ -67,7 +121,6 @@ namespace jira
 			response(404, report{});
 			return;
 		}
-
 
 		Uri uri{ "rest/api/2/search" };
 		uri.query(Uri::QueryBuilder{}.add("jql", jql).string());
