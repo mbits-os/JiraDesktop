@@ -124,7 +124,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	for (auto& server : m_servers) {
 		auto url = server->url();
 		auto jql = server->view().jql().empty() ? jira::search_def::standard.jql() : server->view().jql();
-		server->search([hwnd, url, server, jql](int status, const jira::report& dataset) {
+		server->search([hwnd, url, server, jql](int status, jira::report&& dataset) {
 			std::ostringstream o;
 			o << "-----------------------------------------------\n"
 				<< "Answer from: " << url << "\n";
@@ -133,6 +133,19 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 				<< '-' << (dataset.startAt + dataset.data.size())
 				<< " of " << dataset.total << ":\n";
 			OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
+
+			{
+				o << "\n";
+				bool first = true;
+				for (auto& col : dataset.schema.cols()) {
+					if (first) first = false;
+					else o << " | ";
+					o << col->title();
+				}
+				o << "\n-----------------------------------------------------------------------\n";
+				OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
+			}
+
 			for (auto&& row : dataset.data)
 				OutputDebugString(utf::widen(row.text(" | ") + "\n").c_str());
 
@@ -141,7 +154,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 				return;
 
 			print(f.get(), R"(<style>
-body, td {
+body, td, tr {
 	font-family: Arial, sans-serif;
 	font-size: 12px
 }
@@ -162,6 +175,18 @@ a:hover {
 				<< '-' << (dataset.startAt + dataset.data.size())
 				<< " of " << dataset.total << ":</p>\n<table>\n";
 			print(f.get(), o.str()); o.str("");
+
+			{
+				print(f.get(), "  <tr>\n    <th>");
+				bool first = true;
+				for (auto& col : dataset.schema.cols()) {
+					if (first) first = false;
+					else print(f.get(), "</th>\n    <th>");
+					print(f.get(), col->title());
+				}
+				print(f.get(), "</th>\n  </tr>\n");
+			}
+
 			for (auto&& row : dataset.data)
 				print(f.get(), "  <tr>\n    <td>" + row.html("</td>\n    <td>") + "</td>\n  </tr>\n");
 			print(f.get(), "</table>\n");
