@@ -32,7 +32,7 @@
 namespace jira
 {
 	namespace fields {
-		key::key(const std::string& id) : type(id) {}
+		key::key(const std::string& id, const std::string& title) : type(id, title) {}
 
 		template <json::type type_id>
 		json::value_t<type_id> either_or(const json::map& object, const std::string& key)
@@ -84,7 +84,7 @@ namespace jira
 			out.add<values::span>(std::move(s));
 		}
 
-		string::string(const std::string& id) : type(id) {}
+		string::string(const std::string& id, const std::string& title) : type(id, title) {}
 
 		void string::visit(record& out, const json::map& object) const
 		{
@@ -96,7 +96,7 @@ namespace jira
 			out.add<values::label>(it->second.as_string());
 		}
 
-		resolution::resolution(const std::string& id) : type(id) {}
+		resolution::resolution(const std::string& id, const std::string& title) : type(id, title) {}
 
 		void resolution::visit(record& out, const json::map& object) const
 		{
@@ -117,7 +117,7 @@ namespace jira
 			out.add<values::styled>("{!}", "color:#E60026");
 		}
 
-		summary::summary(const std::string& id) : type(id) {}
+		summary::summary(const std::string& id, const std::string& title) : type(id, title) {}
 
 		void summary::visit(record& out, const json::map& object) const
 		{
@@ -129,7 +129,11 @@ namespace jira
 			out.add<values::link>(out.issue_uri(), std::make_unique<values::label>(label));
 		}
 
-		user::user(const std::string& id) : type(id) {}
+		user::user(const std::string& id, const std::string& title) : type(id, title)
+		{
+			if (!title.empty())
+				m_title = title.substr(0, 1);
+		}
 
 		uint32_t stoui(const char* in, char& error)
 		{
@@ -178,7 +182,16 @@ namespace jira
 			out.add<values::user>(active, display, email, login, std::move(avatar));
 		}
 
-		icon::icon(const std::string& id) : type(id) {}
+		const std::string& user::title() const
+		{
+			return m_title;
+		}
+
+		icon::icon(const std::string& id, const std::string& title) : type(id, title)
+		{
+			if (!title.empty())
+				m_title = title.substr(0, 1);
+		}
 
 		void icon::visit(record& out, const json::map& object) const
 		{
@@ -194,6 +207,11 @@ namespace jira
 				return out.add<values::label>(name);
 
 			out.add<values::icon>(uri.as_string(), name, description);
+		}
+
+		const std::string& icon::title() const
+		{
+			return m_title;
 		}
 	}
 };

@@ -198,7 +198,7 @@ namespace jira
 		});
 	}
 
-	void server::search(const search_def& def, const std::function<void(int, const report&)>& response)
+	void server::search(const search_def& def, const std::function<void(int, report&&)>& response)
 	{
 		if (url().empty()) {
 			response(404, report{});
@@ -222,24 +222,24 @@ namespace jira
 			}
 
 			jira::db db{ base };
-			auto model = db.create_model(columns);
+			json::map info{ data };
 
 			report dataset;
-			json::map info{ data };
 			dataset.startAt = info["startAt"].as_int();
 			dataset.total = info["total"].as_int();
-			json::vector issues{ info["issues"] };
+			dataset.schema = db.create_model(columns);
 
+			json::vector issues{ info["issues"] };
 			for (auto& v_issue : issues) {
 				json::map issue{ v_issue };
 				json::map fields{ issue["fields"] };
 				auto key = issue["key"].as_string();
 				auto id = issue["id"].as_string();
 
-				dataset.data.push_back(model.visit(fields, key, id));
+				dataset.data.push_back(dataset.schema.visit(fields, key, id));
 			}
 
-			response(status, dataset);
+			response(status, std::move(dataset));
 		});
 	}
 };

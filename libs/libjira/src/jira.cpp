@@ -99,9 +99,11 @@ namespace jira
 		field_def("resolution", "resolution", "Resolution");
 	}
 
-	void db::field_def(const std::string& id, const std::string& type, const char* /*display*/)
+	void db::field_def(const std::string& id, const std::string& type, const std::string& display)
 	{
-		m_fields[id] = type;
+		auto& ref = m_fields[id];
+		ref.first = type;
+		ref.second = display;
 	}
 
 	std::unique_ptr<type> db::create(const std::string& id) const
@@ -109,10 +111,10 @@ namespace jira
 		auto it = m_fields.find(id);
 		if (it == m_fields.end()) return nullptr;
 
-		auto type = m_types.find(it->second);
+		auto type = m_types.find(it->second.first);
 		if (type == m_types.end()) return nullptr;
 
-		return type->second->create(id);
+		return type->second->create(id, it->second.second);
 	}
 
 	model db::create_model(const std::vector<std::string>& names)

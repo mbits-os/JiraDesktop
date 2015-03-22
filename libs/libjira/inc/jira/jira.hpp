@@ -71,12 +71,15 @@ namespace jira
 	};
 
 	struct type {
-		type(const std::string& id) : m_id(id) {}
+		type(const std::string& id, const std::string& title) : m_id(id), m_title(title) {}
 		virtual ~type() {}
 		virtual const std::string& id() const { return m_id; }
+		virtual const std::string& title() const { return titleFull(); }
+		virtual const std::string& titleFull() const { return m_title; }
 		virtual void visit(record& out, const json::map& object) const = 0;
 	private:
 		std::string m_id;
+		std::string m_title;
 	};
 
 	class db;
@@ -86,27 +89,30 @@ namespace jira
 		std::vector<std::unique_ptr<type>> m_cols;
 		model(std::vector<std::unique_ptr<type>>&& cols, const std::string& uri) : m_cols(std::move(cols)), m_uri(uri) {}
 	public:
+		model() = default;
 		record visit(const json::map& object, const std::string& key, const std::string& id) const;
+
+		const std::vector<std::unique_ptr<type>>& cols() const { return m_cols; }
 	};
 
 	class db {
 
 		struct creator {
 			virtual ~creator() {}
-			virtual std::unique_ptr<type> create(const std::string& name) = 0;
+			virtual std::unique_ptr<type> create(const std::string& id, const std::string& title) = 0;
 		};
 
 		template <typename T>
 		struct creator_impl : creator {
-			std::unique_ptr<type> create(const std::string& id) override
+			std::unique_ptr<type> create(const std::string& id, const std::string& title) override
 			{
-				return std::make_unique<T>(id);
+				return std::make_unique<T>(id, title);
 			}
 		};
 
 		std::string m_uri;
 		std::map<std::string, std::unique_ptr<creator>> m_types;
-		std::map<std::string, std::string> m_fields;
+		std::map<std::string, std::pair<std::string, std::string>> m_fields;
 
 		template <typename T>
 		inline void field(const std::string& type)
@@ -119,7 +125,7 @@ namespace jira
 			it->second = std::make_unique<creator_impl<T>>();
 		}
 
-		void field_def(const std::string& id, const std::string& type, const char* /*display*/);
+		void field_def(const std::string& id, const std::string& type, const std::string& display);
 		std::unique_ptr<type> create(const std::string& id) const;
 
 	public:

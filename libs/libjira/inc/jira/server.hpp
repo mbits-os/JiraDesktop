@@ -48,6 +48,7 @@ namespace jira
 	struct report {
 		uint64_t startAt = 0;
 		uint64_t total = 0;
+		model schema;
 		std::vector<record> data;
 	};
 
@@ -88,8 +89,8 @@ namespace jira
 
 		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone);
 		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response);
-		void search(const search_def& def, const std::function<void(int, const report&)>& response);
-		void search(const std::function<void(int, const report&)>& response) { search(m_view, response); }
+		void search(const search_def& def, const std::function<void(int, report&&)>& response);
+		void search(const std::function<void(int, report&&)>& response) { search(m_view, response); }
 	};
 }
 
