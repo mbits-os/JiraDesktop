@@ -44,6 +44,16 @@ namespace jira
 			return it->second.as<type_id>();
 		}
 
+		template <typename T>
+		T either_or(const json::map& object, const std::string& key)
+		{
+			auto it = object.find(key);
+			if (it == object.end() || !it->second.is<T>())
+				return T{};
+
+			return T{ it->second.as<T>() };
+		}
+
 		template <json::type type_id, typename Arg>
 		json::value_t<type_id> either_or(const json::map& object, const std::string& key, Arg&& arg)
 		{
@@ -52,6 +62,16 @@ namespace jira
 				return json::value_t<type_id>{ std::forward<Arg>(arg) };
 
 			return it->second.as<type_id>();
+		}
+
+		template <typename T, typename Arg>
+		T either_or(const json::map& object, const std::string& key, Arg&& arg)
+		{
+			auto it = object.find(key);
+			if (it == object.end() || !it->second.is<T>())
+				return T{ std::forward<Arg>(arg) };
+
+			return T{ it->second.as<T>() };
 		}
 
 		void key::visit(record& out, const json::map& /*object*/) const
@@ -74,6 +94,27 @@ namespace jira
 				return out.add<values::empty>();
 
 			out.add<values::label>(it->second.as_string());
+		}
+
+		resolution::resolution(const std::string& id) : type(id) {}
+
+		void resolution::visit(record& out, const json::map& object) const
+		{
+			auto it = object.find(id());
+			if (it == object.end() || it->second.is<nullptr_t>())
+				return out.add<values::styled>("Unresolved", "font-style: italic; color: #555");
+
+			if (it->second.is<std::string>())
+				return out.add<values::label>(it->second.as<std::string>());
+
+			if (it->second.is<json::map>()) {
+				json::map map{ it->second };
+				auto name = either_or<std::string>(map, "name", "?");
+				auto description = either_or<std::string>(map, "description");
+				return out.add<values::label>(name, description);
+			}
+
+			out.add<values::styled>("{!}", "color:#E60026");
 		}
 
 		summary::summary(const std::string& id) : type(id) {}

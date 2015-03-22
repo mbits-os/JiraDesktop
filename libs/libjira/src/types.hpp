@@ -42,6 +42,12 @@ namespace jira
 			void visit(record& out, const json::map& object) const override;
 		};
 
+		class resolution : public type {
+		public:
+			resolution(const std::string& id);
+			void visit(record& out, const json::map& object) const override;
+		};
+
 		class summary : public type {
 		public:
 			summary(const std::string & id);

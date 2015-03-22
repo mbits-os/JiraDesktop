@@ -82,6 +82,7 @@ namespace jira
 	{
 		field<fields::key>("key");
 		field<fields::string>("string");
+		field<fields::resolution>("resolution");
 		field<fields::summary>("summary");
 		field<fields::user>("user");
 		field<fields::icon>("icon");
@@ -95,6 +96,7 @@ namespace jira
 		field_def("reporter", "user", "Reporter");
 		field_def("creator", "user", "Creator");
 		field_def("assignee", "user", "Assignee");
+		field_def("resolution", "resolution", "Resolution");
 	}
 
 	void db::field_def(const std::string& id, const std::string& type, const char* /*display*/)
