@@ -27,20 +27,93 @@
 #include "jira/server.hpp"
 #include <net/uri.hpp>
 #include <net/xhr.hpp>
+#include <string>
+
+using namespace std::literals;
 
 namespace jira
 {
-	server::server(const std::string& login, const std::vector<uint8_t>& password, const std::string& url, from_storage)
-		: m_login(login)
-		, m_password(password)
-		, m_url(url)
+	search_def const search_def::standard{ "assignee=currentUser() and resolution=Unresolved"s, {
+		"status"s,
+		"assignee"s,
+		"key"s,
+		"priority"s,
+		"summary"s,
+		"resolution"s
+	} };
+
+	namespace {
+		std::vector<std::string> split(const std::string& str, const std::string& sep)
+		{
+			std::vector<std::string> out;
+			auto pos = str.find(sep, 0);
+			decltype(pos) prev = 0;
+			while (pos != std::string::npos) {
+				out.push_back(str.substr(prev, pos - prev));
+				prev = pos + sep.length();
+				pos = str.find(sep, prev);
+			}
+
+			out.push_back(str.substr(prev));
+			return out;
+		}
+
+		std::string join(const std::vector<std::string>& list, const std::string& sep)
+		{
+			if (list.empty())
+				return{};
+
+			size_t len = sep.length() * (list.size() - 1);
+
+			for (auto& item : list)
+				len += item.length();
+
+			std::string out;
+			out.reserve(len + 1);
+			bool first = true;
+			for (auto& item : list) {
+				if (first) first = false;
+				else out += sep;
+				out += item;
+			}
+			return out;
+		}
+	}
+
+	search_def::search_def(const std::string& jql, const std::string& columnsDescr)
+		: m_jql(jql)
+		, m_columns(split(columnsDescr, ","))
+	{
+		if (m_columns.size() == 1 && m_columns[0].empty())
+			m_columns.clear();
+	}
+
+	search_def::search_def(const std::string& jql, const std::vector<std::string>& columns)
+		: m_jql(jql)
+		, m_columns(columns)
 	{
 	}
 
-	server::server(const std::string& login, const std::string& password, const std::string& url)
-		: m_login(login)
+	std::string search_def::columnsDescr() const
+	{
+		return join(m_columns, ",");
+	}
+
+	server::server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const search_def& view, from_storage)
+		: m_name(name)
+		, m_login(login)
+		, m_password(password)
+		, m_url(url)
+		, m_view(view)
+	{
+	}
+
+	server::server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const search_def& view)
+		: m_name(name)
+		, m_login(login)
 		, m_password()
 		, m_url(url)
+		, m_view(view)
 	{
 		if (!secure::crypt({ password.begin(), password.end() }, m_password))
 			throw std::bad_alloc();
@@ -87,6 +160,7 @@ namespace jira
 		using namespace net::http::client;
 
 		auto xhr = create();
+		xhr->setDebug();
 		xhr->onreadystatechange([xhr, onDone](XmlHttpRequest* req) {
 			if (req->getReadyState() != XmlHttpRequest::DONE)
 				return;
@@ -124,16 +198,20 @@ namespace jira
 		});
 	}
 
-	void server::search(const std::string& jql, const std::vector<std::string>& columns,
-		const std::function<void(int, const report&)>& response)
+	void server::search(const search_def& def, const std::function<void(int, const report&)>& response)
 	{
 		if (url().empty()) {
 			response(404, report{});
 			return;
 		}
 
+		auto& jql = def.jql().empty() ? search_def::standard.jql() : def.jql();
+		auto& columns = def.columns().empty() ? search_def::standard.columns() : def.columns();
+
 		Uri uri{ "rest/api/2/search" };
-		uri.query(Uri::QueryBuilder{}.add("jql", jql).string());
+		uri.query(Uri::QueryBuilder{}.add("jql", jql).add("fields",
+			m_view.columns().empty() ? search_def::standard.columnsDescr() : m_view.columnsDescr()
+			).string());
 
 		auto base = url();
 		loadJSON(uri.string(), [response, columns, base](int status, const json::value& data) {

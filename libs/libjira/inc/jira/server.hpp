@@ -51,26 +51,45 @@ namespace jira
 		std::vector<record> data;
 	};
 
+	class search_def {
+		std::string m_jql;
+		std::vector<std::string> m_columns;
+	public:
+		search_def() = default;
+		search_def(const std::string& jql, const std::string& columnsDescr);
+		search_def(const std::string& jql, const std::vector<std::string>& columns);
+		const std::string& jql() const { return m_jql; }
+		const std::vector<std::string>& columns() const { return m_columns; }
+		std::string columnsDescr() const;
+
+		static const search_def standard;
+	};
+
 	class server {
+		std::string m_name;
 		std::string m_login;
 		std::vector<uint8_t> m_password;
 		std::string m_url;
+
+		search_def m_view;
 
 		std::string passwd() const;
 	public:
 		enum from_storage { stored };
 
 		server() = default;
-		server(const std::string& login, const std::vector<uint8_t>& password, const std::string& url, from_storage);
-		server(const std::string& login, const std::string& password, const std::string& url);
+		server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const search_def& view, from_storage);
+		server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const search_def& view);
 		const std::vector<uint8_t>& password() const { return m_password; }
+		const std::string& name() const { return m_name; }
 		const std::string& login() const { return m_login; }
 		const std::string& url() const { return m_url; }
+		const search_def& view() const { return m_view; }
 
 		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone);
 		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response);
-		void search(const std::string& jql, const std::vector<std::string>& columns,
-			const std::function<void(int, const report&)>& response);
+		void search(const search_def& def, const std::function<void(int, const report&)>& response);
+		void search(const std::function<void(int, const report&)>& response) { search(m_view, response); }
 	};
 }
 
