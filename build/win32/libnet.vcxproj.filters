@@ -11,6 +11,9 @@
     <Filter Include="inc\net">
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="src\win32">
+      <UniqueIdentifier>{8d3f25b9-f642-4ec1-be4d-96b604358300}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\libs\libnet\pch\pch.cpp">
@@ -19,14 +22,23 @@
     <ClCompile Include="..\..\libs\libnet\src\filesystem.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libs\libnet\src\win32\win32_filesystem.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\libs\libnet\src\utf8.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\libs\libnet\src\uri.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libnet\src\curl_http.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libnet\src\win32\win32_filesystem.cpp">
+      <Filter>src\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libnet\src\xhr.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libnet\src\win32\win32_xhr.cpp">
+      <Filter>src\win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -40,6 +52,12 @@
       <Filter>inc\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libs\libnet\inc\net\utf8.hpp">
+      <Filter>inc\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libnet\src\curl_http.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libnet\inc\net\xhr.hpp">
       <Filter>inc\net</Filter>
     </ClInclude>
   </ItemGroup>
