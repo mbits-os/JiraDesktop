@@ -162,7 +162,7 @@ a:hover {
 </style>
 )");
 			o << "<h1>" << url << "</h1>\n"
-				<< "<p>Responose status: " << status << "</p>\n"
+				<< "<p>Response status: " << status << "</p>\n"
 				<< "<p>Issues " << (dataset.startAt + 1)
 				<< '-' << (dataset.startAt + dataset.data.size())
 				<< " of " << dataset.total << ":</p>\n<table>\n";
