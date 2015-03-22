@@ -202,6 +202,11 @@ namespace json
 			return get<value_type>(*this);
 		}
 
+		template <typename T>
+		value_t<type_to_value<T>::value> as() const {
+			return as<type_to_value<T>::value>();
+		}
+
 		std::string to_string(const options& = options::dense()) const;
 		std::string to_html(const options& = options::dense()) const;
 
