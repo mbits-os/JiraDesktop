@@ -18,6 +18,9 @@ namespace servers {
 	{
 		if (!server->name().empty())
 			section.setString(prefix + "name", server->name());
+		else
+			section.unset(prefix + "name");
+
 		section.setString(prefix + "login", server->login());
 		section.setBinary(prefix + "password", server->password());
 		section.setString(prefix + "url", server->url());
@@ -25,8 +28,13 @@ namespace servers {
 		auto& view = server->view();
 		if (!view.jql().empty())
 			section.setString(prefix + "query", view.jql());
+		else
+			section.unset(prefix + "query");
+
 		if (!view.columns().empty())
 			section.setString(prefix + "fields", view.columnsDescr());
+		else
+			section.unset(prefix + "field");
 	}
 
 	static std::vector<std::shared_ptr<jira::server>> load(const settings::Section& section)
