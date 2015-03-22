@@ -22,7 +22,7 @@ public:
 	CCommandBarCtrl m_CmdBar;
 	CTaskBarIcon m_taskIcon;
 	CFont m_font;
-	std::vector<jira::server> m_servers;
+	std::vector<std::shared_ptr<jira::server>> m_servers;
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();

@@ -12,6 +12,7 @@
 #include <jira/jira.hpp>
 #include <jira/server.hpp>
 #include <net/utf8.hpp>
+#include <net/xhr.hpp>
 #include <sstream>
 
 #include "AppSettings.h"
@@ -119,19 +120,11 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	m_taskIcon.Install(m_hWnd, 1, IDR_MAINFRAME);
 
 	auto hwnd = m_hWnd;
-	static const std::string jql{ "assignee=currentUser()" };
-	static const std::vector<std::string> columns{
-		"status",
-		"assignee",
-		"key",
-		"priority",
-		"summary",
-		"resolution"
-	};
 
 	for (auto& server : m_servers) {
-		auto url = server.url();
-		server.search(jql, columns, [hwnd, url](int status, const jira::report& dataset) {
+		auto url = server->url();
+		auto jql = server->view().jql().empty() ? jira::search_def::standard.jql() : server->view().jql();
+		server->search([hwnd, url, server, jql](int status, const jira::report& dataset) {
 			std::ostringstream o;
 			o << "-----------------------------------------------\n"
 				<< "Answer from: " << url << "\n";
