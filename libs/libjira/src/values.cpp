@@ -130,6 +130,12 @@ namespace jira
 		{
 		}
 
+		label::label(const std::string& text, const std::string& description)
+			: m_text(text)
+			, m_description(description)
+		{
+		}
+
 		std::string label::text() const
 		{
 			return m_text;
@@ -137,7 +143,32 @@ namespace jira
 
 		std::string label::html() const
 		{
-			return to_xml(m_text);
+			if (m_description.empty())
+				return to_xml(m_text);
+			std::ostringstream o;
+			o << "<span title=\"" << to_xml(m_description) << "\">" << to_xml(m_text) << "</span>";
+			return o.str();
+		}
+
+
+		styled::styled(const std::string& text, const std::string& style)
+			: m_text(text)
+			, m_style(style)
+		{
+		}
+
+		std::string styled::text() const
+		{
+			return m_text;
+		}
+
+		std::string styled::html() const
+		{
+			if (m_style.empty())
+				return to_xml(m_text);
+			std::ostringstream o;
+			o << "<span style=\"" << to_xml(m_style) << "\">" << to_xml(m_text) << "</span>";
+			return o.str();
 		}
 
 		link::link(const std::string& uri, std::unique_ptr<value>&& content)

@@ -61,8 +61,19 @@ namespace jira
 
 		class label : public value {
 			std::string m_text;
+			std::string m_description;
 		public:
 			label(const std::string& text);
+			label(const std::string& text, const std::string& description);
+			std::string text() const override;
+			std::string html() const override;
+		};
+
+		class styled : public value {
+			std::string m_text;
+			std::string m_style;
+		public:
+			styled(const std::string& text, const std::string& style);
 			std::string text() const override;
 			std::string html() const override;
 		};
