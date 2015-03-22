@@ -36,6 +36,8 @@ namespace json
 	struct value;
 }
 
+namespace net { namespace http { namespace client { struct XmlHttpRequest; }}}
+
 namespace jira
 {
 	namespace secure {
@@ -65,6 +67,7 @@ namespace jira
 		const std::string& login() const { return m_login; }
 		const std::string& url() const { return m_url; }
 
+		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone);
 		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response);
 		void search(const std::string& jql, const std::vector<std::string>& columns,
 			const std::function<void(int, const report&)>& response);

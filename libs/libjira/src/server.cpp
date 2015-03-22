@@ -82,21 +82,17 @@ namespace jira
 		}
 	}
 
-	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response)
+	void server::get(const std::string & uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone)
 	{
-		auto xhr = net::http::client::create();
 		using namespace net::http::client;
-		xhr->onreadystatechange([xhr, response](XmlHttpRequest* req) {
-			auto state = req->getReadyState();
-			if (state != XmlHttpRequest::DONE)
+
+		auto xhr = create();
+		xhr->onreadystatechange([xhr, onDone](XmlHttpRequest* req) {
+			if (req->getReadyState() != XmlHttpRequest::DONE)
 				return;
-			if (req->getStatus() / 100 == 2) {
-				auto text = req->getResponseText();
-				auto length = req->getResponseTextLength();
-				response(req->getStatus(), json::from_string(text, length));
-			} else {
-				response(req->getStatus(), json::value{});
-			}
+
+			onDone(req);
+			req->onreadystatechange(XmlHttpRequest::ONREADYSTATECHANGE{}); // clean up xhr 
 		});
 
 		xhr->open(HTTP_GET, Uri::canonical(uri, url()).string(), false);
@@ -112,6 +108,20 @@ namespace jira
 
 		xhr->setRequestHeader("Authorization", "Basic " + auth);
 		xhr->send();
+	}
+
+	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response)
+	{
+		using namespace net::http::client;
+		get(uri, [response](XmlHttpRequest* req) {
+			if (req->getStatus() / 100 == 2) {
+				auto text = req->getResponseText();
+				auto length = req->getResponseTextLength();
+				response(req->getStatus(), json::from_string(text, length));
+			} else {
+				response(req->getStatus(), json::value{});
+			}
+		});
 	}
 
 	void server::search(const std::string& jql, const std::vector<std::string>& columns,
