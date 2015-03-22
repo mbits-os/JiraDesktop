@@ -74,59 +74,59 @@ namespace jira
 			return T{ it->second.as<T>() };
 		}
 
-		void key::visit(record& out, const json::map& /*object*/) const
+		std::unique_ptr<value> key::visit(const record& issue, const json::map& /*object*/) const
 		{
 			values::span s;
 			s
 				.add<values::label>("[")
-				.add<values::link>(out.issue_uri(), std::make_unique<values::label>(out.issue_key()))
+				.add<values::link>(issue.issue_uri(), std::make_unique<values::label>(issue.issue_key()))
 				.add<values::label>("]");
-			out.add<values::span>(std::move(s));
+			return std::make_unique<values::span>(std::move(s));
 		}
 
 		string::string(const std::string& id, const std::string& title) : type(id, title) {}
 
-		void string::visit(record& out, const json::map& object) const
+		std::unique_ptr<value> string::visit(const record& /*issue*/, const json::map& object) const
 		{
 
 			auto it = object.find(id());
 			if (it == object.end())
-				return out.add<values::empty>();
+				return std::make_unique<values::empty>();
 
-			out.add<values::label>(it->second.as_string());
+			return std::make_unique<values::label>(it->second.as_string());
 		}
 
 		resolution::resolution(const std::string& id, const std::string& title) : type(id, title) {}
 
-		void resolution::visit(record& out, const json::map& object) const
+		std::unique_ptr<value> resolution::visit(const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || it->second.is<nullptr_t>())
-				return out.add<values::styled>("Unresolved", "font-style: italic; color: #555");
+				return std::make_unique<values::styled>("Unresolved", "font-style: italic; color: #555");
 
 			if (it->second.is<std::string>())
-				return out.add<values::label>(it->second.as<std::string>());
+				return std::make_unique<values::label>(it->second.as<std::string>());
 
 			if (it->second.is<json::map>()) {
 				json::map map{ it->second };
 				auto name = either_or<std::string>(map, "name", "?");
 				auto description = either_or<std::string>(map, "description");
-				return out.add<values::label>(name, description);
+				return std::make_unique<values::label>(name, description);
 			}
 
-			out.add<values::styled>("{!}", "color:#E60026");
+			return std::make_unique<values::styled>("{!}", "color:#E60026");
 		}
 
 		summary::summary(const std::string& id, const std::string& title) : type(id, title) {}
 
-		void summary::visit(record& out, const json::map& object) const
+		std::unique_ptr<value> summary::visit(const record& issue, const json::map& object) const
 		{
 			auto it = object.find(id());
 			std::string label = "Untitled";
 			if (it != object.end() && it->second.is<json::STRING>())
 				label = "\"" + it->second.as_string() + "\"";
 
-			out.add<values::link>(out.issue_uri(), std::make_unique<values::label>(label));
+			return std::make_unique<values::link>(issue.issue_uri(), std::make_unique<values::label>(label));
 		}
 
 		user::user(const std::string& id, const std::string& title) : type(id, title)
@@ -151,11 +151,11 @@ namespace jira
 			return out;
 		}
 
-		void user::visit(record& out, const json::map& object) const
+		std::unique_ptr<value> user::visit(const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
-				return out.add<values::empty>();
+				return std::make_unique<values::empty>();
 
 			json::map data{ it->second };
 			auto active = either_or<json::BOOL>(data, "active", false);
@@ -179,7 +179,7 @@ namespace jira
 				}
 			}
 
-			out.add<values::user>(active, display, email, login, std::move(avatar));
+			return std::make_unique<values::user>(active, display, email, login, std::move(avatar));
 		}
 
 		const std::string& user::title() const
@@ -193,20 +193,20 @@ namespace jira
 				m_title = title.substr(0, 1);
 		}
 
-		void icon::visit(record& out, const json::map& object) const
+		std::unique_ptr<value> icon::visit(const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
-				return out.add<values::empty>();
+				return std::make_unique<values::empty>();
 
 			json::map data{ it->second };
 			auto uri = data["iconUrl"];
 			auto name = either_or<json::STRING>(data, "name", "?");
 			auto description = either_or<json::STRING>(data, "description");
 			if (!uri.is<json::STRING>())
-				return out.add<values::label>(name);
+				return std::make_unique<values::label>(name);
 
-			out.add<values::icon>(uri.as_string(), name, description);
+			return std::make_unique<values::icon>(uri.as_string(), name, description);
 		}
 
 		const std::string& icon::title() const

@@ -36,6 +36,11 @@ namespace jira
 		return Uri::canonical("browse/" + m_key, m_uri).string();
 	}
 
+	void record::addVal(std::unique_ptr<value>&& field)
+	{
+		m_values.push_back(std::move(field));
+	}
+
 	std::string record::text(const std::string& sep) const
 	{
 		std::ostringstream o;
@@ -72,7 +77,7 @@ namespace jira
 		out.issue_id(id);
 
 		for (auto& col : m_cols)
-			col->visit(out, object);
+			out.addVal(col->visit(out, object));
 
 		return out;
 	}

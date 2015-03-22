@@ -189,6 +189,12 @@ namespace jira
 			return o.str();
 		}
 
+		span& span::addVal(std::unique_ptr<value>&& child)
+		{
+			m_content.push_back(std::move(child));
+			return *this;
+		}
+
 		std::string span::text() const
 		{
 			std::ostringstream o;

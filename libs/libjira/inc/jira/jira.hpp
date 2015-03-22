@@ -66,6 +66,8 @@ namespace jira
 			m_values.push_back(std::make_unique<T>(std::forward<Args>(args)...));
 		}
 
+		void addVal(std::unique_ptr<value>&&);
+
 		std::string text(const std::string& sep) const;
 		std::string html(const std::string & sep) const;
 	};
@@ -76,7 +78,7 @@ namespace jira
 		virtual const std::string& id() const { return m_id; }
 		virtual const std::string& title() const { return titleFull(); }
 		virtual const std::string& titleFull() const { return m_title; }
-		virtual void visit(record& out, const json::map& object) const = 0;
+		virtual std::unique_ptr<value> visit(const record& issue, const json::map& object) const = 0;
 	private:
 		std::string m_id;
 		std::string m_title;

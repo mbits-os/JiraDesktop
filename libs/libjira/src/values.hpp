@@ -97,6 +97,8 @@ namespace jira
 				return *this;
 			}
 
+			span& addVal(std::unique_ptr<value>&&);
+
 			std::string text() const override;
 			std::string html() const override;
 		};
