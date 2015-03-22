@@ -100,4 +100,14 @@ namespace settings {
 	{
 		return m_impl->setBinary(key, value, size);
 	}
+
+	void Section::unset(const std::string& key)
+	{
+		return m_impl->unset(key);
+	}
+
+	void Section::unsetGroup(const std::string& key)
+	{
+		return m_impl->unsetGroup(key);
+	}
 }

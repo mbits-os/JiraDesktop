@@ -48,5 +48,7 @@ namespace settings { namespace win32 {
 		void setUInt64(const std::string& key, uint64_t value) override;
 		void setBinary(const std::string& key, const std::vector<uint8_t>& value) override;
 		void setBinary(const std::string& key, const void* value, size_t size) override;
+		void unset(const std::string& key) override;
+		void unsetGroup(const std::string& key) override;
 	};
 }}

@@ -96,7 +96,7 @@ namespace settings { namespace win32 {
 
 		size = ws.length();
 		if (size > 0) {
-			while (ws[size - 1] == 0) --size;
+			while (size > 0 && ws[size - 1] == 0) --size;
 			ws = ws.substr(0, size);
 		}
 
@@ -157,5 +157,15 @@ namespace settings { namespace win32 {
 	void Win32Impl::setBinary(const std::string& key, const void* value, size_t size)
 	{
 		RegSetValueEx(m_key, utf::widen(key).c_str(), 0, REG_BINARY, (LPBYTE) value, size);
+	}
+
+	void Win32Impl::unset(const std::string& key)
+	{
+		RegDeleteValue(m_key, utf::widen(key).c_str());
+	}
+
+	void Win32Impl::unsetGroup(const std::string& key)
+	{
+		RegDeleteKey(m_key, utf::widen(key).c_str());
 	}
 }}

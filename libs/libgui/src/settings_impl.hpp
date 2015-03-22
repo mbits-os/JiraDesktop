@@ -42,5 +42,7 @@ namespace settings {
 		virtual void setUInt64(const std::string& key, uint64_t value) = 0;
 		virtual void setBinary(const std::string& key, const std::vector<uint8_t>& value) = 0;
 		virtual void setBinary(const std::string& key, const void* value, size_t size) = 0;
+		virtual void unset(const std::string& key) = 0;
+		virtual void unsetGroup(const std::string& key) = 0;
 	};
 }

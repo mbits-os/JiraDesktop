@@ -66,6 +66,10 @@ namespace settings {
 		void setBinary(const std::string& key, const std::vector<uint8_t>& value);
 		void setBinary(const std::string& key, const void* value, size_t size);
 		template <typename T> void setBinary(const std::string& key, const T& value) { return setBinary(key, &value, sizeof(T)); }
+
+		void unset(const std::string& key);
+		void unsetGroup(const std::string& key);
+
 	private:
 		std::shared_ptr<Impl> m_impl;
 		static std::shared_ptr<Impl> create(const std::string& organization, const std::string& application, const std::string& version);
