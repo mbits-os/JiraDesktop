@@ -74,6 +74,8 @@ namespace jira
 
 		search_def m_view;
 
+		db m_db;
+
 		std::string passwd() const;
 	public:
 		enum from_storage { stored };
@@ -87,10 +89,12 @@ namespace jira
 		const std::string& url() const { return m_url; }
 		const search_def& view() const { return m_view; }
 
-		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone);
-		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response);
-		void search(const search_def& def, const std::function<void(int, report&&)>& response);
-		void search(const std::function<void(int, report&&)>& response) { search(m_view, response); }
+		void loadFields();
+		void debugDump(std::ostream&);
+		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, bool async = true);
+		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response, bool async = true);
+		void search(const search_def& def, const std::function<void(int, report&&)>& response, bool async = true);
+		void search(const std::function<void(int, report&&)>& response, bool async = true) { search(m_view, response, async); }
 	};
 }
 

@@ -91,34 +91,56 @@ namespace jira
 		field<fields::summary>("summary");
 		field<fields::user>("user");
 		field<fields::icon>("icon");
+		field<fields::icon>("issuetype");
+		field<fields::icon>("priority");
+		field<fields::icon>("status");
 
-		field_def("key", false, "key", "Key");
-		field_def("summary", false, "summary", "Summary");
-		field_def("description", false, "string", "Description");
-		field_def("issuetype", false, "icon", "Issue Type");
-		field_def("priority", false, "icon", "Priority");
-		field_def("status", false, "icon", "Status");
-		field_def("reporter", false, "user", "Reporter");
-		field_def("creator", false, "user", "Creator");
-		field_def("assignee", false, "user", "Assignee");
-		field_def("resolution", false, "resolution", "Resolution");
+		reset_defs();
 	}
 
-	void db::field_def(const std::string& id, bool is_array, const std::string& type, const std::string& display)
+	void db::reset_defs()
 	{
+		m_fields.clear();
+		field_def("key", false, "key", "Key");
+	}
+
+	void db::debug_dump(std::ostream& o)
+	{
+		for (auto& type : m_types)
+			o << type.first << "\n";
+
+		o << "\n";
+
+		for (auto& fld : m_fields) {
+			o << fld.first << " (";
+			if (fld.second.m_array)
+				o << "array of ";
+			o << fld.second.m_type << ") " << json::value{ fld.second.m_display }.to_string() << "\n";
+		}
+	}
+
+	bool db::field_def(const std::string& id, bool is_array, const std::string& type, const std::string& display)
+	{
+		auto it = m_types.find(type);
+		if (it == m_types.end())
+			return false;
+
 		auto& ref = m_fields[id];
 		ref.m_type = type;
 		ref.m_display = display;
 		ref.m_array = is_array;
+		return true;
 	}
 
 	std::unique_ptr<type> db::create(const std::string& id) const
 	{
 		auto it = m_fields.find(id);
-		if (it == m_fields.end()) return nullptr;
+		if (it == m_fields.end())
+			return nullptr;
 
 		auto type = m_types.find(it->second.m_type);
-		if (type == m_types.end()) return nullptr;
+		if (type == m_types.end())
+			return nullptr;
 
 		auto out = type->second->create(id, it->second.m_display);
 		if (it->second.m_array)
@@ -130,8 +152,11 @@ namespace jira
 	{
 		std::vector<std::unique_ptr<type>> cols;
 		cols.reserve(names.size());
-		for (auto name : names)
-			cols.push_back(create(name));
+		for (auto name : names) {
+			auto field = create(name);
+			if (field)
+				cols.push_back(std::move(field));
+		}
 		return{ std::move(cols), m_uri };
 	}
 };

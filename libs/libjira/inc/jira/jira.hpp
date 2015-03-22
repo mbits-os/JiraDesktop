@@ -135,9 +135,12 @@ namespace jira
 
 		std::unique_ptr<type> create(const std::string& id) const;
 	public:
+		db() = default;
 		db(const std::string& uri);
+		void reset_defs();
+		void debug_dump(std::ostream&);
 		model create_model(const std::vector<std::string>& names);
-		void field_def(const std::string& id, bool is_array, const std::string& type, const std::string& display);
+		bool field_def(const std::string& id, bool is_array, const std::string& type, const std::string& display);
 	};
 }
 

@@ -29,6 +29,10 @@
 #include <net/xhr.hpp>
 #include <string>
 
+#if 0
+#include <windows.h>
+#endif
+
 using namespace std::literals;
 
 namespace jira
@@ -105,6 +109,7 @@ namespace jira
 		, m_password(password)
 		, m_url(url)
 		, m_view(view)
+		, m_db(url)
 	{
 	}
 
@@ -114,6 +119,7 @@ namespace jira
 		, m_password()
 		, m_url(url)
 		, m_view(view)
+		, m_db(url)
 	{
 		if (!secure::crypt({ password.begin(), password.end() }, m_password))
 			throw std::bad_alloc();
@@ -126,6 +132,79 @@ namespace jira
 			throw std::bad_alloc();
 
 		return{ plain.begin(), plain.end() };
+	}
+
+	void server::loadFields()
+	{
+		loadJSON("rest/api/2/field", [this](int /*status*/, const json::value& doc) {
+			m_db.reset_defs();
+
+			if (!doc.is<json::vector>())
+				return;
+
+			for (const auto& vfld : doc.as<json::vector>()) {
+				if (!vfld.is<json::map>())
+					continue;
+
+				auto fld = vfld.as<json::map>();
+				auto schema_it = fld.find("schema");
+				if (schema_it == fld.end())
+					continue;
+
+				auto schema = schema_it->second.as<json::map>()["type"].as_string();
+
+				bool is_array = schema == "array";
+				bool custom = fld["custom"].as<bool>();
+
+				if (is_array)
+					schema = schema_it->second.as<json::map>()["items"].as_string();
+
+				auto id = fld["id"].as_string();
+				auto it = fld.find("name");
+				auto display = it == fld.end() ? id : it->second.as_string();
+
+				if (schema_it != fld.end() && !custom) {
+					auto system = schema_it->second.as<json::map>()["system"].as_string();
+					static const char* known_types [] = {
+						"date",
+						"datetime",
+						"component",
+						"issuelinks",
+						"progress",
+						"securitylevel",
+						"user",
+						"version"
+					};
+
+					bool known = schema == system;
+					if (!known) {
+						for (auto name : known_types) {
+							if (schema == name) {
+								known = true;
+								break;
+							}
+						}
+					}
+
+					if (!known)
+						schema = system;
+
+					if (!m_db.field_def(id, is_array, schema, display)) {
+#if 0
+						if (is_array)
+							OutputDebugString(utf::widen("COULD NOT ADD: " + id + "(array of " + schema + ")\n").c_str());
+						else
+							OutputDebugString(utf::widen("COULD NOT ADD: " + id + "(" + schema + ")\n").c_str());
+#endif
+					}
+				}
+			}
+		}, false);
+	}
+
+	void server::debugDump(std::ostream& o)
+	{
+		m_db.debug_dump(o);
 	}
 
 	static char alphabet(size_t id)
@@ -155,7 +234,7 @@ namespace jira
 		}
 	}
 
-	void server::get(const std::string & uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone)
+	void server::get(const std::string & uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, bool async)
 	{
 		using namespace net::http::client;
 
@@ -169,7 +248,7 @@ namespace jira
 			req->onreadystatechange(XmlHttpRequest::ONREADYSTATECHANGE{}); // clean up xhr 
 		});
 
-		xhr->open(HTTP_GET, Uri::canonical(uri, url()).string(), false);
+		xhr->open(HTTP_GET, Uri::canonical(uri, url()).string(), async);
 
 		std::string auth;
 
@@ -184,7 +263,7 @@ namespace jira
 		xhr->send();
 	}
 
-	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response)
+	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response, bool async)
 	{
 		using namespace net::http::client;
 		get(uri, [response](XmlHttpRequest* req) {
@@ -195,10 +274,10 @@ namespace jira
 			} else {
 				response(req->getStatus(), json::value{});
 			}
-		});
+		}, async);
 	}
 
-	void server::search(const search_def& def, const std::function<void(int, report&&)>& response)
+	void server::search(const search_def& def, const std::function<void(int, report&&)>& response, bool async)
 	{
 		if (url().empty()) {
 			response(404, report{});
@@ -214,20 +293,19 @@ namespace jira
 			).string());
 
 		auto base = url();
-		loadJSON(uri.string(), [response, columns, base](int status, const json::value& data) {
+		loadJSON(uri.string(), [this, response, columns, base](int status, const json::value& data) {
 
 			if ((status / 100) != 2) {
 				response(status, report{});
 				return;
 			}
 
-			jira::db db{ base };
 			json::map info{ data };
 
 			report dataset;
 			dataset.startAt = info["startAt"].as_int();
 			dataset.total = info["total"].as_int();
-			dataset.schema = db.create_model(columns);
+			dataset.schema = m_db.create_model(columns);
 
 			json::vector issues{ info["issues"] };
 			for (auto& v_issue : issues) {
@@ -240,7 +318,7 @@ namespace jira
 			}
 
 			response(status, std::move(dataset));
-		});
+		}, async);
 	}
 };
 
