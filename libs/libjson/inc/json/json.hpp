@@ -339,6 +339,10 @@ namespace json
 			if (!is<MAP>())
 				throw bad_cast("JSON value is not a map");
 		}
+		map(const map&) = default;
+		map&operator=(const map&) = default;
+		map(map&&) = default;
+		map&operator=(map&&) = default;
 
 		map& add(const std::string& k, const value& v);
 
