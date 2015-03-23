@@ -42,6 +42,13 @@ namespace jira
 			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
 		};
 
+		class label : public type {
+		public:
+			label(const std::string& id, const std::string& title);
+			std::unique_ptr<value> visit(const record& /*issue*/, const json::map& /*object*/) const override { return{}; }
+			std::unique_ptr<value> visit(const record& issue, const json::value& object) const override;
+		};
+
 		class resolution : public type {
 		public:
 			resolution(const std::string& id, const std::string& title);
@@ -72,8 +79,9 @@ namespace jira
 
 		class array : public type {
 			std::unique_ptr<type> m_item;
+			std::string m_sep;
 		public:
-			array(const std::string& id, const std::string& title, std::unique_ptr<type>&& item);
+			array(const std::string& id, const std::string& title, std::unique_ptr<type>&& item, const std::string& sep);
 			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
 		};
 	}

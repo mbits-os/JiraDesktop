@@ -320,11 +320,10 @@ namespace jira
 			json::vector issues{ info["issues"] };
 			for (auto& v_issue : issues) {
 				json::map issue{ v_issue };
-				json::map fields{ issue["fields"] };
 				auto key = issue["key"].as_string();
 				auto id = issue["id"].as_string();
 
-				dataset.data.push_back(dataset.schema.visit(fields, key, id));
+				dataset.data.push_back(dataset.schema.visit(issue["fields"], key, id));
 			}
 
 			response(status, std::move(dataset));

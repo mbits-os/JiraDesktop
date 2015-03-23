@@ -96,6 +96,26 @@ namespace jira
 			return std::make_unique<values::label>(it->second.as_string());
 		}
 
+		label::label(const std::string& id, const std::string& title) : type(id, title) {}
+
+		std::unique_ptr<value> label::visit(const record& /*issue*/, const json::value& object) const
+		{
+			std::string text;
+			if (object.is<std::string>())
+				text = object.as<std::string>();
+			else if (object.is<json::map>()) {
+				auto map = object.as<json::map>();
+				auto it = map.find(id());
+				if (it != map.end())
+					text = it->second.as_string();
+			}
+
+			if (!text.empty())
+				return std::make_unique<values::styled>(text, "background:#f5f5f5;border:1px solid #ccc;border-radius:3.01px;display:inline-block;padding:1px 5px; margin:0 3px 0 0;");
+
+			return std::make_unique<values::empty>();
+		}
+
 		resolution::resolution(const std::string& id, const std::string& title) : type(id, title) {}
 
 		std::unique_ptr<value> resolution::visit(const record& /*issue*/, const json::map& object) const
@@ -214,9 +234,10 @@ namespace jira
 			return m_title;
 		}
 
-		array::array(const std::string& id, const std::string& title, std::unique_ptr<type>&& item)
+		array::array(const std::string& id, const std::string& title, std::unique_ptr<type>&& item, const std::string& sep)
 			: type(id, title)
 			, m_item(std::move(item))
+			, m_sep(sep)
 		{
 		}
 
@@ -224,23 +245,22 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::vector>())
-				return std::make_unique<values::empty>();
+				return std::make_unique<values::styled>("None", "font-style: italic; color: #555");
 
 			values::span out;
 
 			bool first = true;
 			auto items = it->second.as<json::vector>();
 			for (auto&& item : items) {
-				if (!item.is<json::map>())
-					continue;
-
 				if (first) first = false;
-				else out.add<values::label>(", ");
+				else out.add<values::label>(m_sep);
 
-				out.addVal(m_item->visit(issue, item.as<json::map>()));
+				auto val = m_item->visit(issue, item);
+				if (val)
+					out.addVal(std::move(val));
 			}
 			if (first) // no items added to the span, return empty...
-				return std::make_unique<values::empty>();
+				return std::make_unique<values::styled>("None", "font-style: italic; color: #555");
 
 			return std::make_unique<values::span>(std::move(out));
 		}

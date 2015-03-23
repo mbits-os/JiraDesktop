@@ -69,15 +69,26 @@ namespace jira
 		return o.str();
 	}
 
-	record model::visit(const json::map& object, const std::string& key, const std::string& id) const
+	std::unique_ptr<value> type::visit(const record& issue, const json::value& value) const
+	{
+		if (!value.is<json::map>())
+			return nullptr;
+
+		return visit(issue, value.as<json::map>());
+	}
+
+	record model::visit(const json::value& object, const std::string& key, const std::string& id) const
 	{
 		record out;
 		out.uri(m_uri);
 		out.issue_key(key);
 		out.issue_id(id);
 
-		for (auto& col : m_cols)
-			out.addVal(col->visit(out, object));
+		for (auto& col : m_cols) {
+			auto val = col->visit(out, object);
+			if (val)
+				out.addVal(std::move(val));
+		}
 
 		return out;
 	}
@@ -87,6 +98,7 @@ namespace jira
 	{
 		field<fields::key>("key");
 		field<fields::string>("string");
+		field<fields::label>("labels", " ");
 		field<fields::resolution>("resolution");
 		field<fields::summary>("summary");
 		field<fields::user>("user");
@@ -142,9 +154,9 @@ namespace jira
 		if (type == m_types.end())
 			return nullptr;
 
-		auto out = type->second->create(id, it->second.m_display);
+		auto out = type->second.m_fn->create(id, it->second.m_display);
 		if (it->second.m_array)
-			return std::make_unique<fields::array>(id, it->second.m_display, std::move(out));
+			return std::make_unique<fields::array>(id, it->second.m_display, std::move(out), type->second.m_sep.empty() ? ", " : type->second.m_sep);
 		return out;
 	}
 

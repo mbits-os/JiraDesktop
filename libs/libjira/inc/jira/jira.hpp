@@ -79,6 +79,7 @@ namespace jira
 		virtual const std::string& title() const { return titleFull(); }
 		virtual const std::string& titleFull() const { return m_title; }
 		virtual std::unique_ptr<value> visit(const record& issue, const json::map& object) const = 0;
+		virtual std::unique_ptr<value> visit(const record& issue, const json::value& value) const;
 	private:
 		std::string m_id;
 		std::string m_title;
@@ -92,7 +93,7 @@ namespace jira
 		model(std::vector<std::unique_ptr<type>>&& cols, const std::string& uri) : m_cols(std::move(cols)), m_uri(uri) {}
 	public:
 		model() = default;
-		record visit(const json::map& object, const std::string& key, const std::string& id) const;
+		record visit(const json::value& object, const std::string& key, const std::string& id) const;
 
 		const std::vector<std::unique_ptr<type>>& cols() const { return m_cols; }
 	};
@@ -112,6 +113,11 @@ namespace jira
 			}
 		};
 
+		struct creator_descr {
+			std::unique_ptr<creator> m_fn;
+			std::string m_sep;
+		};
+
 		struct type_descr {
 			std::string m_type;
 			std::string m_display;
@@ -119,18 +125,19 @@ namespace jira
 		};
 
 		std::string m_uri;
-		std::map<std::string, std::unique_ptr<creator>> m_types;
+		std::map<std::string, creator_descr> m_types;
 		std::map<std::string, type_descr> m_fields;
 
 		template <typename T>
-		inline void field(const std::string& type)
+		inline void field(const std::string& type, const std::string& sep = {})
 		{
 			auto it = m_types.find(type);
+			creator_descr creator{ std::make_unique<creator_impl<T>>(), sep };
 			if (it == m_types.end()) {
-				m_types.emplace(type, std::make_unique<creator_impl<T>>());
+				m_types.emplace(type, std::move(creator));
 				return;
 			}
-			it->second = std::make_unique<creator_impl<T>>();
+			it->second = std::move(creator);
 		}
 
 		std::unique_ptr<type> create(const std::string& id) const;
