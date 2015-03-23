@@ -5,7 +5,7 @@
 #pragma once
 
 #include "TaskBarIcon.h"
-#include <jira/server.hpp>
+#include "AppModel.h"
 
 using CTasksFrameWinTraits = CWinTraits<WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_APPWINDOW>;
 class CTasksFrame
@@ -22,7 +22,7 @@ public:
 	CCommandBarCtrl m_CmdBar;
 	CTaskBarIcon m_taskIcon;
 	CFont m_font;
-	std::vector<std::shared_ptr<jira::server>> m_servers;
+	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();

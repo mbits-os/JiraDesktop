@@ -14,6 +14,7 @@
 #include <net/utf8.hpp>
 #include <net/xhr.hpp>
 #include <sstream>
+#include <thread>
 
 #include "AppSettings.h"
 
@@ -71,9 +72,6 @@ BOOL CTasksFrame::OnIdle()
 
 LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	CAppSettings settings;
-	m_servers = settings.servers();
-
 	// Check if Common Controls 6.0 are used. If yes, use 32-bit (alpha) images
 	// for the toolbar and command bar. If not, use the old, 4-bit images.
 	UINT uResID = IDR_MAINFRAME_OLD;
@@ -103,6 +101,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	AddSimpleReBarBand(hWndCmdBar);
 	AddSimpleReBarBand(hWndToolBar, NULL, TRUE);
 
+	m_view.m_model = m_model;
 	m_hWndClient = m_view.Create(m_hWnd, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 	m_font = AtlCreateControlFont();
 	m_view.SetFont(m_font);
@@ -121,13 +120,9 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 	auto hwnd = m_hWnd;
 
-	for (auto& server : m_servers) {
-		server->loadFields();
-		std::ostringstream o;
-		server->debugDump(o);
-		OutputDebugString(utf::widen(o.str()).c_str());
-	}
+	m_model->startup();
 
+#if 0
 	for (auto& server : m_servers) {
 		auto url = server->url();
 		auto jql = server->view().jql().empty() ? jira::search_def::standard.jql() : server->view().jql();
@@ -147,7 +142,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 				for (auto& col : dataset.schema.cols()) {
 					if (first) first = false;
 					else o << " | ";
-					o << col->title();
+					o << col->titleFull();
 				}
 				o << "\n-----------------------------------------------------------------------\n";
 				OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
@@ -198,8 +193,9 @@ a:hover {
 				print(f.get(), "  <tr>\n    <td>" + row.html("</td>\n    <td>") + "</td>\n  </tr>\n");
 			print(f.get(), "</table>\n");
 
-		});
+		}, false);
 	}
+#endif
 
 	return 0;
 }

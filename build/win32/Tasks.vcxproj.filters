@@ -33,6 +33,9 @@
     <ClCompile Include="..\..\apps\Tasks\src\AppSettings.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\AppModel.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\apps\Tasks\inc\resource.h">
@@ -57,6 +60,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\apps\Tasks\inc\AppSettings.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\AppModel.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,9 +4,13 @@
 
 #pragma once
 
+#include "AppModel.h"
+
 class CTasksView : public CWindowImpl<CTasksView>
 {
 public:
+	std::shared_ptr<CAppModel> m_model;
+
 	DECLARE_WND_CLASS(NULL)
 
 	BOOL PreTranslateMessage(MSG* pMsg);
