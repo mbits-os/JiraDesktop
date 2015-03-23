@@ -212,6 +212,10 @@ namespace jira
 		}, false);
 	}
 
+	void server::refresh()
+	{
+	}
+
 	void server::debugDump(std::ostream& o)
 	{
 		m_db.debug_dump(o);

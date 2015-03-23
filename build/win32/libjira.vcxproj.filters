@@ -55,5 +55,8 @@
     <ClInclude Include="..\..\libs\libjira\inc\jira\server.hpp">
       <Filter>inc\jira</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\libs\libjira\inc\jira\listeners.hpp">
+      <Filter>inc\jira</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

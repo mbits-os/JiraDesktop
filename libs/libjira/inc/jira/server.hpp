@@ -90,6 +90,7 @@ namespace jira
 		const search_def& view() const { return m_view; }
 
 		void loadFields();
+		void refresh();
 		void debugDump(std::ostream&);
 		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, bool async = true);
 		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response, bool async = true);
