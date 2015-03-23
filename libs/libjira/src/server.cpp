@@ -29,7 +29,7 @@
 #include <net/xhr.hpp>
 #include <string>
 
-#if 0
+#if USE_ODS
 #include <windows.h>
 #endif
 
@@ -37,14 +37,9 @@ using namespace std::literals;
 
 namespace jira
 {
-	search_def const search_def::standard{ "assignee=currentUser() and resolution=Unresolved"s, {
-		"status"s,
-		"assignee"s,
-		"key"s,
-		"priority"s,
-		"summary"s,
-		"resolution"s
-	} };
+	search_def const search_def::standard{ "assignee=currentUser() and resolution is empty"s,
+		{ "status"s, "assignee"s, "key"s, "priority"s, "summary"s, "resolution"s }
+	};
 
 	namespace {
 		std::vector<std::string> split(const std::string& str, const std::string& sep)
@@ -142,6 +137,10 @@ namespace jira
 			if (!doc.is<json::vector>())
 				return;
 
+#if USE_ODS
+			std::map<std::string, bool> failed;
+#endif
+
 			for (const auto& vfld : doc.as<json::vector>()) {
 				if (!vfld.is<json::map>())
 					continue;
@@ -163,7 +162,7 @@ namespace jira
 				auto it = fld.find("name");
 				auto display = it == fld.end() ? id : it->second.as_string();
 
-				if (schema_it != fld.end() && !custom) {
+				if (!custom) {
 					auto system = schema_it->second.as<json::map>()["system"].as_string();
 					static const char* known_types [] = {
 						"date",
@@ -188,17 +187,28 @@ namespace jira
 
 					if (!known)
 						schema = system;
+				}
 
-					if (!m_db.field_def(id, is_array, schema, display)) {
-#if 0
-						if (is_array)
-							OutputDebugString(utf::widen("COULD NOT ADD: " + id + "(array of " + schema + ")\n").c_str());
-						else
-							OutputDebugString(utf::widen("COULD NOT ADD: " + id + "(" + schema + ")\n").c_str());
+				if (!m_db.field_def(id, is_array, schema, display)) {
+#if USE_ODS
+					if (is_array)
+						OutputDebugString(utf::widen("COULD NOT ADD: " + id + "(array of " + schema + ")\n").c_str());
+					else
+						OutputDebugString(utf::widen("COULD NOT ADD: " + id + "(" + schema + ")\n").c_str());
+					failed[schema] = true;
 #endif
-					}
 				}
 			}
+
+#if USE_ODS
+			if (!failed.empty()) {
+				OutputDebugString(L"\nUnrecognized types:\n");
+				for (auto& pair : failed) {
+					OutputDebugString(utf::widen("  " + pair.first + "\n").c_str());
+				}
+				OutputDebugString(L"\n");
+			}
+#endif
 		}, false);
 	}
 
@@ -239,7 +249,7 @@ namespace jira
 		using namespace net::http::client;
 
 		auto xhr = create();
-		xhr->setDebug();
+		// xhr->setDebug();
 		xhr->onreadystatechange([xhr, onDone](XmlHttpRequest* req) {
 			if (req->getReadyState() != XmlHttpRequest::DONE)
 				return;
