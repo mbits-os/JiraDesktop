@@ -32,13 +32,14 @@
 
 namespace jira
 {
-	template <typename T>
-	struct listeners {
+	template <typename T, typename Final>
+	class listeners {
 		std::mutex m_guard;
 		std::vector<std::weak_ptr<T>> m_listeners;
 
 	protected:
-		void emit(const std::function<void(T*)>& cb)
+		template <typename Pred>
+		void emit(Pred cb)
 		{
 			std::lock_guard<std::mutex> lock{ m_guard };
 			for (auto& item : m_listeners) {
@@ -55,12 +56,18 @@ namespace jira
 		{
 			unregisterListener(listener);
 
-			std::lock_guard<std::mutex> lock{ m_guard };
-			m_listeners.push_back(listener);
+			{
+				std::lock_guard<std::mutex> lock{ m_guard };
+				m_listeners.push_back(listener);
+			}
+
+			static_cast<Final*>(this)->onListenerAdded(listener);
 		}
 
 		void unregisterListener(const std::shared_ptr<T>& listener)
 		{
+			static_cast<Final*>(this)->onListenerRemoved(listener);
+
 			std::lock_guard<std::mutex> lock{ m_guard };
 
 			auto it = m_listeners.begin();
@@ -73,6 +80,9 @@ namespace jira
 				}
 			}
 		}
+
+		void onListenerAdded(const std::shared_ptr<T>& /*listener*/) {}
+		void onListenerRemoved(const std::shared_ptr<T>& /*listener*/) {}
 	};
 
 }

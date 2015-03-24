@@ -28,6 +28,7 @@
 #include <net/uri.hpp>
 #include <net/xhr.hpp>
 #include <string>
+#include <atomic>
 
 #if USE_ODS
 #include <windows.h>
@@ -77,6 +78,12 @@ namespace jira
 			}
 			return out;
 		}
+
+		uint32_t nextToken()
+		{
+			static std::atomic<uint32_t> token{ 0xba5e0000ul };
+			return ++token;
+		}
 	}
 
 	search_def::search_def(const std::string& jql, const std::string& columnsDescr)
@@ -105,6 +112,7 @@ namespace jira
 		, m_url(url)
 		, m_view(view)
 		, m_db(url)
+		, m_id(nextToken())
 	{
 	}
 
@@ -115,9 +123,16 @@ namespace jira
 		, m_url(url)
 		, m_view(view)
 		, m_db(url)
+		, m_id(nextToken())
 	{
 		if (!secure::crypt({ password.begin(), password.end() }, m_password))
 			throw std::bad_alloc();
+	}
+
+	void server::onListenerAdded(const std::shared_ptr<server_listener>& listener)
+	{
+		if (m_isLoadingView)
+			listener->onRefreshStarted();
 	}
 
 	std::string server::passwd() const
@@ -131,11 +146,14 @@ namespace jira
 
 	void server::loadFields()
 	{
+		m_isLoadingFields = true;
 		loadJSON("rest/api/2/field", [this](int /*status*/, const json::value& doc) {
 			m_db.reset_defs();
 
-			if (!doc.is<json::vector>())
+			if (!doc.is<json::vector>()) {
+				m_isLoadingFields = false;
 				return;
+			}
 
 #if USE_ODS
 			std::map<std::string, bool> failed;
@@ -209,11 +227,16 @@ namespace jira
 				OutputDebugString(L"\n");
 			}
 #endif
+			m_isLoadingFields = false;
 		}, false);
 	}
 
 	void server::refresh()
 	{
+		m_isLoadingView = true;
+		emit([&](server_listener* listener) { listener->onRefreshStarted(); });
+		emit([&](server_listener* listener) { listener->onRefreshFinished(); });
+		m_isLoadingView = false;
 	}
 
 	void server::debugDump(std::ostream& o)

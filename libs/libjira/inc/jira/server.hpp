@@ -26,10 +26,12 @@
 #define __JIRA_SERVER_HPP__
 
 #include <jira/jira.hpp>
+#include <jira/listeners.hpp>
 #include <memory>
 #include <string>
 #include <vector>
 #include <functional>
+#include <atomic>
 
 namespace json
 {
@@ -66,17 +68,31 @@ namespace jira
 		static const search_def standard;
 	};
 
-	class server {
+	struct server_listener {
+		virtual ~server_listener() {}
+		virtual void onRefreshStarted() = 0;
+		virtual void onRefreshFinished() = 0;
+	};
+
+	class server : public listeners<server_listener, server> {
 		std::string m_name;
 		std::string m_login;
 		std::vector<uint8_t> m_password;
 		std::string m_url;
+		uint32_t m_id;
+
+		std::atomic<bool> m_isLoadingFields = false;
+		std::atomic<bool> m_isLoadingView = false;
 
 		search_def m_view;
 
 		db m_db;
 
 		std::string passwd() const;
+
+		friend class listeners<server_listener, server>;
+
+		void onListenerAdded(const std::shared_ptr<server_listener>& listener) /*override*/;
 	public:
 		enum from_storage { stored };
 
@@ -88,6 +104,7 @@ namespace jira
 		const std::string& login() const { return m_login; }
 		const std::string& url() const { return m_url; }
 		const search_def& view() const { return m_view; }
+		uint32_t sessionId() const { return m_id; }
 
 		void loadFields();
 		void refresh();
