@@ -16,7 +16,7 @@ void CAppModel::startup()
 {
 	synchronize(m_guard, [&] {
 		CAppSettings settings;
-		m_servers = settings.servers();
+		m_servers = settings.jiraServers();
 	});
 
 	onListChanged(0);
@@ -74,7 +74,7 @@ void CAppModel::remove(const std::shared_ptr<jira::server>& server)
 			}
 
 			CAppSettings settings;
-			settings.servers(m_servers);
+			settings.jiraServers(m_servers);
 		});
 	}
 
@@ -88,7 +88,7 @@ void CAppModel::update(const std::shared_ptr<jira::server>& server)
 
 	synchronize(m_guard, [&] {
 		CAppSettings settings;
-		settings.servers(m_servers);
+		settings.jiraServers(m_servers);
 	});
 
 	server->loadFields();

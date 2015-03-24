@@ -68,14 +68,14 @@ CAppSettings::CAppSettings()
 {
 }
 
-std::vector<std::shared_ptr<jira::server>> CAppSettings::servers() const
+std::vector<std::shared_ptr<jira::server>> CAppSettings::jiraServers() const
 {
-	return servers::load(group("Servers"));
+	return servers::load(group("JiraServers"));
 }
 
-void CAppSettings::servers(const std::vector<std::shared_ptr<jira::server>>& list)
+void CAppSettings::jiraServers(const std::vector<std::shared_ptr<jira::server>>& list)
 {
 	unsetGroup("Servers");
-	auto servers = group("Servers");
+	auto servers = group("JiraServers");
 	servers::store(list, servers);
 }
