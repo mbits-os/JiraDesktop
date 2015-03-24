@@ -17,6 +17,7 @@ class CTasksView : public CWindowImpl<CTasksView>
 	struct ServerInfo {
 		std::shared_ptr<jira::server> m_server;
 		std::shared_ptr<jira::server_listener> m_listener;
+		std::shared_ptr<jira::report> m_dataset;
 		uint32_t m_sessionId;
 		// TODO : relation to UI element
 
@@ -30,7 +31,8 @@ class CTasksView : public CWindowImpl<CTasksView>
 
 		~ServerInfo()
 		{
-			m_server->unregisterListener(m_listener);
+			if (m_server && m_listener)
+				m_server->unregisterListener(m_listener);
 		}
 
 		ServerInfo(const ServerInfo&) = delete;

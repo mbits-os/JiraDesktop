@@ -91,6 +91,8 @@ void CAppModel::update(const std::shared_ptr<jira::server>& server)
 		settings.jiraServers(m_servers);
 	});
 
-	server->loadFields();
-	server->refresh();
+	std::thread{ [server] {
+		server->loadFields();
+		server->refresh();
+	} }.detach();
 }

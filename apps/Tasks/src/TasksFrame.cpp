@@ -128,28 +128,6 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 		auto jql = server->view().jql().empty() ? jira::search_def::standard.jql() : server->view().jql();
 		server->search([hwnd, url, server, jql](int status, jira::report&& dataset) {
 			std::ostringstream o;
-			o << "-----------------------------------------------\n"
-				<< "Answer from: " << url << "\n";
-			OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
-			o << "Issues " << (dataset.startAt + 1)
-				<< '-' << (dataset.startAt + dataset.data.size())
-				<< " of " << dataset.total << ":\n";
-			OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
-
-			{
-				o << "\n";
-				bool first = true;
-				for (auto& col : dataset.schema.cols()) {
-					if (first) first = false;
-					else o << " | ";
-					o << col->titleFull();
-				}
-				o << "\n-----------------------------------------------------------------------\n";
-				OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
-			}
-
-			for (auto&& row : dataset.data)
-				OutputDebugString(utf::widen(row.text(" | ") + "\n").c_str());
 
 			std::unique_ptr<FILE, decltype(&fclose)> f{ fopen("issues.html", "w"), fclose };
 			if (!f)

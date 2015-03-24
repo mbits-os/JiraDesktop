@@ -8,6 +8,7 @@
 #include "TasksView.h"
 #include <net/utf8.hpp>
 #include <algorithm>
+#include <sstream>
 
 class TaskViewModelListener : public CAppModelListener {
 	HWND m_hWnd;
@@ -169,5 +170,41 @@ LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam
 LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	OutputDebugString(utf::widen(std::to_string((UINT_PTR) m_hWnd) + ": OnRefreshStop(" + std::to_string(wParam) + ")\n").c_str());
+
+	auto it = find(wParam);
+	if (it == m_servers.end())
+		return 0;
+
+	auto& server = *it->m_server;
+	it->m_dataset = server.dataset();
+	// TODO: update layout
+	// TODO: redraw the report table
+
+	auto& dataset = *it->m_dataset;
+	std::ostringstream o;
+	o << "-----------------------------------------------\n"
+		<< "Answer from: " << server.login() << " @ " << server.displayName() << "\n"
+		<< "Query: " << (server.view().jql().empty() ? jira::search_def::standard.jql() : server.view().jql()) << "\n";
+	OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
+	o << "Issues " << (dataset.startAt + 1)
+		<< '-' << (dataset.startAt + dataset.data.size())
+		<< " of " << dataset.total << ":\n";
+	OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
+
+	{
+		o << "\n";
+		bool first = true;
+		for (auto& col : dataset.schema.cols()) {
+			if (first) first = false;
+			else o << " | ";
+			o << col->titleFull();
+		}
+		o << "\n-----------------------------------------------------------------------\n";
+		OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
+	}
+
+	for (auto&& row : dataset.data)
+		OutputDebugString(utf::widen(row.text(" | ") + "\n").c_str());
+
 	return 0;
 }
