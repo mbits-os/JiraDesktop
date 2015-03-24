@@ -74,7 +74,7 @@ namespace jira
 		virtual void onRefreshFinished() = 0;
 	};
 
-	class server : public listeners<server_listener, server> {
+	class server : public listeners<server_listener, server>, public std::enable_shared_from_this<server> {
 		std::string m_name;
 		std::string m_login;
 		std::vector<uint8_t> m_password;
@@ -86,6 +86,7 @@ namespace jira
 		std::atomic<bool> m_requestRefresh = false;
 
 		search_def m_view;
+		std::shared_ptr<report> m_dataset;
 
 		db m_db;
 
@@ -102,6 +103,7 @@ namespace jira
 		server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const search_def& view);
 		const std::vector<uint8_t>& password() const { return m_password; }
 		const std::string& name() const { return m_name; }
+		const std::string& displayName() const { return m_name.empty() ? m_url : m_name; }
 		const std::string& login() const { return m_login; }
 		const std::string& url() const { return m_url; }
 		const search_def& view() const { return m_view; }
@@ -109,6 +111,7 @@ namespace jira
 
 		void loadFields();
 		void refresh();
+		const std::shared_ptr<report>& dataset() const { return m_dataset; }
 		void debugDump(std::ostream&);
 		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, bool async = true);
 		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response, bool async = true);

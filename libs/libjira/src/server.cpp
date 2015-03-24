@@ -36,6 +36,15 @@
 
 using namespace std::literals;
 
+template <typename F>
+struct on_exit_t {
+	F fn;
+	on_exit_t(const F& fn) : fn(fn) {}
+	~on_exit_t() { fn(); }
+};
+
+#define ON_EXIT(FN) auto fn ## __LINE__ = FN; on_exit_t<decltype(fn ## __LINE__)> on_exit_ ## __LINE__ {fn ## __LINE__ };
+
 namespace jira
 {
 	search_def const search_def::standard{ "assignee=currentUser() and resolution is empty"s,
@@ -150,12 +159,14 @@ namespace jira
 		loadJSON("rest/api/2/field", [this](int /*status*/, const json::value& doc) {
 			m_db.reset_defs();
 
-			if (!doc.is<json::vector>()) {
+			ON_EXIT([this] {
 				m_isLoadingFields = false;
 				if (m_requestRefresh)
 					refresh();
+			});
+
+			if (!doc.is<json::vector>())
 				return;
-			}
 
 #if USE_ODS
 			std::map<std::string, bool> failed;
@@ -229,9 +240,6 @@ namespace jira
 				OutputDebugString(L"\n");
 			}
 #endif
-			m_isLoadingFields = false;
-			if (m_requestRefresh)
-				refresh();
 		}, true);
 	}
 
@@ -251,8 +259,16 @@ namespace jira
 			return;
 		}
 
-		emit([&](server_listener* listener) { listener->onRefreshFinished(); });
-		m_isLoadingView = false;
+		auto thiz = shared_from_this();
+		search([thiz](int /*status*/, jira::report&& report) {
+			ON_EXIT([thiz] {
+				thiz->emit([&](server_listener* listener) { listener->onRefreshFinished(); });
+				thiz->m_isLoadingView = false;
+			});
+
+			thiz->m_dataset = std::make_shared<jira::report>(std::move(report));
+		});
+
 	}
 
 	void server::debugDump(std::ostream& o)
