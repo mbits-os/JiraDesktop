@@ -152,6 +152,8 @@ namespace jira
 
 			if (!doc.is<json::vector>()) {
 				m_isLoadingFields = false;
+				if (m_requestRefresh)
+					refresh();
 				return;
 			}
 
@@ -228,13 +230,27 @@ namespace jira
 			}
 #endif
 			m_isLoadingFields = false;
-		}, false);
+			if (m_requestRefresh)
+				refresh();
+		}, true);
 	}
 
 	void server::refresh()
 	{
+		if (m_isLoadingView && !m_requestRefresh)
+			return;
+
+		if (!m_isLoadingView)
+			emit([&](server_listener* listener) { listener->onRefreshStarted(); });
+
+		m_requestRefresh = false;
 		m_isLoadingView = true;
-		emit([&](server_listener* listener) { listener->onRefreshStarted(); });
+
+		if (m_isLoadingFields) {
+			m_requestRefresh = true;
+			return;
+		}
+
 		emit([&](server_listener* listener) { listener->onRefreshFinished(); });
 		m_isLoadingView = false;
 	}

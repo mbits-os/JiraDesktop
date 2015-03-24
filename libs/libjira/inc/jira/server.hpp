@@ -83,6 +83,7 @@ namespace jira
 
 		std::atomic<bool> m_isLoadingFields = false;
 		std::atomic<bool> m_isLoadingView = false;
+		std::atomic<bool> m_requestRefresh = false;
 
 		search_def m_view;
 
