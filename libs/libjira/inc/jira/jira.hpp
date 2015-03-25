@@ -70,6 +70,8 @@ namespace jira
 
 		std::string text(const std::string& sep) const;
 		std::string html(const std::string & sep) const;
+
+		const std::vector<std::unique_ptr<value>>& values() const { return m_values; }
 	};
 
 	struct type {
