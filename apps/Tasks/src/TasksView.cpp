@@ -42,6 +42,15 @@ public:
 		if (IsWindow(m_hWnd))
 			PostMessage(m_hWnd, UM_REFRESHSTOP, m_sessionId, 0);
 	}
+
+	void onProgress(bool calculable, uint64_t content, uint64_t loaded) override
+	{
+		if (!IsWindow(m_hWnd))
+			return;
+
+		ProgressInfo info{ content, loaded, calculable };
+		SendMessage(m_hWnd, UM_PROGRESS, m_sessionId, (LPARAM)&info);
+	}
 };
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
@@ -213,6 +222,28 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	for (auto&& row : dataset.data)
 		OutputDebugString(utf::widen(row.text(" | ") + "\n").c_str());
+
+	return 0;
+}
+
+LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	if (!lParam)
+		return 0;
+
+	TCHAR szWindowName[260] = { 0 };
+	::LoadString(ModuleHelper::GetResourceInstance(), IDR_MAINFRAME, szWindowName, sizeof(szWindowName) / sizeof(szWindowName[0]));
+
+	auto info = reinterpret_cast<ProgressInfo*>(lParam);
+
+	if (info->calculable)
+		GetParent().SetWindowText((std::wstring{ szWindowName } +L" - Loading - " + std::to_wstring(100ull * info->loaded / info->content) + L"%").c_str());
+	else
+		GetParent().SetWindowText((std::wstring{ szWindowName } +L" - Loading - " + std::to_wstring(info->loaded) + L" B").c_str());
+
+	auto it = find(wParam);
+	if (it == m_servers.end())
+		return 0;
 
 	return 0;
 }

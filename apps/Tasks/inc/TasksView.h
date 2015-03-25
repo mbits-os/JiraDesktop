@@ -7,9 +7,16 @@
 #include "AppModel.h"
 
 enum {
-	UM_LISTCHANGED = WM_USER,
-	UM_REFRESHSTART,
-	UM_REFRESHSTOP
+	UM_LISTCHANGED = WM_USER, // wParam - server's session ID, lParam - unused
+	UM_REFRESHSTART,          // wParam - server's session ID, lParam - unused
+	UM_REFRESHSTOP,           // wParam - server's session ID, lParam - unused
+	UM_PROGRESS,              // wParam - server's session ID, lParam - ProgressInfo*
+};
+
+struct ProgressInfo {
+	uint64_t content;
+	uint64_t loaded;
+	bool calculable;
 };
 
 class CTasksView : public CWindowImpl<CTasksView>
@@ -61,6 +68,7 @@ public:
 		MESSAGE_HANDLER(UM_LISTCHANGED, OnListChanged)
 		MESSAGE_HANDLER(UM_REFRESHSTART, OnRefreshStart)
 		MESSAGE_HANDLER(UM_REFRESHSTOP, OnRefreshStop)
+		MESSAGE_HANDLER(UM_PROGRESS, OnProgress)
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):
@@ -74,4 +82,5 @@ public:
 	LRESULT OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
 };
