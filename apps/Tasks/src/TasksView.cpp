@@ -53,6 +53,38 @@ public:
 	}
 };
 
+void CTasksView::ServerInfo::calcColumns(CDCHandle dc, CFontHandle text, CFontHandle header)
+{
+	if (!m_dataset) {
+		m_columns.clear();
+		return;
+	}
+
+	auto older = dc.SelectFont(header);
+	SIZE s = {};
+
+	m_columns.resize(m_dataset->schema.cols().size());
+	auto dst = m_columns.begin();
+	for (auto& col : m_dataset->schema.cols()) {
+		auto title = utf::widen(col->titleFull());
+		dc.GetTextExtent(title.c_str(), title.length(), &s);
+		*dst++ = s.cx;
+	}
+
+	dc.SelectFont(text);
+	for (auto& item : m_dataset->data) {
+		dst = m_columns.begin();
+		for (auto& value : item.values()) {
+			auto txt = utf::widen(value->text());
+			dc.GetTextExtent(txt.c_str(), txt.length(), &s);
+			if (s.cx > *dst)
+				*dst++ = s.cx;
+			else ++dst;
+		}
+	}
+	dc.SelectFont(older);
+}
+
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
 {
 	return std::find_if(std::begin(m_servers), std::end(m_servers), [sessionId](const ServerInfo& info) { return info.m_sessionId == sessionId; });
@@ -99,8 +131,8 @@ class LinePrinter
 	CFontHandle font;
 	CDCHandle dc;
 	long lineHeight;
-	int x = 5;
-	int y = 5;
+	int x = 7;
+	int y = 7;
 
 	void updateLineHeight()
 	{
@@ -119,36 +151,48 @@ public:
 		dc.SelectFont(older);
 	}
 
-	void select(HFONT font_)
+	LinePrinter& select(HFONT font_)
 	{
 		font = font_;
 		dc.SelectFont(font);
 		updateLineHeight();
+		return *this;
 	}
 
-	void println(const std::wstring& line)
+	LinePrinter& println(const std::wstring& line)
 	{
 		if (!line.empty())
 			dc.TextOut(x, y, line.c_str());
 		y += lineHeight;
-		x = 5;
+		x = 7;
+		return *this;
 	}
 
-	void print(const std::wstring& line)
+	LinePrinter& print(const std::wstring& line)
 	{
 		if (line.empty())
-			return;
+			return *this;
 		SIZE s = {};
 		dc.GetTextExtent(line.c_str(), line.length(), &s);
 		dc.TextOut(x, y, line.c_str());
 		x += s.cx;
+		return *this;
 	}
 
-	void skipY(double scale)
+	LinePrinter& skipY(double scale)
 	{
 		y += int(lineHeight * scale);
-		x = 5;
+		x = 7;
+		return *this;
 	}
+
+	LinePrinter& moveToX(int x_)
+	{
+		x = x_;
+		return *this;
+	}
+
+	int getX() const { return x; }
 };
 
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -172,9 +216,10 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 				o << " " << item.m_progress.loaded << "B";
 			}
 		}
-		out.skipY(0.25); // margin-top: 0.25em
-		out.println(utf::widen(o.str())); o.str("");
-		out.skipY(0.1); // margin-bottom: 0.1em
+		out.skipY(0.25) // margin-top: 0.25em
+			.println(utf::widen(o.str()))
+			.skipY(0.1); // margin-bottom: 0.1em
+		o.str("");
 
 		if (item.m_dataset) {
 			dc.SetTextColor(0x00000000);
@@ -182,15 +227,12 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 			auto& dataset = *item.m_dataset;
 			if (!dataset.schema.cols().empty()) {
 				out.select(m_tableHeader);
-				bool first = true;
+
+				auto x = out.getX();
+				auto src = item.m_columns.begin();
 				for (auto& col : dataset.schema.cols()) {
-					if (first) first = false;
-					else {
-						out.select(m_font);
-						out.print(L" | ");
-						out.select(m_tableHeader);
-					}
-					out.print(utf::widen(col->title()));
+					out.moveToX(x).print(utf::widen(col->titleFull()));
+					x += *src++ + 14;
 				}
 
 				out.println({});
@@ -198,22 +240,35 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 			out.select(m_font);
 
-			for (auto&& row : dataset.data)
-				out.println(utf::widen(row.text(" | ")).c_str());
+			for (auto&& row : dataset.data) {
+				auto x = out.getX();
+				auto src = item.m_columns.begin();
+				for (auto& value : row.values()) {
+					out.moveToX(x).print(utf::widen(value->text()));
+					x += *src++ + 14;
+				}
+				out.println({});
+			}
 
 			o << "(Issues " << (dataset.startAt + 1)
 				<< '-' << (dataset.startAt + dataset.data.size())
 				<< " of " << dataset.total << ")";
 			out.println(utf::widen(o.str()).c_str()); o.str("");
-		} else {
-			out.select(m_font);
-			out.println(L"Empty");
-		}
+		} else
+			out.select(m_font).println(L"Empty");
 
 		out.select(m_serverHeader);
 	}
 
 	return 0;
+}
+
+void CTasksView::updateLayout()
+{
+	CWindowDC dc{m_hWnd};
+
+	for (auto& server : m_servers)
+		server.calcColumns((HDC)dc, m_font, (HFONT)m_tableHeader);
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -234,7 +289,7 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 	lf.lfWeight = FW_NORMAL;
 	m_serverHeader.CreateFontIndirect(&lf);
 
-	// TODO: update layout
+	updateLayout();
 	// TODO: redraw the report table
 
 	return 0;
@@ -330,7 +385,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	// TODO: update layout
+	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();
 

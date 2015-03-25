@@ -29,6 +29,7 @@ class CTasksView : public CWindowImpl<CTasksView>
 
 		ProgressInfo m_progress;
 		bool m_loading = false;
+		std::vector<int> m_columns;
 		// TODO : relation to UI element
 
 		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener)
@@ -49,6 +50,8 @@ class CTasksView : public CWindowImpl<CTasksView>
 		ServerInfo& operator=(const ServerInfo&) = delete;
 		ServerInfo(ServerInfo&&) = default;
 		ServerInfo& operator=(ServerInfo&&) = default;
+
+		void calcColumns(CDCHandle dc, CFontHandle text, CFontHandle header);
 	};
 
 	std::shared_ptr<CAppModelListener> m_listener;
@@ -61,6 +64,8 @@ class CTasksView : public CWindowImpl<CTasksView>
 	CFontHandle m_font;
 	CFont m_serverHeader;
 	CFont m_tableHeader;
+
+	void updateLayout();
 public:
 	std::shared_ptr<CAppModel> m_model;
 
