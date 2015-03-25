@@ -93,19 +93,155 @@ LRESULT CTasksView::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	return 0;
 }
 
+class LinePrinter
+{
+	HFONT older;
+	CFontHandle font;
+	CDCHandle dc;
+	long lineHeight;
+	int x = 5;
+	int y = 5;
+
+	void updateLineHeight()
+	{
+		TEXTMETRIC metric = {};
+		dc.GetTextMetrics(&metric);
+		lineHeight = metric.tmHeight * 12 / 10; // 120%
+	}
+public:
+	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
+	{
+		older = dc.SelectFont(font);
+		updateLineHeight();
+	}
+	~LinePrinter()
+	{
+		dc.SelectFont(older);
+	}
+
+	void select(HFONT font_)
+	{
+		font = font_;
+		dc.SelectFont(font);
+		updateLineHeight();
+	}
+
+	void println(const std::wstring& line)
+	{
+		if (!line.empty())
+			dc.TextOut(x, y, line.c_str());
+		y += lineHeight;
+		x = 5;
+	}
+
+	void print(const std::wstring& line)
+	{
+		if (line.empty())
+			return;
+		SIZE s = {};
+		dc.GetTextExtent(line.c_str(), line.length(), &s);
+		dc.TextOut(x, y, line.c_str());
+		x += s.cx;
+	}
+
+	void skipY(double scale)
+	{
+		y += int(lineHeight * scale);
+		x = 5;
+	}
+};
+
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	CPaintDC dc(m_hWnd);
+	dc.SetBkMode(TRANSPARENT);
+	LinePrinter out{ (HDC)dc, (HFONT)m_serverHeader };
 
-	//TODO: Add your drawing code here
+	for (auto& item : m_servers) {
+
+		std::ostringstream o;
+
+		dc.SetTextColor(0x00883333);
+
+		auto& server = *item.m_server;
+		o << server.login() << "@" << server.displayName();
+		if (item.m_loading) {
+			if (item.m_progress.calculable) {
+				o << " " << (100 * item.m_progress.loaded / item.m_progress.content) << "%";
+			} else {
+				o << " " << item.m_progress.loaded << "B";
+			}
+		}
+		out.skipY(0.25); // margin-top: 0.25em
+		out.println(utf::widen(o.str())); o.str("");
+		out.skipY(0.1); // margin-bottom: 0.1em
+
+		if (item.m_dataset) {
+			dc.SetTextColor(0x00000000);
+
+			auto& dataset = *item.m_dataset;
+			if (!dataset.schema.cols().empty()) {
+				out.select(m_tableHeader);
+				bool first = true;
+				for (auto& col : dataset.schema.cols()) {
+					if (first) first = false;
+					else {
+						out.select(m_font);
+						out.print(L" | ");
+						out.select(m_tableHeader);
+					}
+					out.print(utf::widen(col->title()));
+				}
+
+				out.println({});
+			}
+
+			out.select(m_font);
+
+			for (auto&& row : dataset.data)
+				out.println(utf::widen(row.text(" | ")).c_str());
+
+			o << "(Issues " << (dataset.startAt + 1)
+				<< '-' << (dataset.startAt + dataset.data.size())
+				<< " of " << dataset.total << ")";
+			out.println(utf::widen(o.str()).c_str()); o.str("");
+		} else {
+			out.select(m_font);
+			out.println(L"Empty");
+		}
+
+		out.select(m_serverHeader);
+	}
+
+	return 0;
+}
+
+LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	bHandled = FALSE;
+	m_font = (HFONT) wParam;
+
+	LOGFONT lf;
+	m_font.GetLogFont(&lf);
+
+	// 1em bold
+	lf.lfWeight = FW_BOLD;
+	m_tableHeader.CreateFontIndirect(&lf);
+
+	// 1.8em
+	lf.lfHeight *= 18;
+	lf.lfHeight /= 10;
+	lf.lfWeight = FW_NORMAL;
+	m_serverHeader.CreateFontIndirect(&lf);
+
+	// TODO: update layout
+	// TODO: redraw the report table
 
 	return 0;
 }
 
 LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	OutputDebugString(utf::widen(std::to_string((UINT_PTR) m_hWnd) + ": OnListChanged(" +std::to_string(wParam) + ")\n").c_str());
-
 	// TODO: lock updates
 	if (wParam) { 
 		// a server has been added or removed...
@@ -166,62 +302,37 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 		});
 	}
 	// TODO: unlock updates
+	Invalidate();
 
 	return 0;
 }
 
 LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	OutputDebugString(utf::widen(std::to_string((UINT_PTR) m_hWnd) + ": OnRefreshStart(" + std::to_string(wParam) + ")\n").c_str());
-	TCHAR szWindowName[260] = { 0 };
-	::LoadString(ModuleHelper::GetResourceInstance(), IDR_MAINFRAME, szWindowName, sizeof(szWindowName) / sizeof(szWindowName[0]));
+	auto it = find(wParam);
+	if (it == m_servers.end())
+		return 0;
 
-	GetParent().SetWindowText((std::wstring{szWindowName} + L" - Loading...").c_str());
+	it->m_progress = ProgressInfo{100, 0, true};
+	it->m_loading = true;
+	Invalidate();
+
 	return 0;
 }
 
 LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	OutputDebugString(utf::widen(std::to_string((UINT_PTR) m_hWnd) + ": OnRefreshStop(" + std::to_string(wParam) + ")\n").c_str());
-	TCHAR szWindowName[260] = { 0 };
-	::LoadString(ModuleHelper::GetResourceInstance(), IDR_MAINFRAME, szWindowName, sizeof(szWindowName) / sizeof(szWindowName[0]));
-
-	GetParent().SetWindowText(szWindowName);
-
 	auto it = find(wParam);
 	if (it == m_servers.end())
 		return 0;
+
+	it->m_loading = false;
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
 	// TODO: update layout
 	// TODO: redraw the report table
-
-	auto& dataset = *it->m_dataset;
-	std::ostringstream o;
-	o << "-----------------------------------------------\n"
-		<< "Answer from: " << server.login() << " @ " << server.displayName() << "\n"
-		<< "Query: " << (server.view().jql().empty() ? jira::search_def::standard.jql() : server.view().jql()) << "\n";
-	OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
-	o << "Issues " << (dataset.startAt + 1)
-		<< '-' << (dataset.startAt + dataset.data.size())
-		<< " of " << dataset.total << ":\n";
-	OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
-
-	{
-		o << "\n";
-		bool first = true;
-		for (auto& col : dataset.schema.cols()) {
-			if (first) first = false;
-			else o << " | ";
-			o << col->titleFull();
-		}
-		o << "\n-----------------------------------------------------------------------\n";
-		OutputDebugString(utf::widen(o.str()).c_str()); o.str("");
-	}
-
-	for (auto&& row : dataset.data)
-		OutputDebugString(utf::widen(row.text(" | ") + "\n").c_str());
+	Invalidate();
 
 	return 0;
 }
@@ -231,19 +342,12 @@ LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 	if (!lParam)
 		return 0;
 
-	TCHAR szWindowName[260] = { 0 };
-	::LoadString(ModuleHelper::GetResourceInstance(), IDR_MAINFRAME, szWindowName, sizeof(szWindowName) / sizeof(szWindowName[0]));
-
-	auto info = reinterpret_cast<ProgressInfo*>(lParam);
-
-	if (info->calculable)
-		GetParent().SetWindowText((std::wstring{ szWindowName } +L" - Loading - " + std::to_wstring(100ull * info->loaded / info->content) + L"%").c_str());
-	else
-		GetParent().SetWindowText((std::wstring{ szWindowName } +L" - Loading - " + std::to_wstring(info->loaded) + L" B").c_str());
-
 	auto it = find(wParam);
 	if (it == m_servers.end())
 		return 0;
+
+	it->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
+	Invalidate();
 
 	return 0;
 }

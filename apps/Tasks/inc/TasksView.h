@@ -26,6 +26,9 @@ class CTasksView : public CWindowImpl<CTasksView>
 		std::shared_ptr<jira::server_listener> m_listener;
 		std::shared_ptr<jira::report> m_dataset;
 		uint32_t m_sessionId;
+
+		ProgressInfo m_progress;
+		bool m_loading = false;
 		// TODO : relation to UI element
 
 		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener)
@@ -54,6 +57,10 @@ class CTasksView : public CWindowImpl<CTasksView>
 
 	std::vector<ServerInfo>::iterator insert(std::vector<ServerInfo>::const_iterator it, const std::shared_ptr<jira::server>& server);
 	std::vector<ServerInfo>::iterator erase(std::vector<ServerInfo>::const_iterator it);
+
+	CFontHandle m_font;
+	CFont m_serverHeader;
+	CFont m_tableHeader;
 public:
 	std::shared_ptr<CAppModel> m_model;
 
@@ -65,6 +72,7 @@ public:
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
+		MESSAGE_HANDLER(WM_SETFONT, OnSetFont)
 		MESSAGE_HANDLER(UM_LISTCHANGED, OnListChanged)
 		MESSAGE_HANDLER(UM_REFRESHSTART, OnRefreshStart)
 		MESSAGE_HANDLER(UM_REFRESHSTOP, OnRefreshStop)
@@ -79,6 +87,7 @@ public:
 	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnSetFont(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
