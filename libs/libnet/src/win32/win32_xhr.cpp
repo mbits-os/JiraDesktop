@@ -116,10 +116,10 @@ namespace net { namespace http { namespace client {
 	{
 		static OSInfo info;
 		std::string   version = info.isNt ? "Windows NT" : "Windows";
-		version += "/";
+		version += " ";
 		version += std::to_string(info.version.major);
 		version += ".";
-		version += std::to_string(info.version.major);
+		version += std::to_string(info.version.minor);
 		if (info.isWow64)
 			version += "; WOW64";
 #ifdef UNICODE
