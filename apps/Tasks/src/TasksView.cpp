@@ -164,12 +164,20 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	OutputDebugString(utf::widen(std::to_string((UINT_PTR) m_hWnd) + ": OnRefreshStart(" + std::to_string(wParam) + ")\n").c_str());
+	TCHAR szWindowName[260] = { 0 };
+	::LoadString(ModuleHelper::GetResourceInstance(), IDR_MAINFRAME, szWindowName, sizeof(szWindowName) / sizeof(szWindowName[0]));
+
+	GetParent().SetWindowText((std::wstring{szWindowName} + L" - Loading...").c_str());
 	return 0;
 }
 
 LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	OutputDebugString(utf::widen(std::to_string((UINT_PTR) m_hWnd) + ": OnRefreshStop(" + std::to_string(wParam) + ")\n").c_str());
+	TCHAR szWindowName[260] = { 0 };
+	::LoadString(ModuleHelper::GetResourceInstance(), IDR_MAINFRAME, szWindowName, sizeof(szWindowName) / sizeof(szWindowName[0]));
+
+	GetParent().SetWindowText(szWindowName);
 
 	auto it = find(wParam);
 	if (it == m_servers.end())
