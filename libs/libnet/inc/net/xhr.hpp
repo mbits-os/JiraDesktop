@@ -33,8 +33,10 @@
 namespace net { namespace http { namespace client {
 	struct HttpResponse;
 	struct XmlHttpRequest;
+	struct CredentialProvider;
 	typedef std::shared_ptr<HttpResponse> HttpResponsePtr;
 	typedef std::shared_ptr<XmlHttpRequest> XmlHttpRequestPtr;
+	typedef std::shared_ptr<CredentialProvider> CredentialProviderPtr;
 
 	typedef std::map<std::string, std::string> HTTPArgs;
 
@@ -92,6 +94,14 @@ namespace net { namespace http { namespace client {
 		virtual void setDebug(bool debug = true) = 0;
 		virtual void setShouldFollowLocation(bool follow) = 0;
 		virtual void setMaxRedirects(size_t redirects) = 0;
+
+		virtual void setCredentials(const CredentialProviderPtr& provider) = 0;
+	};
+
+	struct CredentialProvider {
+		virtual ~CredentialProvider() {}
+		virtual std::string getUsername() = 0;
+		virtual std::string getPassword() = 0;
 	};
 
 	XmlHttpRequestPtr create();

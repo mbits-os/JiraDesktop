@@ -42,8 +42,16 @@ namespace net { namespace http {
 		virtual void appendHeader(const std::string& header) = 0;
 	};
 
+	struct HttpCredentials
+	{
+		virtual ~HttpCredentials() {}
+		virtual std::string username() = 0;
+		virtual std::string password() = 0;
+	};
+
 	struct HttpCallback
 	{
+		virtual ~HttpCallback() {}
 		virtual void onStart() = 0;
 		virtual void onError() = 0;
 		virtual void onFinish() = 0;
@@ -58,6 +66,7 @@ namespace net { namespace http {
 		virtual bool getDebug() = 0;
 		virtual long getMaxRedirs() = 0;
 		virtual bool shouldFollowLocation() = 0;
+		virtual HttpCredentials* getCredentials() = 0;
 	};
 
 	HttpEndpointPtr GetEndpoint(const HttpCallbackPtr&);

@@ -139,6 +139,21 @@ namespace net { namespace http {
 			uint64_t m_contentLength;
 			uint64_t m_loadedLength;
 
+			struct Credentials : http::HttpCredentials
+			{
+				client::CredentialProviderPtr m_provider;
+				std::string username() override 
+				{
+					return m_provider->getUsername();
+				}
+
+				std::string password() override
+				{
+					return m_provider->getPassword();
+				}
+			} m_impl;
+			http::HttpCredentials* m_credentials;
+
 			void onReadyStateChange()
 			{
 				if (handler)
@@ -174,6 +189,7 @@ namespace net { namespace http {
 				, m_followRedirects(true)
 				, m_redirects(10)
 				, m_wasRedirected(false)
+				, m_credentials(nullptr)
 			{
 			}
 
@@ -207,6 +223,7 @@ namespace net { namespace http {
 			void setDebug(bool) override;
 			void setMaxRedirects(size_t) override;
 			void setShouldFollowLocation(bool) override;
+			void setCredentials(const client::CredentialProviderPtr& provider) override;
 
 			void onStart() override;
 			void onError() override;
@@ -222,6 +239,7 @@ namespace net { namespace http {
 			bool getDebug() override;
 			bool shouldFollowLocation() override;
 			long getMaxRedirs() override;
+			HttpCredentials* getCredentials() override;
 		};
 
 		void XmlHttpRequest::onreadystatechange(ONREADYSTATECHANGE fn)
@@ -387,6 +405,12 @@ namespace net { namespace http {
 			m_followRedirects = follow;
 		}
 
+		void XmlHttpRequest::setCredentials(const client::CredentialProviderPtr& provider)
+		{
+			m_impl.m_provider = provider;
+			m_credentials = provider ? &m_impl : nullptr;
+		}
+
 		void XmlHttpRequest::onStart()
 		{
 			if (!body.content || !body.content_length)
@@ -466,6 +490,7 @@ namespace net { namespace http {
 		bool XmlHttpRequest::getDebug() { return debug; }
 		bool XmlHttpRequest::shouldFollowLocation() { return m_followRedirects; }
 		long XmlHttpRequest::getMaxRedirs() { return m_redirects; }
+		HttpCredentials* XmlHttpRequest::getCredentials() { return m_credentials; }
 	} // http::impl
 
 

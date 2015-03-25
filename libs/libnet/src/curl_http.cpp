@@ -141,6 +141,12 @@ namespace net { namespace http {
 			curl_easy_setopt(m_curl, CURLOPT_PROGRESSDATA, static_cast<Final*>(this));
 		}
 
+		void setCredentials(const std::string& user, const std::string& password)
+		{
+			curl_easy_setopt(m_curl, CURLOPT_USERNAME, user.c_str());
+			curl_easy_setopt(m_curl, CURLOPT_PASSWORD, password.c_str());
+		}
+
 		void setDebug(bool debug = true)
 		{
 			curl_easy_setopt(m_curl, CURLOPT_VERBOSE, debug ? 1L : 0L);
@@ -328,6 +334,10 @@ namespace net { namespace http {
 		{
 			m_curl.dontFollowLocation();
 		}
+
+		auto cred = http_callback->getCredentials();
+		if (cred)
+			m_curl.setCredentials(cred->username(), cred->password());
 
 		m_curl.setDebug(http_callback->getDebug());
 
