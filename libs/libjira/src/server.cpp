@@ -114,6 +114,14 @@ namespace jira
 		return join(m_columns, ",");
 	}
 
+	class server::credentials_provider : public net::http::client::CredentialProvider {
+		std::shared_ptr<server> m_parent;
+	public:
+		explicit credentials_provider(const std::shared_ptr<server>& parent) : m_parent(parent) {}
+		std::string getUsername() { return m_parent->login(); }
+		std::string getPassword() { return m_parent->passwd(); }
+	};
+
 	server::server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const search_def& view, from_storage)
 		: m_name(name)
 		, m_login(login)
@@ -276,33 +284,6 @@ namespace jira
 		m_db.debug_dump(o);
 	}
 
-	static char alphabet(size_t id)
-	{
-		static char alph [] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-		return alph[id];
-	}
-
-	// the output should be at least (len * 8 + 5) DIV 6 long
-	void base64_encode(const void* data, size_t len, char* output)
-	{
-		const unsigned char* p = (const unsigned char*) data;
-		size_t pos = 0;
-		unsigned int bits = 0;
-		unsigned int accu = 0;
-		for (size_t i = 0; i < len; ++i) {
-			accu = (accu << 8) | (p[i] & 0xFF);
-			bits += 8;
-			while (bits >= 6) {
-				bits -= 6;
-				output[pos++] = alphabet((accu >> bits) & 0x3F);
-			}
-		}
-		if (bits > 0) {
-			accu <<= 6 - bits;
-			output[pos++] = alphabet(accu & 0x3F);
-		}
-	}
-
 	void server::get(const std::string & uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, bool async)
 	{
 		using namespace net::http::client;
@@ -318,17 +299,7 @@ namespace jira
 		});
 
 		xhr->open(HTTP_GET, Uri::canonical(uri, url()).string(), async);
-
-		std::string auth;
-
-		{
-			auto plain = login() + ":" + passwd();
-			auth.resize((plain.length() * 8 + 5) / 6);
-			base64_encode(plain.data(), plain.length(), &auth[0]);
-			plain.clear();
-		}
-
-		xhr->setRequestHeader("Authorization", "Basic " + auth);
+		xhr->setCredentials(std::make_shared<credentials_provider>(shared_from_this()));
 		xhr->send();
 	}
 

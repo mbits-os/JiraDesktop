@@ -95,6 +95,8 @@ namespace jira
 		friend class listeners<server_listener, server>;
 
 		void onListenerAdded(const std::shared_ptr<server_listener>& listener) /*override*/;
+
+		class credentials_provider;
 	public:
 		enum from_storage { stored };
 
