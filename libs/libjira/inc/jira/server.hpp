@@ -71,6 +71,7 @@ namespace jira
 	struct server_listener {
 		virtual ~server_listener() {}
 		virtual void onRefreshStarted() = 0;
+		virtual void onProgress(bool calculable, uint64_t content, uint64_t loaded) = 0;
 		virtual void onRefreshFinished() = 0;
 	};
 
@@ -100,6 +101,8 @@ namespace jira
 	public:
 		enum from_storage { stored };
 
+		using ONPROGRESS = std::function<void(net::http::client::XmlHttpRequest*, bool, uint64_t, uint64_t)>;
+
 		server() = default;
 		server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const search_def& view, from_storage);
 		server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const search_def& view);
@@ -115,10 +118,10 @@ namespace jira
 		void refresh();
 		const std::shared_ptr<report>& dataset() const { return m_dataset; }
 		void debugDump(std::ostream&);
-		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, bool async = true);
-		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response, bool async = true);
-		void search(const search_def& def, const std::function<void(int, report&&)>& response, bool async = true);
-		void search(const std::function<void(int, report&&)>& response, bool async = true) { search(m_view, response, async); }
+		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, const ONPROGRESS& progress = {}, bool async = true);
+		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
+		void search(const search_def& def, const std::function<void(int, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
+		void search(const std::function<void(int, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true) { search(m_view, response, progress, async); }
 	};
 }
 

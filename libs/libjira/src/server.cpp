@@ -248,7 +248,7 @@ namespace jira
 				OutputDebugString(L"\n");
 			}
 #endif
-		}, true);
+		}, ONPROGRESS{}, true);
 	}
 
 	void server::refresh()
@@ -275,6 +275,8 @@ namespace jira
 			});
 
 			thiz->m_dataset = std::make_shared<jira::report>(std::move(report));
+		}, [thiz](net::http::client::XmlHttpRequest* /*req*/, bool calculable, uint64_t content, uint64_t loaded) {
+			thiz->emit([&](server_listener* listener) { listener->onProgress(calculable, content, loaded); });
 		});
 
 	}
@@ -284,7 +286,7 @@ namespace jira
 		m_db.debug_dump(o);
 	}
 
-	void server::get(const std::string & uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, bool async)
+	void server::get(const std::string & uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, const ONPROGRESS& progress, bool async)
 	{
 		using namespace net::http::client;
 
@@ -296,14 +298,18 @@ namespace jira
 
 			onDone(req);
 			req->onreadystatechange(XmlHttpRequest::ONREADYSTATECHANGE{}); // clean up xhr 
+			req->onprogress(XmlHttpRequest::ONPROGRESS{}); // clean up xhr 
 		});
+
+		if (progress)
+			xhr->onprogress([xhr, progress](bool calculable, uint64_t content, uint64_t loaded) { progress(xhr.get(), calculable, content, loaded); });
 
 		xhr->open(HTTP_GET, Uri::canonical(uri, url()).string(), async);
 		xhr->setCredentials(std::make_shared<credentials_provider>(shared_from_this()));
 		xhr->send();
 	}
 
-	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response, bool async)
+	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response, const ONPROGRESS& progress, bool async)
 	{
 		using namespace net::http::client;
 		get(uri, [response](XmlHttpRequest* req) {
@@ -314,10 +320,10 @@ namespace jira
 			} else {
 				response(req->getStatus(), json::value{});
 			}
-		}, async);
+		}, progress, async);
 	}
 
-	void server::search(const search_def& def, const std::function<void(int, report&&)>& response, bool async)
+	void server::search(const search_def& def, const std::function<void(int, report&&)>& response, const ONPROGRESS& progress, bool async)
 	{
 		if (url().empty()) {
 			response(404, report{});
@@ -357,7 +363,7 @@ namespace jira
 			}
 
 			response(status, std::move(dataset));
-		}, async);
+		}, progress, async);
 	}
 };
 
