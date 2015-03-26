@@ -109,14 +109,15 @@ BEGIN
 		MENUITEM "Show/hide Tasks",             ID_TASKS_SHOWHIDE
 		MENUITEM SEPARATOR
 		MENUITEM "New &Connection",             ID_FILE_NEW
-        MENUITEM "&Refresh All",                ID_TASKS_REFRESH
+		MENUITEM "&Refresh All",                ID_TASKS_REFRESH
 		MENUITEM SEPARATOR
-		MENUITEM "Show &Licences", ID_HELP_SHOWLICENCES
-		MENUITEM "&About Tasks", ID_APP_ABOUT
+		MENUITEM "Show &Licences",              ID_HELP_SHOWLICENCES
+		MENUITEM "&About Tasks",                ID_APP_ABOUT
 		MENUITEM SEPARATOR
 		MENUITEM "E&xit",                       ID_APP_EXIT
     END
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -171,12 +172,8 @@ END
 
 IDR_MAINFRAME ACCELERATORS
 BEGIN
-    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL
-    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL
-    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL
-    "P",            ID_FILE_PRINT,          VIRTKEY, CONTROL
-    VK_F6,          ID_NEXT_PANE,           VIRTKEY 
-    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT
+	"N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
+	VK_F5,          ID_TASKS_REFRESH,       VIRTKEY, NOINVERT
 END
 
 

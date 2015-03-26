@@ -133,6 +133,19 @@ LRESULT CTasksFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 	return 0;
 }
 
+LRESULT CTasksFrame::OnTasksRefersh(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	auto local = m_model->servers();
+	for (auto server : local) {
+		std::thread{ [server] {
+			server->loadFields();
+			server->refresh();
+		} }.detach();
+	}
+
+	return 0;
+}
+
 LRESULT CTasksFrame::OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	CAboutDlg dlg;
