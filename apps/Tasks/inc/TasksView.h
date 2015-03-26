@@ -19,8 +19,11 @@ struct ProgressInfo {
 	bool calculable;
 };
 
-class CTasksView : public CWindowImpl<CTasksView>
+using CTasksViewWinTraits = CWinTraits<WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_COMPOSITED>;
+class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 {
+	using CViewSuper = CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>;
+
 	struct ServerInfo {
 		std::shared_ptr<jira::server> m_server;
 		std::shared_ptr<jira::server_listener> m_listener;
@@ -65,12 +68,13 @@ class CTasksView : public CWindowImpl<CTasksView>
 	CFontHandle m_font;
 	CFont m_serverHeader;
 	CFont m_tableHeader;
+	CBrush m_background;
 
 	void updateLayout();
 public:
 	std::shared_ptr<CAppModel> m_model;
 
-	DECLARE_WND_CLASS(NULL)
+	DECLARE_WND_CLASS_EX(NULL, CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS, -1)
 
 	BOOL PreTranslateMessage(MSG* pMsg);
 

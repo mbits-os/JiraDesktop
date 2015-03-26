@@ -114,6 +114,7 @@ BOOL CTasksView::PreTranslateMessage(MSG* pMsg)
 
 LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	m_background.CreateSolidBrush(0x00FFFFFF);
 	m_listener = std::make_shared<TaskViewModelListener>(m_hWnd);
 	m_model->registerListener(m_listener);
 	return 0;
@@ -198,6 +199,8 @@ public:
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	CPaintDC dc(m_hWnd);
+	dc.FillRect(&dc.m_ps.rcPaint, m_background);
+
 	dc.SetBkMode(TRANSPARENT);
 	LinePrinter out{ (HDC)dc, (HFONT)m_serverHeader };
 
