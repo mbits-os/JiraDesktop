@@ -210,7 +210,9 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 		auto& server = *item.m_server;
 		o << server.login() << "@" << server.displayName();
 		if (item.m_loading) {
-			if (item.m_progress.calculable) {
+			if (!item.m_gotProgress) {
+				o << " ...";
+			} else if (item.m_progress.calculable) {
 				o << " " << (100 * item.m_progress.loaded / item.m_progress.content) << "%";
 			} else {
 				o << " " << item.m_progress.loaded << "B";
@@ -221,9 +223,9 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 			.skipY(0.1); // margin-bottom: 0.1em
 		o.str("");
 
-		if (item.m_dataset) {
-			dc.SetTextColor(0x00000000);
+		dc.SetTextColor(0x00000000);
 
+		if (item.m_dataset) {
 			auto& dataset = *item.m_dataset;
 			if (!dataset.schema.cols().empty()) {
 				out.select(m_tableHeader);
@@ -250,10 +252,11 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 				out.println({});
 			}
 
+			dc.SetTextColor(0x00555555);
 			o << "(Issues " << (dataset.startAt + 1)
 				<< '-' << (dataset.startAt + dataset.data.size())
 				<< " of " << dataset.total << ")";
-			out.println(utf::widen(o.str()).c_str()); o.str("");
+			out.println({}).println(utf::widen(o.str()).c_str()); o.str("");
 		} else
 			out.select(m_font).println(L"Empty");
 
@@ -382,6 +385,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 		return 0;
 
 	it->m_loading = false;
+	it->m_gotProgress = false;
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
@@ -402,6 +406,7 @@ LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 		return 0;
 
 	it->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
+	it->m_gotProgress = true;
 	Invalidate();
 
 	return 0;

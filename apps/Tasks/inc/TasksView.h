@@ -29,6 +29,7 @@ class CTasksView : public CWindowImpl<CTasksView>
 
 		ProgressInfo m_progress;
 		bool m_loading = false;
+		bool m_gotProgress = false;
 		std::vector<int> m_columns;
 		// TODO : relation to UI element
 
