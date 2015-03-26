@@ -102,6 +102,21 @@ BEGIN
     END
 END
 
+IDR_TASKBAR MENU
+BEGIN
+    POPUP "Taskbar"
+    BEGIN
+		MENUITEM "Show/hide Tasks",             ID_TASKS_SHOWHIDE
+		MENUITEM SEPARATOR
+		MENUITEM "New &Connection",             ID_FILE_NEW
+        MENUITEM "&Refresh All",                ID_TASKS_REFRESH
+		MENUITEM SEPARATOR
+		MENUITEM "Show &Licences", ID_HELP_SHOWLICENCES
+		MENUITEM "&About Tasks", ID_APP_ABOUT
+		MENUITEM SEPARATOR
+		MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+END
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -111,6 +126,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "..\\res\\Tasks.ico"
+IDR_TASKBAR             ICON                    "..\\res\\Tasks.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

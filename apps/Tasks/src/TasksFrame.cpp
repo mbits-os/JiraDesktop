@@ -94,7 +94,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	pLoop->AddMessageFilter(this);
 	pLoop->AddIdleHandler(this);
 
-	m_taskIcon.Install(m_hWnd, 1, IDR_MAINFRAME);
+	m_taskIcon.Install(m_hWnd, 1, IDR_TASKBAR);
 
 	auto hwnd = m_hWnd;
 
