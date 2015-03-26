@@ -100,59 +100,6 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 	m_model->startup();
 
-#if 0
-	for (auto& server : m_servers) {
-		auto url = server->url();
-		auto jql = server->view().jql().empty() ? jira::search_def::standard.jql() : server->view().jql();
-		server->search([hwnd, url, server, jql](int status, jira::report&& dataset) {
-			std::ostringstream o;
-
-			std::unique_ptr<FILE, decltype(&fclose)> f{ fopen("issues.html", "w"), fclose };
-			if (!f)
-				return;
-
-			print(f.get(), R"(<style>
-body, td, tr {
-	font-family: Arial, sans-serif;
-	font-size: 12px
-}
-a {
-	color: #3b73af;
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-</style>
-)");
-			o << "<h1>" << url << "</h1>\n"
-				<< "<p>Response status: " << status << "</p>\n"
-				<< "<p>Query: <code>" << jql << "</code></p>\n"
-				<< "<p>Issues " << (dataset.startAt + 1)
-				<< '-' << (dataset.startAt + dataset.data.size())
-				<< " of " << dataset.total << ":</p>\n<table>\n";
-			print(f.get(), o.str()); o.str("");
-
-			{
-				print(f.get(), "  <tr>\n    <th>");
-				bool first = true;
-				for (auto& col : dataset.schema.cols()) {
-					if (first) first = false;
-					else print(f.get(), "</th>\n    <th>");
-					print(f.get(), col->title());
-				}
-				print(f.get(), "</th>\n  </tr>\n");
-			}
-
-			for (auto&& row : dataset.data)
-				print(f.get(), "  <tr>\n    <td>" + row.html("</td>\n    <td>") + "</td>\n  </tr>\n");
-			print(f.get(), "</table>\n");
-
-		}, false);
-	}
-#endif
-
 	return 0;
 }
 
