@@ -7,6 +7,10 @@
 #define IDR_MAINFRAME_OLD               129
 #define IDR_TASKBAR                     130
 #define IDD_CONNECTION                  201
+#define IDC_NAME                        1000
+#define IDC_URL                         1001
+#define IDC_LOGIN                       1002
+#define IDC_PASSWORD                    1003
 #define ID_TASKS_REFRESH                32775
 #define ID_CONNECTIONS_EDIT             32776
 #define ID_CONNECTIONS_REFERSH          32777
@@ -21,7 +25,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        202
 #define _APS_NEXT_COMMAND_VALUE         32782
-#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
