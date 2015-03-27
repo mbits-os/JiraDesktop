@@ -24,6 +24,7 @@ class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 {
 	using CViewSuper = CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>;
 
+public:
 	struct ServerInfo {
 		std::shared_ptr<jira::server> m_server;
 		std::shared_ptr<jira::server_listener> m_listener;
@@ -58,6 +59,7 @@ class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 		void calcColumns(CDCHandle dc, CFontHandle text, CFontHandle header);
 	};
 
+private:
 	std::shared_ptr<CAppModelListener> m_listener;
 	std::vector<ServerInfo> m_servers;
 	std::vector<ServerInfo>::iterator find(uint32_t sessionId);
@@ -66,8 +68,6 @@ class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 	std::vector<ServerInfo>::iterator erase(std::vector<ServerInfo>::const_iterator it);
 
 	CFontHandle m_font;
-	CFont m_serverHeader;
-	CFont m_tableHeader;
 	CBrush m_background;
 
 	void updateLayout();

@@ -126,14 +126,19 @@ LRESULT CTasksView::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	return 0;
 }
 
+enum {
+	BODY_MARGIN = 7,
+	CELL_MARGIN = 7
+};
+
 class LinePrinter
 {
 	HFONT older;
 	CFontHandle font;
 	CDCHandle dc;
 	long lineHeight;
-	int x = 7;
-	int y = 7;
+	int x = BODY_MARGIN;
+	int y = BODY_MARGIN;
 
 	void updateLineHeight()
 	{
@@ -165,7 +170,7 @@ public:
 		if (!line.empty())
 			dc.TextOut(x, y, line.c_str());
 		y += lineHeight;
-		x = 7;
+		x = BODY_MARGIN;
 		return *this;
 	}
 
@@ -183,7 +188,7 @@ public:
 	LinePrinter& skipY(double scale)
 	{
 		y += int(lineHeight * scale);
-		x = 7;
+		x = BODY_MARGIN;
 		return *this;
 	}
 
@@ -196,21 +201,236 @@ public:
 	int getX() const { return x; }
 };
 
-LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
-{
-	CPaintDC dc(m_hWnd);
-	dc.FillRect(&dc.m_ps.rcPaint, m_background);
+namespace {
 
-	dc.SetBkMode(TRANSPARENT);
-	LinePrinter out{ (HDC)dc, (HFONT)m_serverHeader };
+	enum class rules {
+		body,
+		header,
+		tableHead,
+		tableRow,
+		classEmpty,
+		classSummary
+	};
 
-	for (auto& item : m_servers) {
+	class Styler {
+		LinePrinter printer;
+		CDCHandle dc;
+		CFont font;
+		LOGFONT logFont;
+		COLORREF lastColor;
 
-		std::ostringstream o;
+		void update()
+		{
+			font.CreateFontIndirect(&logFont);
+			printer.select(font);
+		}
+	public:
+		Styler(HDC dc_, HFONT font_)
+			: printer(dc_, font_)
+			, dc(dc_)
+			, lastColor(0)
+		{
+			CFontHandle{ font_ }.GetLogFont(&logFont);
+			lastColor = dc.GetTextColor();
+			update();
+		}
 
-		dc.SetTextColor(0x00883333);
+		void setColor(COLORREF color)
+		{
+			lastColor = color;
+			dc.SetTextColor(color);
+		}
+
+		void setFontItalic(bool italic)
+		{
+			logFont.lfItalic = italic ? TRUE : FALSE;
+			update();
+		}
+
+		void setFontWeight(int weight)
+		{
+			logFont.lfWeight = weight;
+			update();
+		}
+
+		void setFontSize(int size)
+		{
+			logFont.lfHeight = size;
+			update();
+		}
+
+		COLORREF getColor() const { return lastColor; }
+		bool getFontItalic() const { return !!logFont.lfItalic; }
+		int getFontWeight() const { return logFont.lfWeight; }
+		int getFontSize() const { return logFont.lfHeight; }
+		LinePrinter& out() { return printer; }
+
+		const LOGFONT& fontDef() const { return this->logFont; }
+	};
+
+
+	class Style {
+		Styler& m_styler;
+		COLORREF m_color;
+		int m_weight;
+		int m_size;
+		bool m_italic;
+
+		static void apply(Style& style, rules rule);
+
+	public:
+		Style() = delete;
+		Style(const Style&) = delete;
+		Style& operator=(const Style&) = delete;
+
+		explicit Style(Styler& styler)
+			: m_styler(styler)
+			, m_color(styler.getColor())
+			, m_weight(styler.getFontWeight())
+			, m_size(styler.getFontSize())
+			, m_italic(styler.getFontItalic())
+		{
+		}
+
+		explicit Style(Styler& styler, rules rule)
+			: m_styler(styler)
+			, m_color(styler.getColor())
+			, m_weight(styler.getFontWeight())
+			, m_size(styler.getFontSize())
+			, m_italic(styler.getFontItalic())
+		{
+			apply(*this, rule);
+		}
+
+		~Style()
+		{
+			setColor(m_color);
+			setFontWeight(m_weight);
+			setFontSize(m_size);
+			setFontItalic(m_italic);
+		}
+
+		Style& setColor(COLORREF color)
+		{
+			if (color != m_styler.getColor())
+				m_styler.setColor(color);
+			return *this;
+		}
+
+		Style& setFontItalic(bool italic)
+		{
+			if (italic != m_styler.getFontItalic())
+				m_styler.setFontItalic(italic);
+			return *this;
+		}
+
+		Style& setFontWeight(int weight)
+		{
+			if (weight != m_styler.getFontWeight())
+				m_styler.setFontWeight(weight);
+			return *this;
+		}
+
+		Style& setFontSize(int size)
+		{
+			if (size != m_styler.getFontSize())
+				m_styler.setFontSize(size);
+			return *this;
+		}
+	};
+
+	template <typename T>
+	class ManipBase {
+	protected:
+		T m_data;
+	public:
+		ManipBase(T data) : m_data(data) {}
+	};
+
+	class ColorManip : public ManipBase<COLORREF> {
+	public:
+		ColorManip(COLORREF color) : ManipBase<COLORREF>(color) {}
+		friend Style& operator<<(Style& o, const ColorManip& manip)
+		{
+			return o.setColor(manip.m_data);
+		}
+	};
+
+	ColorManip color(COLORREF color) { return ColorManip{ color }; }
+
+	class FontSizeManip : public ManipBase<int> {
+	public:
+		FontSizeManip(int size) : ManipBase<int>(size) {}
+		friend Style& operator<<(Style& o, const FontSizeManip& manip)
+		{
+			return o.setFontSize(manip.m_data);
+		}
+	};
+
+	FontSizeManip fontSize(int size) { return FontSizeManip{ size }; }
+
+	class FontWeightManip : public ManipBase<int> {
+	public:
+		FontWeightManip(int weight) : ManipBase<int>(weight) {}
+		friend Style& operator<<(Style& o, const FontWeightManip& manip)
+		{
+			return o.setFontWeight(manip.m_data);
+		}
+	};
+
+	inline FontWeightManip fontWeight(int size) { return FontWeightManip{ size }; }
+	inline FontWeightManip bold() { return FontWeightManip{ FW_BOLD }; }
+
+
+	class FontItalicManip : public ManipBase<bool> {
+	public:
+		FontItalicManip(bool italic) : ManipBase<bool>(italic) {}
+		friend Style& operator<<(Style& o, const FontItalicManip& manip)
+		{
+			return o.setFontItalic(manip.m_data);
+		}
+	};
+
+	inline FontItalicManip fontItalic(bool italic) { return FontItalicManip{ italic }; }
+	inline FontItalicManip italic() { return FontItalicManip{ true }; }
+
+
+	void Style::apply(Style& style, rules rule)
+	{
+		switch (rule) {
+		case rules::body:
+			// from UI
+			break;
+		case rules::header:
+			style
+				<< fontSize((style.m_styler.getFontSize() * 18) / 10)
+				<< color(0x00883333);
+			break;
+		case rules::tableHead:
+			style << bold();
+			break;
+		case rules::tableRow:
+			// same as parent
+			break;
+		case rules::classEmpty:
+			style << italic() << color(0x00555555);
+			break;
+		case rules::classSummary:
+			style
+				<< fontSize((style.m_styler.getFontSize() * 8) / 10)
+				<< color(0x00555555);
+			break;
+		};
+	}
+
+
+	void serverHeader(Styler& styler, const CTasksView::ServerInfo& item)
+	{
+		Style style{ styler, rules::header };
 
 		auto& server = *item.m_server;
+
+		std::ostringstream o;
 		o << server.login() << "@" << server.displayName();
 		if (item.m_loading) {
 			if (!item.m_gotProgress) {
@@ -221,50 +441,95 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 				o << " " << item.m_progress.loaded << "B";
 			}
 		}
-		out.skipY(0.25) // margin-top: 0.25em
+
+		styler.out()
+			.skipY(0.25) // margin-top: 0.25em
 			.println(utf::widen(o.str()))
 			.skipY(0.1); // margin-bottom: 0.1em
-		o.str("");
-
-		dc.SetTextColor(0x00000000);
-
-		if (item.m_dataset) {
-			auto& dataset = *item.m_dataset;
-			if (!dataset.schema.cols().empty()) {
-				out.select(m_tableHeader);
-
-				auto x = out.getX();
-				auto src = item.m_columns.begin();
-				for (auto& col : dataset.schema.cols()) {
-					out.moveToX(x).print(utf::widen(col->titleFull()));
-					x += *src++ + 14;
-				}
-
-				out.println({});
-			}
-
-			out.select(m_font);
-
-			for (auto&& row : dataset.data) {
-				auto x = out.getX();
-				auto src = item.m_columns.begin();
-				for (auto& value : row.values()) {
-					out.moveToX(x).print(utf::widen(value->text()));
-					x += *src++ + 14;
-				}
-				out.println({});
-			}
-
-			dc.SetTextColor(0x00555555);
-			o << "(Issues " << (dataset.startAt + 1)
-				<< '-' << (dataset.startAt + dataset.data.size())
-				<< " of " << dataset.total << ")";
-			out.println({}).println(utf::widen(o.str()).c_str()); o.str("");
-		} else
-			out.select(m_font).println(L"Empty");
-
-		out.select(m_serverHeader);
 	}
+
+	void tableHead(Styler& styler, const jira::model& schema, const std::vector<int>& widths)
+	{
+		Style style{ styler, rules::tableHead };
+
+		auto x = styler.out().getX();
+		auto src = widths.begin();
+		for (auto& col : schema.cols()) {
+			styler.out().moveToX(x).print(utf::widen(col->titleFull()));
+			x += *src++ + CELL_MARGIN + CELL_MARGIN;
+		}
+
+		styler.out().println({});
+	}
+
+	void tableRow(Styler& styler, const jira::record& row, const std::vector<int>& widths)
+	{
+		Style style{ styler, rules::tableRow };
+
+		auto x = styler.out().getX();
+		auto src = widths.begin();
+		for (auto& value : row.values()) {
+			styler.out().moveToX(x).print(utf::widen(value->text()));
+			x += *src++ + CELL_MARGIN + CELL_MARGIN;
+		}
+
+		styler.out().println({});
+	}
+
+	void tableFoot(Styler& styler, const jira::report& dataset)
+	{
+		Style style{ styler, rules::classSummary };
+
+		std::ostringstream o;
+		o << "(Issues " << (dataset.startAt + 1)
+			<< '-' << (dataset.startAt + dataset.data.size())
+			<< " of " << dataset.total << ")";
+		styler.out()/*.println({})*/.println(utf::widen(o.str()).c_str()); o.str("");
+	}
+
+	void table(Styler& styler, const jira::report& dataset, const std::vector<int>& widths)
+	{
+		tableHead(styler, dataset.schema, widths);
+		for (auto&& row : dataset.data)
+			tableRow(styler, row, widths);
+		tableFoot(styler, dataset);
+	}
+
+	void noTable(Styler& styler)
+	{
+		Style style{ styler, rules::classEmpty };
+
+		styler.out().println(L"Empty");
+	}
+
+	void server(Styler& styler, const CTasksView::ServerInfo& item)
+	{
+		serverHeader(styler, item);
+		if (item.m_dataset)
+			table(styler, *item.m_dataset, item.m_columns);
+		else
+			noTable(styler);
+	}
+
+	HFONT getFont(Styler& styler, rules rule)
+	{
+		Style style{ styler, rule };
+		CFont font;
+		font.CreateFontIndirect(&styler.fontDef());
+		return font.Detach();
+	}
+};
+
+LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+	CPaintDC dc(m_hWnd);
+	dc.FillRect(&dc.m_ps.rcPaint, m_background);
+
+	dc.SetBkMode(TRANSPARENT);
+	Styler control{ (HDC) dc, (HFONT) m_font };
+
+	for (auto& item : m_servers)
+		server(control, item);
 
 	return 0;
 }
@@ -272,28 +537,18 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 void CTasksView::updateLayout()
 {
 	CWindowDC dc{m_hWnd};
+	Styler styler{ (HDC) dc, (HFONT) m_font };
+	CFont row{ getFont(styler, rules::tableRow) };
+	CFont header{ getFont(styler, rules::tableHead) };
 
 	for (auto& server : m_servers)
-		server.calcColumns((HDC)dc, m_font, (HFONT)m_tableHeader);
+		server.calcColumns((HDC)dc, (HFONT) row, (HFONT) header);
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
 	bHandled = FALSE;
 	m_font = (HFONT) wParam;
-
-	LOGFONT lf;
-	m_font.GetLogFont(&lf);
-
-	// 1em bold
-	lf.lfWeight = FW_BOLD;
-	m_tableHeader.CreateFontIndirect(&lf);
-
-	// 1.8em
-	lf.lfHeight *= 18;
-	lf.lfHeight /= 10;
-	lf.lfWeight = FW_NORMAL;
-	m_serverHeader.CreateFontIndirect(&lf);
 
 	updateLayout();
 	// TODO: redraw the report table
