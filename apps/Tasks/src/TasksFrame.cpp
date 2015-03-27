@@ -5,7 +5,8 @@
 #include "stdafx.h"
 #include "resource.h"
 
-#include "aboutdlg.h"
+#include "AboutDlg.h"
+#include "ConnectionDlg.h"
 #include "TasksView.h"
 #include "TasksFrame.h"
 
@@ -128,8 +129,8 @@ LRESULT CTasksFrame::OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndC
 
 LRESULT CTasksFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	// TODO: add code to initialize document
-
+	CConnectionDlg dlg;
+	dlg.DoModal();
 	return 0;
 }
 
