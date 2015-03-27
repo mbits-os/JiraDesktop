@@ -38,8 +38,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\apps\Tasks\inc\resource.h">
-      <Filter>inc</Filter>
+    <ClInclude Include="..\..\apps\Tasks\src\resource.h">
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h">
       <Filter>inc</Filter>

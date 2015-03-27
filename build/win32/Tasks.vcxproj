@@ -63,12 +63,12 @@
     <ClInclude Include="..\..\apps\Tasks\inc\AboutDlg.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\AppModel.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\AppSettings.h" />
-    <ClInclude Include="..\..\apps\Tasks\inc\resource.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TaskBarIcon.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\Tasks.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksFrame.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksView.h" />
+    <ClInclude Include="..\..\apps\Tasks\src\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\apps\Tasks\res\toolbar_old.bmp" />
