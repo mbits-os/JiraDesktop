@@ -11,6 +11,8 @@
 #define IDC_URL                         1001
 #define IDC_LOGIN                       1002
 #define IDC_PASSWORD                    1003
+#define IDC_STATIC_SERVER               1004
+#define IDC_STATIC_USER                 1005
 #define ID_TASKS_REFRESH                32775
 #define ID_CONNECTIONS_EDIT             32776
 #define ID_CONNECTIONS_REFERSH          32777
@@ -25,7 +27,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        202
 #define _APS_NEXT_COMMAND_VALUE         32782
-#define _APS_NEXT_CONTROL_VALUE         1001
+#define _APS_NEXT_CONTROL_VALUE         1006
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

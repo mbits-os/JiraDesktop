@@ -4,8 +4,16 @@
 
 #pragma once
 
+#include <string>
+
 class CConnectionDlg : public CDialogImpl<CConnectionDlg>
 {
+	void setWindowText(const std::string&, int);
+	std::string getWindowText(int);
+	bool hasText(int);
+	void updateExitState();
+
+	CFont m_symbols;
 public:
 	enum { IDD = IDD_CONNECTION };
 
@@ -22,4 +30,9 @@ public:
 
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+
+	std::string serverName;
+	std::string serverUrl;
+	std::string userName;
+	std::string userPassword;
 };
