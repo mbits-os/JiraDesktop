@@ -92,9 +92,9 @@ namespace utf
 		switch (length) {
 		default: return false;
 			/* Everything else falls through when "true"... */
-		case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-		case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-		case 2: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+		case 4: if ((a = ((uint8_t)*--srcptr)) < 0x80 || a > 0xBF) return false;
+		case 3: if ((a = ((uint8_t)*--srcptr)) < 0x80 || a > 0xBF) return false;
+		case 2: if ((a = ((uint8_t)*--srcptr)) < 0x80 || a > 0xBF) return false;
 
 			switch (*source) {
 				/* no fall-through in this inner switch */
@@ -105,9 +105,9 @@ namespace utf
 			default:   if (a < 0x80) return false;
 			}
 
-		case 1: if (*source >= 0x80 && *source < 0xC2) return false;
+		case 1: if ((uint8_t) *source >= 0x80 && (uint8_t) *source < 0xC2) return false;
 		}
-		if (*source > 0xF4) return false;
+		if ((uint8_t) *source > 0xF4) return false;
 		return true;
 	}
 
@@ -120,7 +120,7 @@ namespace utf
 
 		while (source < sourceEnd) {
 			UTF32 ch = 0;
-			unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
+			unsigned short extraBytesToRead = trailingBytesForUTF8[(uint8_t)*source];
 			if (extraBytesToRead >= sourceEnd - source) {
 				break;
 			}
@@ -132,12 +132,12 @@ namespace utf
 			* The cases all fall through. See "Note A" below.
 			*/
 			switch (extraBytesToRead) {
-			case 5: ch += *source++; ch <<= 6; /* remember, illegal UTF-8 */
-			case 4: ch += *source++; ch <<= 6; /* remember, illegal UTF-8 */
-			case 3: ch += *source++; ch <<= 6;
-			case 2: ch += *source++; ch <<= 6;
-			case 1: ch += *source++; ch <<= 6;
-			case 0: ch += *source++;
+			case 5: ch += (uint8_t)*source++; ch <<= 6; /* remember, illegal UTF-8 */
+			case 4: ch += (uint8_t)*source++; ch <<= 6; /* remember, illegal UTF-8 */
+			case 3: ch += (uint8_t)*source++; ch <<= 6;
+			case 2: ch += (uint8_t)*source++; ch <<= 6;
+			case 1: ch += (uint8_t)*source++; ch <<= 6;
+			case 0: ch += (uint8_t)*source++;
 			}
 			ch -= offsetsFromUTF8[extraBytesToRead];
 
