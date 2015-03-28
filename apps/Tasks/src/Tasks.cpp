@@ -17,13 +17,6 @@ CAppModule _Module;
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
-	//int argc = 0;
-	//LPWSTR * argv = nullptr;
-	//std::unique_ptr<LPWSTR, decltype(&LocalFree)> args{ nullptr, LocalFree };
-	//args.reset(CommandLineToArgvW(GetCommandLineW(), &argc));
-	//if (args) argv = args.get();
-	//else argc = 0;
-
 	CMessageLoop theLoop;
 	_Module.AddMessageLoop(&theLoop);
 
@@ -51,6 +44,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 //	HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	ATLASSERT(SUCCEEDED(hRes));
 
+	AddFontResourceEx(L"FontAwesome.otf", FR_PRIVATE, nullptr);
+
 	// this resolves ATL window thunking problem when Microsoft Layer for Unicode (MSLU) is used
 	::DefWindowProc(NULL, 0, 0, 0L);
 
@@ -62,6 +57,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	int nRet = Run(lpstrCmdLine, nCmdShow);
 
 	_Module.Term();
+
+	RemoveFontResourceEx(L"FontAwesome.otf", FR_PRIVATE, nullptr);
 	::CoUninitialize();
 
 	return nRet;

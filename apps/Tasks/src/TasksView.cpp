@@ -212,15 +212,24 @@ namespace {
 		classSummary
 	};
 
+	enum class family {
+		base,
+		symbols
+	};
+
 	class Styler {
 		LinePrinter printer;
 		CDCHandle dc;
 		CFont font;
 		LOGFONT logFont;
 		COLORREF lastColor;
+		family lastFamily;
+		std::wstring baseName;
 
 		void update()
 		{
+			if (font)
+				font.DeleteObject();
 			font.CreateFontIndirect(&logFont);
 			printer.select(font);
 		}
@@ -229,9 +238,11 @@ namespace {
 			: printer(dc_, font_)
 			, dc(dc_)
 			, lastColor(0)
+			, lastFamily(family::base)
 		{
 			CFontHandle{ font_ }.GetLogFont(&logFont);
 			lastColor = dc.GetTextColor();
+			baseName = logFont.lfFaceName;
 			update();
 		}
 
@@ -259,10 +270,28 @@ namespace {
 			update();
 		}
 
+		void setFontFamily(family f)
+		{
+			switch (f) {
+			case family::base:
+				wcscpy(logFont.lfFaceName, baseName.c_str());
+				lastFamily = f;
+				break;
+			case family::symbols:
+				wcscpy(logFont.lfFaceName, L"FontAwesome");
+				lastFamily = f;
+				break;
+			default:
+				return;
+			}
+			update();
+		}
+
 		COLORREF getColor() const { return lastColor; }
 		bool getFontItalic() const { return !!logFont.lfItalic; }
 		int getFontWeight() const { return logFont.lfWeight; }
 		int getFontSize() const { return logFont.lfHeight; }
+		family getFontFamily() const { return lastFamily; }
 		LinePrinter& out() { return printer; }
 
 		const LOGFONT& fontDef() const { return this->logFont; }
@@ -275,6 +304,7 @@ namespace {
 		int m_weight;
 		int m_size;
 		bool m_italic;
+		family m_family;
 
 		static void apply(Style& style, rules rule);
 
@@ -289,6 +319,7 @@ namespace {
 			, m_weight(styler.getFontWeight())
 			, m_size(styler.getFontSize())
 			, m_italic(styler.getFontItalic())
+			, m_family(styler.getFontFamily())
 		{
 		}
 
@@ -298,6 +329,7 @@ namespace {
 			, m_weight(styler.getFontWeight())
 			, m_size(styler.getFontSize())
 			, m_italic(styler.getFontItalic())
+			, m_family(styler.getFontFamily())
 		{
 			apply(*this, rule);
 		}
@@ -308,6 +340,7 @@ namespace {
 			setFontWeight(m_weight);
 			setFontSize(m_size);
 			setFontItalic(m_italic);
+			setFontFamily(m_family);
 		}
 
 		Style& setColor(COLORREF color)
@@ -335,6 +368,13 @@ namespace {
 		{
 			if (size != m_styler.getFontSize())
 				m_styler.setFontSize(size);
+			return *this;
+		}
+
+		Style& setFontFamily(family f)
+		{
+			if (f != m_styler.getFontFamily())
+				m_styler.setFontFamily(f);
 			return *this;
 		}
 	};
@@ -381,7 +421,6 @@ namespace {
 	inline FontWeightManip fontWeight(int size) { return FontWeightManip{ size }; }
 	inline FontWeightManip bold() { return FontWeightManip{ FW_BOLD }; }
 
-
 	class FontItalicManip : public ManipBase<bool> {
 	public:
 		FontItalicManip(bool italic) : ManipBase<bool>(italic) {}
@@ -394,6 +433,17 @@ namespace {
 	inline FontItalicManip fontItalic(bool italic) { return FontItalicManip{ italic }; }
 	inline FontItalicManip italic() { return FontItalicManip{ true }; }
 
+	class FontFamilyManip : public ManipBase<family> {
+	public:
+		FontFamilyManip(family name) : ManipBase<family>(name) {}
+		friend Style& operator<<(Style& o, const FontFamilyManip& manip)
+		{
+			return o.setFontFamily(manip.m_data);
+		}
+	};
+
+	inline FontFamilyManip fontFamily(family name) { return FontFamilyManip{ name }; }
+	inline FontFamilyManip symbols() { return FontFamilyManip{ family::symbols }; }
 
 	void Style::apply(Style& style, rules rule)
 	{
