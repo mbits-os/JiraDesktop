@@ -616,14 +616,14 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			synchronize(*m_model, [&] {
 				auto& servers = m_model->servers();
 				// find the location of the ID; hint: it might be at the end
-				auto rit = std::find_if(std::rbegin(servers), std::rend(servers), [&](const std::shared_ptr<jira::server>& server) { return server->sessionId() == wParam; });
-				if (rit != std::rend(servers)) {
+				auto sit = std::find_if(std::begin(servers), std::end(servers), [&](const std::shared_ptr<jira::server>& server) { return server->sessionId() == wParam; });
+				if (sit != std::end(servers)) {
 					auto it = std::begin(m_servers);
 
 					// it += (rit.base() - servers.begin())
-					 std::advance(it, std::distance(std::begin(servers), rit.base()));
+					 std::advance(it, std::distance(std::begin(servers), sit));
 
-					 insert(it, *rit);
+					 insert(it, *sit);
 				}
 			});
 		} else
