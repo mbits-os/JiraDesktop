@@ -531,7 +531,8 @@ namespace {
 		Style style{ styler, rules::classSummary };
 
 		std::ostringstream o;
-		o << "(Issues " << (dataset.startAt + 1)
+		auto low = dataset.data.empty() ? 0 : 1;
+		o << "(Issues " << (dataset.startAt + low)
 			<< '-' << (dataset.startAt + dataset.data.size())
 			<< " of " << dataset.total << ")";
 		styler.out()/*.println({})*/.println(utf::widen(o.str()).c_str()); o.str("");
