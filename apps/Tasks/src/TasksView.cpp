@@ -579,8 +579,54 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	dc.SetBkMode(TRANSPARENT);
 	Styler control{ (HDC) dc, (HFONT) m_font };
 
+#if FA_CHEATSHEET
+	std::unique_ptr<wchar_t[]> text;
+	std::unique_ptr<char[]> glyphsPtr;
+	GLYPHSET* glyphs = nullptr;
+	{
+		Style style{ control };
+		style << symbols();
+
+		auto textLen = dc.GetTextFaceLen();
+		text.reset(new wchar_t[textLen]);
+		dc.GetTextFace(text.get(), textLen);
+
+		auto size = dc.GetFontUnicodeRanges(nullptr);
+		glyphsPtr.reset(new char[size]);
+		glyphs = reinterpret_cast<GLYPHSET*>(glyphsPtr.get());
+		dc.GetFontUnicodeRanges(glyphs);
+	}
+#endif
+
 	for (auto& item : m_servers)
 		server(control, item);
+
+#if FA_CHEATSHEET
+	control.out().println({}).println(std::wstring(L"Font face: ") + text.get());
+
+	Style style{ control };
+	style << symbols() << fontSize((control.getFontSize() * 18) / 10);
+
+	size_t pos = 0;
+	std::wstring line;
+	for (DWORD i = 0; i < glyphs->cRanges; ++i) {
+		for (USHORT cnt = 0; cnt < glyphs->ranges[i].cGlyphs; ++cnt) {
+			WCHAR glyph = cnt + glyphs->ranges[i].wcLow;
+			line.push_back(glyph);
+			pos++;
+			if (pos == 32) {
+				control.out().println(line);
+				line.clear();
+				pos = 0;
+			}
+		}
+	}
+
+	if (pos) {
+		control.out().println(line);
+		line.clear();
+	}
+#endif
 
 	return 0;
 }

@@ -72,10 +72,11 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 	{
 		LOGFONT lf = { 0 };
 		CFontHandle{ GetFont() }.GetLogFont(lf);
-		wcscpy(lf.lfFaceName, L"FontAwesome");
 		lf.lfHeight *= 38;
 		lf.lfHeight /= 8;
-		m_symbols.CreateFontIndirect(&lf);
+		m_symbols.CreateFont(lf.lfHeight, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET,
+			OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
+			L"FontAwesome");
 	}
 
 	SendDlgItemMessage(IDC_STATIC_SERVER, (WPARAM)(HFONT)m_symbols, TRUE);
