@@ -131,6 +131,8 @@ namespace jira
 		, m_db(url)
 		, m_id(nextToken())
 	{
+		if (Uri{ url }.relative())
+			m_url = "http://" + url;
 	}
 
 	server::server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const search_def& view)
@@ -142,6 +144,9 @@ namespace jira
 		, m_db(url)
 		, m_id(nextToken())
 	{
+		if (Uri{ url }.relative())
+			m_url = "http://" + url;
+
 		if (!secure::crypt({ password.begin(), password.end() }, m_password))
 			throw std::bad_alloc();
 	}
