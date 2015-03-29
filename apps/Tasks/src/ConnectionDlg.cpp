@@ -7,6 +7,7 @@
 
 #include "ConnectionDlg.h"
 #include <net/utf8.hpp>
+#include <net/uri.hpp>
 #include <atlstr.h>
 
 void CConnectionDlg::setWindowText(const std::string& value, int id)
@@ -26,9 +27,37 @@ bool CConnectionDlg::hasText(int id)
 	return GetDlgItem(id).GetWindowTextLength() > 0;
 }
 
+namespace {
+	bool isURL_(const Uri& uri) {
+		if (uri.relative() || uri.opaque())
+			return false;
+
+		auto auth = uri.authority();
+		if (auth.empty())
+			return false;
+
+		auto at = auth.find('@');
+		if (at != std::string::npos)
+			auth = auth.substr(at + 1);
+
+		return !auth.empty(); // potentialy: check if authority is a valid <server> or <server>:<port> pair...
+	}
+
+	bool isURL(const std::string& url) {
+		Uri uri{ url };
+		bool ret = isURL_(uri);
+		if (!ret && uri.relative()) {
+			uri = "http://" + url;
+			ret = isURL_(uri);
+		}
+
+		return ret;
+	}
+}
+
 void CConnectionDlg::updateExitState()
 {
-	GetDlgItem(IDOK).EnableWindow(hasText(IDC_URL) && hasText(IDC_LOGIN) && hasText(IDC_PASSWORD));
+	GetDlgItem(IDOK).EnableWindow(hasText(IDC_URL) && hasText(IDC_LOGIN) && hasText(IDC_PASSWORD) && isURL(getWindowText(IDC_URL)));
 }
 
 LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -57,6 +86,12 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 	updateExitState();
 
 	return TRUE;
+}
+
+LRESULT CConnectionDlg::OnTextChanged(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	updateExitState();
+	return 0;
 }
 
 LRESULT CConnectionDlg::OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
