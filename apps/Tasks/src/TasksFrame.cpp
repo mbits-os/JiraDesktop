@@ -130,7 +130,10 @@ LRESULT CTasksFrame::OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndC
 LRESULT CTasksFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	CConnectionDlg dlg;
-	dlg.DoModal();
+	if (dlg.DoModal() == IDOK) {
+		auto conn = std::make_shared<jira::server>(dlg.serverName, dlg.userName, dlg.userPassword, dlg.serverUrl, jira::search_def{});
+		m_model->add(conn);
+	};
 	return 0;
 }
 
