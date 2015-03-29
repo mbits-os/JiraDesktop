@@ -12,6 +12,14 @@
 #include <shellapi.h>
 
 #include <memory>
+#include <net/filesystem.hpp>
+
+namespace fs = filesystem;
+
+fs::path exe_dir() {
+	static fs::path dir = fs::app_directory();
+	return dir;
+}
 
 CAppModule _Module;
 
@@ -36,6 +44,28 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	return nRet;
 }
 
+class Fonts {
+	std::vector<fs::path> m_fonts;
+public:
+	Fonts()
+	{
+		for (auto entry : fs::dir(exe_dir() / "fonts"))
+		{
+			if (entry.status().is_directory())
+				continue;
+			auto count = AddFontResourceEx(entry.path().wnative().c_str(), FR_PRIVATE, nullptr);
+			if (count)
+				m_fonts.push_back(entry.path());
+		}
+	}
+
+	~Fonts()
+	{
+		for (auto& path : m_fonts)
+			RemoveFontResourceExW(path.wnative().c_str(), FR_PRIVATE, nullptr);
+	}
+};
+
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lpstrCmdLine, int nCmdShow)
 {
 	HRESULT hRes = ::CoInitialize(NULL);
@@ -44,7 +74,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 //	HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	ATLASSERT(SUCCEEDED(hRes));
 
-	AddFontResourceEx(L"FontAwesome.otf", FR_PRIVATE, nullptr);
+	Fonts external;
 
 	// this resolves ATL window thunking problem when Microsoft Layer for Unicode (MSLU) is used
 	::DefWindowProc(NULL, 0, 0, 0L);
@@ -58,7 +88,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 
 	_Module.Term();
 
-	RemoveFontResourceEx(L"FontAwesome.otf", FR_PRIVATE, nullptr);
 	::CoUninitialize();
 
 	return nRet;
