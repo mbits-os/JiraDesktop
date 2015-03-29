@@ -98,4 +98,56 @@ namespace filesystem
 		else
 			m_type = file_type::not_found;
 	}
+
+	void directory_iterator::setup_iter(const path& p)
+	{
+		m_find.m_handle = FindFirstFileW((p / "*").wnative().c_str(), &m_find.m_data);
+		if (m_find.m_handle != INVALID_HANDLE_VALUE)
+			m_entry = directory_entry{ p / m_find.m_data.cFileName };
+	}
+
+	void directory_iterator::next_entry()
+	{
+		if (m_find.m_handle == INVALID_HANDLE_VALUE)
+			return;
+
+		if (!FindNextFile(m_find.m_handle, &m_find.m_data)) { // we are at end()
+			m_find.close();
+			m_entry = directory_entry{};
+			return;
+		}
+
+		m_entry = directory_entry{ m_entry.path().parent_path() / m_find.m_data.cFileName };
+	}
+
+	void directory_iterator::shutdown_iter()
+	{
+		// noop
+	}
+
+	directory_iterator::directory_iterator(directory_iterator&& rhs)
+		: m_entry(std::move(rhs.m_entry))
+	{
+		std::swap(m_find, rhs.m_find);
+	}
+
+	directory_iterator& directory_iterator::operator=(const directory_iterator& rhs)
+	{
+		if (m_find.m_handle == rhs.m_find.m_handle)
+			return *this;
+
+		m_find.close();
+		if (rhs.m_find.m_handle != INVALID_HANDLE_VALUE)
+			setup_iter(rhs.m_entry.path().parent_path());
+
+		return *this;
+	}
+
+	directory_iterator& directory_iterator::operator=(directory_iterator&& rhs)
+	{
+		m_entry = std::move(rhs.m_entry);
+		std::swap(m_find, rhs.m_find);
+		return *this;
+	}
+
 }

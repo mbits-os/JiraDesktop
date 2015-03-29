@@ -27,6 +27,9 @@
 
 #include <string>
 #include <net/utf8.hpp>
+#ifdef WIN32
+#	include <windows.h>
+#endif
 
 namespace filesystem
 {
@@ -466,6 +469,102 @@ namespace filesystem
 
 	void remove(const path& p);
 	FILE* fopen(const path& file, char const* mode);
+
+	class directory_entry
+	{
+	public:
+		// constructors and destructor
+		directory_entry() = default;
+		directory_entry(const directory_entry&) = default;
+		directory_entry(directory_entry&&) = default;
+
+		explicit directory_entry(const filesystem::path& p) : m_path(p) {};
+		~directory_entry() {}
+		// modifiers
+		directory_entry& operator=(const directory_entry&) = default;
+		directory_entry& operator=(directory_entry&&) = default;
+		void assign(const path& p) { m_path = p; }
+		void replace_filename(const path& p) {
+			m_path = m_path.parent_path() / p;
+		}
+		// observers
+		const path& path() const { return m_path; }
+		operator const filesystem::path&() const { return m_path; }
+		filesystem::status status() const { return filesystem::status{ m_path }; }
+		bool operator< (const directory_entry& rhs) const { return m_path < rhs.m_path; }
+		bool operator==(const directory_entry& rhs) const { return m_path == rhs.m_path; }
+		bool operator!=(const directory_entry& rhs) const { return m_path != rhs.m_path; }
+		bool operator<=(const directory_entry& rhs) const { return m_path <= rhs.m_path; }
+		bool operator> (const directory_entry& rhs) const { return m_path > rhs.m_path; }
+		bool operator>=(const directory_entry& rhs) const { return m_path >= rhs.m_path; }
+	private:
+		filesystem::path m_path; // for exposition only
+	};
+	class directory_iterator
+	{
+		directory_entry m_entry;
+		void setup_iter(const path& p); // should do the initial next_entry
+		void next_entry();
+		void shutdown_iter();
+
+#ifdef WIN32
+		struct dir_find {
+			WIN32_FIND_DATAW m_data;
+			HANDLE m_handle;
+			dir_find() : m_handle(INVALID_HANDLE_VALUE) {}
+			~dir_find() { close(); }
+
+			void close() {
+				if (m_handle != INVALID_HANDLE_VALUE)
+					FindClose(m_handle);
+				m_handle = INVALID_HANDLE_VALUE;
+			}
+		};
+#else
+#		error Define directory iteration...
+#endif
+		dir_find m_find;
+	public:
+		typedef directory_entry value_type;
+		typedef ptrdiff_t difference_type;
+		typedef const directory_entry* pointer;
+		typedef const directory_entry& reference;
+		typedef std::input_iterator_tag iterator_category;
+
+		directory_iterator() {};
+		explicit directory_iterator(const path& p)
+		{
+			setup_iter(p);
+		}
+		directory_iterator(const directory_iterator& rhs)
+		{
+			if (rhs.m_entry != directory_entry{}) {
+				setup_iter(rhs.m_entry.path().parent_path());
+			}
+		}
+		directory_iterator(directory_iterator&& rhs);
+		~directory_iterator() { shutdown_iter(); }
+		directory_iterator& operator=(const directory_iterator& rhs);
+		directory_iterator& operator=(directory_iterator&& rhs);
+		const directory_entry& operator*() const { return m_entry; }
+		const directory_entry* operator->() const { return &m_entry; }
+		directory_iterator& operator++() {
+			next_entry();
+			return *this;
+		}
+
+		bool operator!=(const directory_iterator& rhs) const { return m_entry != rhs.m_entry; }
+	};
+	class dir_entries
+	{
+		path m_dir;
+	public:
+		explicit dir_entries(const path& dir) : m_dir(dir) {}
+		directory_iterator begin() const { return directory_iterator(m_dir); }
+		directory_iterator end() const { return directory_iterator(); }
+	};
+
+	inline dir_entries dir(const path& dir) { return dir_entries{ dir }; }
 };
 
 namespace std
