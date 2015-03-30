@@ -8,6 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "atlres.h"
+#include "version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -33,6 +34,7 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include ""atlres.h""\r\n"
+    "#include ""version.h""\r\n"
     "\0"
 END
 
@@ -212,8 +214,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION PROGRAM_VERSION_RC,0
+ PRODUCTVERSION PROGRAM_VERSION_RC,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -228,13 +230,14 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "FileDescription", "Tasks Module"
-            VALUE "FileVersion", "1, 0, 0, 1"
-            VALUE "InternalName", "Tasks"
-            VALUE "LegalCopyright", "Copyright 2015 midnightBITS"
-            VALUE "OriginalFilename", "Tasks.exe"
-            VALUE "ProductName", "Tasks Module"
-            VALUE "ProductVersion", "1, 0, 0, 1"
+            VALUE "FileDescription", "Tasks and issues"
+            VALUE "CompanyName", PROGRAM_COPYRIGHT_HOLDER
+            VALUE "FileVersion", PROGRAM_VERSION_STRING
+            VALUE "InternalName", PROGRAM_NAME
+            VALUE "LegalCopyright", "\xA9 2015 " PROGRAM_COPYRIGHT_HOLDER
+            VALUE "OriginalFilename", PROGRAM_NAME ".exe"
+            VALUE "ProductName", PROGRAM_NAME
+            VALUE "ProductVersion", PROGRAM_VERSION_STRING
         END
     END
     BLOCK "VarFileInfo"
