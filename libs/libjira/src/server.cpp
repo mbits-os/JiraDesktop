@@ -166,10 +166,24 @@ namespace jira
 		return{ plain.begin(), plain.end() };
 	}
 
+	static std::string to_string(json::type type) {
+		switch (type) {
+		case json::NULLPTR: return "nullptr";
+		case json::BOOL: return "boolean";
+		case json::NUMBER: return "number";
+		case json::INTEGER: return "integer";
+		case json::FLOAT: return "float";
+		case json::STRING: return "string";
+		case json::VECTOR: return "array";
+		case json::MAP: return "dictionary";
+		}
+		return std::to_string((int)type);
+	}
 	void server::loadFields()
 	{
+		m_errors.clear();
 		m_isLoadingFields = true;
-		loadJSON("rest/api/2/field", [this](int /*status*/, const json::value& doc) {
+		loadJSON("rest/api/2/field", [this](XHR* xhr, const json::value& doc) {
 			m_db.reset_defs();
 
 			ON_EXIT([this] {
@@ -178,8 +192,14 @@ namespace jira
 					refresh();
 			});
 
-			if (!doc.is<json::vector>())
+			if ((xhr->getStatus() / 100) != 2) {
+				m_errors.emplace_back("Error loading fields: " + std::to_string(xhr->getStatus()) + " " + xhr->getStatusText());
+			}
+
+			if (!doc.is<json::vector>()) {
+				m_errors.emplace_back("Returning document is not a json array: " + to_string(doc.get_type()));
 				return;
+			}
 
 #if USE_ODS
 			std::map<std::string, bool> failed;
@@ -273,7 +293,7 @@ namespace jira
 		}
 
 		auto thiz = shared_from_this();
-		search([thiz](int /*status*/, jira::report&& report) {
+		search([thiz](XHR* /*xhr*/, jira::report&& report) {
 			ON_EXIT([thiz] {
 				thiz->emit([&](server_listener* listener) { listener->onRefreshFinished(); });
 				thiz->m_isLoadingView = false;
@@ -297,9 +317,13 @@ namespace jira
 
 		auto xhr = create();
 		// xhr->setDebug();
-		xhr->onreadystatechange([xhr, onDone](XmlHttpRequest* req) {
+		xhr->onreadystatechange([xhr, onDone, this](XmlHttpRequest* req) {
 			if (req->getReadyState() != XmlHttpRequest::DONE)
 				return;
+
+			auto& err = req->getError();
+			if (!err.empty())
+				m_errors.push_back(err);
 
 			onDone(req);
 			req->onreadystatechange(XmlHttpRequest::ONREADYSTATECHANGE{}); // clean up xhr 
@@ -314,24 +338,25 @@ namespace jira
 		xhr->send();
 	}
 
-	void server::loadJSON(const std::string& uri, const std::function<void(int, const json::value&)>& response, const ONPROGRESS& progress, bool async)
+	void server::loadJSON(const std::string& uri, const std::function<void(XHR*, const json::value&)>& response, const ONPROGRESS& progress, bool async)
 	{
 		using namespace net::http::client;
 		get(uri, [response](XmlHttpRequest* req) {
 			if (req->getStatus() / 100 == 2) {
 				auto text = req->getResponseText();
 				auto length = req->getResponseTextLength();
-				response(req->getStatus(), json::from_string(text, length));
+				response(req, json::from_string(text, length));
 			} else {
-				response(req->getStatus(), json::value{});
+				response(req, json::value{});
 			}
 		}, progress, async);
 	}
 
-	void server::search(const search_def& def, const std::function<void(int, report&&)>& response, const ONPROGRESS& progress, bool async)
+	void server::search(const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress, bool async)
 	{
 		if (url().empty()) {
-			response(404, report{});
+			m_errors.push_back("Trying to open an empty URL.");
+			response(nullptr, report{});
 			return;
 		}
 
@@ -344,10 +369,17 @@ namespace jira
 			).string());
 
 		auto base = url();
-		loadJSON(uri.string(), [this, response, columns, base](int status, const json::value& data) {
+		loadJSON(uri.string(), [this, response, columns, base](XHR* xhr, const json::value& data) {
 
-			if ((status / 100) != 2) {
-				response(status, report{});
+			if ((xhr->getStatus() / 100) != 2) {
+				m_errors.emplace_back("Error loading query reply: " + std::to_string(xhr->getStatus()) + " " + xhr->getStatusText());
+				response(xhr, report{});
+				return;
+			}
+
+			if (!data.is<json::map>()) {
+				m_errors.emplace_back("Returning document is not a json dictionary: " + to_string(data.get_type()));
+				response(xhr, report{});
 				return;
 			}
 
@@ -367,7 +399,7 @@ namespace jira
 				dataset.data.push_back(dataset.schema.visit(issue["fields"], key, id));
 			}
 
-			response(status, std::move(dataset));
+			response(xhr, std::move(dataset));
 		}, progress, async);
 	}
 };

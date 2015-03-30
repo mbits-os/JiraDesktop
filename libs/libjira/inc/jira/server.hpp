@@ -88,6 +88,7 @@ namespace jira
 
 		search_def m_view;
 		std::shared_ptr<report> m_dataset;
+		std::vector<std::string> m_errors;
 
 		db m_db;
 
@@ -101,7 +102,9 @@ namespace jira
 	public:
 		enum from_storage { stored };
 
-		using ONPROGRESS = std::function<void(net::http::client::XmlHttpRequest*, bool, uint64_t, uint64_t)>;
+		using XHR =  net::http::client::XmlHttpRequest;
+
+		using ONPROGRESS = std::function<void(XHR*, bool, uint64_t, uint64_t)>;
 
 		server() = default;
 		server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const search_def& view, from_storage);
@@ -113,15 +116,16 @@ namespace jira
 		const std::string& url() const { return m_url; }
 		const search_def& view() const { return m_view; }
 		uint32_t sessionId() const { return m_id; }
+		const std::vector<std::string>& errors() const { return m_errors; }
 
 		void loadFields();
 		void refresh();
 		const std::shared_ptr<report>& dataset() const { return m_dataset; }
 		void debugDump(std::ostream&);
-		void get(const std::string& uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, const ONPROGRESS& progress = {}, bool async = true);
-		void loadJSON(const std::string& uri, const std::function<void (int, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
-		void search(const search_def& def, const std::function<void(int, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
-		void search(const std::function<void(int, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true) { search(m_view, response, progress, async); }
+		void get(const std::string& uri, const std::function<void(XHR*)>& onDone, const ONPROGRESS& progress = {}, bool async = true);
+		void loadJSON(const std::string& uri, const std::function<void (XHR*, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
+		void search(const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
+		void search(const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true) { search(m_view, response, progress, async); }
 	};
 }
 
