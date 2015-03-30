@@ -206,6 +206,7 @@ namespace {
 	enum class rules {
 		body,
 		header,
+		error,
 		tableHead,
 		tableRow,
 		classEmpty,
@@ -456,6 +457,9 @@ namespace {
 				<< fontSize((style.m_styler.getFontSize() * 18) / 10)
 				<< color(0x00883333);
 			break;
+		case rules::error:
+			style << color(0x00171BC1);
+			break;
 		case rules::tableHead:
 			style << bold();
 			break;
@@ -472,7 +476,6 @@ namespace {
 			break;
 		};
 	}
-
 
 	void serverHeader(Styler& styler, const CTasksView::ServerInfo& item)
 	{
@@ -496,6 +499,19 @@ namespace {
 			.skipY(0.25) // margin-top: 0.25em
 			.println(utf::widen(o.str()))
 			.skipY(0.1); // margin-bottom: 0.1em
+	}
+
+	void serverErrors(Styler& styler, const CTasksView::ServerInfo& item)
+	{
+		auto& server = *item.m_server;
+
+		if (server.errors().empty())
+			return;
+
+		Style style{ styler, rules::error };
+
+		for (auto& error : server.errors())
+			styler.out().println(utf::widen(error));
 	}
 
 	void tableHead(Styler& styler, const jira::model& schema, const std::vector<int>& widths)
@@ -556,6 +572,7 @@ namespace {
 	void server(Styler& styler, const CTasksView::ServerInfo& item)
 	{
 		serverHeader(styler, item);
+		serverErrors(styler, item);
 		if (item.m_dataset)
 			table(styler, *item.m_dataset, item.m_columns);
 		else
