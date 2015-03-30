@@ -13,6 +13,8 @@ public:
 	std::string text() const override;
 	void setTooltip(const std::string& text) override;
 	void addChild(std::unique_ptr<node>&& child) override;
+	void paint(IJiraPainter* painter) override;
+	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
 
 protected:
 	std::map<Attr, std::string> m_data;
@@ -23,16 +25,21 @@ class CJiraIconNode : public CJiraNode {
 public:
 	CJiraIconNode(const std::string& uri, const std::string& tooltip);
 	void addChild(std::unique_ptr<node>&& child) override;
+	void paint(IJiraPainter* painter) override;
+	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
 };
 
 class CJiraLinkNode : public CJiraNode {
 public:
 	CJiraLinkNode(const std::string& href);
+	void paint(IJiraPainter* painter) override;
 };
 
 class CJiraTextNode : public CJiraNode {
 public:
 	CJiraTextNode(const std::string& text);
+	void paint(IJiraPainter* painter) override;
+	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
 };
 
 class CJiraDocument : public jira::document {

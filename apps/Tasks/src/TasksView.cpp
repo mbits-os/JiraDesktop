@@ -131,7 +131,7 @@ enum {
 	CELL_MARGIN = 7
 };
 
-class LinePrinter
+class LinePrinter : IJiraPainter
 {
 	HFONT older;
 	CFontHandle font;
@@ -146,6 +146,45 @@ class LinePrinter
 		dc.GetTextMetrics(&metric);
 		lineHeight = metric.tmHeight * 12 / 10; // 120%
 	}
+
+	void moveOrigin(int x_, int y_) override
+	{
+		x += x_;
+		y += y_;
+	}
+
+	std::pair<int, int> getOrigin() const override
+	{
+		return{ x, y };
+	}
+
+	void setOrigin(const std::pair<int, int>& orig) override
+	{
+		x = std::get<0>(orig);
+		y = std::get<1>(orig);
+	}
+
+	void paintImage(const std::string& /*url*/, int width, int height) override
+	{
+		// TODO: get url from pixmap cache
+		dc.Rectangle(x, y, x + width, y + height);
+	}
+
+	void paintString(const std::string& text) override
+	{
+		if (text.empty())
+			return;
+		dc.TextOut(x, y, utf::widen(text).c_str());
+	}
+
+	std::pair<size_t, size_t> measureString(const std::string& text) override
+	{
+		auto line = utf::widen(text);
+		SIZE s;
+		dc.GetTextExtent(line.c_str(), line.length(), &s);
+		return{ (size_t)s.cx, (size_t)s.cy };
+	}
+
 public:
 	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
 	{
@@ -195,6 +234,12 @@ public:
 	LinePrinter& moveToX(int x_)
 	{
 		x = x_;
+		return *this;
+	}
+
+	LinePrinter& paint(const std::unique_ptr<jira::node>& node)
+	{
+		cast(node)->paint(this);
 		return *this;
 	}
 
@@ -535,7 +580,7 @@ namespace {
 		auto x = styler.out().getX();
 		auto src = widths.begin();
 		for (auto& value : row.values()) {
-			styler.out().moveToX(x).print(utf::widen(cast(value)->text()));
+			styler.out().moveToX(x).paint(value);
 			x += *src++ + CELL_MARGIN + CELL_MARGIN;
 		}
 
