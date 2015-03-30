@@ -721,11 +721,9 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			auto srv_it = std::begin(servers);
 			auto srv_end = std::end(servers);
 
-			for (; srv_it != srv_end; ++srv_it) {
-				if (it != end && (*srv_it)->sessionId() == it->m_sessionId) {
-					++it;
+			for (; srv_it != srv_end; ++srv_it, ++it) {
+				if (it != end && (*srv_it)->sessionId() == it->m_sessionId)
 					continue;
-				}
 
 				it = insert(it, *srv_it); // fill in blanks...
 				end = std::end(m_servers);
