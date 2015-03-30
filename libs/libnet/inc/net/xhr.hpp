@@ -106,6 +106,8 @@ namespace net { namespace http { namespace client {
 	};
 
 	XmlHttpRequestPtr create();
+
+	void set_program_client_info(const char*);
 }}}
 
 #endif //__HTTP_HPP__

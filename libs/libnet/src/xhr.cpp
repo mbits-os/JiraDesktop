@@ -505,11 +505,24 @@ namespace net { namespace http {
 
 
 	namespace client {
+		std::string s_program_version;
+
+		void set_program_client_info(const char* ver)
+		{
+			if (!ver || !*ver) {
+				s_program_version.clear();
+				return;
+			}
+			s_program_version = " ";
+			s_program_version += ver;
+		}
+
 		std::string os_client_info();
 		std::string http_client_info();
+
 		static std::string getUserAgent()
 		{
-			static std::string userAgent = "Mozilla/5.0 (" + os_client_info() + ") XHRLoader/1.0 " + http_client_info();
+			static std::string userAgent = "Mozilla/5.0 (" + os_client_info() + ")" + s_program_version + " XHRLoader/1.0 " + http_client_info();
 			return userAgent;
 		}
 

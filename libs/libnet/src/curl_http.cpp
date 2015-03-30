@@ -694,7 +694,12 @@ namespace net { namespace http {
 	namespace client {
 		std::string http_client_info()
 		{
+#ifdef CURL_FULL_VERSION
 			return curl_version();
+#else
+			auto version = curl_version_info(CURLVERSION_FIRST);
+			return std::string{"libcurl/"} + version->version;
+#endif
 		}
 	}
 }}
