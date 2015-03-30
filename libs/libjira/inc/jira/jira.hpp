@@ -33,10 +33,18 @@
 
 namespace jira
 {
+	enum class styles {
+		unset,
+		none,
+		error,
+		link
+	};
+
 	struct node {
 		virtual ~node() {}
 		virtual void setTooltip(const std::string& text) = 0;
 		virtual void addChild(std::unique_ptr<node>&& child) = 0;
+		virtual void setClass(styles) = 0;
 	};
 
 	struct document {

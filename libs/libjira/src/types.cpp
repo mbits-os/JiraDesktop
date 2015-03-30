@@ -118,8 +118,11 @@ namespace jira
 		std::unique_ptr<node> resolution::visit(document* doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
-			if (it == object.end() || it->second.is<nullptr_t>())
-				return doc->createText("Unresolved"); // font-style: italic; color: #555
+			if (it == object.end() || it->second.is<nullptr_t>()) {
+				auto node = doc->createText("Unresolved");
+				node->setClass(styles::none); // font-style: italic; color: #555
+				return std::move(node); 
+			}
 
 			if (it->second.is<std::string>())
 				return doc->createText(it->second.as<std::string>());
@@ -134,7 +137,9 @@ namespace jira
 				return std::move(label);
 			}
 
-			return doc->createText("{!}"); // color:#E60026
+			auto node = doc->createText("{!}"); // color:#E60026
+			node->setClass(styles::error);
+			return std::move(node);
 		}
 
 		summary::summary(const std::string& id, const std::string& title) : type(id, title) {}
@@ -246,8 +251,11 @@ namespace jira
 		std::unique_ptr<node> array::visit(document* doc, const record& issue, const json::map& object) const
 		{
 			auto it = object.find(id());
-			if (it == object.end() || !it->second.is<json::vector>())
-				return doc->createText("None"); // font-style: italic; color: #555
+			if (it == object.end() || !it->second.is<json::vector>()) {
+				auto node = doc->createText("None");
+				node->setClass(styles::none); // font-style: italic; color: #555
+				return std::move(node);
+			}
 
 			auto out = doc->createSpan();
 
@@ -261,8 +269,12 @@ namespace jira
 				if (val)
 					out->addChild(std::move(val));
 			}
-			if (first) // no items added to the span, return empty...
-				return doc->createText("None"); // font-style: italic; color: #555
+
+			if (first) { // no items added to the span, return empty...
+				auto node = doc->createText("None");
+				node->setClass(styles::none); // font-style: italic; color: #555
+				return std::move(node);
+			}
 
 			return std::move(out);
 		}
