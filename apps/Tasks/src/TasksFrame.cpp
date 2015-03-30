@@ -140,10 +140,11 @@ LRESULT CTasksFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 LRESULT CTasksFrame::OnTasksRefersh(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	auto local = m_model->servers();
+	auto document = m_model->document();
 	for (auto server : local) {
-		std::thread{ [server] {
+		std::thread{ [server, document] {
 			server->loadFields();
-			server->refresh();
+			server->refresh(document);
 		} }.detach();
 	}
 

@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "AppModel.h"
+#include "AppNodes.h"
 #include "AppSettings.h"
 #include <thread>
 
 CAppModel::CAppModel()
+	: m_document(std::make_shared<CJiraDocument>())
 {
 }
 
@@ -22,10 +24,11 @@ void CAppModel::startup()
 	onListChanged(0);
 
 	auto local = m_servers;
+	auto document = m_document;
 	for (auto server : local) {
-		std::thread{ [server] {
+		std::thread{ [server, document] {
 			server->loadFields();
-			server->refresh();
+			server->refresh(document);
 		} }.detach();
 	}
 }
@@ -43,6 +46,11 @@ void CAppModel::unlock()
 const std::vector<std::shared_ptr<jira::server>>& CAppModel::servers() const
 {
 	return m_servers;
+}
+
+const std::shared_ptr<jira::document>& CAppModel::document() const
+{
+	return m_document;
 }
 
 void CAppModel::add(const std::shared_ptr<jira::server>& server)
@@ -91,8 +99,9 @@ void CAppModel::update(const std::shared_ptr<jira::server>& server)
 		settings.jiraServers(m_servers);
 	});
 
-	std::thread{ [server] {
+	auto document = m_document;
+	std::thread{ [server, document] {
 		server->loadFields();
-		server->refresh();
+		server->refresh(document);
 	} }.detach();
 }

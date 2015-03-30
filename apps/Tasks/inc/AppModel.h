@@ -15,8 +15,18 @@ inline void synchronize(T& mtx, F fn)
 	fn();
 }
 
+struct IJiraNode : jira::node {
+	virtual std::string text() const = 0;
+};
+
+inline IJiraNode* cast(const std::unique_ptr<jira::node>& node) {
+	return static_cast<IJiraNode*>(node.get());
+}
+
+
 class CAppModel : public jira::listeners<CAppModelListener, CAppModel> {
 	std::vector<std::shared_ptr<jira::server>> m_servers;
+	std::shared_ptr<jira::document> m_document;
 
 	void onListChanged(uint32_t addedOrRemoved);
 	std::mutex m_guard;
@@ -27,6 +37,7 @@ public:
 
 	void lock();
 	const std::vector<std::shared_ptr<jira::server>>& servers() const;
+	const std::shared_ptr<jira::document>& document() const;
 	void unlock();
 
 	void add(const std::shared_ptr<jira::server>& server);

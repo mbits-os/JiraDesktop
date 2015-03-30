@@ -48,6 +48,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\apps\Tasks\src\AboutDlg.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\AppModel.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\AppNodes.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\AppSettings.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\ConnectionDlg.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\stdafx.cpp">
@@ -63,6 +64,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\apps\Tasks\inc\AboutDlg.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\AppModel.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\AppNodes.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\AppSettings.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\ConnectionDlg.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h" />

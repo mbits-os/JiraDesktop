@@ -66,7 +66,7 @@ void CTasksView::ServerInfo::calcColumns(CDCHandle dc, CFontHandle text, CFontHa
 	m_columns.resize(m_dataset->schema.cols().size());
 	auto dst = m_columns.begin();
 	for (auto& col : m_dataset->schema.cols()) {
-		auto title = utf::widen(col->titleFull());
+		auto title = utf::widen(col->title());
 		dc.GetTextExtent(title.c_str(), title.length(), &s);
 		*dst++ = s.cx;
 	}
@@ -75,7 +75,7 @@ void CTasksView::ServerInfo::calcColumns(CDCHandle dc, CFontHandle text, CFontHa
 	for (auto& item : m_dataset->data) {
 		dst = m_columns.begin();
 		for (auto& value : item.values()) {
-			auto txt = utf::widen(value->text());
+			auto txt = utf::widen(cast(value)->text());
 			dc.GetTextExtent(txt.c_str(), txt.length(), &s);
 			if (s.cx > *dst)
 				*dst++ = s.cx;
@@ -521,7 +521,7 @@ namespace {
 		auto x = styler.out().getX();
 		auto src = widths.begin();
 		for (auto& col : schema.cols()) {
-			styler.out().moveToX(x).print(utf::widen(col->titleFull()));
+			styler.out().moveToX(x).print(utf::widen(col->title()));
 			x += *src++ + CELL_MARGIN + CELL_MARGIN;
 		}
 
@@ -535,7 +535,7 @@ namespace {
 		auto x = styler.out().getX();
 		auto src = widths.begin();
 		for (auto& value : row.values()) {
-			styler.out().moveToX(x).print(utf::widen(value->text()));
+			styler.out().moveToX(x).print(utf::widen(cast(value)->text()));
 			x += *src++ + CELL_MARGIN + CELL_MARGIN;
 		}
 
