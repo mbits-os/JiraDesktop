@@ -71,6 +71,9 @@
     <ClInclude Include="..\..\apps\Tasks\inc\ConnectionDlg.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\src\version.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\apps\Tasks\src\Tasks.rc">

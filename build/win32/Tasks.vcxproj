@@ -71,6 +71,7 @@
     <ClInclude Include="..\..\apps\Tasks\inc\TasksFrame.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksView.h" />
     <ClInclude Include="..\..\apps\Tasks\src\resource.h" />
+    <ClInclude Include="..\..\apps\Tasks\src\version.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\apps\Tasks\res\toolbar_old.bmp" />

@@ -4,6 +4,7 @@
 #include "stdafx.h"
 
 #include "resource.h"
+#include "version.h"
 
 #include "TasksView.h"
 #include "AboutDlg.h"
@@ -13,6 +14,7 @@
 
 #include <memory>
 #include <net/filesystem.hpp>
+#include <net/xhr.hpp>
 
 namespace fs = filesystem;
 
@@ -75,6 +77,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	ATLASSERT(SUCCEEDED(hRes));
 
 	Fonts external;
+
+	net::http::client::set_program_client_info(PROGRAM_NAME "/" PROGRAM_VERSION_STRING);
 
 	// this resolves ATL window thunking problem when Microsoft Layer for Unicode (MSLU) is used
 	::DefWindowProc(NULL, 0, 0, 0L);
