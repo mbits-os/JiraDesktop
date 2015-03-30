@@ -577,24 +577,40 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	dc.FillRect(&dc.m_ps.rcPaint, m_background);
 
 	dc.SetBkMode(TRANSPARENT);
-	Styler control{ (HDC) dc, (HFONT) m_font };
+	Styler control{ (HDC)dc, (HFONT)m_font };
 
 #if FA_CHEATSHEET
-	std::unique_ptr<wchar_t[]> text;
-	std::unique_ptr<char[]> glyphsPtr;
-	GLYPHSET* glyphs = nullptr;
+	std::wstring textFace;
+	std::vector<std::pair<size_t, wchar_t>> ranges;
 	{
 		Style style{ control };
 		style << symbols();
 
-		auto textLen = dc.GetTextFaceLen();
-		text.reset(new wchar_t[textLen]);
-		dc.GetTextFace(text.get(), textLen);
+		{
+			auto textLen = dc.GetTextFaceLen();
+			std::unique_ptr<wchar_t[]> text{ new wchar_t[textLen] };
+			dc.GetTextFace(text.get(), textLen);
+			textFace = text.get();
+		}
 
-		auto size = dc.GetFontUnicodeRanges(nullptr);
-		glyphsPtr.reset(new char[size]);
-		glyphs = reinterpret_cast<GLYPHSET*>(glyphsPtr.get());
-		dc.GetFontUnicodeRanges(glyphs);
+		{
+			auto size = dc.GetFontUnicodeRanges(nullptr);
+			std::unique_ptr<char[]> glyphsPtr{ new char[size] };
+			auto glyphs = reinterpret_cast<GLYPHSET*>(glyphsPtr.get());
+			dc.GetFontUnicodeRanges(glyphs);
+
+			for (DWORD i = 0; i < glyphs->cRanges; ++i) {
+				if (!ranges.empty()) {
+					auto& range = ranges.back();
+					auto last = std::get<0>(range) + std::get<1>(range);
+					if (last == glyphs->ranges[i].wcLow) {
+						std::get<0>(range) += glyphs->ranges[i].cGlyphs;
+						continue;
+					}
+				}
+				ranges.emplace_back(glyphs->ranges[i].cGlyphs, glyphs->ranges[i].wcLow);
+			}
+		}
 	}
 #endif
 
@@ -602,17 +618,19 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 		server(control, item);
 
 #if FA_CHEATSHEET
-	control.out().println({}).println(std::wstring(L"Font face: ") + text.get());
+	control.out().println({}).println(L"Font face: " + textFace);
 
 	Style style{ control };
 	style << symbols() << fontSize((control.getFontSize() * 18) / 10);
 
 	size_t pos = 0;
 	std::wstring line;
-	for (DWORD i = 0; i < glyphs->cRanges; ++i) {
-		for (USHORT cnt = 0; cnt < glyphs->ranges[i].cGlyphs; ++cnt) {
-			WCHAR glyph = cnt + glyphs->ranges[i].wcLow;
+
+	for (auto& range : ranges) {
+		for (USHORT cnt = 0; cnt < std::get<0>(range); ++cnt) {
+			WCHAR glyph = cnt + std::get<1>(range);
 			line.push_back(glyph);
+			line.push_back(' ');
 			pos++;
 			if (pos == 32) {
 				control.out().println(line);
