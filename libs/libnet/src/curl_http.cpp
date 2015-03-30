@@ -167,6 +167,11 @@ namespace net { namespace http {
 			return curl_easy_perform(m_curl);
 		}
 
+		std::string error(CURLcode err)
+		{
+			return curl_easy_strerror(err);
+		}
+
 	protected:
 		size_type onData(const char* data, size_type length) { return 0; }
 		size_type onHeader(const char* data, size_type length) { return 0; }
@@ -306,13 +311,13 @@ namespace net { namespace http {
 
 		if (!m_curl)
 		{
-			http_callback->onError();
+			http_callback->onError("libCurl handle not inited.");
 			return;
 		}
 
 		m_curl.setCallback(http_callback);
 		m_curl.setOwner(shared_from_this());
-		m_curl.setConnectTimeout(5);
+		m_curl.setConnectTimeout(30);
 		m_curl.setUA(http_callback->getUserAgent());
 		m_curl.setProgress();
 		m_curl.setSSLVerify(false);
@@ -357,7 +362,7 @@ namespace net { namespace http {
 		if (ret == CURLE_OK)
 			http_callback->onFinish();
 		else
-			http_callback->onError();
+			http_callback->onError(http_callback->getUrl() + " error: " + m_curl.error(ret));
 	}
 
 	namespace Transfer

@@ -53,7 +53,7 @@ namespace net { namespace http {
 	{
 		virtual ~HttpCallback() {}
 		virtual void onStart() = 0;
-		virtual void onError() = 0;
+		virtual void onError(const std::string& error) = 0;
 		virtual void onFinish() = 0;
 		virtual size_t onData(const void* data, size_t count) = 0;
 		virtual void onFinalLocation(const std::string& location) = 0;

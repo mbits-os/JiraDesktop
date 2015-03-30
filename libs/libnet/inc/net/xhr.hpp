@@ -96,6 +96,7 @@ namespace net { namespace http { namespace client {
 		virtual void setMaxRedirects(size_t redirects) = 0;
 
 		virtual void setCredentials(const CredentialProviderPtr& provider) = 0;
+		virtual const std::string& getError() = 0;
 	};
 
 	struct CredentialProvider {

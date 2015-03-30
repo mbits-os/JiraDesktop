@@ -139,6 +139,8 @@ namespace net { namespace http {
 			uint64_t m_contentLength;
 			uint64_t m_loadedLength;
 
+			std::string m_error;
+
 			struct Credentials : http::HttpCredentials
 			{
 				client::CredentialProviderPtr m_provider;
@@ -174,6 +176,7 @@ namespace net { namespace http {
 				response.clear();
 				m_wasRedirected = false;
 				m_finalLocation.clear();
+				m_error.clear();
 			}
 		public:
 
@@ -224,9 +227,10 @@ namespace net { namespace http {
 			void setMaxRedirects(size_t) override;
 			void setShouldFollowLocation(bool) override;
 			void setCredentials(const client::CredentialProviderPtr& provider) override;
+			const std::string& getError() override;
 
 			void onStart() override;
-			void onError() override;
+			void onError(const std::string& error) override;
 			void onFinish() override;
 			size_t onData(const void*, size_t) override;
 			void onFinalLocation(const std::string&) override;
@@ -411,6 +415,11 @@ namespace net { namespace http {
 			m_credentials = provider ? &m_impl : nullptr;
 		}
 
+		const std::string& XmlHttpRequest::getError()
+		{
+			return m_error;
+		}
+
 		void XmlHttpRequest::onStart()
 		{
 			if (!body.content || !body.content_length)
@@ -419,8 +428,9 @@ namespace net { namespace http {
 			//onReadyStateChange();
 		}
 
-		void XmlHttpRequest::onError()
+		void XmlHttpRequest::onError(const std::string& error)
 		{
+			m_error = error;
 			ready_state = DONE;
 			done_flag = true;
 			onReadyStateChange();
