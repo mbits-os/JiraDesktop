@@ -15,6 +15,8 @@ inline void synchronize(T& mtx, F fn)
 	fn();
 }
 
+struct StyleSave;
+
 struct IJiraPainter {
 	virtual ~IJiraPainter() {}
 	virtual void moveOrigin(int x, int y) = 0;
@@ -23,6 +25,8 @@ struct IJiraPainter {
 	virtual void paintImage(const std::string& url, int width, int height) = 0;
 	virtual void paintString(const std::string& text) = 0;
 	virtual std::pair<size_t, size_t> measureString(const std::string& text) = 0;
+	virtual StyleSave* setStyle(jira::styles) = 0;
+	virtual void restoreStyle(StyleSave*) = 0;
 };
 
 class PushOrigin {
@@ -39,8 +43,23 @@ public:
 	}
 };
 
+class StyleSaver {
+	IJiraPainter* painter;
+	StyleSave* save;
+public:
+	explicit StyleSaver(IJiraPainter* painter, jira::styles style) : painter(painter), save(painter->setStyle(style))
+	{
+	}
+
+	~StyleSaver()
+	{
+		painter->restoreStyle(save);
+	}
+};
+
 struct IJiraNode : jira::node {
 	virtual std::string text() const = 0;
+	virtual jira::styles getStyles() const = 0;
 	virtual void paint(IJiraPainter* painter) = 0;
 	virtual std::pair<size_t, size_t> measure(IJiraPainter* painter) = 0;
 };

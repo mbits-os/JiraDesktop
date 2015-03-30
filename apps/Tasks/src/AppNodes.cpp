@@ -34,9 +34,20 @@ void CJiraNode::addChild(std::unique_ptr<node>&& child)
 	m_children.push_back(std::move(child));
 }
 
+void CJiraNode::setClass(jira::styles styles)
+{
+	m_class = styles;
+}
+
+jira::styles CJiraNode::getStyles() const
+{
+	return m_class;
+}
+
 void CJiraNode::paint(IJiraPainter* painter)
 {
 	PushOrigin push{ painter };
+	StyleSaver saver{ painter, getStyles() };
 
 	int x = 0;
 	// slow, but working:
@@ -49,6 +60,8 @@ void CJiraNode::paint(IJiraPainter* painter)
 
 std::pair<size_t, size_t> CJiraNode::measure(IJiraPainter* painter)
 {
+	StyleSaver saver{ painter, getStyles() };
+
 	size_t height = 0;
 	size_t width = 0;
 	for (auto& node : m_children) {
@@ -85,13 +98,7 @@ std::pair<size_t, size_t> CJiraIconNode::measure(IJiraPainter* /*painter*/)
 CJiraLinkNode::CJiraLinkNode(const std::string& href)
 {
 	m_data[Attr::Href] = href;
-}
-
-void CJiraLinkNode::paint(IJiraPainter* painter)
-{
-	// set color from style
-	CJiraNode::paint(painter);
-	// restore color
+	CJiraNode::setClass(jira::styles::link);
 }
 
 CJiraTextNode::CJiraTextNode(const std::string& text)
@@ -101,11 +108,15 @@ CJiraTextNode::CJiraTextNode(const std::string& text)
 
 void CJiraTextNode::paint(IJiraPainter* painter)
 {
+	StyleSaver saver{ painter, getStyles() };
+
 	painter->paintString(m_data[Attr::Text]);
 }
 
 std::pair<size_t, size_t> CJiraTextNode::measure(IJiraPainter* painter)
 {
+	StyleSaver saver{ painter, getStyles() };
+
 	return painter->measureString(m_data[Attr::Text]);
 }
 

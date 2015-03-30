@@ -13,12 +13,15 @@ public:
 	std::string text() const override;
 	void setTooltip(const std::string& text) override;
 	void addChild(std::unique_ptr<node>&& child) override;
+	void setClass(jira::styles) override;
+	jira::styles getStyles() const override;
 	void paint(IJiraPainter* painter) override;
 	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
 
 protected:
 	std::map<Attr, std::string> m_data;
 	std::vector<std::unique_ptr<jira::node>> m_children;
+	jira::styles m_class = jira::styles::unset;
 };
 
 class CJiraIconNode : public CJiraNode {
@@ -32,7 +35,6 @@ public:
 class CJiraLinkNode : public CJiraNode {
 public:
 	CJiraLinkNode(const std::string& href);
-	void paint(IJiraPainter* painter) override;
 };
 
 class CJiraTextNode : public CJiraNode {

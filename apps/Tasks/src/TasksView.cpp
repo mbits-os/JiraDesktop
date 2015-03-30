@@ -131,6 +131,8 @@ enum {
 	CELL_MARGIN = 7
 };
 
+namespace { class Styler; };
+
 class LinePrinter : IJiraPainter
 {
 	HFONT older;
@@ -139,6 +141,7 @@ class LinePrinter : IJiraPainter
 	long lineHeight;
 	int x = BODY_MARGIN;
 	int y = BODY_MARGIN;
+	Styler* uplink = nullptr;
 
 	void updateLineHeight()
 	{
@@ -185,6 +188,8 @@ class LinePrinter : IJiraPainter
 		return{ (size_t)s.cx, (size_t)s.cy };
 	}
 
+	StyleSave* setStyle(jira::styles) override;
+	void restoreStyle(StyleSave* save) override;
 public:
 	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
 	{
@@ -237,8 +242,9 @@ public:
 		return *this;
 	}
 
-	LinePrinter& paint(const std::unique_ptr<jira::node>& node)
+	LinePrinter& paint(const std::unique_ptr<jira::node>& node, Styler* link)
 	{
+		uplink = link;
 		cast(node)->paint(this);
 		return *this;
 	}
@@ -342,7 +348,6 @@ namespace {
 
 		const LOGFONT& fontDef() const { return this->logFont; }
 	};
-
 
 	class Style {
 		Styler& m_styler;
@@ -580,7 +585,7 @@ namespace {
 		auto x = styler.out().getX();
 		auto src = widths.begin();
 		for (auto& value : row.values()) {
-			styler.out().moveToX(x).paint(value);
+			styler.out().moveToX(x).paint(value, &styler);
 			x += *src++ + CELL_MARGIN + CELL_MARGIN;
 		}
 
@@ -632,6 +637,51 @@ namespace {
 		return font.Detach();
 	}
 };
+
+struct StyleSave
+{
+	Style saved;
+	explicit StyleSave(Styler& styler)
+		: saved{ styler }
+	{
+	}
+
+	void apply(jira::styles style)
+	{
+		using namespace jira;
+
+		switch (style) {
+		case styles::unset:
+			// from UI
+			break;
+		case styles::none:
+			saved << italic() << color(0x00555555);
+			break;
+		case styles::error:
+			saved << color(0x002600E6);
+			break;
+		case styles::link:
+			saved << color(0x00AF733B);
+			break;
+		};
+	}
+};
+
+StyleSave* LinePrinter::setStyle(jira::styles style)
+{
+	if (style == jira::styles::unset)
+		return nullptr;
+
+	auto mem = std::make_unique<StyleSave>(*uplink);
+	mem->apply(style);
+	return mem.release();
+}
+
+void LinePrinter::restoreStyle(StyleSave* save)
+{
+	if (!save)
+		return;
+}
 
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
