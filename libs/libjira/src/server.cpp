@@ -188,8 +188,9 @@ namespace jira
 
 			ON_EXIT([this] {
 				m_isLoadingFields = false;
-				if (m_requestRefresh)
-					refresh();
+				auto doc = m_refreshDoc;
+				if (doc)
+					refresh(doc);
 			});
 
 			if ((xhr->getStatus() / 100) != 2) {
@@ -276,24 +277,24 @@ namespace jira
 		}, ONPROGRESS{}, true);
 	}
 
-	void server::refresh()
+	void server::refresh(const std::shared_ptr<document>& doc)
 	{
-		if (m_isLoadingView && !m_requestRefresh)
+		if (m_isLoadingView && !m_refreshDoc)
 			return;
 
 		if (!m_isLoadingView)
 			emit([&](server_listener* listener) { listener->onRefreshStarted(); });
 
-		m_requestRefresh = false;
+		m_refreshDoc.reset();
 		m_isLoadingView = true;
 
 		if (m_isLoadingFields) {
-			m_requestRefresh = true;
+			m_refreshDoc = doc;
 			return;
 		}
 
 		auto thiz = shared_from_this();
-		search([thiz](XHR* /*xhr*/, jira::report&& report) {
+		search(doc, [thiz](XHR* /*xhr*/, jira::report&& report) {
 			ON_EXIT([thiz] {
 				thiz->emit([&](server_listener* listener) { listener->onRefreshFinished(); });
 				thiz->m_isLoadingView = false;
@@ -352,7 +353,7 @@ namespace jira
 		}, progress, async);
 	}
 
-	void server::search(const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress, bool async)
+	void server::search(const std::shared_ptr<document>& doc, const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress, bool async)
 	{
 		if (url().empty()) {
 			m_errors.push_back("Trying to open an empty URL.");
@@ -369,7 +370,7 @@ namespace jira
 			).string());
 
 		auto base = url();
-		loadJSON(uri.string(), [this, response, columns, base](XHR* xhr, const json::value& data) {
+		loadJSON(uri.string(), [this, doc, response, columns, base](XHR* xhr, const json::value& data) {
 
 			if ((xhr->getStatus() / 100) != 2) {
 				m_errors.emplace_back("Error loading query reply: " + std::to_string(xhr->getStatus()) + " " + xhr->getStatusText());
@@ -396,7 +397,7 @@ namespace jira
 				auto key = issue["key"].as_string();
 				auto id = issue["id"].as_string();
 
-				dataset.data.push_back(dataset.schema.visit(issue["fields"], key, id));
+				dataset.data.push_back(dataset.schema.visit(doc.get(), issue["fields"], key, id));
 			}
 
 			response(xhr, std::move(dataset));

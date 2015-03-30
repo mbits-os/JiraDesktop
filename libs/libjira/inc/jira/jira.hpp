@@ -33,14 +33,23 @@
 
 namespace jira
 {
-	struct value {
-		virtual ~value() {}
-		virtual std::string text() const = 0;
-		virtual std::string html() const = 0;
+	struct node {
+		virtual ~node() {}
+		virtual void setTooltip(const std::string& text) = 0;
+		virtual void addChild(std::unique_ptr<node>&& child) = 0;
+	};
+
+	struct document {
+		virtual ~document() {}
+		virtual std::unique_ptr<node> createSpan() = 0;
+		virtual std::unique_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
+		virtual std::unique_ptr<node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) = 0;
+		virtual std::unique_ptr<node> createLink(const std::string& href) = 0;
+		virtual std::unique_ptr<node> createText(const std::string& text) = 0;
 	};
 
 	class record {
-		std::vector<std::unique_ptr<value>> m_values;
+		std::vector<std::unique_ptr<node>> m_values;
 
 		std::string m_uri;
 		std::string m_key;
@@ -66,12 +75,9 @@ namespace jira
 			m_values.push_back(std::make_unique<T>(std::forward<Args>(args)...));
 		}
 
-		void addVal(std::unique_ptr<value>&&);
+		void addVal(std::unique_ptr<node>&&);
 
-		std::string text(const std::string& sep) const;
-		std::string html(const std::string & sep) const;
-
-		const std::vector<std::unique_ptr<value>>& values() const { return m_values; }
+		const std::vector<std::unique_ptr<node>>& values() const { return m_values; }
 	};
 
 	struct type {
@@ -80,8 +86,8 @@ namespace jira
 		virtual const std::string& id() const { return m_id; }
 		virtual const std::string& title() const { return titleFull(); }
 		virtual const std::string& titleFull() const { return m_title; }
-		virtual std::unique_ptr<value> visit(const record& issue, const json::map& object) const = 0;
-		virtual std::unique_ptr<value> visit(const record& issue, const json::value& value) const;
+		virtual std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& object) const = 0;
+		virtual std::unique_ptr<node> visit(document* doc, const record& issue, const json::value& value) const;
 	private:
 		std::string m_id;
 		std::string m_title;
@@ -95,7 +101,7 @@ namespace jira
 		model(std::vector<std::unique_ptr<type>>&& cols, const std::string& uri) : m_cols(std::move(cols)), m_uri(uri) {}
 	public:
 		model() = default;
-		record visit(const json::value& object, const std::string& key, const std::string& id) const;
+		record visit(document* doc, const json::value& object, const std::string& key, const std::string& id) const;
 
 		const std::vector<std::unique_ptr<type>>& cols() const { return m_cols; }
 	};

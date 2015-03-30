@@ -33,39 +33,39 @@ namespace jira
 		class key : public type {
 		public:
 			key(const std::string& id, const std::string& title);
-			std::unique_ptr<value> visit(const record& issue, const json::map& /*object*/) const override;
+			std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& /*object*/) const override;
 		};
 
 		class string : public type {
 		public:
 			string(const std::string& id, const std::string& title);
-			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
+			std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& object) const override;
 		};
 
 		class label : public type {
 		public:
 			label(const std::string& id, const std::string& title);
-			std::unique_ptr<value> visit(const record& /*issue*/, const json::map& /*object*/) const override { return{}; }
-			std::unique_ptr<value> visit(const record& issue, const json::value& object) const override;
+			std::unique_ptr<node> visit(document* /*doc*/, const record& /*issue*/, const json::map& /*object*/) const override { return{}; }
+			std::unique_ptr<node> visit(document* doc, const record& issue, const json::value& object) const override;
 		};
 
 		class resolution : public type {
 		public:
 			resolution(const std::string& id, const std::string& title);
-			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
+			std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& object) const override;
 		};
 
 		class summary : public type {
 		public:
 			summary(const std::string & id, const std::string& title);
-			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
+			std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& object) const override;
 		};
 
 		class user : public type {
 			std::string m_title;
 		public:
 			user(const std::string & id, const std::string& title);
-			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
+			std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& object) const override;
 			const std::string& title() const override;
 		};
 
@@ -73,7 +73,7 @@ namespace jira
 			std::string m_title;
 		public:
 			icon(const std::string& id, const std::string& title);
-			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
+			std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& object) const override;
 			const std::string& title() const override;
 		};
 
@@ -82,7 +82,7 @@ namespace jira
 			std::string m_sep;
 		public:
 			array(const std::string& id, const std::string& title, std::unique_ptr<type>&& item, const std::string& sep);
-			std::unique_ptr<value> visit(const record& issue, const json::map& object) const override;
+			std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& object) const override;
 		};
 	}
 }

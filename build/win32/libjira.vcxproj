@@ -53,7 +53,6 @@
     <ClCompile Include="..\..\libs\libjira\src\jira.cpp" />
     <ClCompile Include="..\..\libs\libjira\src\server.cpp" />
     <ClCompile Include="..\..\libs\libjira\src\types.cpp" />
-    <ClCompile Include="..\..\libs\libjira\src\values.cpp" />
     <ClCompile Include="..\..\libs\libjira\src\win32\win32_secure.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -62,6 +61,5 @@
     <ClInclude Include="..\..\libs\libjira\inc\jira\server.hpp" />
     <ClInclude Include="..\..\libs\libjira\pch\pch.h" />
     <ClInclude Include="..\..\libs\libjira\src\types.hpp" />
-    <ClInclude Include="..\..\libs\libjira\src\values.hpp" />
   </ItemGroup>
 </Project>

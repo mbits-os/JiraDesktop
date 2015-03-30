@@ -26,7 +26,6 @@
 
 #include "jira/jira.hpp"
 #include "types.hpp"
-#include "values.hpp"
 #include <cctype>
 
 namespace jira
@@ -74,31 +73,27 @@ namespace jira
 			return T{ it->second.as<T>() };
 		}
 
-		std::unique_ptr<value> key::visit(const record& issue, const json::map& /*object*/) const
+		std::unique_ptr<node> key::visit(document* doc, const record& issue, const json::map& /*object*/) const
 		{
-			values::span s;
-			s
-				.add<values::label>("[")
-				.add<values::link>(issue.issue_uri(), std::make_unique<values::label>(issue.issue_key()))
-				.add<values::label>("]");
-			return std::make_unique<values::span>(std::move(s));
+			auto link = doc->createLink(issue.issue_uri());
+			link->addChild(doc->createText(issue.issue_key()));
+			return std::move(link);
 		}
 
 		string::string(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::unique_ptr<value> string::visit(const record& /*issue*/, const json::map& object) const
+		std::unique_ptr<node> string::visit(document* doc, const record& /*issue*/, const json::map& object) const
 		{
-
 			auto it = object.find(id());
 			if (it == object.end())
-				return std::make_unique<values::empty>();
+				return nullptr;
 
-			return std::make_unique<values::label>(it->second.as_string());
+			return doc->createText(it->second.as_string());
 		}
 
 		label::label(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::unique_ptr<value> label::visit(const record& /*issue*/, const json::value& object) const
+		std::unique_ptr<node> label::visit(document* doc, const record& /*issue*/, const json::value& object) const
 		{
 			std::string text;
 			if (object.is<std::string>())
@@ -110,43 +105,50 @@ namespace jira
 					text = it->second.as_string();
 			}
 
-			if (!text.empty())
-				return std::make_unique<values::styled>(text, "background:#f5f5f5;border:1px solid #ccc;border-radius:3.01px;display:inline-block;padding:1px 5px; margin:0 3px 0 0;");
+			if (!text.empty()) {
+				// TODO: styling - background:#f5f5f5;border:1px solid #ccc;border-radius:3.01px;display:inline-block;padding:1px 5px; margin:0 3px 0 0;
+				return doc->createText(text);
+			}
 
-			return std::make_unique<values::empty>();
+			return nullptr;
 		}
 
 		resolution::resolution(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::unique_ptr<value> resolution::visit(const record& /*issue*/, const json::map& object) const
+		std::unique_ptr<node> resolution::visit(document* doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || it->second.is<nullptr_t>())
-				return std::make_unique<values::styled>("Unresolved", "font-style: italic; color: #555");
+				return doc->createText("Unresolved"); // font-style: italic; color: #555
 
 			if (it->second.is<std::string>())
-				return std::make_unique<values::label>(it->second.as<std::string>());
+				return doc->createText(it->second.as<std::string>());
 
 			if (it->second.is<json::map>()) {
 				json::map map{ it->second };
 				auto name = either_or<std::string>(map, "name", "?");
 				auto description = either_or<std::string>(map, "description");
-				return std::make_unique<values::label>(name, description);
+
+				auto label = doc->createText(name);
+				label->setTooltip(description);
+				return std::move(label);
 			}
 
-			return std::make_unique<values::styled>("{!}", "color:#E60026");
+			return doc->createText("{!}"); // color:#E60026
 		}
 
 		summary::summary(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::unique_ptr<value> summary::visit(const record& issue, const json::map& object) const
+		std::unique_ptr<node> summary::visit(document* doc, const record& issue, const json::map& object) const
 		{
 			auto it = object.find(id());
 			std::string label = "Untitled";
 			if (it != object.end() && it->second.is<json::STRING>())
-				label = "\"" + it->second.as_string() + "\"";
+				label = it->second.as_string();
 
-			return std::make_unique<values::link>(issue.issue_uri(), std::make_unique<values::label>(label));
+			auto link = doc->createLink(issue.issue_uri());
+			link->addChild(doc->createText(label));
+			return std::move(link);
 		}
 
 		user::user(const std::string& id, const std::string& title) : type(id, title)
@@ -171,11 +173,11 @@ namespace jira
 			return out;
 		}
 
-		std::unique_ptr<value> user::visit(const record& /*issue*/, const json::map& object) const
+		std::unique_ptr<node> user::visit(document* doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
-				return std::make_unique<values::empty>();
+				return nullptr;
 
 			json::map data{ it->second };
 			auto active = either_or<json::BOOL>(data, "active", false);
@@ -199,7 +201,7 @@ namespace jira
 				}
 			}
 
-			return std::make_unique<values::user>(active, display, email, login, std::move(avatar));
+			return doc->createUser(active, display, email, login, std::move(avatar));
 		}
 
 		const std::string& user::title() const
@@ -213,20 +215,20 @@ namespace jira
 				m_title = title.substr(0, 1);
 		}
 
-		std::unique_ptr<value> icon::visit(const record& /*issue*/, const json::map& object) const
+		std::unique_ptr<node> icon::visit(document* doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
-				return std::make_unique<values::empty>();
+				return nullptr;
 
 			json::map data{ it->second };
 			auto uri = data["iconUrl"];
 			auto name = either_or<json::STRING>(data, "name", "?");
 			auto description = either_or<json::STRING>(data, "description");
 			if (!uri.is<json::STRING>())
-				return std::make_unique<values::label>(name);
+				return doc->createText(name);
 
-			return std::make_unique<values::icon>(uri.as_string(), name, description);
+			return doc->createIcon(uri.as_string(), name, description);
 		}
 
 		const std::string& icon::title() const
@@ -241,28 +243,28 @@ namespace jira
 		{
 		}
 
-		std::unique_ptr<value> array::visit(const record& issue, const json::map& object) const
+		std::unique_ptr<node> array::visit(document* doc, const record& issue, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::vector>())
-				return std::make_unique<values::styled>("None", "font-style: italic; color: #555");
+				return doc->createText("None"); // font-style: italic; color: #555
 
-			values::span out;
+			auto out = doc->createSpan();
 
 			bool first = true;
 			auto items = it->second.as<json::vector>();
 			for (auto&& item : items) {
 				if (first) first = false;
-				else out.add<values::label>(m_sep);
+				else out->addChild(doc->createText(m_sep));
 
-				auto val = m_item->visit(issue, item);
+				auto val = m_item->visit(doc, issue, item);
 				if (val)
-					out.addVal(std::move(val));
+					out->addChild(std::move(val));
 			}
 			if (first) // no items added to the span, return empty...
-				return std::make_unique<values::styled>("None", "font-style: italic; color: #555");
+				return doc->createText("None"); // font-style: italic; color: #555
 
-			return std::make_unique<values::span>(std::move(out));
+			return std::move(out);
 		}
 	}
 };

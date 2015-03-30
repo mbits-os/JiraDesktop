@@ -36,48 +36,20 @@ namespace jira
 		return Uri::canonical("browse/" + m_key, m_uri).string();
 	}
 
-	void record::addVal(std::unique_ptr<value>&& field)
+	void record::addVal(std::unique_ptr<node>&& field)
 	{
 		m_values.push_back(std::move(field));
 	}
 
-	std::string record::text(const std::string& sep) const
-	{
-		std::ostringstream o;
-		bool first = true;
-		for (auto&& value : m_values) {
-			if (first) first = false;
-			else o << sep;
-
-			o << value->text();
-		}
-
-		return o.str();
-	}
-
-	std::string record::html(const std::string& sep) const
-	{
-		std::ostringstream o;
-		bool first = true;
-		for (auto&& value : m_values) {
-			if (first) first = false;
-			else o << sep;
-
-			o << value->html();
-		}
-
-		return o.str();
-	}
-
-	std::unique_ptr<value> type::visit(const record& issue, const json::value& value) const
+	std::unique_ptr<node> type::visit(document* doc, const record& issue, const json::value& value) const
 	{
 		if (!value.is<json::map>())
 			return nullptr;
 
-		return visit(issue, value.as<json::map>());
+		return visit(doc, issue, value.as<json::map>());
 	}
 
-	record model::visit(const json::value& object, const std::string& key, const std::string& id) const
+	record model::visit(document* doc, const json::value& object, const std::string& key, const std::string& id) const
 	{
 		record out;
 		out.uri(m_uri);
@@ -85,7 +57,7 @@ namespace jira
 		out.issue_id(id);
 
 		for (auto& col : m_cols) {
-			auto val = col->visit(out, object);
+			auto val = col->visit(doc, out, object);
 			if (val)
 				out.addVal(std::move(val));
 		}

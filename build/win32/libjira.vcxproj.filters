@@ -29,9 +29,6 @@
     <ClCompile Include="..\..\libs\libjira\src\types.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libs\libjira\src\values.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\libs\libjira\src\win32\win32_secure.cpp">
       <Filter>src\win32</Filter>
     </ClCompile>
@@ -47,9 +44,6 @@
       <Filter>inc\jira</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libs\libjira\src\types.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libs\libjira\src\values.hpp">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libs\libjira\inc\jira\server.hpp">
