@@ -5,6 +5,7 @@
   </ImportGroup>
   <PropertyGroup>
     <_PropertySheetDisplayName>libbase code</_PropertySheetDisplayName>
+    <TargetName>runtime</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup>
