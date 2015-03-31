@@ -15,16 +15,23 @@ public:
 	void addChild(std::unique_ptr<node>&& child) override;
 	void setClass(jira::styles) override;
 	jira::styles getStyles() const override;
+	const std::vector<std::unique_ptr<node>>& values() const override;
+
 	void paint(IJiraPainter* painter) override;
 	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
 
-	void invalidate();
+	IJiraNode* getParent() const override;
+	void setParent(IJiraNode*) override;
+	void invalidate() override;
 
 protected:
 	std::map<Attr, std::string> m_data;
 	std::vector<std::unique_ptr<jira::node>> m_children;
 	jira::styles m_class = jira::styles::unset;
+	IJiraNode* m_parent = nullptr;
 };
+
+class CJiraRoot : public CJiraNode {};
 
 class CJiraIconNode : public CJiraNode {
 	class ImageCb
@@ -60,6 +67,7 @@ public:
 
 class CJiraDocument : public jira::document {
 	void setCurrent(const std::shared_ptr<jira::server>&) override;
+	std::unique_ptr<jira::node> createTableRow() override;
 	std::unique_ptr<jira::node> createSpan() override;
 	std::unique_ptr<jira::node> createIcon(const std::string& uri, const std::string& text, const std::string& description) override;
 	std::unique_ptr<jira::node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) override;

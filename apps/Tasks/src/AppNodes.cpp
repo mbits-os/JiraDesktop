@@ -31,6 +31,7 @@ void CJiraNode::addChild(std::unique_ptr<node>&& child)
 	if (it != m_data.end())
 		return;
 
+	cast(child)->setParent(this);
 	m_children.push_back(std::move(child));
 }
 
@@ -42,6 +43,11 @@ void CJiraNode::setClass(jira::styles styles)
 jira::styles CJiraNode::getStyles() const
 {
 	return m_class;
+}
+
+const std::vector<std::unique_ptr<jira::node>>& CJiraNode::values() const
+{
+	return m_children;
 }
 
 void CJiraNode::paint(IJiraPainter* painter)
@@ -74,9 +80,20 @@ std::pair<size_t, size_t> CJiraNode::measure(IJiraPainter* painter)
 	return{ width, height };
 }
 
+IJiraNode* CJiraNode::getParent() const
+{
+	return m_parent;
+}
+
+void CJiraNode::setParent(IJiraNode* node)
+{
+	m_parent = node;
+}
+
 void CJiraNode::invalidate()
 {
-	// TODO
+	if (m_parent)
+		m_parent->invalidate(); // TODO: only invalidate the rect this node "occupies"
 }
 
 CJiraIconNode* parent = nullptr;
@@ -149,6 +166,11 @@ CJiraDocument::CJiraDocument(std::shared_ptr<ImageRef>(*creator)(const std::shar
 void CJiraDocument::setCurrent(const std::shared_ptr<jira::server>& server)
 {
 	m_server = server;
+}
+
+std::unique_ptr<jira::node> CJiraDocument::createTableRow()
+{
+	return std::make_unique<CJiraNode>();
 }
 
 std::unique_ptr<jira::node> CJiraDocument::createSpan()

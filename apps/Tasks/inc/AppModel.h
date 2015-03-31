@@ -84,6 +84,10 @@ struct IJiraNode : jira::node {
 	virtual jira::styles getStyles() const = 0;
 	virtual void paint(IJiraPainter* painter) = 0;
 	virtual std::pair<size_t, size_t> measure(IJiraPainter* painter) = 0;
+
+	virtual IJiraNode* getParent() const = 0;
+	virtual void setParent(IJiraNode*) = 0;
+	virtual void invalidate() = 0;
 };
 
 inline IJiraNode* cast(const std::unique_ptr<jira::node>& node) {
