@@ -31,6 +31,13 @@
 #	include <windows.h>
 #endif
 
+#ifdef LIBNET_EXPORTS
+#define FS_LINK __declspec(dllexport)
+struct __declspec(dllimport) _WIN32_FIND_DATAW;
+#else
+#define FS_LINK
+#endif
+
 namespace filesystem
 {
 	struct slash { static const char value = '/'; };
@@ -40,77 +47,28 @@ namespace filesystem
 
 	class path;
 
-	class path_iterator
+	class FS_LINK path_iterator
 		: public std::iterator< std::bidirectional_iterator_tag, std::string, std::ptrdiff_t, std::string*, std::string&>
 	{
 	public:
 		typedef const std::string *pointer;
 		typedef const std::string& reference;
 
-		path_iterator(): m_ptr(0), m_offset(0) {}
-
-		path_iterator(const path& val, size_t offset) : m_ptr(&val), m_offset(offset) {	get_value(); }
-
-		path_iterator(const path_iterator&) = default;
-		path_iterator& operator=(const path_iterator&) = default;
-		path_iterator(path_iterator&& oth)
-			: m_ptr(oth.m_ptr)
-			, m_value(std::move(oth.m_value))
-			, m_offset(oth.m_offset)
-			, m_needs_value(oth.m_needs_value)
-		{
-		}
-		path_iterator& operator=(const path_iterator&& oth)
-		{
-			m_ptr = oth.m_ptr;
-			m_value = std::move(oth.m_value);
-			m_offset = oth.m_offset;
-			m_needs_value = oth.m_needs_value;
-
-			return *this;
-		}
-
-		reference operator*() const
-		{
-			if (m_needs_value)
-				((path_iterator*)this)->get_value();
-			return m_value;
-		}
-
-		pointer operator->() const
-		{
-			return (std::pointer_traits<pointer>::pointer_to(**this));
-		}
-
-		inline path_iterator& operator++();
-
-		path_iterator operator++(int)
-		{	// postincrement
-			path_iterator _Tmp = *this;
-			++*this;
-			return (_Tmp);
-		}
-
-		inline path_iterator& operator--();
-
-		path_iterator operator--(int)
-		{	// postdecrement
-			path_iterator _Tmp = *this;
-			--*this;
-			return (_Tmp);
-		}
-
-		bool operator==(const path_iterator& _Right) const
-		{	// test for iterator equality
-			return (m_ptr == _Right.m_ptr && m_offset == _Right.m_offset);
-		}
-
-		bool operator!=(const path_iterator& _Right) const
-		{	// test for iterator inequality
-			return (!(*this == _Right));
-		}
-
-		size_t __offset() const { return m_offset; }
+		path_iterator();
+		path_iterator(const path& val, size_t offset);
+		path_iterator(const path_iterator&);
+		path_iterator& operator=(const path_iterator&);
+		path_iterator(path_iterator&& oth);
+		path_iterator& operator=(const path_iterator&& oth);
+		reference operator*() const;
+		pointer operator->() const;
+		path_iterator& operator++();
+		path_iterator operator++(int);
+		path_iterator& operator--();
+		path_iterator operator--(int);
+		bool operator==(const path_iterator& _Right) const;
+		bool operator!=(const path_iterator& _Right) const;
+		size_t __offset() const;
 	private:
 		inline void get_value();
 
@@ -120,7 +78,7 @@ namespace filesystem
 		bool m_needs_value;
 	};
 
-	class path
+	class FS_LINK path
 	{
 		friend class path_iterator;
 		std::string m_path;
@@ -132,13 +90,7 @@ namespace filesystem
 		static void make_universal(std::string&) {}
 		size_t root_name_end() const { return 0; }
 #endif
-		size_t root_directory_end() const
-		{
-			auto name = root_name_end();
-			if (name < m_path.size() && m_path[name] == slash::value)
-				++name;
-			return name;
-		}
+		size_t root_directory_end() const;
 
 	public:
 		using directory_separator = slash;
@@ -148,210 +100,86 @@ namespace filesystem
 		using preferred_separator = slash;
 #endif
 
-		path() = default;
-		path(const path& p) = default;
-		path(path&& p) : m_path(std::move(p.m_path)) {}
-		path(const std::string& val) : m_path(val) { make_universal(m_path); }
-		path(const char* val) : m_path(val) { make_universal(m_path); }
+		path();
+		path(const path& p);
+		path(path&& p);
+		path(const std::string& val);
+		path(const char* val);
 #ifdef WIN32
-		path(const std::wstring& val) : m_path(utf::narrowed(val)) { make_universal(m_path); }
-		path(const wchar_t* val) : m_path(utf::narrowed(val)) { make_universal(m_path); }
+		path(const std::wstring& val);
+		path(const wchar_t* val);
 #endif
 		template <typename It>
 		path(It begin, It end) : m_path(begin, end) { make_universal(m_path); }
-		~path() = default;
+		~path();
 
-		path& operator=(const path& p) = default;
-		path& operator=(path&& p)
-		{
-			m_path = std::move(p.m_path);
-			return *this;
-		}
-		path& operator=(const std::string& val) { return *this = path(val); }
-		path& operator=(const char* val) { return *this = path(val); }
+		path& operator=(const path& p);
+		path& operator=(path&& p);
+		path& operator=(const std::string& val);
+		path& operator=(const char* val);
 
-		path& operator/=(const path& p) { return append(p.m_path); }
-		path& operator/=(const std::string& val) { return append(val); }
-		path& operator/=(const char* val) { return append(val); }
-		path& append(const std::string& s) { return append(s.begin(), s.end()); }
+		path& operator/=(const path& p);
+		path& operator/=(const std::string& val);
+		path& operator/=(const char* val);
+		path& append(const std::string& s);
 		path& append(std::string::const_iterator from, std::string::const_iterator to);
 
 
-		path& operator+=(const path& val) { return *this += val.m_path; }
+		path& operator+=(const path& val);
 		path& operator+=(const std::string& val);
 		path& operator+=(const char* val);
 		path& operator+=(char val);
 
 
-		void clear() { m_path.clear(); }
+		void clear();
 #ifdef WIN32
 		path& make_preferred();
 #else
 		path& make_preferred() { return *this; }
 #endif
 		path& remove_filename();
-		path& replace_filename(const path& replacement) { return remove_filename() /= replacement; }
+		path& replace_filename(const path& replacement);
 		path& replace_extension(const path& replacement = path());
-		void swap(path& rhs) noexcept{ std::swap(m_path, rhs.m_path); }
+		void swap(path& rhs) noexcept;
 
-		const std::string& string() const { return m_path; }
+		const std::string& string() const;
 #ifdef WIN32
-		std::wstring wstring() const { return utf::widen(m_path); }
-		std::wstring wnative() const { return path(*this).make_preferred().wstring(); }
-		std::string native() const { return path(*this).make_preferred().string(); }
-#else
-		std::string native() const { return m_path; }
+		std::wstring wstring() const;
+		std::wstring wnative() const;
 #endif
+		std::string native() const;
 
-		int compare(const path& p) const { return m_path.compare(p.string()); }
-		int compare(const std::string& s) const { return compare(path(s)); }
-		int compare(const char* s) const { return compare(path(s)); }
+		int compare(const path& p) const;
+		int compare(const std::string& s) const;
+		int compare(const char* s) const;
 
 		path root_name() const;
 		path root_directory() const;
 		path root_path() const;
 		path relative_path() const;
 		path parent_path() const;
-		path filename() const { return empty() ? std::string() : *--end(); }
+		path filename() const;
 		path stem() const;
 		path extension() const;
 
-		bool empty() const { return m_path.empty(); }
-		bool has_root_name() const { return !root_name().empty(); }
-		bool has_root_directory() const { return !root_directory().empty(); }
-		bool has_root_path() const { return !root_path().empty(); }
-		bool has_relative_path() const { return !relative_path().empty(); }
-		bool has_parent_path() const { return !parent_path().empty(); }
-		bool has_filename() const { return !filename().empty(); }
-		bool has_stem() const { return !stem().empty(); }
-		bool has_extension() const { return !extension().empty(); }
-#ifdef WIN32
-		bool is_absolute() const { return has_root_name() && has_root_directory(); }
-#else
-		bool is_absolute() const { return has_root_directory(); }
-#endif
-		bool is_relative() const { return !is_absolute(); }
+		bool empty() const;
+		bool has_root_name() const;
+		bool has_root_directory() const;
+		bool has_root_path() const;
+		bool has_relative_path() const;
+		bool has_parent_path() const;
+		bool has_filename() const;
+		bool has_stem() const;
+		bool has_extension() const;
+		bool is_absolute() const;
+		bool is_relative() const;
 
 		using iterator = path_iterator;
 		using const_iterator = iterator;
 
-		iterator begin() const
-		{
-			return (iterator(*this, (size_t)0));
-		}
-
-		iterator end() const
-		{
-			return (iterator(*this, m_path.size()));
-		}
+		iterator begin() const;
+		iterator end() const;
 	};
-
-	inline path_iterator& path_iterator::operator++()
-	{
-		size_t root_name_size = m_ptr->root_name_end();
-		size_t path_size = m_ptr->m_path.size();
-		const char* data = m_ptr->m_path.data();
-
-		if (m_offset < root_name_size)
-			m_offset = root_name_size; // move past drive
-
-		else if (m_offset == root_name_size && root_name_size < path_size && data[root_name_size] == slash::value)
-		{
-			// move past root "/"
-			for (++m_offset; m_offset < path_size; ++m_offset)
-			{
-				if (data[m_offset] != slash::value)
-					break;
-			}
-		}
-		else
-		{
-			// move past slashes followed by a name
-
-			for (; m_offset < path_size; ++m_offset)
-			{
-				if (data[m_offset] != slash::value)
-					break;
-			}
-
-			for (; m_offset < path_size; ++m_offset)
-			{
-				if (data[m_offset] == slash::value)
-					break;
-			}
-		}
-
-		m_needs_value = true;
-		return (*this);
-	}
-
-	inline path_iterator& path_iterator::operator--()
-	{
-		size_t offset_save = m_offset;
-		size_t offset_prev = 0;
-
-		m_offset = 0;
-		do
-		{
-			offset_prev = m_offset;
-			++*this;
-		} while (m_offset < offset_save);
-		m_offset = offset_prev;
-
-		get_value();
-		return *this;
-	}
-
-	inline void path_iterator::get_value()
-	{
-		m_needs_value = false;
-
-		size_t root_name_size = m_ptr->root_name_end();
-		size_t path_size = m_ptr->m_path.size();
-
-		m_value.clear();
-
-		// nothing more to enumerate and/or end()
-		if (path_size <= m_offset)
-			return;
-
-		if (m_offset < root_name_size)
-		{
-			m_value = m_ptr->m_path.substr(0, root_name_size); // get drive
-			return;
-		}
-
-		const char* data = m_ptr->m_path.data();
-
-		if (m_offset == root_name_size && root_name_size < path_size && data[root_name_size] == slash::value)
-		{
-			m_value = slash::value;	// get "/"
-			return;
-		}
-
-		size_t start = m_offset;
-		size_t next_slash = 0;
-
-		for (; start < path_size; ++start)
-		{
-			if (data[start] != slash::value)
-				break;
-		}
-		for (; start + next_slash < path_size; ++next_slash)
-		{
-			if (data[start + next_slash] == slash::value)
-				break;
-		}
-
-		if (next_slash)
-		{
-			m_value = m_ptr->m_path.substr(start, next_slash);
-			return;
-		}
-
-		if (start > m_offset) // we moved, but are right after the last slash
-			m_value = dot::value;
-	}
 
 	inline void swap(path& lhs, path& rhs)
 	{
@@ -406,15 +234,15 @@ namespace filesystem
 		return os << p.string();
 	}
 
-	path current_path();
+	path FS_LINK current_path();
 	inline void current_path(path& p) { p = current_path(); }
 
 #ifdef WIN32
-	path app_directory();
+	path FS_LINK app_directory();
 #endif
 
-	path absolute(const path& p, const path& base = current_path());
-	path canonical(const path& p, const path& base = current_path());
+	path FS_LINK absolute(const path& p, const path& base = current_path());
+	path FS_LINK canonical(const path& p, const path& base = current_path());
 
 	enum class file_type
 	{
@@ -430,7 +258,7 @@ namespace filesystem
 		unknown
 	};
 
-	class status
+	class FS_LINK status
 	{
 		file_type m_type = file_type::none;
 		uintmax_t m_file_size = 0;
@@ -467,10 +295,10 @@ namespace filesystem
 	inline bool is_directory(const path& p) { return status(p).is_directory(); }
 	inline bool is_regular_file(const path& p) { return status(p).is_regular_file(); }
 
-	void remove(const path& p);
-	FILE* fopen(const path& file, char const* mode);
+	FS_LINK void remove(const path& p);
+	FS_LINK FILE* fopen(const path& file, char const* mode);
 
-	class directory_entry
+	class FS_LINK directory_entry
 	{
 	public:
 		// constructors and destructor
@@ -499,8 +327,9 @@ namespace filesystem
 		bool operator>=(const directory_entry& rhs) const { return m_path >= rhs.m_path; }
 	private:
 		filesystem::path m_path; // for exposition only
-	};
-	class directory_iterator
+	};
+
+	class FS_LINK directory_iterator
 	{
 		directory_entry m_entry;
 		void setup_iter(const path& p); // should do the initial next_entry
@@ -508,7 +337,7 @@ namespace filesystem
 		void shutdown_iter();
 
 #ifdef WIN32
-		struct dir_find {
+		struct FS_LINK dir_find {
 			WIN32_FIND_DATAW m_data;
 			HANDLE m_handle;
 			dir_find() : m_handle(INVALID_HANDLE_VALUE) {}
@@ -531,7 +360,7 @@ namespace filesystem
 		typedef const directory_entry& reference;
 		typedef std::input_iterator_tag iterator_category;
 
-		directory_iterator() {};
+		directory_iterator() = default;
 		explicit directory_iterator(const path& p)
 		{
 			setup_iter(p);
@@ -554,8 +383,9 @@ namespace filesystem
 		}
 
 		bool operator!=(const directory_iterator& rhs) const { return m_entry != rhs.m_entry; }
-	};
-	class dir_entries
+	};
+
+	class FS_LINK dir_entries
 	{
 		path m_dir;
 	public:

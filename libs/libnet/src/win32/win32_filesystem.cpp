@@ -30,6 +30,9 @@
 
 namespace filesystem
 {
+	path::path(const std::wstring& val) : m_path(utf::narrowed(val)) { make_universal(m_path); }
+	path::path(const wchar_t* val) : m_path(utf::narrowed(val)) { make_universal(m_path); }
+
 	void path::make_universal(std::string& s)
 	{
 		for (char& c : s)
@@ -58,6 +61,10 @@ namespace filesystem
 
 		return *this;
 	}
+
+	std::wstring path::wstring() const { return utf::widen(m_path); }
+	std::wstring path::wnative() const { return path(*this).make_preferred().wstring(); }
+	std::string path::native() const { return path(*this).make_preferred().string(); }
 
 	path current_path()
 	{

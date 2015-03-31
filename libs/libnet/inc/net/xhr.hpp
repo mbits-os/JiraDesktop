@@ -30,6 +30,12 @@
 #include <map>
 #include <functional>
 
+#ifdef LIBNET_EXPORTS
+#define XHR_LINK __declspec(dllexport)
+#else
+#define XHR_LINK
+#endif
+
 namespace net { namespace http { namespace client {
 	struct HttpResponse;
 	struct XmlHttpRequest;
@@ -105,9 +111,9 @@ namespace net { namespace http { namespace client {
 		virtual std::string getPassword() = 0;
 	};
 
-	XmlHttpRequestPtr create();
+	XHR_LINK XmlHttpRequestPtr create();
 
-	void set_program_client_info(const char*);
+	XHR_LINK void set_program_client_info(const char*);
 }}}
 
 #endif //__HTTP_HPP__

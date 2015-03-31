@@ -25,8 +25,14 @@
 #pragma once
 #include <string>
 
+#ifdef LIBNET_EXPORTS
+#define UTF_LINK __declspec(dllexport)
+#else
+#define UTF_LINK
+#endif
+
 namespace utf
 {
-	std::wstring widen(const std::string& src);
-	std::string narrowed(const std::wstring& src);
+	UTF_LINK std::wstring widen(const std::string& src);
+	UTF_LINK std::string narrowed(const std::wstring& src);
 }
