@@ -386,6 +386,9 @@ namespace jira
 
 			json::map info{ data };
 
+			// TODO: this is prone to concurrent runs
+			doc->setCurrent(shared_from_this());
+
 			report dataset;
 			dataset.startAt = info["startAt"].as_int();
 			dataset.total = info["total"].as_int();
