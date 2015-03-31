@@ -82,6 +82,7 @@ namespace jira
 		const std::string& issue_id() const { return m_id; }
 
 		void setRow(std::unique_ptr<node>&&);
+		node* getRow() const { return m_row.get(); }
 		void addVal(std::unique_ptr<node>&&);
 
 		const std::vector<std::unique_ptr<node>>& values() const { return m_row->values(); }

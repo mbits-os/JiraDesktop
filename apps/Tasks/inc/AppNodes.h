@@ -26,6 +26,7 @@ public:
 	IJiraNode* getParent() const override;
 	void setParent(IJiraNode*) override;
 	void invalidate() override;
+	void invalidate(int x, int y, size_t width, size_t height) override;
 
 protected:
 	std::map<Attr, std::string> m_data;
@@ -92,4 +93,32 @@ class CJiraDocument : public jira::document {
 
 public:
 	explicit CJiraDocument(std::shared_ptr<ImageRef>(*creator)(const std::shared_ptr<jira::server>&, const std::string&));
+};
+
+class CJiraReportNode : public CJiraNode {
+protected:
+	CJiraReportNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
+	std::shared_ptr<jira::report> m_dataset;
+	std::shared_ptr<std::vector<size_t>> m_columns;
+};
+
+class CJiraRowProxy : public CJiraReportNode {
+	size_t m_id;
+	CJiraNode* m_proxy = nullptr;
+public:
+	CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
+
+	std::string text() const override;
+	void setTooltip(const std::string& text) override;
+	void addChild(std::unique_ptr<jira::node>&& child) override;
+	void setClass(jira::styles) override;
+	jira::styles getStyles() const override;
+	const std::vector<std::unique_ptr<jira::node>>& values() const override;
+
+	void paint(IJiraPainter* painter) override;
+	void measure(IJiraPainter* painter) override;
+	void setPosition(int x, int y) override;
+
+	IJiraNode* getParent() const override;
+	void setParent(IJiraNode*) override;
 };

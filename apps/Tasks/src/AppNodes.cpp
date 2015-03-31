@@ -113,8 +113,15 @@ void CJiraNode::setParent(IJiraNode* node)
 
 void CJiraNode::invalidate()
 {
+	invalidate(0, 0, m_position.width, m_position.height);
+}
+
+void CJiraNode::invalidate(int x, int y, size_t width, size_t height)
+{
+	x += m_position.x;
+	y += m_position.y;
 	if (m_parent)
-		m_parent->invalidate(); // TODO: only invalidate the rect this node "occupies"
+		m_parent->invalidate(x, y, width, height);
 }
 
 CJiraIconNode* parent = nullptr;
@@ -259,4 +266,80 @@ std::shared_ptr<ImageRef> CJiraDocument::createImage(const std::string& uri)
 	auto image = m_creator(m_server, uri);
 	m_cache.insert(it, std::make_pair(uri, image));
 	return image;
+}
+
+CJiraReportNode::CJiraReportNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
+	: m_dataset(dataset)
+	, m_columns(columns)
+{
+}
+
+CJiraRowProxy::CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
+	: CJiraReportNode(dataset, columns)
+	, m_id(id)
+{
+	auto& record = m_dataset->data.at(m_id);
+	m_proxy = static_cast<CJiraNode*>(record.getRow());
+}
+
+std::string CJiraRowProxy::text() const
+{
+	m_proxy->text();
+}
+
+void CJiraRowProxy::setTooltip(const std::string& text)
+{
+	m_proxy->setTooltip(text);
+}
+
+void CJiraRowProxy::addChild(std::unique_ptr<jira::node>&& child)
+{
+	m_proxy->addChild(std::move(child));
+}
+
+void CJiraRowProxy::setClass(jira::styles style)
+{
+	m_proxy->setClass(style);
+}
+
+jira::styles CJiraRowProxy::getStyles() const
+{
+	return m_proxy->getStyles();
+}
+
+const std::vector<std::unique_ptr<jira::node>>& CJiraRowProxy::values() const
+{
+	return m_proxy->values();
+}
+
+
+void CJiraRowProxy::paint(IJiraPainter* painter)
+{
+	return m_proxy->paint(painter);
+}
+
+void CJiraRowProxy::measure(IJiraPainter* painter)
+{
+	m_proxy->measure(painter);
+	auto size = m_proxy->getSize();
+	m_position.width = size.width;
+	m_position.height = size.height;
+}
+
+void CJiraRowProxy::setPosition(int x, int y)
+{
+	m_position.x = x;
+	m_position.y = y;
+	m_proxy->setPosition(0, 0);
+}
+
+IJiraNode* CJiraRowProxy::getParent() const
+{
+	return m_parent;
+}
+
+void CJiraRowProxy::setParent(IJiraNode* parent)
+{
+	m_parent = parent;
+	m_proxy->setParent(this);
 }

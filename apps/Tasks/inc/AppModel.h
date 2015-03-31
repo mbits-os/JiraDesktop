@@ -97,6 +97,7 @@ struct IJiraNode : jira::node {
 	virtual IJiraNode* getParent() const = 0;
 	virtual void setParent(IJiraNode*) = 0;
 	virtual void invalidate() = 0;
+	virtual void invalidate(int x, int y, size_t width, size_t height) = 0;
 };
 
 inline IJiraNode* cast(const std::unique_ptr<jira::node>& node) {
