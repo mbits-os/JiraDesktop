@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;libjson.lib;libjira.lib;libgui.lib;libnet.lib;curl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <CustomBuildStep />
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
