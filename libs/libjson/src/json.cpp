@@ -533,5 +533,141 @@ namespace json
 
 		return ret;
 	}
+
+
+	std::string value::backend_base::as_string() const { return{}; }
+	int64_t value::backend_base::as_int() const { return 0; }
+	double value::backend_base::as_double() const { return 0.0; }
+	bool value::backend_base::as_bool() const { return false; }
+
+	value::value() {} // null
+	value::value(nullptr_t) {} // null
+	value::value(bool value) { use<logical>(value); }
+	value::value(int8_t value) { use<integer>(value); }
+	value::value(int16_t value) { use<integer>(value); }
+	value::value(int32_t value) { use<integer>(value); }
+	value::value(int64_t value) { use<integer>(value); }
+	value::value(float value) { use<floating>(value); }
+	value::value(double value) { use<floating>(value); }
+	value::value(const char* value) { use<string>(value); }
+	value::value(const std::string& value) { use<string>(value); }
+
+	value::operator bool() const {
+		return !is<NULLPTR>();
+	}
+
+	type value::get_type() const {
+		if (m_back)
+			return m_back->get_type();
+		return NULLPTR;
+	}
+
+	bool value::as_bool() const {
+		if (m_back)
+			return m_back->as_bool();
+		return false;
+	}
+
+	std::string value::as_string() const {
+		if (m_back)
+			return m_back->as_string();
+		return{};
+	}
+
+	int64_t value::as_int() const {
+		if (m_back)
+			return m_back->as_int();
+		return 0;
+	}
+
+	double value::as_double() const {
+		if (m_back)
+			return m_back->as_double();
+		return 0.0;
+	}
+
+	void value::to_string(std::ostream& o, const options& opts, int offset) const {
+		if (!m_back)
+			o << "null";
+		else
+			m_back->to_string(o, opts, offset);
+	}
+
+	void value::to_html(std::ostream& o, const options& opts, int offset) const {
+		if (!m_back)
+			o << "<span class='cpp-keyword'>null</span>";
+		else
+			m_back->to_html(o, opts, offset);
+	}
+
+	value::logical::logical(bool value) : value(value) {}
+	void value::logical::to_string(std::ostream& o, const options&, int) const { o << (value ? "true" : "false"); }
+	void value::logical::to_html(std::ostream& o, const options&, int) const { o << "<span class='cpp-keyword'>" << (value ? "true" : "false") << "</span>"; }
+	bool value::logical::as_bool() const { return value; }
+	value::integer::integer(int64_t value) : value(value) {}
+	void value::integer::to_string(std::ostream& o, const options&, int) const { o << std::to_string(value); }
+	void value::integer::to_html(std::ostream& o, const options&, int) const { o << "<span class='cpp-number'>" << std::to_string(value) << "</span>"; }
+	int64_t value::integer::as_int() const { return value; }
+	value::floating::floating(double value) : value(value) {}
+	void value::floating::to_string(std::ostream& o, const options&, int) const { o << std::to_string(value); }
+	void value::floating::to_html(std::ostream& o, const options&, int) const { o << "<span class='cpp-number'>" << std::to_string(value) << "</span>"; }
+	double value::floating::as_double() const { return value; }
+
+	value::string::string(std::string value) : value(value) {}
+	void value::string::to_string(std::ostream& o, const options&, int) const { json_string(o, value); }
+	void value::string::to_html(std::ostream& o, const options&, int) const
+	{
+		o << "<span class='cpp-string'>";
+		json_string(o, value);
+		o << "</span>";
+	}
+	std::string value::string::as_string() const { return value; }
+
+	vector::vector() { use<backend>(); }
+	vector::vector(const value& oth) : value(oth) {
+		if (!is<VECTOR>())
+			throw bad_cast("JSON value is not a vector");
+	}
+
+	vector& vector::add(const value& v) { values().push_back(v); return *this; }
+	size_t vector::size() const { return values().size(); }
+	vector::iterator vector::begin() { return values().begin(); }
+	vector::iterator vector::end() { return values().end(); }
+	vector::const_iterator vector::begin() const { return values().begin(); }
+	vector::const_iterator vector::end() const { return values().end(); }
+
+	vector::reference vector::at(size_t ndx) { return values().at(ndx); }
+	vector::reference vector::operator[](size_t ndx) { return values()[ndx]; }
+	vector::const_reference vector::at(size_t ndx) const { return values().at(ndx); }
+	vector::const_reference vector::operator[](size_t ndx) const { return values()[ndx]; }
+
+	vector::container_t& vector::values() { return back<backend>()->values; }
+	const vector::container_t& vector::values() const { return back<backend>()->values; }
+
+	map::map() { use<backend>(); }
+	map::map(const value& oth) : value(oth) {
+		if (!is<MAP>())
+			throw bad_cast("JSON value is not a map");
+	}
+	map::map(const map&) = default;
+	map& map::operator=(const map&) = default;
+	map::map(map&&) = default;
+	map& map::operator=(map&&) = default;
+
+	size_t map::size() const { return values().size(); }
+	map::iterator map::begin() { return values().begin(); }
+	map::iterator map::end() { return values().end(); }
+	map::const_iterator map::begin() const { return values().begin(); }
+	map::const_iterator map::end() const { return values().end(); }
+	map::iterator map::find(const std::string& key) { return values().find(key); }
+	map::const_iterator map::find(const std::string& key) const { return values().find(key); }
+
+	map::mapped_type& map::at(const std::string& key) { return values().at(key); }
+	const map::mapped_type& map::at(const std::string& key) const { return values().at(key); }
+	map::mapped_type& map::operator[](const std::string& key) { return values()[key]; }
+
+	map::container_t& map::values() { return back<backend>()->values; }
+	const map::container_t& map::values() const { return back<backend>()->values; }
+
 };
 

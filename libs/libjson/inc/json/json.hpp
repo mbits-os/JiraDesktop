@@ -32,6 +32,12 @@
 #include <memory>
 #include <iostream>
 
+#ifdef LIBJSON_EXPORTS
+#define JSON_LINK __declspec(dllexport)
+#else
+#define JSON_LINK
+#endif
+
 namespace json
 {
 	class bad_cast : public std::exception {
@@ -57,7 +63,7 @@ namespace json
 	struct vector;
 	struct map;
 
-	void json_string(std::ostream&, const std::string&);
+	void JSON_LINK json_string(std::ostream&, const std::string&);
 
 	enum type {
 		NULLPTR,
@@ -97,7 +103,7 @@ namespace json
 	template <typename T>
 	value_t<type_to_value<T>::value> get(const value& v) { return value_traits<type_to_value<T>::value>::__get(v); }
 
-	struct value {
+	struct JSON_LINK value {
 		struct options {
 			struct {
 				const char* namesep;
@@ -119,17 +125,17 @@ namespace json
 			}
 		};
 
-		struct backend_base {
+		struct JSON_LINK backend_base {
 			virtual void to_string(std::ostream&, const options&, int) const = 0;
 			virtual void to_html(std::ostream&, const options&, int) const = 0;
 			virtual type get_type() const = 0;
 			template <type value_type>
 			bool is() const { return get_type() == value_type; }
 
-			virtual std::string as_string() const { return{}; }
-			virtual int64_t as_int() const { return 0; }
-			virtual double as_double() const { return 0.0; }
-			virtual bool as_bool() const { return false; }
+			virtual std::string as_string() const;
+			virtual int64_t as_int() const;
+			virtual double as_double() const;
+			virtual bool as_bool() const;
 		};
 		using backend_ptr = std::shared_ptr<backend_base>;
 
@@ -138,27 +144,21 @@ namespace json
 			type get_type() const override { return value_type; }
 		};
 
-		value() {} // null
-		value(nullptr_t) {} // null
-		value(bool value) { use<logical>(value); }
-		value(int8_t value) { use<integer>(value); }
-		value(int16_t value) { use<integer>(value); }
-		value(int32_t value) { use<integer>(value); }
-		value(int64_t value) { use<integer>(value); }
-		value(float value) { use<floating>(value); }
-		value(double value) { use<floating>(value); }
-		value(const char* value) { use<string>(value); }
-		value(const std::string& value) { use<string>(value); }
+		value(); // null
+		value(nullptr_t); // null
+		value(bool value);
+		value(int8_t value);
+		value(int16_t value);
+		value(int32_t value);
+		value(int64_t value);
+		value(float value);
+		value(double value);
+		value(const char* value);
+		value(const std::string& value);
 
-		explicit operator bool() const {
-			return !is<NULLPTR>();
-		}
+		explicit operator bool() const;
 
-		type get_type() const {
-			if (m_back)
-				return m_back->get_type();
-			return NULLPTR;
-		}
+		type get_type() const;
 		template <type value_type>
 		bool is() const {
 			if (m_back)
@@ -175,27 +175,10 @@ namespace json
 			return is<type_to_value<T>::value>();
 		}
 
-		bool as_bool() const {
-			if (m_back)
-				return m_back->as_bool();
-			return false;
-		}
-		std::string as_string() const {
-			if (m_back)
-				return m_back->as_string();
-			return{};
-		}
-		int64_t as_int() const {
-			if (m_back)
-				return m_back->as_int();
-			return 0;
-		}
-
-		double as_double() const {
-			if (m_back)
-				return m_back->as_double();
-			return 0.0;
-		}
+		bool as_bool() const;
+		std::string as_string() const;
+		int64_t as_int() const;
+		double as_double() const;
 
 		template <type value_type>
 		value_t<value_type> as() const {
@@ -210,19 +193,8 @@ namespace json
 		std::string to_string(const options& = options::dense()) const;
 		std::string to_html(const options& = options::dense()) const;
 
-		void to_string(std::ostream& o, const options& opts, int offset) const {
-			if (!m_back)
-				o << "null";
-			else
-				m_back->to_string(o, opts, offset);
-		}
-
-		void to_html(std::ostream& o, const options& opts, int offset) const {
-			if (!m_back)
-				o << "<span class='cpp-keyword'>null</span>";
-			else
-				m_back->to_html(o, opts, offset);
-		}
+		void to_string(std::ostream& o, const options& opts, int offset) const;
+		void to_html(std::ostream& o, const options& opts, int offset) const;
 
 	protected:
 		template <typename T, typename... Args>
@@ -240,87 +212,79 @@ namespace json
 		struct logical: backend<BOOL> {
 			bool value;
 
-			logical(bool value) : value(value) {}
-			void to_string(std::ostream& o, const options&, int) const override { o << (value ? "true" : "false"); }
-			void to_html(std::ostream& o, const options&, int) const override { o << "<span class='cpp-keyword'>" << (value ? "true" : "false") << "</span>"; }
-			bool as_bool() const override { return value; }
+			logical(bool value);
+			void to_string(std::ostream& o, const options&, int) const override;
+			void to_html(std::ostream& o, const options&, int) const override;
+			bool as_bool() const override;
 		};
 
 		struct integer : backend<INTEGER> {
 			int64_t value;
 
-			integer(int64_t value) : value(value) {}
-			void to_string(std::ostream& o, const options&, int) const override { o << std::to_string(value); }
-			void to_html(std::ostream& o, const options&, int) const override { o << "<span class='cpp-number'>" << std::to_string(value) << "</span>"; }
-			int64_t as_int() const override { return value; }
+			integer(int64_t value);
+			void to_string(std::ostream& o, const options&, int) const override;
+			void to_html(std::ostream& o, const options&, int) const override;
+			int64_t as_int() const override;
 		};
 
 		struct floating : backend<FLOAT> {
 			double value;
 
-			floating(double value) : value(value) {}
-			void to_string(std::ostream& o, const options&, int) const override { o << std::to_string(value); }
-			void to_html(std::ostream& o, const options&, int) const override { o << "<span class='cpp-number'>" << std::to_string(value) << "</span>"; }
-			double as_double() const override { return value; }
+			floating(double value);
+			void to_string(std::ostream& o, const options&, int) const override;
+			void to_html(std::ostream& o, const options&, int) const override;
+			double as_double() const override;
 		};
 
 		struct string : backend<STRING> {
 			std::string value;
 
-			string(std::string value) : value(value) {}
-			void to_string(std::ostream& o, const options&, int) const override { json_string(o, value); }
-			void to_html(std::ostream& o, const options&, int) const override
-			{
-				o << "<span class='cpp-string'>";
-				json_string(o, value);
-				o << "</span>";
-			}
-			std::string as_string() const override { return value; }
+			string(std::string value);
+			void to_string(std::ostream& o, const options&, int) const override;
+			void to_html(std::ostream& o, const options&, int) const override;
+			std::string as_string() const override;
 		};
 	};
 
-	value from_string(const std::string&);
-	value from_string(const char* data, size_t length);
+	value JSON_LINK from_string(const std::string&);
+	value JSON_LINK from_string(const char* data, size_t length);
 
-	struct vector : value {
+	struct JSON_LINK vector : value {
 		using container_t = std::vector<value>;
 		using iterator = container_t::iterator;
 		using const_iterator = container_t::const_iterator;
 		using reference = container_t::reference;
 		using const_reference = container_t::const_reference;
 
-		vector() { use<backend>(); }
-		explicit vector(const value& oth) : value(oth) {
-			if (!is<VECTOR>())
-				throw bad_cast("JSON value is not a vector");
-		}
+		vector();
+		explicit vector(const value& oth);
 
-		vector& add(const value& v) { values().push_back(v); return *this; }
-		size_t size() const { return values().size(); }
-		iterator begin() { return values().begin(); }
-		iterator end() { return values().end(); }
-		const_iterator begin() const { return values().begin(); }
-		const_iterator end() const { return values().end(); }
+		vector& add(const value& v);
+		size_t size() const;
+		iterator begin();
+		iterator end();
+		const_iterator begin() const;
+		const_iterator end() const;
 
 		template <type value_type>
 		value_t<value_type> as(size_t ndx) const {
 			return get<value_type>(at(ndx));
 		}
 
-		reference at(size_t ndx) { return values().at(ndx); }
-		reference operator[](size_t ndx) { return values()[ndx]; }
-		const_reference at(size_t ndx) const { return values().at(ndx); }
-		const_reference operator[](size_t ndx) const { return values()[ndx]; }
+		reference at(size_t ndx);
+		reference operator[](size_t ndx);
+		const_reference at(size_t ndx) const;
+		const_reference operator[](size_t ndx) const;
 
 	private:
-		struct backend : value::backend<VECTOR> {
+		struct JSON_LINK backend : value::backend<VECTOR> {
 			container_t values;
 			void to_string(std::ostream&, const options&, int) const override;
 			void to_html(std::ostream&, const options&, int) const override;
 		};
 
-		container_t& values() { return back<backend>()->values; }
-		const container_t& values() const { return back<backend>()->values; }
+		container_t& values();
+		const container_t& values() const;
 	};
 
 	template <typename T>
@@ -328,50 +292,47 @@ namespace json
 		return v.add(value);
 	}
 
-	struct map : value {
+	struct JSON_LINK map : value {
 		using container_t = std::map<std::string, value>;
 		using iterator = container_t::iterator;
 		using const_iterator = container_t::const_iterator;
 		using mapped_type = container_t::mapped_type;
 
-		map() { use<backend>(); }
-		explicit map(const value& oth) : value(oth) {
-			if (!is<MAP>())
-				throw bad_cast("JSON value is not a map");
-		}
-		map(const map&) = default;
-		map&operator=(const map&) = default;
-		map(map&&) = default;
-		map&operator=(map&&) = default;
+		map();
+		explicit map(const value& oth);
+		map(const map&);
+		map& operator=(const map&);
+		map(map&&);
+		map& operator=(map&&);
 
 		map& add(const std::string& k, const value& v);
 
-		size_t size() const { return values().size(); }
-		iterator begin() { return values().begin(); }
-		iterator end() { return values().end(); }
-		const_iterator begin() const { return values().begin(); }
-		const_iterator end() const { return values().end(); }
-		iterator find(const std::string& key) { return values().find(key); }
-		const_iterator find(const std::string& key) const { return values().find(key); }
+		size_t size() const;
+		iterator begin();
+		iterator end();
+		const_iterator begin() const;
+		const_iterator end() const;
+		iterator find(const std::string& key);
+		const_iterator find(const std::string& key) const;
 
 		template <type value_type>
 		value_t<value_type> as(const std::string& key) const {
 			return get<value_type>(at(key));
 		}
 
-		mapped_type& at(const std::string& key) { return values().at(key); }
-		const mapped_type& at(const std::string& key) const { return values().at(key); }
-		mapped_type& operator[](const std::string& key) { return values()[key]; }
+		mapped_type& at(const std::string& key);
+		const mapped_type& at(const std::string& key) const;
+		mapped_type& operator[](const std::string& key);
 		//const mapped_type& operator[](const std::string& key) const { return values()[key]; }
 	private:
-		struct backend : value::backend<MAP> {
+		struct JSON_LINK backend : value::backend<MAP> {
 			container_t values;
 			void to_string(std::ostream&, const options&, int) const override;
 			void to_html(std::ostream&, const options&, int) const override;
 		};
 
-		container_t& values() { return back<backend>()->values; }
-		const container_t& values() const { return back<backend>()->values; }
+		container_t& values();
+		const container_t& values() const;
 	};
 
 	template <typename K, typename V>
