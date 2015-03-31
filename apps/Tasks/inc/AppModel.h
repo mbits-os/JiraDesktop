@@ -39,21 +39,24 @@ struct ImageRef : public jira::listeners<ImageRefCallback, ImageRef> {
 };
 
 struct IJiraPainter {
+	struct point { int x; int y; };
+	struct size { size_t width; size_t height; };
+
 	virtual ~IJiraPainter() {}
 	virtual void moveOrigin(int x, int y) = 0;
-	virtual std::pair<int, int> getOrigin() const = 0;
-	virtual void setOrigin(const std::pair<int, int>& orig) = 0;
+	virtual point getOrigin() const = 0;
+	virtual void setOrigin(const point& orig) = 0;
 	virtual void paintImage(const std::string& url, size_t width, size_t height) = 0;
 	virtual void paintImage(const ImageRef* img, size_t width, size_t height) = 0;
 	virtual void paintString(const std::string& text) = 0;
-	virtual std::pair<size_t, size_t> measureString(const std::string& text) = 0;
+	virtual size measureString(const std::string& text) = 0;
 	virtual StyleSave* setStyle(jira::styles) = 0;
 	virtual void restoreStyle(StyleSave*) = 0;
 };
 
 class PushOrigin {
 	IJiraPainter* painter;
-	std::pair<int, int> orig;
+	IJiraPainter::point orig;
 public:
 	explicit PushOrigin(IJiraPainter* painter) : painter(painter), orig(painter->getOrigin())
 	{
@@ -80,10 +83,16 @@ public:
 };
 
 struct IJiraNode : jira::node {
+	using point = IJiraPainter::point;
+	using size = IJiraPainter::size;
+
 	virtual std::string text() const = 0;
 	virtual jira::styles getStyles() const = 0;
 	virtual void paint(IJiraPainter* painter) = 0;
-	virtual std::pair<size_t, size_t> measure(IJiraPainter* painter) = 0;
+	virtual void measure(IJiraPainter* painter) = 0;
+	virtual void setPosition(int x, int y) = 0;
+	virtual point getPosition() = 0;
+	virtual size getSize() = 0;
 
 	virtual IJiraNode* getParent() const = 0;
 	virtual void setParent(IJiraNode*) = 0;

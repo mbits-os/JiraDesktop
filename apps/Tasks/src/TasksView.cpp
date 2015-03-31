@@ -156,15 +156,15 @@ class LinePrinter : IJiraPainter
 		y += y_;
 	}
 
-	std::pair<int, int> getOrigin() const override
+	point getOrigin() const override
 	{
 		return{ x, y };
 	}
 
-	void setOrigin(const std::pair<int, int>& orig) override
+	void setOrigin(const point& orig) override
 	{
-		x = std::get<0>(orig);
-		y = std::get<1>(orig);
+		x = orig.x;
+		y = orig.y;
 	}
 
 	void paintImage(const std::string& /*url*/, size_t width, size_t height) override
@@ -195,7 +195,7 @@ class LinePrinter : IJiraPainter
 		dc.TextOut(x, y, utf::widen(text).c_str());
 	}
 
-	std::pair<size_t, size_t> measureString(const std::string& text) override
+	size measureString(const std::string& text) override
 	{
 		auto line = utf::widen(text);
 		SIZE s;

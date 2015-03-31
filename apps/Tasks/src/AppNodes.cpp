@@ -60,24 +60,45 @@ void CJiraNode::paint(IJiraPainter* painter)
 	for (auto& node : m_children) {
 		painter->moveOrigin(x, 0);
 		cast(node)->paint(painter);
-		x += std::get<0>(cast(node)->measure(painter));
+		x += cast(node)->getSize().width;
 	}
 }
 
-std::pair<size_t, size_t> CJiraNode::measure(IJiraPainter* painter)
+void CJiraNode::measure(IJiraPainter* painter)
 {
 	StyleSaver saver{ painter, getStyles() };
 
 	size_t height = 0;
 	size_t width = 0;
+	int x = 0;
 	for (auto& node : m_children) {
-		auto ret = cast(node)->measure(painter);
-		if (height < std::get<0>(ret))
-			height = std::get<0>(ret);
+		cast(node)->measure(painter);
+		auto ret = cast(node)->getSize();
+		if (height < ret.height)
+			height = ret.height;
 
-		width += std::get<1>(ret);
+		width += ret.width;
+		cast(node)->setPosition(x, 0);
+		x += ret.height;
 	}
-	return{ width, height };
+	m_position.height = height;
+	m_position.width = width;
+}
+
+void CJiraNode::setPosition(int x, int y)
+{
+	m_position.x = x;
+	m_position.y = y;
+}
+
+IJiraNode::point CJiraNode::getPosition()
+{
+	return{ m_position.x, m_position.y };
+}
+
+IJiraNode::size CJiraNode::getSize()
+{
+	return{ m_position.width, m_position.height };
 }
 
 IJiraNode* CJiraNode::getParent() const
@@ -110,6 +131,7 @@ CJiraIconNode::CJiraIconNode(const std::string& uri, const std::shared_ptr<Image
 	CJiraNode::setTooltip(tooltip);
 	m_cb->parent = this;
 	m_image->onListenerAdded(m_cb);
+	m_position.width = m_position.height = 16;
 }
 
 CJiraIconNode::~CJiraIconNode()
@@ -128,9 +150,8 @@ void CJiraIconNode::paint(IJiraPainter* painter)
 	painter->paintImage(m_image.get(), 16, 16);
 }
 
-std::pair<size_t, size_t> CJiraIconNode::measure(IJiraPainter* /*painter*/)
+void CJiraIconNode::measure(IJiraPainter* /*painter*/)
 {
-	return{ 16, 16 };
 }
 
 CJiraLinkNode::CJiraLinkNode(const std::string& href)
@@ -151,11 +172,13 @@ void CJiraTextNode::paint(IJiraPainter* painter)
 	painter->paintString(m_data[Attr::Text]);
 }
 
-std::pair<size_t, size_t> CJiraTextNode::measure(IJiraPainter* painter)
+void CJiraTextNode::measure(IJiraPainter* painter)
 {
 	StyleSaver saver{ painter, getStyles() };
 
-	return painter->measureString(m_data[Attr::Text]);
+	auto size = painter->measureString(m_data[Attr::Text]);
+	m_position.width = size.width;
+	m_position.height = size.height;
 }
 
 CJiraDocument::CJiraDocument(std::shared_ptr<ImageRef>(*creator)(const std::shared_ptr<jira::server>&, const std::string&))

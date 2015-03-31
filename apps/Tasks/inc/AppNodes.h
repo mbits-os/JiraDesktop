@@ -18,7 +18,10 @@ public:
 	const std::vector<std::unique_ptr<node>>& values() const override;
 
 	void paint(IJiraPainter* painter) override;
-	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
+	void measure(IJiraPainter* painter) override;
+	void setPosition(int x, int y) override;
+	point getPosition() override;
+	size getSize() override;
 
 	IJiraNode* getParent() const override;
 	void setParent(IJiraNode*) override;
@@ -29,6 +32,12 @@ protected:
 	std::vector<std::unique_ptr<jira::node>> m_children;
 	jira::styles m_class = jira::styles::unset;
 	IJiraNode* m_parent = nullptr;
+	struct {
+		int x = 0;
+		int y = 0;
+		size_t width = 0;
+		size_t height = 0;
+	} m_position;
 };
 
 class CJiraRoot : public CJiraNode {};
@@ -50,7 +59,7 @@ public:
 	~CJiraIconNode();
 	void addChild(std::unique_ptr<node>&& child) override;
 	void paint(IJiraPainter* painter) override;
-	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
+	void measure(IJiraPainter* painter) override;
 };
 
 class CJiraLinkNode : public CJiraNode {
@@ -62,7 +71,7 @@ class CJiraTextNode : public CJiraNode {
 public:
 	CJiraTextNode(const std::string& text);
 	void paint(IJiraPainter* painter) override;
-	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
+	void measure(IJiraPainter* painter) override;
 };
 
 class CJiraDocument : public jira::document {
