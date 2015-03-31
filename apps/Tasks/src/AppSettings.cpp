@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "AppSettings.h"
+#include "version.h"
 
 namespace servers {
 	static std::shared_ptr<jira::server> load(const settings::Section& section, const std::string& prefix)
@@ -64,7 +65,7 @@ namespace servers {
 }
 
 CAppSettings::CAppSettings() 
-	: settings::Section("midnightBITS", "Tasks", "1.0")
+	: settings::Section(PROGRAM_COPYRIGHT_HOLDER, PROGRAM_NAME, PROGRAM_VERSION_STRING_SHORT)
 {
 }
 
