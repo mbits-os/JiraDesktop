@@ -36,9 +36,14 @@ namespace jira
 		return Uri::canonical("browse/" + m_key, m_uri).string();
 	}
 
+	void record::setRow(std::unique_ptr<node>&& row)
+	{
+		m_row = std::move(row);
+	}
+
 	void record::addVal(std::unique_ptr<node>&& field)
 	{
-		m_values.push_back(std::move(field));
+		m_row->addChild(std::move(field));
 	}
 
 	std::unique_ptr<node> type::visit(document* doc, const record& issue, const json::value& value) const
@@ -55,6 +60,7 @@ namespace jira
 		out.uri(m_uri);
 		out.issue_key(key);
 		out.issue_id(id);
+		out.setRow(doc->createTableRow());
 
 		for (auto& col : m_cols) {
 			auto val = col->visit(doc, out, object);

@@ -45,12 +45,14 @@ namespace jira
 		virtual void setTooltip(const std::string& text) = 0;
 		virtual void addChild(std::unique_ptr<node>&& child) = 0;
 		virtual void setClass(styles) = 0;
+		virtual const std::vector<std::unique_ptr<node>>& values() const = 0;
 	};
 
 	class server;
 	struct document {
 		virtual ~document() {}
 		virtual void setCurrent(const std::shared_ptr<server>&) = 0;
+		virtual std::unique_ptr<node> createTableRow() = 0;
 		virtual std::unique_ptr<node> createSpan() = 0;
 		virtual std::unique_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
 		virtual std::unique_ptr<node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) = 0;
@@ -59,7 +61,7 @@ namespace jira
 	};
 
 	class record {
-		std::vector<std::unique_ptr<node>> m_values;
+		std::unique_ptr<node> m_row;
 
 		std::string m_uri;
 		std::string m_key;
@@ -79,15 +81,10 @@ namespace jira
 		const std::string& issue_key() const { return m_key; }
 		const std::string& issue_id() const { return m_id; }
 
-		template <typename T, typename... Args>
-		void add(Args&&... args)
-		{
-			m_values.push_back(std::make_unique<T>(std::forward<Args>(args)...));
-		}
-
+		void setRow(std::unique_ptr<node>&&);
 		void addVal(std::unique_ptr<node>&&);
 
-		const std::vector<std::unique_ptr<node>>& values() const { return m_values; }
+		const std::vector<std::unique_ptr<node>>& values() const { return m_row->values(); }
 	};
 
 	struct type {
