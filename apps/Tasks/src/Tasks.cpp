@@ -16,6 +16,8 @@
 #include <net/filesystem.hpp>
 #include <net/xhr.hpp>
 
+#include <gdiplus.h>
+
 namespace fs = filesystem;
 
 fs::path exe_dir() {
@@ -70,13 +72,17 @@ public:
 
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lpstrCmdLine, int nCmdShow)
 {
+	Fonts external;
+
 	HRESULT hRes = ::CoInitialize(NULL);
 // If you are running on NT 4.0 or higher you can use the following call instead to 
 // make the EXE free threaded. This means that calls come in on a random RPC thread.
 //	HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	ATLASSERT(SUCCEEDED(hRes));
 
-	Fonts external;
+	ULONG_PTR gdiplusToken;
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	net::http::client::set_program_client_info(PROGRAM_NAME "/" PROGRAM_VERSION_STRING);
 
@@ -92,6 +98,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 
 	_Module.Term();
 
+	Gdiplus::GdiplusShutdown(gdiplusToken);
 	::CoUninitialize();
 
 	return nRet;

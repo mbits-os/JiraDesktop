@@ -74,10 +74,31 @@ std::pair<size_t, size_t> CJiraNode::measure(IJiraPainter* painter)
 	return{ width, height };
 }
 
-CJiraIconNode::CJiraIconNode(const std::string& uri, const std::string& tooltip)
+void CJiraNode::invalidate()
+{
+	// TODO
+}
+
+CJiraIconNode* parent = nullptr;
+void CJiraIconNode::ImageCb::onImageChange(ImageRef*)
+{
+	parent->invalidate();
+}
+
+CJiraIconNode::CJiraIconNode(const std::string& uri, const std::shared_ptr<ImageRef>& image, const std::string& tooltip)
+	: m_image(image)
+	, m_cb(std::make_shared<ImageCb>())
 {
 	m_data[Attr::Href] = uri;
 	CJiraNode::setTooltip(tooltip);
+	m_cb->parent = this;
+	m_image->onListenerAdded(m_cb);
+}
+
+CJiraIconNode::~CJiraIconNode()
+{
+	m_image->onListenerRemoved(m_cb);
+	m_cb->parent = nullptr;
 }
 
 void CJiraIconNode::addChild(std::unique_ptr<node>&& /*child*/)
@@ -87,7 +108,7 @@ void CJiraIconNode::addChild(std::unique_ptr<node>&& /*child*/)
 
 void CJiraIconNode::paint(IJiraPainter* painter)
 {
-	painter->paintImage(m_data[Attr::Href], 16, 16);
+	painter->paintImage(m_image.get(), 16, 16);
 }
 
 std::pair<size_t, size_t> CJiraIconNode::measure(IJiraPainter* /*painter*/)
@@ -120,6 +141,16 @@ std::pair<size_t, size_t> CJiraTextNode::measure(IJiraPainter* painter)
 	return painter->measureString(m_data[Attr::Text]);
 }
 
+CJiraDocument::CJiraDocument(std::shared_ptr<ImageRef>(*creator)(const std::shared_ptr<jira::server>&, const std::string&))
+	: m_creator(creator)
+{
+}
+
+void CJiraDocument::setCurrent(const std::shared_ptr<jira::server>& server)
+{
+	m_server = server;
+}
+
 std::unique_ptr<jira::node> CJiraDocument::createSpan()
 {
 	return std::make_unique<CJiraNode>();
@@ -127,10 +158,11 @@ std::unique_ptr<jira::node> CJiraDocument::createSpan()
 
 std::unique_ptr<jira::node> CJiraDocument::createIcon(const std::string& uri, const std::string& text, const std::string& description)
 {
+	auto image = createImage(uri);
 	if (text.empty() || description.empty())
-		return std::make_unique<CJiraIconNode>(uri, text + description);
+		return std::make_unique<CJiraIconNode>(uri, image, text + description);
 
-	return std::make_unique<CJiraIconNode>(uri, text + "\n" + description);
+	return std::make_unique<CJiraIconNode>(uri, image, text + "\n" + description);
 }
 
 std::unique_ptr<jira::node> CJiraDocument::createUser(bool /*active*/, const std::string& display, const std::string& email, const std::string& /*login*/, std::map<uint32_t, std::string>&& avatar)
@@ -170,4 +202,16 @@ std::unique_ptr<jira::node> CJiraDocument::createLink(const std::string& href)
 std::unique_ptr<jira::node> CJiraDocument::createText(const std::string& text)
 {
 	return std::make_unique<CJiraTextNode>(text);
+}
+
+std::shared_ptr<ImageRef> CJiraDocument::createImage(const std::string& uri)
+{
+	std::lock_guard<std::mutex> lock(m_guard);
+	auto it = m_cache.lower_bound(uri);
+	if (it != m_cache.end() && it->first == uri)
+		return it->second;
+
+	auto image = m_creator(m_server, uri);
+	m_cache.insert(it, std::make_pair(uri, image));
+	return image;
 }

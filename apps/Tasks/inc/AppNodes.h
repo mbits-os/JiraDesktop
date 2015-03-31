@@ -18,6 +18,8 @@ public:
 	void paint(IJiraPainter* painter) override;
 	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
 
+	void invalidate();
+
 protected:
 	std::map<Attr, std::string> m_data;
 	std::vector<std::unique_ptr<jira::node>> m_children;
@@ -25,8 +27,20 @@ protected:
 };
 
 class CJiraIconNode : public CJiraNode {
+	class ImageCb
+		: public ImageRefCallback
+		, public std::enable_shared_from_this<ImageCb> {
+
+	public:
+		CJiraIconNode* parent = nullptr;
+		void onImageChange(ImageRef*) override;
+	};
+
+	std::shared_ptr<ImageRef> m_image;
+	std::shared_ptr<ImageCb> m_cb;
 public:
-	CJiraIconNode(const std::string& uri, const std::string& tooltip);
+	CJiraIconNode(const std::string& uri, const std::shared_ptr<ImageRef>& image, const std::string& tooltip);
+	~CJiraIconNode();
 	void addChild(std::unique_ptr<node>&& child) override;
 	void paint(IJiraPainter* painter) override;
 	std::pair<size_t, size_t> measure(IJiraPainter* painter) override;
@@ -45,9 +59,20 @@ public:
 };
 
 class CJiraDocument : public jira::document {
+	void setCurrent(const std::shared_ptr<jira::server>&) override;
 	std::unique_ptr<jira::node> createSpan() override;
 	std::unique_ptr<jira::node> createIcon(const std::string& uri, const std::string& text, const std::string& description) override;
 	std::unique_ptr<jira::node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) override;
 	std::unique_ptr<jira::node> createLink(const std::string& href) override;
 	std::unique_ptr<jira::node> createText(const std::string& text) override;
+
+	std::shared_ptr<ImageRef> createImage(const std::string& uri);
+
+	std::mutex m_guard;
+	std::map<std::string, std::shared_ptr<ImageRef>> m_cache;
+	std::shared_ptr<jira::server> m_server;
+	std::shared_ptr<ImageRef>(*m_creator)(const std::shared_ptr<jira::server>&, const std::string&);
+
+public:
+	explicit CJiraDocument(std::shared_ptr<ImageRef>(*creator)(const std::shared_ptr<jira::server>&, const std::string&));
 };

@@ -167,10 +167,25 @@ class LinePrinter : IJiraPainter
 		y = std::get<1>(orig);
 	}
 
-	void paintImage(const std::string& /*url*/, int width, int height) override
+	void paintImage(const std::string& /*url*/, size_t width, size_t height) override
 	{
 		// TODO: get url from pixmap cache
 		dc.Rectangle(x, y, x + width, y + height);
+	}
+
+	void paintImage(const ImageRef* img, size_t width, size_t height) override
+	{
+		auto bmp = reinterpret_cast<Gdiplus::Bitmap*>(img ? img->getNativeHandle() : nullptr);
+		if (img && img->getState() != load_state::pixmap_available)
+			bmp = nullptr;
+
+		if (!bmp) {
+			dc.Rectangle(x, y, x + width, y + height);
+			return;
+		}
+
+		Gdiplus::Graphics gfx{ (HDC)dc };
+		gfx.DrawImage(bmp, x, y, width, height);
 	}
 
 	void paintString(const std::string& text) override

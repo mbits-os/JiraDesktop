@@ -17,12 +17,34 @@ inline void synchronize(T& mtx, F fn)
 
 struct StyleSave;
 
+enum class load_state {
+	image_missing,
+	size_known,
+	pixmap_available
+};
+
+struct ImageRef;
+
+struct ImageRefCallback {
+	virtual ~ImageRefCallback() {}
+	virtual void onImageChange(ImageRef*) = 0;
+};
+
+struct ImageRef : public jira::listeners<ImageRefCallback, ImageRef> {
+	virtual ~ImageRef() {}
+	virtual load_state getState() const = 0;
+	virtual size_t getWidth() const = 0;
+	virtual size_t getHeight() const = 0;
+	virtual void* getNativeHandle() const = 0;
+};
+
 struct IJiraPainter {
 	virtual ~IJiraPainter() {}
 	virtual void moveOrigin(int x, int y) = 0;
 	virtual std::pair<int, int> getOrigin() const = 0;
 	virtual void setOrigin(const std::pair<int, int>& orig) = 0;
-	virtual void paintImage(const std::string& url, int width, int height) = 0;
+	virtual void paintImage(const std::string& url, size_t width, size_t height) = 0;
+	virtual void paintImage(const ImageRef* img, size_t width, size_t height) = 0;
 	virtual void paintString(const std::string& text) = 0;
 	virtual std::pair<size_t, size_t> measureString(const std::string& text) = 0;
 	virtual StyleSave* setStyle(jira::styles) = 0;
@@ -75,6 +97,8 @@ class CAppModel : public jira::listeners<CAppModelListener, CAppModel> {
 
 	void onListChanged(uint32_t addedOrRemoved);
 	std::mutex m_guard;
+
+	static std::shared_ptr<ImageRef> image_creator(const std::shared_ptr<jira::server>& srv, const std::string&);
 public:
 	CAppModel();
 
