@@ -56,6 +56,9 @@ private:
 	CFontHandle m_font;
 	CBrush m_background;
 
+	int m_mouseX = 0;
+	int m_mouseY = 0;
+
 	void updateLayout();
 public:
 	std::shared_ptr<CAppModel> m_model;
@@ -69,6 +72,7 @@ public:
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
 		MESSAGE_HANDLER(WM_SETFONT, OnSetFont)
+		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove);
 		MESSAGE_HANDLER(UM_LISTCHANGED, OnListChanged)
 		MESSAGE_HANDLER(UM_REFRESHSTART, OnRefreshStart)
 		MESSAGE_HANDLER(UM_REFRESHSTOP, OnRefreshStop)
@@ -84,6 +88,7 @@ public:
 	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnSetFont(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);

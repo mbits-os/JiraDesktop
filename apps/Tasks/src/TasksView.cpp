@@ -780,6 +780,8 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	}
 #endif
 
+	dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x00000080, 0x00000080);
+
 	return 0;
 }
 
@@ -806,6 +808,17 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 	updateLayout();
 	// TODO: redraw the report table
 
+	return 0;
+}
+
+LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	RECT r{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
+	InvalidateRect(&r);
+	m_mouseX = GET_X_LPARAM(lParam);
+	m_mouseY = GET_Y_LPARAM(lParam);
+	RECT r2{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
+	InvalidateRect(&r2);
 	return 0;
 }
 
