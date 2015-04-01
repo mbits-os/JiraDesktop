@@ -139,6 +139,24 @@ void CJiraNode::invalidate(int x, int y, size_t width, size_t height)
 		m_parent->invalidate(x, y, width, height);
 }
 
+jira::node* CJiraNode::findHovered(int x, int y)
+{
+	x -= m_position.x;
+	y -= m_position.y;
+
+	if (x < 0 || (size_t)x > m_position.width ||
+		y < 0 || (size_t)y > m_position.height)
+		return nullptr;
+
+	for (auto& node : m_children) {
+		auto tmp = cast(node)->findHovered(x, y);
+		if (tmp)
+			return tmp;
+	}
+
+	return this;
+}
+
 void CJiraIconNode::ImageCb::onImageChange(ImageRef*)
 {
 	parent->invalidate();
@@ -411,6 +429,28 @@ void CJiraRowProxy::repositionChildren()
 	}
 	m_position.width = x + CELL_MARGIN;
 	m_position.height = m_proxy->getSize().height;
+}
+
+jira::node* CJiraRowProxy::findHovered(int x, int y)
+{
+	x -= m_position.x;
+	y -= m_position.y;
+
+	if (x < 0 || (size_t)x > m_position.width ||
+		y < 0 || (size_t)y > m_position.height)
+		return nullptr;
+
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return this;
+
+	for (auto& node : values()) {
+		auto tmp = cast(node)->findHovered(x, y);
+		if (tmp)
+			return tmp;
+	}
+
+	return this;
 }
 
 CJiraHeaderNode::CJiraHeaderNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)

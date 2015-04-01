@@ -643,6 +643,45 @@ void LinePrinter::restoreStyle(StyleSave* save)
 	std::unique_ptr<StyleSave> mem{ save };
 }
 
+IJiraPainter::point getOffset(jira::node* node) {
+	if (!node)
+		return{ 0, 0 };
+
+	auto pt = static_cast<IJiraNode*>(node)->getPosition();
+	auto parent = static_cast<IJiraNode*>(node)->getParent();
+
+	auto tmp = getOffset(parent);
+
+	pt.x += tmp.x;
+	pt.y += tmp.y;
+	return pt;
+}
+
+IJiraPainter::point paintGrayFrame(CDCHandle dc, BYTE shade, jira::node* node) {
+	if (!node)
+		return{ 0, 0 };
+
+	auto pt = static_cast<IJiraNode*>(node)->getPosition();
+	auto sz = static_cast<IJiraNode*>(node)->getSize();
+	auto parent = static_cast<IJiraNode*>(node)->getParent();
+
+	uint16_t channel = shade + 0x44;
+	if (channel >= 0xFF) {
+		auto tmp = getOffset(parent);
+		pt.x += tmp.x;
+		pt.y += tmp.y;
+	} else {
+		auto tmp = paintGrayFrame(dc, (BYTE)channel, parent);
+		pt.x += tmp.x;
+		pt.y += tmp.y;
+	}
+
+	RECT r{ pt.x, pt.y, pt.x + (int)sz.width, pt.y + (int)sz.height };
+	dc.Draw3dRect(pt.x, pt.y, sz.width, sz.height, RGB(shade, shade, shade), RGB(shade, shade, shade));
+
+	return pt;
+}
+
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	CPaintDC dc(m_hWnd);
@@ -746,6 +785,9 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 	dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x00000080, 0x00000080);
 
+	if (m_hovered)
+		paintGrayFrame((HDC)dc, 0x00, m_hovered);
+
 	return 0;
 }
 
@@ -753,6 +795,8 @@ void CTasksView::updateLayout()
 {
 	CWindowDC dc{m_hWnd};
 	Styler styler{ (HDC) dc, (HFONT) m_font };
+
+	m_hovered = nullptr;
 
 	int height = 0;
 	int width = 0;
@@ -766,6 +810,22 @@ void CTasksView::updateLayout()
 	}
 
 	// document size: height + 2xBODY_MARGIN, width + 2xBODY_MARGIN
+
+	m_hovered = findHovered();
+}
+
+jira::node* CTasksView::findHovered()
+{
+	for (auto& server : m_servers) {
+		if (!server.m_plaque)
+			continue;
+
+		auto tmp = cast(server.m_plaque)->findHovered(m_mouseX, m_mouseY);
+		if (tmp)
+			return tmp;
+	}
+
+	return nullptr;
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -787,6 +847,12 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	m_mouseY = GET_Y_LPARAM(lParam);
 	RECT r2{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
 	InvalidateRect(&r2);
+
+	auto tmp = findHovered();
+	if (tmp != m_hovered) {
+		m_hovered = tmp;
+		Invalidate(); // TODO: invalidate old and new hovered/their parents...
+	}
 	return 0;
 }
 

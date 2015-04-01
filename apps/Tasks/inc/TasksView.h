@@ -58,8 +58,10 @@ private:
 
 	int m_mouseX = 0;
 	int m_mouseY = 0;
+	jira::node* m_hovered = nullptr;
 
 	void updateLayout();
+	jira::node* findHovered();
 public:
 	std::shared_ptr<CAppModel> m_model;
 
