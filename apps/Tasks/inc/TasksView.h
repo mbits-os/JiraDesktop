@@ -37,7 +37,7 @@ public:
 		// TODO : relation to UI element
 		std::unique_ptr<jira::node> m_plaque;
 
-		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener);
+		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener, HWND hWnd);
 		~ServerInfo();
 		ServerInfo(const ServerInfo&) = delete;
 		ServerInfo& operator=(const ServerInfo&) = delete;

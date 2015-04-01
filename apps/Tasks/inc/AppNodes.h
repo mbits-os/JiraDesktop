@@ -150,9 +150,11 @@ public:
 
 class CJiraReportElement : public CJiraNode {
 	std::weak_ptr<jira::report> m_dataset;
+	std::function<void(int, int, int, int)> m_invalidator;
 public:
-	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const jira::server& server);
+	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const jira::server& server, const std::function<void(int, int, int, int)>& invalidator);
 
 	void addChild(std::unique_ptr<jira::node>&& child) override final;
 	void measure(IJiraPainter* painter) override;
+	void invalidate(int x, int y, size_t width, size_t height) override;
 };

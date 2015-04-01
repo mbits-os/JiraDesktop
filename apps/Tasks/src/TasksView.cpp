@@ -59,13 +59,20 @@ public:
 	}
 };
 
-CTasksView::ServerInfo::ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener)
+std::function<void(int, int, int, int)> make_invalidator(HWND hWnd) {
+	return [hWnd](int x, int y, size_t width, size_t height) {
+		RECT r{ x, y, x + (int)width, y + (int)height };
+		::InvalidateRect(hWnd, &r, TRUE);
+	};
+}
+
+CTasksView::ServerInfo::ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener, HWND hWnd)
 	: m_server(server)
 	, m_listener(listener)
 	, m_sessionId(server->sessionId())
 {
 	m_server->registerListener(m_listener);
-	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, *server);
+	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, *server, make_invalidator(hWnd));
 }
 
 CTasksView::ServerInfo::~ServerInfo()
@@ -84,7 +91,7 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<Ser
 	// TODO: create UI element
 	// TDOD: attach refresh listener to the server
 	auto listener = std::make_shared<ServerListener>(m_hWnd, server->sessionId());
-	return m_servers.emplace(it, server, listener);
+	return m_servers.emplace(it, server, listener, m_hWnd);
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<ServerInfo>::const_iterator it)
@@ -873,7 +880,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	it->m_plaque = std::make_unique<CJiraReportElement>(it->m_dataset, server);
+	it->m_plaque = std::make_unique<CJiraReportElement>(it->m_dataset, server, make_invalidator(m_hWnd));
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();

@@ -139,7 +139,6 @@ void CJiraNode::invalidate(int x, int y, size_t width, size_t height)
 		m_parent->invalidate(x, y, width, height);
 }
 
-CJiraIconNode* parent = nullptr;
 void CJiraIconNode::ImageCb::onImageChange(ImageRef*)
 {
 	parent->invalidate();
@@ -152,13 +151,13 @@ CJiraIconNode::CJiraIconNode(const std::string& uri, const std::shared_ptr<Image
 	m_data[Attr::Href] = uri;
 	CJiraNode::setTooltip(tooltip);
 	m_cb->parent = this;
-	m_image->onListenerAdded(m_cb);
+	m_image->registerListener(m_cb);
 	m_position.width = m_position.height = 16;
 }
 
 CJiraIconNode::~CJiraIconNode()
 {
-	m_image->onListenerRemoved(m_cb);
+	m_image->unregisterListener(m_cb);
 	m_cb->parent = nullptr;
 }
 
@@ -493,8 +492,9 @@ void CJiraReportTableNode::measure(IJiraPainter* painter)
 	m_position.width = cast(m_children[0])->getSize().width;
 }
 
-CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const jira::server& server)
+CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const jira::server& server, const std::function<void(int, int, int, int)>& invalidator)
 	: m_dataset(dataset)
+	, m_invalidator(invalidator)
 {
 	{
 		auto text = server.login() + "@" + server.displayName();
@@ -551,4 +551,12 @@ void CJiraReportElement::measure(IJiraPainter* painter)
 
 	m_position.height = height;
 	m_position.width = width;
+}
+
+void CJiraReportElement::invalidate(int x, int y, size_t width, size_t height)
+{
+	x += m_position.x;
+	y += m_position.y;
+	if (m_invalidator)
+		m_invalidator(x, y, width, height);
 }
