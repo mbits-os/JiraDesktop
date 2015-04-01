@@ -36,21 +36,10 @@ public:
 		bool m_gotProgress = false;
 		std::vector<int> m_columns;
 		// TODO : relation to UI element
+		std::unique_ptr<jira::node> m_table;
 
-		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener)
-			: m_server(server)
-			, m_listener(listener)
-			, m_sessionId(server->sessionId())
-		{
-			m_server->registerListener(m_listener);
-		}
-
-		~ServerInfo()
-		{
-			if (m_server && m_listener)
-				m_server->unregisterListener(m_listener);
-		}
-
+		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener);
+		~ServerInfo();
 		ServerInfo(const ServerInfo&) = delete;
 		ServerInfo& operator=(const ServerInfo&) = delete;
 		ServerInfo(ServerInfo&&) = default;

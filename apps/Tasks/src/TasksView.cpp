@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <sstream>
 
+#include "AppNodes.h"
+
 #if FA_CHEATSHEET
 #include "font_awesome.hh"
 #endif
@@ -56,6 +58,20 @@ public:
 		SendMessage(m_hWnd, UM_PROGRESS, m_sessionId, (LPARAM)&info);
 	}
 };
+
+CTasksView::ServerInfo::ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener)
+	: m_server(server)
+	, m_listener(listener)
+	, m_sessionId(server->sessionId())
+{
+	m_server->registerListener(m_listener);
+}
+
+CTasksView::ServerInfo::~ServerInfo()
+{
+	if (m_server && m_listener)
+		m_server->unregisterListener(m_listener);
+}
 
 void CTasksView::ServerInfo::calcColumns(CDCHandle dc, CFontHandle text, CFontHandle header)
 {
@@ -137,7 +153,7 @@ enum {
 
 namespace { class Styler; };
 
-class LinePrinter : IJiraPainter
+class LinePrinter : public IJiraPainter
 {
 	HFONT older;
 	CFontHandle font;
@@ -265,6 +281,13 @@ public:
 	{
 		uplink = link;
 		cast(node)->paint(this);
+		return *this;
+	}
+
+	LinePrinter& measure(const std::unique_ptr<jira::node>& node, Styler* link)
+	{
+		uplink = link;
+		cast(node)->measure(this);
 		return *this;
 	}
 
@@ -623,6 +646,18 @@ namespace {
 		styler.out()/*.println({})*/.println(utf::widen(o.str()).c_str()); o.str("");
 	}
 
+	void table(Styler& styler, const std::unique_ptr<jira::node>& table)
+	{
+		auto& painter = static_cast<IJiraPainter&>(styler.out());
+		auto orig = painter.getOrigin();
+
+		styler.out().paint(table, &styler);
+		auto size = cast(table)->getSize();
+		orig.y += size.height;
+
+		painter.setOrigin(orig);
+	}
+
 	void table(Styler& styler, const jira::report& dataset, const std::vector<int>& widths)
 	{
 		tableHead(styler, dataset.schema, widths);
@@ -642,7 +677,10 @@ namespace {
 	{
 		serverHeader(styler, item);
 		serverErrors(styler, item);
-		if (item.m_dataset)
+		if (item.m_table) {
+			table(styler, item.m_table);
+			tableFoot(styler, *item.m_dataset);
+		} else if (item.m_dataset)
 			table(styler, *item.m_dataset, item.m_columns);
 		else
 			noTable(styler);
@@ -681,6 +719,9 @@ struct StyleSave
 			break;
 		case styles::link:
 			saved << color(0x00AF733B);
+			break;
+		case styles::tableHeader:
+			saved << bold(); // << center()
 			break;
 		};
 	}
@@ -813,8 +854,11 @@ void CTasksView::updateLayout()
 	CFont row{ getFont(styler, rules::tableRow) };
 	CFont header{ getFont(styler, rules::tableHead) };
 
-	for (auto& server : m_servers)
-		server.calcColumns((HDC)dc, (HFONT) row, (HFONT) header);
+	for (auto& server : m_servers) {
+		server.calcColumns((HDC)dc, (HFONT)row, (HFONT)header);
+		if (server.m_table)
+			styler.out().measure(server.m_table, &styler);
+	}
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -917,6 +961,10 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
+	if (it->m_dataset)
+		it->m_table = std::make_unique<CJiraReportTableNode>(it->m_dataset);
+	else
+		it->m_table.reset();
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();

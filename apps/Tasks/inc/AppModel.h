@@ -44,6 +44,7 @@ struct IJiraPainter {
 
 	virtual ~IJiraPainter() {}
 	virtual void moveOrigin(int x, int y) = 0;
+	void moveOrigin(const point& pt) { moveOrigin(pt.x, pt.y); }
 	virtual point getOrigin() const = 0;
 	virtual void setOrigin(const point& orig) = 0;
 	virtual void paintImage(const std::string& url, size_t width, size_t height) = 0;

@@ -7,6 +7,10 @@
 #include "AppNodes.h"
 #include <limits>
 
+enum {
+	CELL_MARGIN = 7
+};
+
 std::string CJiraNode::text() const
 {
 	auto it = m_data.find(Attr::Text);
@@ -52,15 +56,13 @@ const std::vector<std::unique_ptr<jira::node>>& CJiraNode::values() const
 
 void CJiraNode::paint(IJiraPainter* painter)
 {
-	PushOrigin push{ painter };
 	StyleSaver saver{ painter, getStyles() };
 
-	int x = 0;
 	// slow, but working:
 	for (auto& node : m_children) {
-		painter->moveOrigin(x, 0);
+		PushOrigin push{ painter };
+		painter->moveOrigin(cast(node)->getPosition());
 		cast(node)->paint(painter);
-		x += cast(node)->getSize().width;
 	}
 }
 
@@ -79,7 +81,7 @@ void CJiraNode::measure(IJiraPainter* painter)
 
 		width += ret.width;
 		cast(node)->setPosition(x, 0);
-		x += ret.height;
+		x += ret.width;
 	}
 	m_position.height = height;
 	m_position.width = width;
@@ -321,6 +323,15 @@ void CJiraRowProxy::paint(IJiraPainter* painter)
 void CJiraRowProxy::measure(IJiraPainter* painter)
 {
 	m_proxy->measure(painter);
+
+	auto it = m_columns->begin();
+	for (auto& node : values()) {
+		auto width = cast(node)->getSize().width;
+		if (*it < width)
+			*it = width;
+		*it++;
+	}
+
 	auto size = m_proxy->getSize();
 	m_position.width = size.width;
 	m_position.height = size.height;
@@ -343,3 +354,98 @@ void CJiraRowProxy::setParent(IJiraNode* parent_)
 	m_parent = parent_;
 	m_proxy->setParent(this);
 }
+
+void CJiraRowProxy::repositionChildren()
+{
+	int x = CELL_MARGIN;
+	auto it = m_columns->begin();
+	for (auto& node : values()) {
+		cast(node)->setPosition(x, 0);
+		x += *it++ + 2 * CELL_MARGIN;
+	}
+	m_position.width = x + CELL_MARGIN;
+	m_position.height = m_proxy->getSize().height;
+}
+
+CJiraHeaderNode::CJiraHeaderNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
+	: CJiraReportNode(dataset, columns)
+{
+	CJiraNode::setClass(jira::styles::tableHeader);
+
+	for (auto& col : dataset->schema.cols()) {
+		auto name = col->title();
+		auto node = std::make_unique<CJiraTextNode>(name);
+
+		auto tooltip = col->titleFull();
+		if (name != tooltip)
+			node->setTooltip(tooltip);
+
+		CJiraReportNode::addChild(std::move(node));
+	}
+}
+
+void CJiraHeaderNode::addChild(std::unique_ptr<jira::node>&& /*child*/)
+{
+	// noop
+}
+
+void CJiraHeaderNode::measure(IJiraPainter* painter)
+{
+	CJiraReportNode::measure(painter);
+
+	auto it = m_columns->begin();
+	for (auto& node : values()) {
+		*it++ = cast(node)->getSize().width;
+	}
+}
+
+void CJiraHeaderNode::repositionChildren()
+{
+	int x = CELL_MARGIN;
+	auto it = m_columns->begin();
+	for (auto& node : values()) {
+		cast(node)->setPosition(x, 0);
+		x += *it++ + 2 * CELL_MARGIN;
+	}
+	m_position.width = x + CELL_MARGIN;
+}
+
+CJiraReportTableNode::CJiraReportTableNode(const std::shared_ptr<jira::report>& dataset)
+	: m_columns(std::make_shared<std::vector<size_t>>(dataset->schema.cols().size()))
+{
+	CJiraNode::addChild(std::make_unique<CJiraHeaderNode>(dataset, m_columns));
+
+	auto size = dataset->data.size();
+	for (size_t id = 0; id < size; ++id) {
+		CJiraNode::addChild(std::make_unique<CJiraRowProxy>(id, dataset, m_columns));
+	}
+}
+
+void CJiraReportTableNode::addChild(std::unique_ptr<jira::node>&& /*child*/)
+{
+	// noop
+}
+
+void CJiraReportTableNode::measure(IJiraPainter* painter)
+{
+	StyleSaver saver{ painter, getStyles() };
+
+	size_t height = 0;
+	for (auto& node : m_children) {
+		cast(node)->measure(painter);
+		//auto ret = cast(node)->getSize();
+		//if (width < ret.width)
+		//	width = ret.width;
+
+		auto nheight = cast(node)->getSize().height;
+		cast(node)->setPosition(0, height);
+		height += nheight * 12 / 10; // 120%
+	}
+
+	for (auto& node : m_children)
+		static_cast<CJiraReportNode*>(node.get())->repositionChildren();
+
+	m_position.height = height;
+	m_position.width = cast(m_children[0])->getSize().width;
+}
+
