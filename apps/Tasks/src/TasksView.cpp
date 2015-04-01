@@ -73,38 +73,6 @@ CTasksView::ServerInfo::~ServerInfo()
 		m_server->unregisterListener(m_listener);
 }
 
-void CTasksView::ServerInfo::calcColumns(CDCHandle dc, CFontHandle text, CFontHandle header)
-{
-	if (!m_dataset) {
-		m_columns.clear();
-		return;
-	}
-
-	auto older = dc.SelectFont(header);
-	SIZE s = {};
-
-	m_columns.resize(m_dataset->schema.cols().size());
-	auto dst = m_columns.begin();
-	for (auto& col : m_dataset->schema.cols()) {
-		auto title = utf::widen(col->title());
-		dc.GetTextExtent(title.c_str(), title.length(), &s);
-		*dst++ = s.cx;
-	}
-
-	dc.SelectFont(text);
-	for (auto& item : m_dataset->data) {
-		dst = m_columns.begin();
-		for (auto& value : item.values()) {
-			auto txt = utf::widen(cast(value)->text());
-			dc.GetTextExtent(txt.c_str(), txt.length(), &s);
-			if (s.cx > *dst)
-				*dst++ = s.cx;
-			else ++dst;
-		}
-	}
-	dc.SelectFont(older);
-}
-
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
 {
 	return std::find_if(std::begin(m_servers), std::end(m_servers), [sessionId](const ServerInfo& info) { return info.m_sessionId == sessionId; });
@@ -147,8 +115,7 @@ LRESULT CTasksView::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 }
 
 enum {
-	BODY_MARGIN = 7,
-	CELL_MARGIN = 7
+	BODY_MARGIN = 7
 };
 
 namespace { class Styler; };
@@ -606,34 +573,6 @@ namespace {
 			styler.out().println(utf::widen(error));
 	}
 
-	void tableHead(Styler& styler, const jira::model& schema, const std::vector<int>& widths)
-	{
-		Style style{ styler, rules::tableHead };
-
-		auto x = styler.out().getX();
-		auto src = widths.begin();
-		for (auto& col : schema.cols()) {
-			styler.out().moveToX(x).print(utf::widen(col->title()));
-			x += *src++ + CELL_MARGIN + CELL_MARGIN;
-		}
-
-		styler.out().println({});
-	}
-
-	void tableRow(Styler& styler, const jira::record& row, const std::vector<int>& widths)
-	{
-		Style style{ styler, rules::tableRow };
-
-		auto x = styler.out().getX();
-		auto src = widths.begin();
-		for (auto& value : row.values()) {
-			styler.out().moveToX(x).paint(value, &styler);
-			x += *src++ + CELL_MARGIN + CELL_MARGIN;
-		}
-
-		styler.out().println({});
-	}
-
 	void tableFoot(Styler& styler, const jira::report& dataset)
 	{
 		Style style{ styler, rules::classSummary };
@@ -646,7 +585,7 @@ namespace {
 		styler.out()/*.println({})*/.println(utf::widen(o.str()).c_str()); o.str("");
 	}
 
-	void table(Styler& styler, const std::unique_ptr<jira::node>& table)
+	void table(Styler& styler, const std::unique_ptr<jira::node>& table, jira::report& dataset)
 	{
 		auto& painter = static_cast<IJiraPainter&>(styler.out());
 		auto orig = painter.getOrigin();
@@ -656,13 +595,7 @@ namespace {
 		orig.y += size.height;
 
 		painter.setOrigin(orig);
-	}
 
-	void table(Styler& styler, const jira::report& dataset, const std::vector<int>& widths)
-	{
-		tableHead(styler, dataset.schema, widths);
-		for (auto&& row : dataset.data)
-			tableRow(styler, row, widths);
 		tableFoot(styler, dataset);
 	}
 
@@ -677,11 +610,8 @@ namespace {
 	{
 		serverHeader(styler, item);
 		serverErrors(styler, item);
-		if (item.m_table) {
-			table(styler, item.m_table);
-			tableFoot(styler, *item.m_dataset);
-		} else if (item.m_dataset)
-			table(styler, *item.m_dataset, item.m_columns);
+		if (item.m_table)
+			table(styler, item.m_table, *item.m_dataset);
 		else
 			noTable(styler);
 	}
@@ -854,7 +784,6 @@ void CTasksView::updateLayout()
 	CFont header{ getFont(styler, rules::tableHead) };
 
 	for (auto& server : m_servers) {
-		server.calcColumns((HDC)dc, (HFONT)row, (HFONT)header);
 		if (server.m_table)
 			styler.out().measure(server.m_table, &styler);
 	}

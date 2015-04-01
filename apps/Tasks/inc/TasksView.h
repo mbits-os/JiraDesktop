@@ -34,7 +34,6 @@ public:
 		ProgressInfo m_progress;
 		bool m_loading = false;
 		bool m_gotProgress = false;
-		std::vector<int> m_columns;
 		// TODO : relation to UI element
 		std::unique_ptr<jira::node> m_table;
 
@@ -44,8 +43,6 @@ public:
 		ServerInfo& operator=(const ServerInfo&) = delete;
 		ServerInfo(ServerInfo&&) = default;
 		ServerInfo& operator=(ServerInfo&&) = default;
-
-		void calcColumns(CDCHandle dc, CFontHandle text, CFontHandle header);
 	};
 
 private:

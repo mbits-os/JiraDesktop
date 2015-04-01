@@ -433,9 +433,6 @@ void CJiraReportTableNode::measure(IJiraPainter* painter)
 	size_t height = 0;
 	for (auto& node : m_children) {
 		cast(node)->measure(painter);
-		//auto ret = cast(node)->getSize();
-		//if (width < ret.width)
-		//	width = ret.width;
 
 		auto nheight = cast(node)->getSize().height;
 		cast(node)->setPosition(0, height);
