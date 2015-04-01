@@ -51,6 +51,7 @@
     <ClCompile Include="..\..\apps\Tasks\src\AppNodes.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\AppSettings.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\ConnectionDlg.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\font_awesome.cc" />
     <ClCompile Include="..\..\apps\Tasks\src\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -72,6 +73,7 @@
     <ClInclude Include="..\..\apps\Tasks\inc\Tasks.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksFrame.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksView.h" />
+    <ClInclude Include="..\..\apps\Tasks\src\font_awesome.hh" />
     <ClInclude Include="..\..\apps\Tasks\src\resource.h" />
     <ClInclude Include="..\..\apps\Tasks\src\version.h" />
   </ItemGroup>
