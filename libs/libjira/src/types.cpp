@@ -27,10 +27,15 @@
 #include "jira/jira.hpp"
 #include "types.hpp"
 #include <cctype>
+#include <net/utf8.hpp>
 
 namespace jira
 {
 	namespace fields {
+		std::string utf8initial(const std::string& utf8) {
+			return{ utf8.c_str(), utf::next_char(utf8.c_str()) };
+		}
+
 		key::key(const std::string& id, const std::string& title) : type(id, title) {}
 
 		template <json::type type_id>
@@ -159,7 +164,7 @@ namespace jira
 		user::user(const std::string& id, const std::string& title) : type(id, title)
 		{
 			if (!title.empty())
-				m_title = title.substr(0, 1);
+				m_title = utf8initial(title);
 		}
 
 		uint32_t stoui(const char* in, char& error)
@@ -217,7 +222,7 @@ namespace jira
 		icon::icon(const std::string& id, const std::string& title) : type(id, title)
 		{
 			if (!title.empty())
-				m_title = title.substr(0, 1);
+				m_title = utf8initial(title);
 		}
 
 		std::unique_ptr<node> icon::visit(document* doc, const record& /*issue*/, const json::map& object) const

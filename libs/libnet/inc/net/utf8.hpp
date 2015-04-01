@@ -29,4 +29,5 @@ namespace utf
 {
 	std::wstring widen(const std::string& src);
 	std::string narrowed(const std::wstring& src);
+	const char* next_char(const char* src);
 }

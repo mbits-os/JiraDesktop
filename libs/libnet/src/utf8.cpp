@@ -225,4 +225,13 @@ namespace utf
 		}
 		return out;
 	}
+
+	const char* next_char(const char* src)
+	{
+		if (!src)
+			return src;
+
+		auto trailing = trailingBytesForUTF8[(uint8_t)*src];
+		return src + 1 + trailing;
+	}
 }

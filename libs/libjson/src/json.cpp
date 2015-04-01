@@ -274,7 +274,7 @@ namespace json
 			auto pos = in.pos;
 
 			++in;
-			std::basic_string<uint16_t> value;
+			std::string value;
 			uint16_t unicode;
 			while (in) {
 				if (in.cur() == '\\') {
@@ -313,7 +313,11 @@ namespace json
 								return in.err("Expecting HEX");
 							};
 						}
-						value.push_back(unicode);
+
+						{
+							std::basic_string<uint16_t> codepoint{ unicode, 0 };
+							value += utf16_to_utf8(codepoint);
+						}
 						break;
 					default:
 						value.push_back('\\');
@@ -327,7 +331,7 @@ namespace json
 				else value.push_back((uint8_t)in.cur());
 				++in;
 			}
-			return pos.str(utf16_to_utf8(value));
+			return pos.str(value);
 		}
 
 		token_t json_number(input& in) {
