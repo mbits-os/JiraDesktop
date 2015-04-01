@@ -37,7 +37,8 @@ namespace jira
 		unset,
 		none,
 		error,
-		link
+		link,
+		tableHeader
 	};
 
 	struct node {
