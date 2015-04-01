@@ -739,8 +739,7 @@ StyleSave* LinePrinter::setStyle(jira::styles style)
 
 void LinePrinter::restoreStyle(StyleSave* save)
 {
-	if (!save)
-		return;
+	std::unique_ptr<StyleSave> mem{ save };
 }
 
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
