@@ -10,6 +10,10 @@
 #include <algorithm>
 #include <sstream>
 
+#if FA_CHEATSHEET
+#include "font_awesome.hh"
+#endif
+
 class TaskViewModelListener : public CAppModelListener {
 	HWND m_hWnd;
 public:
@@ -18,7 +22,7 @@ public:
 	void onListChanged(uint32_t addedOrRemoved) override
 	{
 		// traversing the borders of threads, if needed
-		// also, the actual reaction to the vent will
+		// also, the actual reaction to the event will
 		// not block the emit up there
 		if (IsWindow(m_hWnd))
 			PostMessage(m_hWnd, UM_LISTCHANGED, addedOrRemoved, 0);
@@ -747,10 +751,36 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 #if FA_CHEATSHEET
 	control.out().println({}).println(L"Font face: " + textFace);
 
+	size_t pos = 0;
+	for (size_t id = 0; id < (size_t)fa::glyph::__last_glyph; ++id, ++pos) {
+		wchar_t s[2] = {};
+		s[0] = fa::glyph_char((fa::glyph)id);
+		s[1] = 0;
+		{
+			Style style{ control };
+			style << symbols();
+			control.out().print(s);
+		}
+
+		{
+			Style style{ control };
+			style << color(0x0060c060) << fontSize((control.getFontSize() * 8) / 10);
+			control.out()
+				.print(L" ")
+				.print(utf::widen(fa::glyph_name((fa::glyph)id)))
+				.print(L", ");
+		}
+
+		if (pos == 16) {
+			control.out().println({});
+			pos = 0;
+		}
+	}
+
 	Style style{ control };
 	style << symbols() << fontSize((control.getFontSize() * 18) / 10);
 
-	size_t pos = 0;
+	pos = 0;
 	std::wstring line;
 
 	for (auto& range : ranges) {
