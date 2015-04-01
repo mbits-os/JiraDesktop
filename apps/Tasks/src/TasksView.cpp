@@ -191,6 +191,7 @@ class LinePrinter : public IJiraPainter
 	}
 
 	StyleSave* setStyle(jira::styles) override;
+	StyleSave* setStyle(rules) override;
 	void restoreStyle(StyleSave* save) override;
 public:
 	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
@@ -259,19 +260,10 @@ public:
 	}
 
 	int getX() const { return x; }
+	CDCHandle native() const { return dc; }
 };
 
 namespace {
-
-	enum class rules {
-		body,
-		header,
-		error,
-		tableHead,
-		tableRow,
-		classEmpty,
-		classSummary
-	};
 
 	enum class family {
 		base,
@@ -366,8 +358,6 @@ namespace {
 		bool m_italic;
 		family m_family;
 
-		static void apply(Style& style, rules rule);
-
 	public:
 		Style() = delete;
 		Style(const Style&) = delete;
@@ -402,6 +392,8 @@ namespace {
 			setFontItalic(m_italic);
 			setFontFamily(m_family);
 		}
+
+		static void apply(Style& style, rules rule);
 
 		Style& setColor(COLORREF color)
 		{
@@ -587,8 +579,14 @@ namespace {
 
 	void table(Styler& styler, const std::unique_ptr<jira::node>& table, jira::report& dataset)
 	{
+		auto pt = cast(table)->getPosition();
+		auto sz = cast(table)->getSize();
+
+		styler.out().native().Draw3dRect(pt.x, pt.y, sz.width, sz.height, 0x00336633, 0x00336633);
+
 		auto& painter = static_cast<IJiraPainter&>(styler.out());
 		auto orig = painter.getOrigin();
+		styler.out().native().Draw3dRect(orig.x, orig.y, sz.width, sz.height, 0x00336699, 0x00336699);
 
 		styler.out().paint(table, &styler);
 		auto size = cast(table)->getSize();
@@ -650,10 +648,12 @@ struct StyleSave
 		case styles::link:
 			saved << color(0x00AF733B);
 			break;
-		case styles::tableHeader:
-			saved << bold(); // << center()
-			break;
 		};
+	}
+
+	void apply(rules rule)
+	{
+		Style::apply(saved, rule);
 	}
 };
 
@@ -664,6 +664,13 @@ StyleSave* LinePrinter::setStyle(jira::styles style)
 
 	auto mem = std::make_unique<StyleSave>(*uplink);
 	mem->apply(style);
+	return mem.release();
+}
+
+StyleSave* LinePrinter::setStyle(rules rule)
+{
+	auto mem = std::make_unique<StyleSave>(*uplink);
+	mem->apply(rule);
 	return mem.release();
 }
 
@@ -784,8 +791,10 @@ void CTasksView::updateLayout()
 	CFont header{ getFont(styler, rules::tableHead) };
 
 	for (auto& server : m_servers) {
-		if (server.m_table)
+		if (server.m_table) {
 			styler.out().measure(server.m_table, &styler);
+			cast(server.m_table)->setPosition(0, 0);
+		}
 	}
 }
 

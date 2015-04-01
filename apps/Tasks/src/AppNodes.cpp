@@ -42,11 +42,23 @@ void CJiraNode::addChild(std::unique_ptr<node>&& child)
 void CJiraNode::setClass(jira::styles styles)
 {
 	m_class = styles;
+	m_rule = rules::body;
 }
 
 jira::styles CJiraNode::getStyles() const
 {
 	return m_class;
+}
+
+void CJiraNode::setClass(rules rule)
+{
+	m_rule = rule;
+	m_class = jira::styles::unset;
+}
+
+rules CJiraNode::getRules() const
+{
+	return m_rule;
 }
 
 const std::vector<std::unique_ptr<jira::node>>& CJiraNode::values() const
@@ -56,7 +68,7 @@ const std::vector<std::unique_ptr<jira::node>>& CJiraNode::values() const
 
 void CJiraNode::paint(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles() };
+	StyleSaver saver{ painter, getStyles(), getRules() };
 
 	// slow, but working:
 	for (auto& node : m_children) {
@@ -68,7 +80,7 @@ void CJiraNode::paint(IJiraPainter* painter)
 
 void CJiraNode::measure(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles() };
+	StyleSaver saver{ painter, getStyles(), getRules() };
 
 	size_t height = 0;
 	size_t width = 0;
@@ -176,14 +188,14 @@ CJiraTextNode::CJiraTextNode(const std::string& text)
 
 void CJiraTextNode::paint(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles() };
+	StyleSaver saver{ painter, getStyles(), getRules() };
 
 	painter->paintString(m_data[Attr::Text]);
 }
 
 void CJiraTextNode::measure(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles() };
+	StyleSaver saver{ painter, getStyles(), getRules() };
 
 	auto size = painter->measureString(m_data[Attr::Text]);
 	m_position.width = size.width;
@@ -280,6 +292,7 @@ CJiraRowProxy::CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dat
 	: CJiraReportNode(dataset, columns)
 	, m_id(id)
 {
+	CJiraNode::setClass(rules::tableRow);
 	auto& record = m_dataset->data.at(m_id);
 	m_proxy = static_cast<CJiraNode*>(record.getRow());
 }
@@ -313,7 +326,6 @@ const std::vector<std::unique_ptr<jira::node>>& CJiraRowProxy::values() const
 {
 	return m_proxy->values();
 }
-
 
 void CJiraRowProxy::paint(IJiraPainter* painter)
 {
@@ -370,7 +382,7 @@ void CJiraRowProxy::repositionChildren()
 CJiraHeaderNode::CJiraHeaderNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
 	: CJiraReportNode(dataset, columns)
 {
-	CJiraNode::setClass(jira::styles::tableHeader);
+	CJiraNode::setClass(rules::tableHead);
 
 	for (auto& col : dataset->schema.cols()) {
 		auto name = col->title();
@@ -428,7 +440,7 @@ void CJiraReportTableNode::addChild(std::unique_ptr<jira::node>&& /*child*/)
 
 void CJiraReportTableNode::measure(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles() };
+	StyleSaver saver{ painter, getStyles(), getRules() };
 
 	size_t height = 0;
 	for (auto& node : m_children) {

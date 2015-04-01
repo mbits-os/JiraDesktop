@@ -15,6 +15,8 @@ public:
 	void addChild(std::unique_ptr<node>&& child) override;
 	void setClass(jira::styles) override;
 	jira::styles getStyles() const override;
+	void setClass(rules) override;
+	rules getRules() const override;
 	const std::vector<std::unique_ptr<node>>& values() const override;
 
 	void paint(IJiraPainter* painter) override;
@@ -32,6 +34,7 @@ protected:
 	std::map<Attr, std::string> m_data;
 	std::vector<std::unique_ptr<jira::node>> m_children;
 	jira::styles m_class = jira::styles::unset;
+	rules m_rule = rules::body;
 	IJiraNode* m_parent = nullptr;
 	struct {
 		int x = 0;

@@ -23,6 +23,16 @@ enum class load_state {
 	pixmap_available
 };
 
+enum class rules {
+	body,
+	header,
+	error,
+	tableHead,
+	tableRow,
+	classEmpty,
+	classSummary,
+};
+
 struct ImageRef;
 
 struct ImageRefCallback {
@@ -52,6 +62,7 @@ struct IJiraPainter {
 	virtual void paintString(const std::string& text) = 0;
 	virtual size measureString(const std::string& text) = 0;
 	virtual StyleSave* setStyle(jira::styles) = 0;
+	virtual StyleSave* setStyle(rules) = 0;
 	virtual void restoreStyle(StyleSave*) = 0;
 };
 
@@ -73,8 +84,12 @@ class StyleSaver {
 	IJiraPainter* painter;
 	StyleSave* save;
 public:
-	explicit StyleSaver(IJiraPainter* painter, jira::styles style) : painter(painter), save(painter->setStyle(style))
+	explicit StyleSaver(IJiraPainter* painter, jira::styles style, rules rule) : painter(painter), save(nullptr)
 	{
+		if (style == jira::styles::unset)
+			save = painter->setStyle(rule);
+		else
+			save = painter->setStyle(style);
 	}
 
 	~StyleSaver()
@@ -94,6 +109,8 @@ struct IJiraNode : jira::node {
 	virtual void setPosition(int x, int y) = 0;
 	virtual point getPosition() = 0;
 	virtual size getSize() = 0;
+	virtual void setClass(rules) = 0;
+	virtual rules getRules() const = 0;
 
 	virtual IJiraNode* getParent() const = 0;
 	virtual void setParent(IJiraNode*) = 0;
