@@ -284,7 +284,7 @@ CJiraRowProxy::CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dat
 
 std::string CJiraRowProxy::text() const
 {
-	m_proxy->text();
+	return m_proxy->text();
 }
 
 void CJiraRowProxy::setTooltip(const std::string& text)
@@ -338,8 +338,8 @@ IJiraNode* CJiraRowProxy::getParent() const
 	return m_parent;
 }
 
-void CJiraRowProxy::setParent(IJiraNode* parent)
+void CJiraRowProxy::setParent(IJiraNode* parent_)
 {
-	m_parent = parent;
+	m_parent = parent_;
 	m_proxy->setParent(this);
 }
