@@ -35,7 +35,7 @@ public:
 		bool m_loading = false;
 		bool m_gotProgress = false;
 		// TODO : relation to UI element
-		std::unique_ptr<jira::node> m_table;
+		std::unique_ptr<jira::node> m_plaque;
 
 		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener);
 		~ServerInfo();

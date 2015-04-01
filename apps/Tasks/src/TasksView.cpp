@@ -65,6 +65,7 @@ CTasksView::ServerInfo::ServerInfo(const std::shared_ptr<jira::server>& server, 
 	, m_sessionId(server->sessionId())
 {
 	m_server->registerListener(m_listener);
+	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, *server);
 }
 
 CTasksView::ServerInfo::~ServerInfo()
@@ -552,66 +553,22 @@ namespace {
 			.skipY(0.1); // margin-bottom: 0.1em
 	}
 
-	void serverErrors(Styler& styler, const CTasksView::ServerInfo& item)
+	void plaque(Styler& styler, const std::unique_ptr<jira::node>& node)
 	{
-		auto& server = *item.m_server;
-
-		if (server.errors().empty())
-			return;
-
-		Style style{ styler, rules::error };
-
-		for (auto& error : server.errors())
-			styler.out().println(utf::widen(error));
-	}
-
-	void tableFoot(Styler& styler, const jira::report& dataset)
-	{
-		Style style{ styler, rules::classSummary };
-
-		std::ostringstream o;
-		auto low = dataset.data.empty() ? 0 : 1;
-		o << "(Issues " << (dataset.startAt + low)
-			<< '-' << (dataset.startAt + dataset.data.size())
-			<< " of " << dataset.total << ")";
-		styler.out()/*.println({})*/.println(utf::widen(o.str()).c_str()); o.str("");
-	}
-
-	void table(Styler& styler, const std::unique_ptr<jira::node>& table, jira::report& dataset)
-	{
-		auto pt = cast(table)->getPosition();
-		auto sz = cast(table)->getSize();
-
-		styler.out().native().Draw3dRect(pt.x, pt.y, sz.width, sz.height, 0x00336633, 0x00336633);
-
 		auto& painter = static_cast<IJiraPainter&>(styler.out());
 		auto orig = painter.getOrigin();
-		styler.out().native().Draw3dRect(orig.x, orig.y, sz.width, sz.height, 0x00336699, 0x00336699);
 
-		styler.out().paint(table, &styler);
-		auto size = cast(table)->getSize();
+		styler.out().paint(node, &styler);
+		auto size = cast(node)->getSize();
 		orig.y += size.height;
 
 		painter.setOrigin(orig);
-
-		tableFoot(styler, dataset);
-	}
-
-	void noTable(Styler& styler)
-	{
-		Style style{ styler, rules::classEmpty };
-
-		styler.out().println(L"Empty");
 	}
 
 	void server(Styler& styler, const CTasksView::ServerInfo& item)
 	{
-		serverHeader(styler, item);
-		serverErrors(styler, item);
-		if (item.m_table)
-			table(styler, item.m_table, *item.m_dataset);
-		else
-			noTable(styler);
+		if (item.m_plaque)
+			plaque(styler, item.m_plaque);
 	}
 
 	HFONT getFont(Styler& styler, rules rule)
@@ -789,15 +746,19 @@ void CTasksView::updateLayout()
 {
 	CWindowDC dc{m_hWnd};
 	Styler styler{ (HDC) dc, (HFONT) m_font };
-	CFont row{ getFont(styler, rules::tableRow) };
-	CFont header{ getFont(styler, rules::tableHead) };
 
+	int height = 0;
+	int width = 0;
 	for (auto& server : m_servers) {
-		if (server.m_table) {
-			styler.out().measure(server.m_table, &styler);
-			cast(server.m_table)->setPosition(0, 0);
+		if (server.m_plaque) {
+			styler.out().measure(server.m_plaque, &styler);
+			auto size = cast(server.m_plaque)->getSize();
+			cast(server.m_plaque)->setPosition(BODY_MARGIN, BODY_MARGIN + height);
+			height += size.height;
 		}
 	}
+
+	// document size: height + 2xBODY_MARGIN, width + 2xBODY_MARGIN
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -881,6 +842,7 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			}
 		});
 	}
+	updateLayout();
 	// TODO: unlock updates
 	Invalidate();
 
@@ -911,10 +873,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	if (it->m_dataset)
-		it->m_table = std::make_unique<CJiraReportTableNode>(it->m_dataset);
-	else
-		it->m_table.reset();
+	it->m_plaque = std::make_unique<CJiraReportElement>(it->m_dataset, server);
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();

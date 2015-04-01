@@ -101,7 +101,7 @@ public:
 class CJiraReportNode : public CJiraNode {
 protected:
 	CJiraReportNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
-	std::shared_ptr<jira::report> m_dataset;
+	std::weak_ptr<jira::report> m_dataset;
 	std::shared_ptr<std::vector<size_t>> m_columns;
 public:
 	virtual void repositionChildren() = 0;
@@ -143,6 +143,15 @@ class CJiraReportTableNode : public CJiraNode {
 	std::shared_ptr<std::vector<size_t>> m_columns;
 public:
 	explicit CJiraReportTableNode(const std::shared_ptr<jira::report>& dataset);
+
+	void addChild(std::unique_ptr<jira::node>&& child) override final;
+	void measure(IJiraPainter* painter) override;
+};
+
+class CJiraReportElement : public CJiraNode {
+	std::weak_ptr<jira::report> m_dataset;
+public:
+	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const jira::server& server);
 
 	void addChild(std::unique_ptr<jira::node>&& child) override final;
 	void measure(IJiraPainter* painter) override;

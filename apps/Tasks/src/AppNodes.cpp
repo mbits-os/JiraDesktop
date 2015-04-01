@@ -6,6 +6,7 @@
 
 #include "AppNodes.h"
 #include <limits>
+#include <sstream>
 
 enum {
 	CELL_MARGIN = 7
@@ -293,47 +294,73 @@ CJiraRowProxy::CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dat
 	, m_id(id)
 {
 	CJiraNode::setClass(rules::tableRow);
-	auto& record = m_dataset->data.at(m_id);
+	auto& record = dataset->data.at(m_id);
 	m_proxy = static_cast<CJiraNode*>(record.getRow());
 }
 
 std::string CJiraRowProxy::text() const
 {
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return{};
 	return m_proxy->text();
 }
 
 void CJiraRowProxy::setTooltip(const std::string& text)
 {
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return;
 	m_proxy->setTooltip(text);
 }
 
 void CJiraRowProxy::addChild(std::unique_ptr<jira::node>&& child)
 {
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return;
 	m_proxy->addChild(std::move(child));
 }
 
 void CJiraRowProxy::setClass(jira::styles style)
 {
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return;
 	m_proxy->setClass(style);
 }
 
 jira::styles CJiraRowProxy::getStyles() const
 {
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return jira::styles::unset;
 	return m_proxy->getStyles();
 }
 
 const std::vector<std::unique_ptr<jira::node>>& CJiraRowProxy::values() const
 {
+	auto lock = m_dataset.lock();
+	if (!lock) {
+		static std::vector<std::unique_ptr<jira::node>> dummy;
+		return dummy;
+	}
 	return m_proxy->values();
 }
 
 void CJiraRowProxy::paint(IJiraPainter* painter)
 {
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return;
 	return m_proxy->paint(painter);
 }
 
 void CJiraRowProxy::measure(IJiraPainter* painter)
 {
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return;
 	m_proxy->measure(painter);
 
 	auto it = m_columns->begin();
@@ -353,6 +380,10 @@ void CJiraRowProxy::setPosition(int x, int y)
 {
 	m_position.x = x;
 	m_position.y = y;
+
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return;
 	m_proxy->setPosition(0, 0);
 }
 
@@ -364,6 +395,10 @@ IJiraNode* CJiraRowProxy::getParent() const
 void CJiraRowProxy::setParent(IJiraNode* parent_)
 {
 	m_parent = parent_;
+
+	auto lock = m_dataset.lock();
+	if (!lock)
+		return;
 	m_proxy->setParent(this);
 }
 
@@ -458,3 +493,62 @@ void CJiraReportTableNode::measure(IJiraPainter* painter)
 	m_position.width = cast(m_children[0])->getSize().width;
 }
 
+CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const jira::server& server)
+	: m_dataset(dataset)
+{
+	{
+		auto text = server.login() + "@" + server.displayName();
+		auto title = std::make_unique<CJiraTextNode>(text);
+		title->setClass(rules::header);
+		CJiraNode::addChild(std::move(title));
+	}
+
+	for (auto& error : server.errors()) {
+		auto note = std::make_unique<CJiraTextNode>(error);
+		note->setClass(rules::error);
+		CJiraNode::addChild(std::move(note));
+	}
+
+	if (dataset) {
+		CJiraNode::addChild(std::make_unique<CJiraReportTableNode>(dataset));
+
+		std::ostringstream o;
+		auto low = dataset->data.empty() ? 0 : 1;
+		o << "(Issues " << (dataset->startAt + low)
+			<< '-' << (dataset->startAt + dataset->data.size())
+			<< " of " << dataset->total << ")";
+
+		auto note = std::make_unique<CJiraTextNode>(o.str());
+		note->setClass(rules::classSummary);
+		CJiraNode::addChild(std::move(note));
+	} else {
+		auto note = std::make_unique<CJiraTextNode>("Empty");
+		note->setClass(rules::classEmpty);
+		CJiraNode::addChild(std::move(note));
+	}
+}
+
+void CJiraReportElement::addChild(std::unique_ptr<jira::node>&& /*child*/)
+{
+	// noop
+}
+
+void CJiraReportElement::measure(IJiraPainter* painter)
+{
+	StyleSaver saver{ painter, getStyles(), getRules() };
+
+	size_t height = 0;
+	size_t width = 0;
+	for (auto& node : m_children) {
+		cast(node)->measure(painter);
+
+		auto size = cast(node)->getSize();
+		cast(node)->setPosition(0, height);
+		height += size.height;
+		if (width < size.width)
+			width = size.width;
+	}
+
+	m_position.height = height;
+	m_position.width = width;
+}
