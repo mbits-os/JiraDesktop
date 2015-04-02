@@ -181,6 +181,23 @@ bool CJiraNode::getHovered() const
 	return m_hoverCount > 0;
 }
 
+void CJiraNode::setCursor(cursor c)
+{
+	m_cursor = c;
+}
+
+cursor CJiraNode::getCursor() const
+{
+	if (m_cursor != cursor::inherited)
+		return m_cursor;
+
+	if (m_parent)
+		return m_parent->getCursor();
+
+	return cursor::arrow;
+}
+
+
 void CJiraIconNode::ImageCb::onImageChange(ImageRef*)
 {
 	parent->invalidate();
@@ -221,6 +238,7 @@ CJiraLinkNode::CJiraLinkNode(const std::string& href)
 {
 	m_data[Attr::Href] = href;
 	CJiraNode::setClass(jira::styles::link);
+	CJiraNode::setCursor(cursor::pointer);
 }
 
 CJiraTextNode::CJiraTextNode(const std::string& text)

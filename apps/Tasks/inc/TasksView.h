@@ -55,17 +55,29 @@ private:
 
 	CFontHandle m_font;
 	CBrush m_background;
+	CCursor m_cursorObj;
 
 	int m_mouseX = 0;
 	int m_mouseY = 0;
 	jira::node* m_hovered = nullptr;
+	cursor m_cursor = cursor::arrow;
 
 	void updateLayout();
+	void updateCursor(bool force = false);
 	jira::node* nodeFromPoint();
 public:
 	std::shared_ptr<CAppModel> m_model;
 
-	DECLARE_WND_CLASS_EX(NULL, CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS, -1)
+	static ATL::CWndClassInfo& GetWndClassInfo()
+	{
+		static ATL::CWndClassInfo wc =
+		{
+			{ sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS, StartWindowProc,
+			  0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+			NULL, NULL, NULL, TRUE, 0, _T("")
+		};
+		return wc;
+	}
 
 	BOOL PreTranslateMessage(MSG* pMsg);
 
@@ -75,6 +87,7 @@ public:
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
 		MESSAGE_HANDLER(WM_SETFONT, OnSetFont)
 		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove);
+		MESSAGE_HANDLER(WM_SETCURSOR, OnSetCursor)
 		MESSAGE_HANDLER(UM_LISTCHANGED, OnListChanged)
 		MESSAGE_HANDLER(UM_REFRESHSTART, OnRefreshStart)
 		MESSAGE_HANDLER(UM_REFRESHSTOP, OnRefreshStop)
@@ -91,6 +104,7 @@ public:
 	LRESULT OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnSetFont(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);

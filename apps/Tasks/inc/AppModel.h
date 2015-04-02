@@ -33,6 +33,12 @@ enum class rules {
 	classSummary,
 };
 
+enum class cursor {
+	inherited,
+	arrow,
+	pointer
+};
+
 struct ImageRef;
 
 struct ImageRefCallback {
@@ -103,6 +109,8 @@ struct IJiraNode : jira::node {
 	virtual jira::node* nodeFromPoint(int x, int y) = 0;
 	virtual void setHovered(bool hovered) = 0;
 	virtual bool getHovered() const = 0;
+	virtual void setCursor(cursor) = 0;
+	virtual cursor getCursor() const = 0;
 };
 
 inline IJiraNode* cast(const std::unique_ptr<jira::node>& node) {

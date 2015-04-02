@@ -33,6 +33,8 @@ public:
 	jira::node* nodeFromPoint(int x, int y) override;
 	void setHovered(bool hovered) override;
 	bool getHovered() const override;
+	void setCursor(cursor) override;
+	cursor getCursor() const override;
 
 protected:
 	std::map<Attr, std::string> m_data;
@@ -48,6 +50,7 @@ protected:
 	} m_position;
 
 	std::atomic<int> m_hoverCount{ 0 };
+	cursor m_cursor = cursor::inherited;
 };
 
 class CJiraRoot : public CJiraNode {};

@@ -110,6 +110,7 @@ BOOL CTasksView::PreTranslateMessage(MSG* pMsg)
 
 LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	updateCursor(true);
 	m_background.CreateSolidBrush(0x00FFFFFF);
 	m_listener = std::make_shared<TaskViewModelListener>(m_hWnd);
 	m_model->registerListener(m_listener);
@@ -809,7 +810,7 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	}
 #endif
 
-	dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x00000080, 0x00000080);
+	//dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x00000080, 0x00000080);
 
 	//if (m_hovered)
 	//	paintGrayFrame((HDC)dc, 0x00, m_hovered);
@@ -842,6 +843,33 @@ void CTasksView::updateLayout()
 	m_hovered = nodeFromPoint();
 	if (m_hovered)
 		static_cast<IJiraNode*>(m_hovered)->setHovered(true);
+	updateCursor();
+}
+
+void CTasksView::updateCursor(bool force)
+{
+	auto tmp = cursor::arrow;
+	if (m_hovered)
+		tmp = static_cast<IJiraNode*>(m_hovered)->getCursor();
+
+	if (tmp == cursor::inherited)
+		tmp = cursor::arrow;
+
+	if (tmp == m_cursor && !force)
+		return;
+
+	m_cursor = tmp;
+	LPCWSTR idc = IDC_ARROW;
+	switch (m_cursor) {
+	case cursor::pointer:
+		idc = IDC_HAND;
+		break;
+	};
+
+	if (!m_cursorObj.IsNull())
+		m_cursorObj.DestroyCursor();
+	m_cursorObj.LoadSysCursor(idc);
+	SetCursor(m_cursorObj);
 }
 
 jira::node* CTasksView::nodeFromPoint()
@@ -886,9 +914,20 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 			static_cast<IJiraNode*>(m_hovered)->setHovered(false);
 
 		m_hovered = tmp;
+		updateCursor();
 		Invalidate(); // TODO: invalidate old and new hovered/their parents...
 	}
 	return 0;
+}
+
+LRESULT CTasksView::OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled)
+{
+	bHandled = LOWORD(lParam) == HTCLIENT;
+	if (bHandled) {
+		SetCursor(m_cursorObj);
+	}
+
+	return FALSE;
 }
 
 LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
