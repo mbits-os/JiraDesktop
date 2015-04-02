@@ -122,6 +122,15 @@ namespace jira
 		return true;
 	}
 
+	void db::update_name(const std::string& id, const std::string& display)
+	{
+		auto it = m_fields.find(id);
+		if (it == m_fields.end())
+			return;
+
+		it->second.m_display = display;
+	}
+
 	std::unique_ptr<type> db::create(const std::string& id) const
 	{
 		auto it = m_fields.find(id);

@@ -166,6 +166,7 @@ namespace jira
 		void debug_dump(std::ostream&);
 		model create_model(const std::vector<std::string>& names);
 		bool field_def(const std::string& id, bool is_array, const std::string& type, const std::string& display);
+		void update_name(const std::string& id, const std::string& display);
 	};
 }
 

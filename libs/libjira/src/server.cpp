@@ -218,9 +218,17 @@ namespace jira
 					continue;
 
 				auto fld = vfld.as<json::map>();
+
+				auto id = fld["id"].as_string();
+				auto it = fld.find("name");
+				auto display = it == fld.end() ? id : it->second.as_string();
+
 				auto schema_it = fld.find("schema");
-				if (schema_it == fld.end())
+				if (schema_it == fld.end()) {
+					if (id == "issuekey")
+						m_db.update_name("key", display);
 					continue;
+				}
 
 				auto schema = schema_it->second.as<json::map>()["type"].as_string();
 
@@ -229,10 +237,6 @@ namespace jira
 
 				if (is_array)
 					schema = schema_it->second.as<json::map>()["items"].as_string();
-
-				auto id = fld["id"].as_string();
-				auto it = fld.find("name");
-				auto display = it == fld.end() ? id : it->second.as_string();
 
 				if (!custom) {
 					auto system = schema_it->second.as<json::map>()["system"].as_string();
