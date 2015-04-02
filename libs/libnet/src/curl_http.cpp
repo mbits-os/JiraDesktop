@@ -356,6 +356,13 @@ namespace net { namespace http {
 		}
 
 		CURLcode ret = m_curl.fetch();
+
+		if (ret == CURLE_COULDNT_RESOLVE_HOST) {
+			using namespace std::chrono;
+			std::this_thread::sleep_for(500ms);
+			ret = m_curl.fetch();
+		}
+
 		if (m_curl.isRedirect())
 			m_curl.sendHeaders(); // we must have hit max or a circular
 
