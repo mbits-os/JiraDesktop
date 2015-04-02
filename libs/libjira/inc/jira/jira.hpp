@@ -44,26 +44,26 @@ namespace jira
 	struct node {
 		virtual ~node() {}
 		virtual void setTooltip(const std::string& text) = 0;
-		virtual void addChild(std::unique_ptr<node>&& child) = 0;
+		virtual void addChild(const std::shared_ptr<node>& child) = 0;
 		virtual void setClass(styles) = 0;
-		virtual const std::vector<std::unique_ptr<node>>& values() const = 0;
+		virtual const std::vector<std::shared_ptr<node>>& values() const = 0;
 	};
 
 	class server;
 	struct document {
 		virtual ~document() {}
 		virtual void setCurrent(const std::shared_ptr<server>&) = 0;
-		virtual std::unique_ptr<node> createTableRow() = 0;
-		virtual std::unique_ptr<node> createEmpty() = 0;
-		virtual std::unique_ptr<node> createSpan() = 0;
-		virtual std::unique_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
-		virtual std::unique_ptr<node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) = 0;
-		virtual std::unique_ptr<node> createLink(const std::string& href) = 0;
-		virtual std::unique_ptr<node> createText(const std::string& text) = 0;
+		virtual std::shared_ptr<node> createTableRow() = 0;
+		virtual std::shared_ptr<node> createEmpty() = 0;
+		virtual std::shared_ptr<node> createSpan() = 0;
+		virtual std::shared_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
+		virtual std::shared_ptr<node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) = 0;
+		virtual std::shared_ptr<node> createLink(const std::string& href) = 0;
+		virtual std::shared_ptr<node> createText(const std::string& text) = 0;
 	};
 
 	class record {
-		std::unique_ptr<node> m_row;
+		std::shared_ptr<node> m_row;
 
 		std::string m_uri;
 		std::string m_key;
@@ -83,11 +83,11 @@ namespace jira
 		const std::string& issue_key() const { return m_key; }
 		const std::string& issue_id() const { return m_id; }
 
-		void setRow(std::unique_ptr<node>&&);
-		node* getRow() const { return m_row.get(); }
-		void addVal(std::unique_ptr<node>&&);
+		void setRow(const std::shared_ptr<node>&);
+		const std::shared_ptr<node>& getRow() const { return m_row; }
+		void addVal(const std::shared_ptr<node>&);
 
-		const std::vector<std::unique_ptr<node>>& values() const { return m_row->values(); }
+		const std::vector<std::shared_ptr<node>>& values() const { return m_row->values(); }
 	};
 
 	struct type {
@@ -96,8 +96,8 @@ namespace jira
 		virtual const std::string& id() const { return m_id; }
 		virtual const std::string& title() const { return titleFull(); }
 		virtual const std::string& titleFull() const { return m_title; }
-		virtual std::unique_ptr<node> visit(document* doc, const record& issue, const json::map& object) const = 0;
-		virtual std::unique_ptr<node> visit(document* doc, const record& issue, const json::value& value) const;
+		virtual std::shared_ptr<node> visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const = 0;
+		virtual std::shared_ptr<node> visit(const std::shared_ptr<document>& doc, const record& issue, const json::value& value) const;
 	private:
 		std::string m_id;
 		std::string m_title;
@@ -111,7 +111,7 @@ namespace jira
 		model(std::vector<std::unique_ptr<type>>&& cols, const std::string& uri) : m_cols(std::move(cols)), m_uri(uri) {}
 	public:
 		model() = default;
-		record visit(document* doc, const json::value& object, const std::string& key, const std::string& id) const;
+		record visit(const std::shared_ptr<document>& doc, const json::value& object, const std::string& key, const std::string& id) const;
 
 		const std::vector<std::unique_ptr<type>>& cols() const { return m_cols; }
 	};

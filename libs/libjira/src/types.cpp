@@ -78,7 +78,7 @@ namespace jira
 			return T{ it->second.as<T>() };
 		}
 
-		std::unique_ptr<node> key::visit(document* doc, const record& issue, const json::map& /*object*/) const
+		std::shared_ptr<node> key::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& /*object*/) const
 		{
 			auto link = doc->createLink(issue.issue_uri());
 			link->addChild(doc->createText(issue.issue_key()));
@@ -87,7 +87,7 @@ namespace jira
 
 		string::string(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::unique_ptr<node> string::visit(document* doc, const record& /*issue*/, const json::map& object) const
+		std::shared_ptr<node> string::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end())
@@ -98,7 +98,7 @@ namespace jira
 
 		label::label(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::unique_ptr<node> label::visit(document* doc, const record& /*issue*/, const json::value& object) const
+		std::shared_ptr<node> label::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::value& object) const
 		{
 			std::string text;
 			if (object.is<std::string>())
@@ -120,7 +120,7 @@ namespace jira
 
 		resolution::resolution(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::unique_ptr<node> resolution::visit(document* doc, const record& /*issue*/, const json::map& object) const
+		std::shared_ptr<node> resolution::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || it->second.is<nullptr_t>()) {
@@ -149,7 +149,7 @@ namespace jira
 
 		summary::summary(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::unique_ptr<node> summary::visit(document* doc, const record& issue, const json::map& object) const
+		std::shared_ptr<node> summary::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const
 		{
 			auto it = object.find(id());
 			std::string label = "Untitled";
@@ -183,7 +183,7 @@ namespace jira
 			return out;
 		}
 
-		std::unique_ptr<node> user::visit(document* doc, const record& /*issue*/, const json::map& object) const
+		std::shared_ptr<node> user::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
@@ -225,7 +225,7 @@ namespace jira
 				m_title = utf8initial(title);
 		}
 
-		std::unique_ptr<node> icon::visit(document* doc, const record& /*issue*/, const json::map& object) const
+		std::shared_ptr<node> icon::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
@@ -246,14 +246,14 @@ namespace jira
 			return m_title;
 		}
 
-		array::array(const std::string& id, const std::string& title, std::unique_ptr<type>&& item, const std::string& sep)
+		array::array(const std::string& id, const std::string& title, const std::shared_ptr<type>& item, const std::string& sep)
 			: type(id, title)
 			, m_item(std::move(item))
 			, m_sep(sep)
 		{
 		}
 
-		std::unique_ptr<node> array::visit(document* doc, const record& issue, const json::map& object) const
+		std::shared_ptr<node> array::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::vector>()) {

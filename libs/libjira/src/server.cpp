@@ -407,7 +407,7 @@ namespace jira
 				auto key = issue["key"].as_string();
 				auto id = issue["id"].as_string();
 
-				dataset.data.push_back(dataset.schema.visit(doc.get(), issue["fields"], key, id));
+				dataset.data.push_back(dataset.schema.visit(doc, issue["fields"], key, id));
 			}
 
 			response(xhr, std::move(dataset));

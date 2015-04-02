@@ -36,17 +36,17 @@ namespace jira
 		return Uri::canonical("browse/" + m_key, m_uri).string();
 	}
 
-	void record::setRow(std::unique_ptr<node>&& row)
+	void record::setRow(const std::shared_ptr<node>& row)
 	{
 		m_row = std::move(row);
 	}
 
-	void record::addVal(std::unique_ptr<node>&& field)
+	void record::addVal(const std::shared_ptr<node>& field)
 	{
 		m_row->addChild(std::move(field));
 	}
 
-	std::unique_ptr<node> type::visit(document* doc, const record& issue, const json::value& value) const
+	std::shared_ptr<node> type::visit(const std::shared_ptr<document>& doc, const record& issue, const json::value& value) const
 	{
 		if (!value.is<json::map>())
 			return nullptr;
@@ -54,7 +54,7 @@ namespace jira
 		return visit(doc, issue, value.as<json::map>());
 	}
 
-	record model::visit(document* doc, const json::value& object, const std::string& key, const std::string& id) const
+	record model::visit(const std::shared_ptr<document>& doc, const json::value& object, const std::string& key, const std::string& id) const
 	{
 		record out;
 		out.uri(m_uri);
