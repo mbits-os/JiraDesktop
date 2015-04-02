@@ -201,7 +201,17 @@ class LinePrinter : public IJiraPainter
 	{
 		if (text.empty())
 			return;
-		dc.TextOut(x, y, utf::widen(text).c_str());
+
+		auto widen = utf::widen(text);
+		dc.TextOut(x, y, widen.c_str());
+
+#if 0
+		SIZE s = {};
+		TEXTMETRIC tm = {};
+		dc.GetTextExtent(widen.c_str(), widen.length(), &s);
+		dc.GetTextMetrics(&tm);
+		dc.FillSolidRect(x, y + tm.tmAscent, s.cx - 1, 1, 0x003333FF);
+#endif
 	}
 
 	size measureString(const std::string& text) override
