@@ -24,6 +24,53 @@ fs::path exe_dir() {
 	static fs::path dir = fs::app_directory();
 	return dir;
 }
+namespace dpi {
+	enum class aware {
+		unaware = 0,
+		system = 1,
+		monitor = 2
+	};
+
+	typedef enum PROCESS_DPI_AWARENESS {
+		PROCESS_DPI_UNAWARE = 0,
+		PROCESS_SYSTEM_DPI_AWARE = 1,
+		PROCESS_PER_MONITOR_DPI_AWARE = 2
+	} PROCESS_DPI_AWARENESS;
+
+	aware checkHighDpi()
+	{
+		aware result = aware::unaware;
+
+		HMODULE hShcore = LoadLibrary(_T("shcore.dll"));
+
+		if (hShcore) {
+			typedef HRESULT(STDAPICALLTYPE *SetProcessDpiAwarenessFunc)(_In_ PROCESS_DPI_AWARENESS value);
+			auto setProcessDpiAwareness = (SetProcessDpiAwarenessFunc)GetProcAddress(hShcore, "SetProcessDpiAwareness");
+			if (setProcessDpiAwareness) {
+				HRESULT hr = setProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
+				if (SUCCEEDED(hr))
+					result = aware::system;
+				else if (hr == E_ACCESSDENIED)
+					result = aware::system; // TODO: read from OS
+			}
+			FreeLibrary(hShcore);
+		}
+
+		if (result != aware::unaware)
+			return result;
+
+		HMODULE hUser32 = LoadLibrary(_T("user32.dll"));
+		typedef BOOL(*SetProcessDPIAwareFunc)();
+		SetProcessDPIAwareFunc setDPIAware = (SetProcessDPIAwareFunc)GetProcAddress(hUser32, "SetProcessDPIAware");
+		if (setDPIAware) {
+			if (setDPIAware())
+				result = aware::system;
+		}
+		FreeLibrary(hUser32);
+
+		return result;
+	}
+};
 
 CAppModule _Module;
 
@@ -79,6 +126,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 // make the EXE free threaded. This means that calls come in on a random RPC thread.
 //	HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	ATLASSERT(SUCCEEDED(hRes));
+
+	dpi::checkHighDpi();
 
 	ULONG_PTR gdiplusToken;
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
