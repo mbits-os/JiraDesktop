@@ -319,6 +319,12 @@ namespace {
 			update();
 		}
 
+		void setFontUnderline(bool underline)
+		{
+			logFont.lfUnderline = underline ? TRUE : FALSE;
+			update();
+		}
+
 		void setFontWeight(int weight)
 		{
 			logFont.lfWeight = weight;
@@ -350,6 +356,7 @@ namespace {
 
 		COLORREF getColor() const { return lastColor; }
 		bool getFontItalic() const { return !!logFont.lfItalic; }
+		bool getFontUnderline() const { return !!logFont.lfUnderline; }
 		int getFontWeight() const { return logFont.lfWeight; }
 		int getFontSize() const { return logFont.lfHeight; }
 		family getFontFamily() const { return lastFamily; }
@@ -364,6 +371,7 @@ namespace {
 		int m_weight;
 		int m_size;
 		bool m_italic;
+		bool m_underline;
 		family m_family;
 
 	public:
@@ -377,6 +385,7 @@ namespace {
 			, m_weight(styler.getFontWeight())
 			, m_size(styler.getFontSize())
 			, m_italic(styler.getFontItalic())
+			, m_underline(styler.getFontUnderline())
 			, m_family(styler.getFontFamily())
 		{
 		}
@@ -387,6 +396,7 @@ namespace {
 			, m_weight(styler.getFontWeight())
 			, m_size(styler.getFontSize())
 			, m_italic(styler.getFontItalic())
+			, m_underline(styler.getFontUnderline())
 			, m_family(styler.getFontFamily())
 		{
 			apply(*this, rule, node);
@@ -398,6 +408,7 @@ namespace {
 			setFontWeight(m_weight);
 			setFontSize(m_size);
 			setFontItalic(m_italic);
+			setFontUnderline(m_underline);
 			setFontFamily(m_family);
 		}
 
@@ -414,6 +425,13 @@ namespace {
 		{
 			if (italic != m_styler.getFontItalic())
 				m_styler.setFontItalic(italic);
+			return *this;
+		}
+
+		Style& setFontUnderline(bool underline)
+		{
+			if (underline != m_styler.getFontUnderline())
+				m_styler.setFontUnderline(underline);
 			return *this;
 		}
 
@@ -492,6 +510,18 @@ namespace {
 
 	inline FontItalicManip fontItalic(bool italic) { return FontItalicManip{ italic }; }
 	inline FontItalicManip italic() { return FontItalicManip{ true }; }
+
+	class FontUnderlineManip : public ManipBase<bool> {
+	public:
+		FontUnderlineManip(bool underline) : ManipBase<bool>(underline) {}
+		friend Style& operator<<(Style& o, const FontUnderlineManip& manip)
+		{
+			return o.setFontUnderline(manip.m_data);
+		}
+	};
+
+	inline FontUnderlineManip fontUnderline(bool underline) { return FontUnderlineManip{ underline }; }
+	inline FontUnderlineManip underline() { return FontUnderlineManip{ true }; }
 
 	class FontFamilyManip : public ManipBase<family> {
 	public:
@@ -589,7 +619,7 @@ struct StyleSave
 	{
 	}
 
-	void apply(jira::styles style, IJiraNode* /*node*/)
+	void apply(jira::styles style, IJiraNode* node)
 	{
 		using namespace jira;
 
@@ -605,6 +635,8 @@ struct StyleSave
 			break;
 		case styles::link:
 			saved << color(0x00AF733B);
+			if (node && node->getHovered())
+				saved << underline();
 			break;
 		};
 	}
@@ -779,8 +811,8 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 	dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x00000080, 0x00000080);
 
-	if (m_hovered)
-		paintGrayFrame((HDC)dc, 0x00, m_hovered);
+	//if (m_hovered)
+	//	paintGrayFrame((HDC)dc, 0x00, m_hovered);
 
 	return 0;
 }
@@ -790,6 +822,8 @@ void CTasksView::updateLayout()
 	CWindowDC dc{m_hWnd};
 	Styler styler{ (HDC) dc, (HFONT) m_font };
 
+	if (m_hovered)
+		static_cast<IJiraNode*>(m_hovered)->setHovered(false);
 	m_hovered = nullptr;
 
 	int height = 0;
@@ -806,6 +840,8 @@ void CTasksView::updateLayout()
 	// document size: height + 2xBODY_MARGIN, width + 2xBODY_MARGIN
 
 	m_hovered = nodeFromPoint();
+	if (m_hovered)
+		static_cast<IJiraNode*>(m_hovered)->setHovered(true);
 }
 
 jira::node* CTasksView::nodeFromPoint()
@@ -844,6 +880,11 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 	auto tmp = nodeFromPoint();
 	if (tmp != m_hovered) {
+		if (tmp)
+			static_cast<IJiraNode*>(tmp)->setHovered(true);
+		if (m_hovered)
+			static_cast<IJiraNode*>(m_hovered)->setHovered(false);
+
 		m_hovered = tmp;
 		Invalidate(); // TODO: invalidate old and new hovered/their parents...
 	}

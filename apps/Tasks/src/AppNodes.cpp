@@ -157,6 +157,30 @@ jira::node* CJiraNode::nodeFromPoint(int x, int y)
 	return this;
 }
 
+void CJiraNode::setHovered(bool hovered)
+{
+	bool changed = false;
+	if (hovered) {
+		auto value = ++m_hoverCount;
+		changed = value == 1;
+	} else {
+		auto value = --m_hoverCount;
+		changed = value == 0;
+	}
+
+	if (changed) {
+		invalidate();
+		auto parent = getParent();
+		if (parent)
+			parent->setHovered(hovered);
+	}
+}
+
+bool CJiraNode::getHovered() const
+{
+	return m_hoverCount > 0;
+}
+
 void CJiraIconNode::ImageCb::onImageChange(ImageRef*)
 {
 	parent->invalidate();

@@ -101,6 +101,8 @@ struct IJiraNode : jira::node {
 	virtual void invalidate(int x, int y, size_t width, size_t height) = 0;
 
 	virtual jira::node* nodeFromPoint(int x, int y) = 0;
+	virtual void setHovered(bool hovered) = 0;
+	virtual bool getHovered() const = 0;
 };
 
 inline IJiraNode* cast(const std::unique_ptr<jira::node>& node) {

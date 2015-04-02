@@ -31,6 +31,8 @@ public:
 	void invalidate(int x, int y, size_t width, size_t height) override;
 
 	jira::node* nodeFromPoint(int x, int y) override;
+	void setHovered(bool hovered) override;
+	bool getHovered() const override;
 
 protected:
 	std::map<Attr, std::string> m_data;
@@ -44,6 +46,8 @@ protected:
 		size_t width = 0;
 		size_t height = 0;
 	} m_position;
+
+	std::atomic<int> m_hoverCount{ 0 };
 };
 
 class CJiraRoot : public CJiraNode {};
