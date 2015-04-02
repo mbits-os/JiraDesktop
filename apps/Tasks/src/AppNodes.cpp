@@ -479,7 +479,8 @@ void CJiraRowProxy::paint(IJiraPainter* painter)
 	auto lock = m_dataset.lock();
 	if (!lock)
 		return;
-	return m_proxy->paint(painter);
+	CJiraReportNode::paint(painter);
+	m_proxy->paint(painter);
 }
 
 void CJiraRowProxy::measure(IJiraPainter* painter)

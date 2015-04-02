@@ -134,6 +134,11 @@ enum {
 
 namespace { class Styler; };
 
+enum class bk {
+	transparent,
+	solid
+};
+
 class LinePrinter : public IJiraPainter
 {
 	HFONT older;
@@ -144,6 +149,8 @@ class LinePrinter : public IJiraPainter
 	int y = BODY_MARGIN;
 	Styler* uplink = nullptr;
 	bool selectedFrame = false;
+	bk backgroundMode = bk::transparent;
+	COLORREF color = 0x00FFFFFF;
 
 	void updateLineHeight()
 	{
@@ -266,9 +273,22 @@ public:
 			selectedFrame = false;
 			auto pt = static_cast<IJiraNode*>(node)->getAbsolutePos();
 			auto sz = static_cast<IJiraNode*>(node)->getSize();
-			RECT r{pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 4 , pt.y + (int)sz.height + 4 };
+			RECT r{pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 2, pt.y + (int)sz.height + 2 };
 			dc.DrawFocusRect(&r);
 		}
+		return *this;
+	}
+
+	LinePrinter& drawBackground(jira::node* node)
+	{
+		if (backgroundMode == bk::solid) {
+			backgroundMode = bk::transparent;
+			auto pt = static_cast<IJiraNode*>(node)->getAbsolutePos();
+			auto sz = static_cast<IJiraNode*>(node)->getSize();
+			RECT r{ pt.x - 1, pt.y - 1, pt.x + (int)sz.width + 1, pt.y + (int)sz.height + 1 };
+			dc.FillSolidRect(&r, color);
+		}
+
 		return *this;
 	}
 
@@ -289,6 +309,13 @@ public:
 	LinePrinter& setFrameSelect()
 	{
 		selectedFrame = true;
+		return *this;
+	}
+
+	LinePrinter& setBackground(bk mode, COLORREF clr)
+	{
+		backgroundMode = mode;
+		color = clr;
 		return *this;
 	}
 
@@ -382,6 +409,11 @@ namespace {
 		void setFrameSelect()
 		{
 			printer.setFrameSelect();
+		}
+
+		void setBackground(bk mode, COLORREF color)
+		{
+			printer.setBackground(mode, color);
 		}
 
 		COLORREF getColor() const { return lastColor; }
@@ -491,6 +523,12 @@ namespace {
 			m_styler.setFrameSelect();
 			return *this;
 		}
+
+		Style& setBackground(bk mode, COLORREF color)
+		{
+			m_styler.setBackground(mode, color);
+			return *this;
+		}
 	};
 
 	template <typename T>
@@ -579,7 +617,18 @@ namespace {
 		}
 	};
 
-	void Style::apply(Style& style, rules rule, IJiraNode* /*node*/)
+	class BackgroundManip : public ManipBase<std::pair<bk, COLORREF>> {
+	public:
+		BackgroundManip(bk mode, COLORREF color) : ManipBase<std::pair<bk, COLORREF>>(std::make_pair(mode, color)) {}
+		friend Style& operator<<(Style& o, const BackgroundManip& manip)
+		{
+			return o.setBackground(manip.m_data.first, manip.m_data.second);
+		}
+	};
+
+	inline BackgroundManip background(COLORREF color) { return BackgroundManip{ bk::solid, color }; }
+
+	void Style::apply(Style& style, rules rule, IJiraNode* node)
 	{
 		switch (rule) {
 		case rules::body:
@@ -598,6 +647,8 @@ namespace {
 			break;
 		case rules::tableRow:
 			// same as parent
+			if (node && node->getHovered())
+				style << background(0x00f8f8f8);
 			break;
 		case rules::classEmpty:
 			style << italic() << color(0x00555555);
@@ -700,6 +751,7 @@ StyleSave* LinePrinter::setStyle(jira::styles style, IJiraNode* node)
 
 	auto mem = std::make_unique<StyleSave>(*uplink);
 	mem->apply(style, node);
+	drawBackground(node);
 	drawFocus(node);
 	return mem.release();
 }
@@ -708,6 +760,7 @@ StyleSave* LinePrinter::setStyle(rules rule, IJiraNode* node)
 {
 	auto mem = std::make_unique<StyleSave>(*uplink);
 	mem->apply(rule, node);
+	drawBackground(node);
 	drawFocus(node);
 	return mem.release();
 }
