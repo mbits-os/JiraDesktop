@@ -30,7 +30,7 @@ public:
 	void invalidate() override;
 	void invalidate(int x, int y, size_t width, size_t height) override;
 
-	jira::node* findHovered(int x, int y) override;
+	jira::node* nodeFromPoint(int x, int y) override;
 
 protected:
 	std::map<Attr, std::string> m_data;
@@ -130,7 +130,7 @@ public:
 	void setParent(IJiraNode*) override;
 
 	void repositionChildren() override;
-	jira::node* findHovered(int x, int y) override;
+	jira::node* nodeFromPoint(int x, int y) override;
 };
 
 class CJiraHeaderNode : public CJiraReportNode {

@@ -805,16 +805,16 @@ void CTasksView::updateLayout()
 
 	// document size: height + 2xBODY_MARGIN, width + 2xBODY_MARGIN
 
-	m_hovered = findHovered();
+	m_hovered = nodeFromPoint();
 }
 
-jira::node* CTasksView::findHovered()
+jira::node* CTasksView::nodeFromPoint()
 {
 	for (auto& server : m_servers) {
 		if (!server.m_plaque)
 			continue;
 
-		auto tmp = cast(server.m_plaque)->findHovered(m_mouseX, m_mouseY);
+		auto tmp = cast(server.m_plaque)->nodeFromPoint(m_mouseX, m_mouseY);
 		if (tmp)
 			return tmp;
 	}
@@ -842,7 +842,7 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	RECT r2{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
 	InvalidateRect(&r2);
 
-	auto tmp = findHovered();
+	auto tmp = nodeFromPoint();
 	if (tmp != m_hovered) {
 		m_hovered = tmp;
 		Invalidate(); // TODO: invalidate old and new hovered/their parents...

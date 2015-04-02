@@ -139,7 +139,7 @@ void CJiraNode::invalidate(int x, int y, size_t width, size_t height)
 		m_parent->invalidate(x, y, width, height);
 }
 
-jira::node* CJiraNode::findHovered(int x, int y)
+jira::node* CJiraNode::nodeFromPoint(int x, int y)
 {
 	x -= m_position.x;
 	y -= m_position.y;
@@ -149,7 +149,7 @@ jira::node* CJiraNode::findHovered(int x, int y)
 		return nullptr;
 
 	for (auto& node : m_children) {
-		auto tmp = cast(node)->findHovered(x, y);
+		auto tmp = cast(node)->nodeFromPoint(x, y);
 		if (tmp)
 			return tmp;
 	}
@@ -431,7 +431,7 @@ void CJiraRowProxy::repositionChildren()
 	m_position.height = m_proxy->getSize().height;
 }
 
-jira::node* CJiraRowProxy::findHovered(int x, int y)
+jira::node* CJiraRowProxy::nodeFromPoint(int x, int y)
 {
 	x -= m_position.x;
 	y -= m_position.y;
@@ -445,7 +445,7 @@ jira::node* CJiraRowProxy::findHovered(int x, int y)
 		return this;
 
 	for (auto& node : values()) {
-		auto tmp = cast(node)->findHovered(x, y);
+		auto tmp = cast(node)->nodeFromPoint(x, y);
 		if (tmp)
 			return tmp;
 	}
