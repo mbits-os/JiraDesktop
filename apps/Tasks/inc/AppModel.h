@@ -102,12 +102,12 @@ struct IJiraNode : jira::node {
 	virtual void setClass(rules) = 0;
 	virtual rules getRules() const = 0;
 
-	virtual IJiraNode* getParent() const = 0;
-	virtual void setParent(IJiraNode*) = 0;
+	virtual std::shared_ptr<IJiraNode> getParent() const = 0;
+	virtual void setParent(const std::shared_ptr<IJiraNode>&) = 0;
 	virtual void invalidate() = 0;
 	virtual void invalidate(int x, int y, size_t width, size_t height) = 0;
 
-	virtual jira::node* nodeFromPoint(int x, int y) = 0;
+	virtual std::shared_ptr<jira::node> nodeFromPoint(int x, int y) = 0;
 	virtual void setHovered(bool hovered) = 0;
 	virtual bool getHovered() const = 0;
 	virtual void setActive(bool active) = 0;
@@ -120,8 +120,8 @@ struct IJiraNode : jira::node {
 	virtual const std::string& getTooltip() const = 0;
 };
 
-inline IJiraNode* cast(const std::unique_ptr<jira::node>& node) {
-	return static_cast<IJiraNode*>(node.get());
+inline std::shared_ptr<IJiraNode> cast(const std::shared_ptr<jira::node>& node) {
+	return std::static_pointer_cast<IJiraNode>(node);
 }
 
 class StyleSaver {

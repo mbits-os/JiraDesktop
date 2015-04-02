@@ -72,7 +72,8 @@ CTasksView::ServerInfo::ServerInfo(const std::shared_ptr<jira::server>& server, 
 	, m_sessionId(server->sessionId())
 {
 	m_server->registerListener(m_listener);
-	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, *server, make_invalidator(hWnd));
+	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, make_invalidator(hWnd));
+	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*server);
 }
 
 CTasksView::ServerInfo::~ServerInfo()
@@ -302,14 +303,14 @@ public:
 		return *this;
 	}
 
-	LinePrinter& paint(const std::unique_ptr<jira::node>& node, Styler* link)
+	LinePrinter& paint(const std::shared_ptr<jira::node>& node, Styler* link)
 	{
 		uplink = link;
 		cast(node)->paint(this);
 		return *this;
 	}
 
-	LinePrinter& measure(const std::unique_ptr<jira::node>& node, Styler* link)
+	LinePrinter& measure(const std::shared_ptr<jira::node>& node, Styler* link)
 	{
 		uplink = link;
 		cast(node)->measure(this);
@@ -697,7 +698,7 @@ namespace {
 	}
 #endif
 
-	void plaque(Styler& styler, const std::unique_ptr<jira::node>& node)
+	void plaque(Styler& styler, const std::shared_ptr<jira::node>& node)
 	{
 		auto& painter = static_cast<IJiraPainter&>(styler.out());
 		auto orig = painter.getOrigin();
@@ -778,45 +779,6 @@ StyleSave* LinePrinter::setStyle(rules rule, IJiraNode* node)
 void LinePrinter::restoreStyle(StyleSave* save)
 {
 	std::unique_ptr<StyleSave> mem{ save };
-}
-
-IJiraPainter::point getOffset(jira::node* node) {
-	if (!node)
-		return{ 0, 0 };
-
-	auto pt = static_cast<IJiraNode*>(node)->getPosition();
-	auto parent = static_cast<IJiraNode*>(node)->getParent();
-
-	auto tmp = getOffset(parent);
-
-	pt.x += tmp.x;
-	pt.y += tmp.y;
-	return pt;
-}
-
-IJiraPainter::point paintGrayFrame(CDCHandle dc, BYTE shade, jira::node* node) {
-	if (!node)
-		return{ 0, 0 };
-
-	auto pt = static_cast<IJiraNode*>(node)->getPosition();
-	auto sz = static_cast<IJiraNode*>(node)->getSize();
-	auto parent = static_cast<IJiraNode*>(node)->getParent();
-
-	uint16_t channel = shade + 0x44;
-	if (channel >= 0xFF) {
-		auto tmp = getOffset(parent);
-		pt.x += tmp.x;
-		pt.y += tmp.y;
-	} else {
-		auto tmp = paintGrayFrame(dc, (BYTE)channel, parent);
-		pt.x += tmp.x;
-		pt.y += tmp.y;
-	}
-
-	RECT r{ pt.x, pt.y, pt.x + (int)sz.width, pt.y + (int)sz.height };
-	dc.Draw3dRect(pt.x, pt.y, sz.width, sz.height, RGB(shade, shade, shade), RGB(shade, shade, shade));
-
-	return pt;
 }
 
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -934,11 +896,11 @@ void CTasksView::updateLayout()
 	Styler styler{ (HDC) dc, (HFONT) m_font };
 
 	if (m_hovered)
-		static_cast<IJiraNode*>(m_hovered)->setHovered(false);
+		cast(m_hovered)->setHovered(false);
 	m_hovered = nullptr;
 
 	if (m_active)
-		static_cast<IJiraNode*>(m_active)->setActive(false);
+		cast(m_active)->setActive(false);
 	m_active = nullptr;
 
 	int height = 0;
@@ -956,7 +918,7 @@ void CTasksView::updateLayout()
 
 	m_hovered = nodeFromPoint();
 	if (m_hovered)
-		static_cast<IJiraNode*>(m_hovered)->setHovered(true);
+		cast(m_hovered)->setHovered(true);
 	updateCursorAndTooltip();
 }
 
@@ -964,7 +926,7 @@ void CTasksView::updateCursor(bool force)
 {
 	auto tmp = cursor::arrow;
 	if (m_hovered)
-		tmp = static_cast<IJiraNode*>(m_hovered)->getCursor();
+		cast(m_hovered)->getCursor();
 
 	if (tmp == cursor::inherited)
 		tmp = cursor::arrow;
@@ -992,16 +954,16 @@ void CTasksView::updateTooltip(bool /*force*/)
 	std::string tooltip;
 	auto node = m_hovered;
 	while (node) {
-		if (static_cast<IJiraNode*>(node)->hasTooltip()) {
-			auto pt = static_cast<IJiraNode*>(m_hovered)->getAbsolutePos();
-			auto sz = static_cast<IJiraNode*>(m_hovered)->getSize();
+		if (cast(node)->hasTooltip()) {
+			auto pt = cast(m_hovered)->getAbsolutePos();
+			auto sz = cast(m_hovered)->getSize();
 			RECT r{ pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 4 , pt.y + (int)sz.height + 4 };
 			tool = r;
-			tooltip = static_cast<IJiraNode*>(node)->getTooltip();
+			tooltip = cast(node)->getTooltip();
 			break;
 		}
 
-		node = static_cast<IJiraNode*>(node)->getParent();
+		node = cast(node)->getParent();
 	}
 
 	{
@@ -1043,7 +1005,7 @@ void CTasksView::updateCursorAndTooltip(bool force)
 	updateTooltip(force);
 }
 
-jira::node* CTasksView::nodeFromPoint()
+std::shared_ptr<jira::node> CTasksView::nodeFromPoint()
 {
 	for (auto& server : m_servers) {
 		if (!server.m_plaque)
@@ -1054,7 +1016,7 @@ jira::node* CTasksView::nodeFromPoint()
 			return tmp;
 	}
 
-	return nullptr;
+	return{};
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -1080,9 +1042,9 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	auto tmp = nodeFromPoint();
 	if (tmp != m_hovered) {
 		if (tmp)
-			static_cast<IJiraNode*>(tmp)->setHovered(true);
+			cast(tmp)->setHovered(true);
 		if (m_hovered)
-			static_cast<IJiraNode*>(m_hovered)->setHovered(false);
+			cast(m_hovered)->setHovered(false);
 
 		m_hovered = tmp;
 		updateCursorAndTooltip();
@@ -1099,9 +1061,9 @@ LRESULT CTasksView::OnMouseDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	auto tmp = m_active;
 	m_active = nodeFromPoint();
 	if (m_active)
-		static_cast<IJiraNode*>(m_active)->setActive(true);
+		cast(m_active)->setActive(true);
 	if (tmp)
-		static_cast<IJiraNode*>(tmp)->setActive(false);
+		cast(tmp)->setActive(false);
 
 	m_tracking = true;
 	SetCapture();
@@ -1121,7 +1083,7 @@ LRESULT CTasksView::OnMouseUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	Invalidate();
 
 	if (tmp && tmp == m_active)
-		static_cast<IJiraNode*>(m_active)->activate();
+		cast(m_active)->activate();
 
 	return 0;
 }
@@ -1226,7 +1188,8 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	it->m_plaque = std::make_unique<CJiraReportElement>(it->m_dataset, server, make_invalidator(m_hWnd));
+	it->m_plaque = std::make_unique<CJiraReportElement>(it->m_dataset, make_invalidator(m_hWnd));
+	std::static_pointer_cast<CJiraReportElement>(it->m_plaque)->addChildren(server);
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();

@@ -33,13 +33,13 @@ void CJiraNode::setTooltip(const std::string& text)
 	m_data[Attr::Tooltip] = text;
 }
 
-void CJiraNode::addChild(std::unique_ptr<node>&& child)
+void CJiraNode::addChild(const std::shared_ptr<node>& child)
 {
 	auto it = m_data.find(Attr::Text);
 	if (it != m_data.end())
 		return;
 
-	cast(child)->setParent(this);
+	cast(child)->setParent(shared_from_this());
 	m_children.push_back(std::move(child));
 }
 
@@ -65,7 +65,7 @@ rules CJiraNode::getRules() const
 	return m_rule;
 }
 
-const std::vector<std::unique_ptr<jira::node>>& CJiraNode::values() const
+const std::vector<std::shared_ptr<jira::node>>& CJiraNode::values() const
 {
 	return m_children;
 }
@@ -116,9 +116,10 @@ IJiraNode::point CJiraNode::getPosition()
 
 IJiraNode::point CJiraNode::getAbsolutePos()
 {
-	if (!m_parent)
+	auto parent = m_parent.lock();
+	if (!parent)
 		return getPosition();
-	auto pt = m_parent->getAbsolutePos();
+	auto pt = parent->getAbsolutePos();
 	return{ pt.x + m_position.x, pt.y + m_position.y };
 }
 
@@ -127,12 +128,12 @@ IJiraNode::size CJiraNode::getSize()
 	return{ m_position.width, m_position.height };
 }
 
-IJiraNode* CJiraNode::getParent() const
+std::shared_ptr<IJiraNode> CJiraNode::getParent() const
 {
-	return m_parent;
+	return m_parent.lock();
 }
 
-void CJiraNode::setParent(IJiraNode* node)
+void CJiraNode::setParent(const std::shared_ptr<IJiraNode>& node)
 {
 	m_parent = node;
 }
@@ -146,11 +147,12 @@ void CJiraNode::invalidate(int x, int y, size_t width, size_t height)
 {
 	x += m_position.x;
 	y += m_position.y;
-	if (m_parent)
-		m_parent->invalidate(x, y, width, height);
+	auto parent = m_parent.lock();
+	if (parent)
+		parent->invalidate(x, y, width, height);
 }
 
-jira::node* CJiraNode::nodeFromPoint(int x, int y)
+std::shared_ptr<jira::node> CJiraNode::nodeFromPoint(int x, int y)
 {
 	x -= m_position.x;
 	y -= m_position.y;
@@ -165,7 +167,7 @@ jira::node* CJiraNode::nodeFromPoint(int x, int y)
 			return tmp;
 	}
 
-	return this;
+	return shared_from_this();
 }
 
 void CJiraNode::setHovered(bool hovered)
@@ -224,8 +226,9 @@ void CJiraNode::activate()
 		return;
 	}
 
-	if (m_parent)
-		m_parent->activate();
+	auto parent = m_parent.lock();
+	if (parent)
+		parent->activate();
 }
 
 void CJiraNode::openLink(const std::string& url)
@@ -243,8 +246,9 @@ cursor CJiraNode::getCursor() const
 	if (m_cursor != cursor::inherited)
 		return m_cursor;
 
-	if (m_parent)
-		return m_parent->getCursor();
+	auto parent = m_parent.lock();
+	if (parent)
+		return parent->getCursor();
 
 	return cursor::arrow;
 }
@@ -267,7 +271,9 @@ const std::string& CJiraNode::getTooltip() const
 
 void CJiraIconNode::ImageCb::onImageChange(ImageRef*)
 {
-	parent->invalidate();
+	auto par = parent.lock();
+	if (par)
+		par->invalidate();
 }
 
 CJiraIconNode::CJiraIconNode(const std::string& uri, const std::shared_ptr<ImageRef>& image, const std::string& tooltip)
@@ -276,18 +282,22 @@ CJiraIconNode::CJiraIconNode(const std::string& uri, const std::shared_ptr<Image
 {
 	m_data[Attr::Href] = uri;
 	CJiraNode::setTooltip(tooltip);
-	m_cb->parent = this;
-	m_image->registerListener(m_cb);
 	m_position.width = m_position.height = 16;
 }
 
 CJiraIconNode::~CJiraIconNode()
 {
 	m_image->unregisterListener(m_cb);
-	m_cb->parent = nullptr;
+	m_cb->parent.reset();
 }
 
-void CJiraIconNode::addChild(std::unique_ptr<node>&& /*child*/)
+void CJiraIconNode::attach()
+{
+	m_cb->parent = shared_from_this();
+	m_image->registerListener(m_cb);
+}
+
+void CJiraIconNode::addChild(const std::shared_ptr<node>& /*child*/)
 {
 	 // noop
 }
@@ -339,31 +349,36 @@ void CJiraDocument::setCurrent(const std::shared_ptr<jira::server>& server)
 	m_server = server;
 }
 
-std::unique_ptr<jira::node> CJiraDocument::createTableRow()
+std::shared_ptr<jira::node> CJiraDocument::createTableRow()
 {
-	return std::make_unique<CJiraNode>();
+	return std::make_shared<CJiraNode>();
 }
 
-std::unique_ptr<jira::node> CJiraDocument::createEmpty()
+std::shared_ptr<jira::node> CJiraDocument::createEmpty()
 {
-	return std::make_unique<CJiraNode>();
+	return std::make_shared<CJiraNode>();
 }
 
-std::unique_ptr<jira::node> CJiraDocument::createSpan()
+std::shared_ptr<jira::node> CJiraDocument::createSpan()
 {
-	return std::make_unique<CJiraNode>();
+	return std::make_shared<CJiraNode>();
 }
 
-std::unique_ptr<jira::node> CJiraDocument::createIcon(const std::string& uri, const std::string& text, const std::string& description)
+std::shared_ptr<jira::node> CJiraDocument::createIcon(const std::string& uri, const std::string& text, const std::string& description)
 {
 	auto image = createImage(uri);
+	auto tooltip = text;
 	if (text.empty() || description.empty())
-		return std::make_unique<CJiraIconNode>(uri, image, text + description);
+		tooltip += description;
+	else
+		tooltip += "\n" + description;
 
-	return std::make_unique<CJiraIconNode>(uri, image, text + "\n" + description);
+	auto icon = std::make_shared<CJiraIconNode>(uri, image, tooltip);
+	icon->attach();
+	return icon;
 }
 
-std::unique_ptr<jira::node> CJiraDocument::createUser(bool /*active*/, const std::string& display, const std::string& email, const std::string& /*login*/, std::map<uint32_t, std::string>&& avatar)
+std::shared_ptr<jira::node> CJiraDocument::createUser(bool /*active*/, const std::string& display, const std::string& email, const std::string& /*login*/, std::map<uint32_t, std::string>&& avatar)
 {
 	auto av = std::move(avatar);
 	constexpr size_t defSize = 16;
@@ -392,14 +407,14 @@ std::unique_ptr<jira::node> CJiraDocument::createUser(bool /*active*/, const std
 	return createIcon(image, display, email);
 }
 
-std::unique_ptr<jira::node> CJiraDocument::createLink(const std::string& href)
+std::shared_ptr<jira::node> CJiraDocument::createLink(const std::string& href)
 {
-	return std::make_unique<CJiraLinkNode>(href);
+	return std::make_shared<CJiraLinkNode>(href);
 }
 
-std::unique_ptr<jira::node> CJiraDocument::createText(const std::string& text)
+std::shared_ptr<jira::node> CJiraDocument::createText(const std::string& text)
 {
-	return std::make_unique<CJiraTextNode>(text);
+	return std::make_shared<CJiraTextNode>(text);
 }
 
 std::shared_ptr<ImageRef> CJiraDocument::createImage(const std::string& uri)
@@ -426,7 +441,7 @@ CJiraRowProxy::CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dat
 {
 	CJiraNode::setClass(rules::tableRow);
 	auto& record = dataset->data.at(m_id);
-	m_proxy = static_cast<CJiraNode*>(record.getRow());
+	m_proxy = cast(record.getRow());
 }
 
 std::string CJiraRowProxy::text() const
@@ -445,7 +460,7 @@ void CJiraRowProxy::setTooltip(const std::string& text)
 	m_proxy->setTooltip(text);
 }
 
-void CJiraRowProxy::addChild(std::unique_ptr<jira::node>&& child)
+void CJiraRowProxy::addChild(const std::shared_ptr<jira::node>& child)
 {
 	auto lock = m_dataset.lock();
 	if (!lock)
@@ -458,7 +473,7 @@ void CJiraRowProxy::setClass(jira::styles style)
 	auto lock = m_dataset.lock();
 	if (!lock)
 		return;
-	m_proxy->setClass(style);
+	static_cast<CJiraNode*>(m_proxy.get())->setClass(style);
 }
 
 jira::styles CJiraRowProxy::getStyles() const
@@ -469,11 +484,11 @@ jira::styles CJiraRowProxy::getStyles() const
 	return m_proxy->getStyles();
 }
 
-const std::vector<std::unique_ptr<jira::node>>& CJiraRowProxy::values() const
+const std::vector<std::shared_ptr<jira::node>>& CJiraRowProxy::values() const
 {
 	auto lock = m_dataset.lock();
 	if (!lock) {
-		static std::vector<std::unique_ptr<jira::node>> dummy;
+		static std::vector<std::shared_ptr<jira::node>> dummy;
 		return dummy;
 	}
 	return m_proxy->values();
@@ -519,19 +534,19 @@ void CJiraRowProxy::setPosition(int x, int y)
 	m_proxy->setPosition(0, 0);
 }
 
-IJiraNode* CJiraRowProxy::getParent() const
+std::shared_ptr<IJiraNode> CJiraRowProxy::getParent() const
 {
-	return m_parent;
+	return m_parent.lock();
 }
 
-void CJiraRowProxy::setParent(IJiraNode* parent_)
+void CJiraRowProxy::setParent(const std::shared_ptr<IJiraNode>& parent_)
 {
 	m_parent = parent_;
 
 	auto lock = m_dataset.lock();
 	if (!lock)
 		return;
-	m_proxy->setParent(this);
+	m_proxy->setParent(shared_from_this());
 }
 
 void CJiraRowProxy::repositionChildren()
@@ -546,7 +561,7 @@ void CJiraRowProxy::repositionChildren()
 	m_position.height = m_proxy->getSize().height;
 }
 
-jira::node* CJiraRowProxy::nodeFromPoint(int x, int y)
+std::shared_ptr<jira::node> CJiraRowProxy::nodeFromPoint(int x, int y)
 {
 	x -= m_position.x;
 	y -= m_position.y;
@@ -557,7 +572,7 @@ jira::node* CJiraRowProxy::nodeFromPoint(int x, int y)
 
 	auto lock = m_dataset.lock();
 	if (!lock)
-		return this;
+		return shared_from_this();
 
 	for (auto& node : values()) {
 		auto tmp = cast(node)->nodeFromPoint(x, y);
@@ -565,17 +580,21 @@ jira::node* CJiraRowProxy::nodeFromPoint(int x, int y)
 			return tmp;
 	}
 
-	return this;
+	return shared_from_this();
 }
 
 CJiraHeaderNode::CJiraHeaderNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
 	: CJiraReportNode(dataset, columns)
 {
 	CJiraNode::setClass(rules::tableHead);
+}
 
+void CJiraHeaderNode::addChildren()
+{
+	auto dataset = m_dataset.lock();
 	for (auto& col : dataset->schema.cols()) {
 		auto name = col->title();
-		auto node = std::make_unique<CJiraTextNode>(name);
+		auto node = std::make_shared<CJiraTextNode>(name);
 
 		auto tooltip = col->titleFull();
 		if (name != tooltip)
@@ -585,7 +604,7 @@ CJiraHeaderNode::CJiraHeaderNode(const std::shared_ptr<jira::report>& dataset, c
 	}
 }
 
-void CJiraHeaderNode::addChild(std::unique_ptr<jira::node>&& /*child*/)
+void CJiraHeaderNode::addChild(const std::shared_ptr<jira::node>& /*child*/)
 {
 	// noop
 }
@@ -614,15 +633,21 @@ void CJiraHeaderNode::repositionChildren()
 CJiraReportTableNode::CJiraReportTableNode(const std::shared_ptr<jira::report>& dataset)
 	: m_columns(std::make_shared<std::vector<size_t>>(dataset->schema.cols().size()))
 {
-	CJiraNode::addChild(std::make_unique<CJiraHeaderNode>(dataset, m_columns));
+}
+
+void CJiraReportTableNode::addChildren(const std::shared_ptr<jira::report>& dataset)
+{
+	auto header = std::make_shared<CJiraHeaderNode>(dataset, m_columns);
+	header->addChildren();
+	CJiraNode::addChild(header);
 
 	auto size = dataset->data.size();
 	for (size_t id = 0; id < size; ++id) {
-		CJiraNode::addChild(std::make_unique<CJiraRowProxy>(id, dataset, m_columns));
+		CJiraNode::addChild(std::make_shared<CJiraRowProxy>(id, dataset, m_columns));
 	}
 }
 
-void CJiraReportTableNode::addChild(std::unique_ptr<jira::node>&& /*child*/)
+void CJiraReportTableNode::addChild(const std::shared_ptr<jira::node>& /*child*/)
 {
 	// noop
 }
@@ -647,25 +672,32 @@ void CJiraReportTableNode::measure(IJiraPainter* painter)
 	m_position.width = cast(m_children[0])->getSize().width;
 }
 
-CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const jira::server& server, const std::function<void(int, int, int, int)>& invalidator)
+CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(int, int, int, int)>& invalidator)
 	: m_dataset(dataset)
 	, m_invalidator(invalidator)
 {
+}
+
+void CJiraReportElement::addChildren(const jira::server& server)
+{
 	{
 		auto text = server.login() + "@" + server.displayName();
-		auto title = std::make_unique<CJiraTextNode>(text);
+		auto title = std::make_shared<CJiraTextNode>(text);
 		title->setClass(rules::header);
 		CJiraNode::addChild(std::move(title));
 	}
 
 	for (auto& error : server.errors()) {
-		auto note = std::make_unique<CJiraTextNode>(error);
+		auto note = std::make_shared<CJiraTextNode>(error);
 		note->setClass(rules::error);
 		CJiraNode::addChild(std::move(note));
 	}
 
+	auto dataset = m_dataset.lock();
 	if (dataset) {
-		CJiraNode::addChild(std::make_unique<CJiraReportTableNode>(dataset));
+		auto table = std::make_shared<CJiraReportTableNode>(dataset);
+		table->addChildren(dataset);
+		CJiraNode::addChild(table);
 
 		std::ostringstream o;
 		auto low = dataset->data.empty() ? 0 : 1;
@@ -673,17 +705,17 @@ CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& data
 			<< '-' << (dataset->startAt + dataset->data.size())
 			<< " of " << dataset->total << ")";
 
-		auto note = std::make_unique<CJiraTextNode>(o.str());
+		auto note = std::make_shared<CJiraTextNode>(o.str());
 		note->setClass(rules::classSummary);
 		CJiraNode::addChild(std::move(note));
 	} else {
-		auto note = std::make_unique<CJiraTextNode>("Empty");
+		auto note = std::make_shared<CJiraTextNode>("Empty");
 		note->setClass(rules::classEmpty);
 		CJiraNode::addChild(std::move(note));
 	}
 }
 
-void CJiraReportElement::addChild(std::unique_ptr<jira::node>&& /*child*/)
+void CJiraReportElement::addChild(const std::shared_ptr<jira::node>& /*child*/)
 {
 	// noop
 }

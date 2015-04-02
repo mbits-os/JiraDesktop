@@ -35,7 +35,7 @@ public:
 		bool m_loading = false;
 		bool m_gotProgress = false;
 		// TODO : relation to UI element
-		std::unique_ptr<jira::node> m_plaque;
+		std::shared_ptr<jira::node> m_plaque;
 
 		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener, HWND hWnd);
 		~ServerInfo();
@@ -60,8 +60,8 @@ private:
 
 	int m_mouseX = 0;
 	int m_mouseY = 0;
-	jira::node* m_hovered = nullptr;
-	jira::node* m_active = nullptr;
+	std::shared_ptr<jira::node> m_hovered;
+	std::shared_ptr<jira::node> m_active;
 	bool m_tracking = false;
 	cursor m_cursor = cursor::arrow;
 
@@ -69,7 +69,7 @@ private:
 	void updateCursor(bool force = false);
 	void updateTooltip(bool force = false);
 	void updateCursorAndTooltip(bool force = false);
-	jira::node* nodeFromPoint();
+	std::shared_ptr<jira::node> nodeFromPoint();
 public:
 	std::shared_ptr<CAppModel> m_model;
 
