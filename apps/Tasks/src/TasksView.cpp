@@ -138,6 +138,7 @@ class LinePrinter : public IJiraPainter
 	int x = BODY_MARGIN;
 	int y = BODY_MARGIN;
 	Styler* uplink = nullptr;
+	bool selectedFrame = false;
 
 	void updateLineHeight()
 	{
@@ -254,6 +255,18 @@ public:
 		return *this;
 	}
 
+	LinePrinter& drawFocus(jira::node* node)
+	{
+		if (selectedFrame) {
+			selectedFrame = false;
+			auto pt = static_cast<IJiraNode*>(node)->getAbsolutePos();
+			auto sz = static_cast<IJiraNode*>(node)->getSize();
+			RECT r{pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 4 , pt.y + (int)sz.height + 4 };
+			dc.DrawFocusRect(&r);
+		}
+		return *this;
+	}
+
 	LinePrinter& paint(const std::unique_ptr<jira::node>& node, Styler* link)
 	{
 		uplink = link;
@@ -265,6 +278,12 @@ public:
 	{
 		uplink = link;
 		cast(node)->measure(this);
+		return *this;
+	}
+
+	LinePrinter& setFrameSelect()
+	{
+		selectedFrame = true;
 		return *this;
 	}
 
@@ -353,6 +372,11 @@ namespace {
 				return;
 			}
 			update();
+		}
+
+		void setFrameSelect()
+		{
+			printer.setFrameSelect();
 		}
 
 		COLORREF getColor() const { return lastColor; }
@@ -456,6 +480,12 @@ namespace {
 				m_styler.setFontFamily(f);
 			return *this;
 		}
+
+		Style& setFrameSelect()
+		{
+			m_styler.setFrameSelect();
+			return *this;
+		}
 	};
 
 	template <typename T>
@@ -535,6 +565,14 @@ namespace {
 
 	inline FontFamilyManip fontFamily(family name) { return FontFamilyManip{ name }; }
 	inline FontFamilyManip symbols() { return FontFamilyManip{ family::symbols }; }
+
+	class frameSelect {
+	public:
+		friend Style& operator<<(Style& o, const frameSelect& /*manip*/)
+		{
+			return o.setFrameSelect();
+		}
+	};
 
 	void Style::apply(Style& style, rules rule, IJiraNode* /*node*/)
 	{
@@ -638,6 +676,8 @@ struct StyleSave
 			saved << color(0x00AF733B);
 			if (node && node->getHovered())
 				saved << underline();
+			if (node && node->getActive())
+				saved << frameSelect();
 			break;
 		};
 	}
@@ -655,6 +695,7 @@ StyleSave* LinePrinter::setStyle(jira::styles style, IJiraNode* node)
 
 	auto mem = std::make_unique<StyleSave>(*uplink);
 	mem->apply(style, node);
+	drawFocus(node);
 	return mem.release();
 }
 
@@ -662,6 +703,7 @@ StyleSave* LinePrinter::setStyle(rules rule, IJiraNode* node)
 {
 	auto mem = std::make_unique<StyleSave>(*uplink);
 	mem->apply(rule, node);
+	drawFocus(node);
 	return mem.release();
 }
 
@@ -812,8 +854,8 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 	//dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x00000080, 0x00000080);
 
-	//if (m_hovered)
-	//	paintGrayFrame((HDC)dc, 0x00, m_hovered);
+	//if (m_active)
+	//	paintGrayFrame((HDC)dc, 0x00, m_active);
 
 	return 0;
 }
@@ -938,6 +980,7 @@ LRESULT CTasksView::OnMouseDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 	m_tracking = true;
 	SetCapture();
+	Invalidate();
 
 	return 0;
 }
@@ -950,6 +993,7 @@ LRESULT CTasksView::OnMouseUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 
 	m_tracking = false;
 	ReleaseCapture();
+	Invalidate();
 
 	if (tmp && tmp == m_active)
 		static_cast<IJiraNode*>(m_active)->activate();

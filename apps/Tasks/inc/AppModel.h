@@ -97,6 +97,7 @@ struct IJiraNode : jira::node {
 	virtual void measure(IJiraPainter* painter) = 0;
 	virtual void setPosition(int x, int y) = 0;
 	virtual point getPosition() = 0;
+	virtual point getAbsolutePos() = 0;
 	virtual size getSize() = 0;
 	virtual void setClass(rules) = 0;
 	virtual rules getRules() const = 0;

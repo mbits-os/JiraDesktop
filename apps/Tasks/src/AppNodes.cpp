@@ -114,6 +114,14 @@ IJiraNode::point CJiraNode::getPosition()
 	return{ m_position.x, m_position.y };
 }
 
+IJiraNode::point CJiraNode::getAbsolutePos()
+{
+	if (!m_parent)
+		return getPosition();
+	auto pt = m_parent->getAbsolutePos();
+	return{ pt.x + m_position.x, pt.y + m_position.y };
+}
+
 IJiraNode::size CJiraNode::getSize()
 {
 	return{ m_position.width, m_position.height };

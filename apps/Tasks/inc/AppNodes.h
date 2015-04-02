@@ -23,6 +23,7 @@ public:
 	void measure(IJiraPainter* painter) override;
 	void setPosition(int x, int y) override;
 	point getPosition() override;
+	point getAbsolutePos() override;
 	size getSize() override;
 
 	IJiraNode* getParent() const override;
