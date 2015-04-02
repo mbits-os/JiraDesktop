@@ -100,6 +100,7 @@ public:
 class CJiraDocument : public jira::document {
 	void setCurrent(const std::shared_ptr<jira::server>&) override;
 	std::unique_ptr<jira::node> createTableRow() override;
+	std::unique_ptr<jira::node> createEmpty() override;
 	std::unique_ptr<jira::node> createSpan() override;
 	std::unique_ptr<jira::node> createIcon(const std::string& uri, const std::string& text, const std::string& description) override;
 	std::unique_ptr<jira::node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) override;

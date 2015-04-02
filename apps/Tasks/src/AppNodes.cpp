@@ -344,6 +344,11 @@ std::unique_ptr<jira::node> CJiraDocument::createTableRow()
 	return std::make_unique<CJiraNode>();
 }
 
+std::unique_ptr<jira::node> CJiraDocument::createEmpty()
+{
+	return std::make_unique<CJiraNode>();
+}
+
 std::unique_ptr<jira::node> CJiraDocument::createSpan()
 {
 	return std::make_unique<CJiraNode>();

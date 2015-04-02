@@ -91,7 +91,7 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end())
-				return nullptr;
+				return doc->createEmpty();
 
 			return doc->createText(it->second.as_string());
 		}
@@ -115,7 +115,7 @@ namespace jira
 				return doc->createText(text);
 			}
 
-			return nullptr;
+			return doc->createEmpty();
 		}
 
 		resolution::resolution(const std::string& id, const std::string& title) : type(id, title) {}
@@ -187,7 +187,7 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
-				return nullptr;
+				return doc->createEmpty();
 
 			json::map data{ it->second };
 			auto active = either_or<json::BOOL>(data, "active", false);
@@ -229,7 +229,7 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
-				return nullptr;
+				return doc->createEmpty();
 
 			json::map data{ it->second };
 			auto uri = data["iconUrl"];

@@ -54,6 +54,7 @@ namespace jira
 		virtual ~document() {}
 		virtual void setCurrent(const std::shared_ptr<server>&) = 0;
 		virtual std::unique_ptr<node> createTableRow() = 0;
+		virtual std::unique_ptr<node> createEmpty() = 0;
 		virtual std::unique_ptr<node> createSpan() = 0;
 		virtual std::unique_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
 		virtual std::unique_ptr<node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) = 0;
