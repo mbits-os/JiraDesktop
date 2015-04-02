@@ -71,6 +71,7 @@ struct IJiraPainter {
 	virtual StyleSave* setStyle(jira::styles, IJiraNode*) = 0;
 	virtual StyleSave* setStyle(rules, IJiraNode*) = 0;
 	virtual void restoreStyle(StyleSave*) = 0;
+	virtual int dpiRescale(int size) = 0;
 };
 
 class PushOrigin {

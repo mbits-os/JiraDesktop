@@ -65,22 +65,37 @@ protected:
 
 class CJiraRoot : public CJiraNode {};
 
+class ImageCb
+	: public ImageRefCallback
+	, public std::enable_shared_from_this<ImageCb> {
+
+public:
+	std::weak_ptr<IJiraNode> parent;
+	void onImageChange(ImageRef*) override;
+};
+
 class CJiraIconNode : public CJiraNode {
-	class ImageCb
-		: public ImageRefCallback
-		, public std::enable_shared_from_this<ImageCb> {
-
-	public:
-		std::weak_ptr<IJiraNode> parent;
-		void onImageChange(ImageRef*) override;
-	};
-
 	std::shared_ptr<ImageRef> m_image;
 	std::shared_ptr<ImageCb> m_cb;
 public:
 	CJiraIconNode(const std::string& uri, const std::shared_ptr<ImageRef>& image, const std::string& tooltip);
 	~CJiraIconNode();
 	void attach();
+	void addChild(const std::shared_ptr<node>& child) override;
+	void paint(IJiraPainter* painter) override;
+	void measure(IJiraPainter* painter) override;
+};
+
+class CJiraDocument;
+class CJiraUserNode : public CJiraNode {
+	std::weak_ptr<CJiraDocument> m_document;
+	std::shared_ptr<ImageRef> m_image;
+	std::shared_ptr<ImageCb> m_cb;
+	std::map<uint32_t, std::string> m_urls;
+	int m_selectedSize;
+public:
+	CJiraUserNode(const std::weak_ptr<CJiraDocument>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip);
+	~CJiraUserNode();
 	void addChild(const std::shared_ptr<node>& child) override;
 	void paint(IJiraPainter* painter) override;
 	void measure(IJiraPainter* painter) override;
@@ -98,7 +113,7 @@ public:
 	void measure(IJiraPainter* painter) override;
 };
 
-class CJiraDocument : public jira::document {
+class CJiraDocument : public jira::document, public std::enable_shared_from_this<CJiraDocument> {
 	void setCurrent(const std::shared_ptr<jira::server>&) override;
 	std::shared_ptr<jira::node> createTableRow() override;
 	std::shared_ptr<jira::node> createEmpty() override;
@@ -108,8 +123,6 @@ class CJiraDocument : public jira::document {
 	std::shared_ptr<jira::node> createLink(const std::string& href) override;
 	std::shared_ptr<jira::node> createText(const std::string& text) override;
 
-	std::shared_ptr<ImageRef> createImage(const std::string& uri);
-
 	std::mutex m_guard;
 	std::map<std::string, std::shared_ptr<ImageRef>> m_cache;
 	std::shared_ptr<jira::server> m_server;
@@ -117,6 +130,8 @@ class CJiraDocument : public jira::document {
 
 public:
 	explicit CJiraDocument(std::shared_ptr<ImageRef>(*creator)(const std::shared_ptr<jira::server>&, const std::string&));
+
+	std::shared_ptr<ImageRef> createImage(const std::string& uri);
 };
 
 class CJiraReportNode : public CJiraNode {

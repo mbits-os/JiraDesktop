@@ -226,6 +226,7 @@ class LinePrinter : public IJiraPainter
 	StyleSave* setStyle(jira::styles, IJiraNode*) override;
 	StyleSave* setStyle(rules, IJiraNode*) override;
 	void restoreStyle(StyleSave* save) override;
+	int dpiRescale(int size) override;
 public:
 	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
 	{
@@ -779,6 +780,11 @@ StyleSave* LinePrinter::setStyle(rules rule, IJiraNode* node)
 void LinePrinter::restoreStyle(StyleSave* save)
 {
 	std::unique_ptr<StyleSave> mem{ save };
+}
+
+int LinePrinter::dpiRescale(int size)
+{
+	return dc.GetDeviceCaps(LOGPIXELSX) * size / 96;
 }
 
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)

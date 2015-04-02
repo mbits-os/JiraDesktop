@@ -269,7 +269,7 @@ const std::string& CJiraNode::getTooltip() const
 	return dummy;
 }
 
-void CJiraIconNode::ImageCb::onImageChange(ImageRef*)
+void ImageCb::onImageChange(ImageRef*)
 {
 	auto par = parent.lock();
 	if (par)
@@ -304,11 +304,93 @@ void CJiraIconNode::addChild(const std::shared_ptr<node>& /*child*/)
 
 void CJiraIconNode::paint(IJiraPainter* painter)
 {
-	painter->paintImage(m_image.get(), 16, 16);
+	painter->paintImage(m_image.get(), m_position.width, m_position.height);
 }
 
-void CJiraIconNode::measure(IJiraPainter* /*painter*/)
+void CJiraIconNode::measure(IJiraPainter* painter)
 {
+	m_position.width = m_position.height = painter->dpiRescale(16);
+}
+
+CJiraUserNode::CJiraUserNode(const std::weak_ptr<CJiraDocument>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip)
+	: m_document(document)
+	, m_cb(std::make_shared<ImageCb>())
+	, m_urls(std::move(avatar))
+	, m_selectedSize(0)
+{
+	CJiraNode::setTooltip(tooltip);
+	m_position.width = m_position.height = 16;
+}
+
+CJiraUserNode::~CJiraUserNode()
+{
+	m_image->unregisterListener(m_cb);
+	m_cb->parent.reset();
+}
+
+void CJiraUserNode::addChild(const std::shared_ptr<node>& /*child*/)
+{
+	// noop
+}
+
+void CJiraUserNode::paint(IJiraPainter* painter)
+{
+	painter->paintImage(m_image.get(), m_position.width, m_position.height);
+}
+
+void CJiraUserNode::measure(IJiraPainter* painter)
+{
+	auto size = painter->dpiRescale(16);
+	auto selected = 0;
+
+	std::string image;
+	auto it = m_urls.find(size);
+	if (it != m_urls.end()) {
+		image = it->second;
+		selected = it->first;
+	} else {
+		size_t delta = std::numeric_limits<size_t>::max();
+		for (auto& pair : m_urls) {
+			if (pair.first < size)
+				continue;
+
+			size_t d =  pair.first - size;
+			if (d < delta) {
+				delta = d;
+				image = pair.second;
+				selected = pair.first;
+			}
+		}
+		for (auto& pair : m_urls) {
+			if (pair.first > size)
+				continue;
+
+			size_t d = size - pair.first;
+			if (d < delta) {
+				delta = d;
+				image = pair.second;
+				selected = pair.first;
+			}
+		}
+	}
+
+	if (selected == m_selectedSize)
+		return;
+
+	m_selectedSize = selected;
+	m_position.width = m_position.height = size;
+
+	if (m_image)
+		m_image->unregisterListener(m_cb);
+	m_image.reset();
+
+	m_cb->parent = shared_from_this();
+	auto doc = m_document.lock();
+	if (doc)
+		m_image = doc->createImage(image);
+
+	if (m_image)
+		m_image->registerListener(m_cb);
 }
 
 CJiraLinkNode::CJiraLinkNode(const std::string& href)
@@ -380,31 +462,20 @@ std::shared_ptr<jira::node> CJiraDocument::createIcon(const std::string& uri, co
 
 std::shared_ptr<jira::node> CJiraDocument::createUser(bool /*active*/, const std::string& display, const std::string& email, const std::string& /*login*/, std::map<uint32_t, std::string>&& avatar)
 {
-	auto av = std::move(avatar);
-	constexpr size_t defSize = 16;
-	std::string image;
-	auto it = av.find(defSize);
-	if (it != av.end())
-		image = it->second;
-	else {
-		size_t delta = std::numeric_limits<size_t>::max();
-		for (auto& pair : av) {
-			size_t d = pair.first > defSize ? pair.first - defSize : defSize - pair.first;
-			if (d < delta) {
-				delta = d;
-				image = pair.second;
-			}
-		}
-	}
-
-	if (image.empty()) {
+	if (avatar.empty()) {
 		auto node = createText(display);
 		if (!email.empty())
 			node->setTooltip(email);
 		return std::move(node);
 	}
 
-	return createIcon(image, display, email);
+	auto tooltip = display;
+	if (display.empty() || email.empty())
+		tooltip += email;
+	else
+		tooltip += "\n" + email;
+
+	return std::make_shared<CJiraUserNode>(shared_from_this(), std::move(avatar), tooltip);
 }
 
 std::shared_ptr<jira::node> CJiraDocument::createLink(const std::string& href)
