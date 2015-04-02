@@ -33,8 +33,13 @@ public:
 	jira::node* nodeFromPoint(int x, int y) override;
 	void setHovered(bool hovered) override;
 	bool getHovered() const override;
+	void setActive(bool active) override;
+	bool getActive() const override;
+	void activate() override;
 	void setCursor(cursor) override;
 	cursor getCursor() const override;
+
+	void openLink(const std::string& url);
 
 protected:
 	std::map<Attr, std::string> m_data;
@@ -50,6 +55,7 @@ protected:
 	} m_position;
 
 	std::atomic<int> m_hoverCount{ 0 };
+	std::atomic<int> m_activeCount{ 0 };
 	cursor m_cursor = cursor::inherited;
 };
 

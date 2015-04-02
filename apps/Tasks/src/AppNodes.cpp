@@ -8,6 +8,9 @@
 #include <limits>
 #include <sstream>
 
+#include <net/utf8.hpp>
+#include "shellapi.h"
+
 enum {
 	CELL_MARGIN = 7
 };
@@ -179,6 +182,47 @@ void CJiraNode::setHovered(bool hovered)
 bool CJiraNode::getHovered() const
 {
 	return m_hoverCount > 0;
+}
+
+void CJiraNode::setActive(bool active)
+{
+	bool changed = false;
+	if (active) {
+		auto value = ++m_activeCount;
+		changed = value == 1;
+	} else {
+		auto value = --m_activeCount;
+		changed = value == 0;
+	}
+
+	if (changed) {
+		invalidate();
+		auto parent = getParent();
+		if (parent)
+			parent->setActive(active);
+	}
+}
+
+bool CJiraNode::getActive() const
+{
+	return m_activeCount > 0;
+}
+
+void CJiraNode::activate()
+{
+	auto it = m_data.find(Attr::Href);
+	if (it != m_data.end() && !it->second.empty()) {
+		openLink(it->second);
+		return;
+	}
+
+	if (m_parent)
+		m_parent->activate();
+}
+
+void CJiraNode::openLink(const std::string& url)
+{
+	ShellExecute(nullptr, nullptr, utf::widen(url).c_str(), nullptr, nullptr, SW_SHOW);
 }
 
 void CJiraNode::setCursor(cursor c)

@@ -827,6 +827,10 @@ void CTasksView::updateLayout()
 		static_cast<IJiraNode*>(m_hovered)->setHovered(false);
 	m_hovered = nullptr;
 
+	if (m_active)
+		static_cast<IJiraNode*>(m_active)->setActive(false);
+	m_active = nullptr;
+
 	int height = 0;
 	int width = 0;
 	for (auto& server : m_servers) {
@@ -899,12 +903,12 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 
 LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
-	RECT r{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
-	InvalidateRect(&r);
+	//RECT r{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
+	//InvalidateRect(&r);
 	m_mouseX = GET_X_LPARAM(lParam);
 	m_mouseY = GET_Y_LPARAM(lParam);
-	RECT r2{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
-	InvalidateRect(&r2);
+	//RECT r2{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
+	//InvalidateRect(&r2);
 
 	auto tmp = nodeFromPoint();
 	if (tmp != m_hovered) {
@@ -917,6 +921,39 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		updateCursor();
 		Invalidate(); // TODO: invalidate old and new hovered/their parents...
 	}
+	return 0;
+}
+
+LRESULT CTasksView::OnMouseDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	m_mouseX = GET_X_LPARAM(lParam);
+	m_mouseY = GET_Y_LPARAM(lParam);
+
+	auto tmp = m_active;
+	m_active = nodeFromPoint();
+	if (m_active)
+		static_cast<IJiraNode*>(m_active)->setActive(true);
+	if (tmp)
+		static_cast<IJiraNode*>(tmp)->setActive(false);
+
+	m_tracking = true;
+	SetCapture();
+
+	return 0;
+}
+
+LRESULT CTasksView::OnMouseUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	m_mouseX = GET_X_LPARAM(lParam);
+	m_mouseY = GET_Y_LPARAM(lParam);
+	auto tmp = nodeFromPoint();
+
+	m_tracking = false;
+	ReleaseCapture();
+
+	if (tmp && tmp == m_active)
+		static_cast<IJiraNode*>(m_active)->activate();
+
 	return 0;
 }
 

@@ -109,6 +109,9 @@ struct IJiraNode : jira::node {
 	virtual jira::node* nodeFromPoint(int x, int y) = 0;
 	virtual void setHovered(bool hovered) = 0;
 	virtual bool getHovered() const = 0;
+	virtual void setActive(bool active) = 0;
+	virtual bool getActive() const = 0;
+	virtual void activate() = 0;
 	virtual void setCursor(cursor) = 0;
 	virtual cursor getCursor() const = 0;
 };
