@@ -69,7 +69,7 @@ const std::vector<std::unique_ptr<jira::node>>& CJiraNode::values() const
 
 void CJiraNode::paint(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles(), getRules() };
+	StyleSaver saver{ painter, this };
 
 	// slow, but working:
 	for (auto& node : m_children) {
@@ -81,7 +81,7 @@ void CJiraNode::paint(IJiraPainter* painter)
 
 void CJiraNode::measure(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles(), getRules() };
+	StyleSaver saver{ painter, this };
 
 	size_t height = 0;
 	size_t width = 0;
@@ -206,14 +206,14 @@ CJiraTextNode::CJiraTextNode(const std::string& text)
 
 void CJiraTextNode::paint(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles(), getRules() };
+	StyleSaver saver{ painter, this };
 
 	painter->paintString(m_data[Attr::Text]);
 }
 
 void CJiraTextNode::measure(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles(), getRules() };
+	StyleSaver saver{ painter, this };
 
 	auto size = painter->measureString(m_data[Attr::Text]);
 	m_position.width = size.width;
@@ -514,7 +514,7 @@ void CJiraReportTableNode::addChild(std::unique_ptr<jira::node>&& /*child*/)
 
 void CJiraReportTableNode::measure(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles(), getRules() };
+	StyleSaver saver{ painter, this };
 
 	size_t height = 0;
 	for (auto& node : m_children) {
@@ -575,7 +575,7 @@ void CJiraReportElement::addChild(std::unique_ptr<jira::node>&& /*child*/)
 
 void CJiraReportElement::measure(IJiraPainter* painter)
 {
-	StyleSaver saver{ painter, getStyles(), getRules() };
+	StyleSaver saver{ painter, this };
 
 	size_t height = 0;
 	size_t width = 0;

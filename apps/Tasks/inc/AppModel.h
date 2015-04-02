@@ -48,6 +48,7 @@ struct ImageRef : public jira::listeners<ImageRefCallback, ImageRef> {
 	virtual void* getNativeHandle() const = 0;
 };
 
+struct IJiraNode;
 struct IJiraPainter {
 	struct point { int x; int y; };
 	struct size { size_t width; size_t height; };
@@ -61,8 +62,8 @@ struct IJiraPainter {
 	virtual void paintImage(const ImageRef* img, size_t width, size_t height) = 0;
 	virtual void paintString(const std::string& text) = 0;
 	virtual size measureString(const std::string& text) = 0;
-	virtual StyleSave* setStyle(jira::styles) = 0;
-	virtual StyleSave* setStyle(rules) = 0;
+	virtual StyleSave* setStyle(jira::styles, IJiraNode*) = 0;
+	virtual StyleSave* setStyle(rules, IJiraNode*) = 0;
 	virtual void restoreStyle(StyleSave*) = 0;
 };
 
@@ -77,24 +78,6 @@ public:
 	~PushOrigin()
 	{
 		painter->setOrigin(orig);
-	}
-};
-
-class StyleSaver {
-	IJiraPainter* painter;
-	StyleSave* save;
-public:
-	explicit StyleSaver(IJiraPainter* painter, jira::styles style, rules rule) : painter(painter), save(nullptr)
-	{
-		if (style == jira::styles::unset)
-			save = painter->setStyle(rule);
-		else
-			save = painter->setStyle(style);
-	}
-
-	~StyleSaver()
-	{
-		painter->restoreStyle(save);
 	}
 };
 
@@ -124,6 +107,27 @@ inline IJiraNode* cast(const std::unique_ptr<jira::node>& node) {
 	return static_cast<IJiraNode*>(node.get());
 }
 
+class StyleSaver {
+	IJiraPainter* painter;
+	StyleSave* save;
+public:
+	explicit StyleSaver(IJiraPainter* painter, IJiraNode* node) : painter(painter), save(nullptr)
+	{
+		if (!node)
+			return;
+
+		auto style = node->getStyles();
+		if (style == jira::styles::unset)
+			save = painter->setStyle(node->getRules(), node);
+		else
+			save = painter->setStyle(style, node);
+	}
+
+	~StyleSaver()
+	{
+		painter->restoreStyle(save);
+	}
+};
 
 class CAppModel : public jira::listeners<CAppModelListener, CAppModel> {
 	std::vector<std::shared_ptr<jira::server>> m_servers;

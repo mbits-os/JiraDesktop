@@ -198,8 +198,8 @@ class LinePrinter : public IJiraPainter
 		return{ (size_t)s.cx, (size_t)s.cy };
 	}
 
-	StyleSave* setStyle(jira::styles) override;
-	StyleSave* setStyle(rules) override;
+	StyleSave* setStyle(jira::styles, IJiraNode*) override;
+	StyleSave* setStyle(rules, IJiraNode*) override;
 	void restoreStyle(StyleSave* save) override;
 public:
 	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
@@ -381,7 +381,7 @@ namespace {
 		{
 		}
 
-		explicit Style(Styler& styler, rules rule)
+		explicit Style(Styler& styler, rules rule, IJiraNode* node)
 			: m_styler(styler)
 			, m_color(styler.getColor())
 			, m_weight(styler.getFontWeight())
@@ -389,7 +389,7 @@ namespace {
 			, m_italic(styler.getFontItalic())
 			, m_family(styler.getFontFamily())
 		{
-			apply(*this, rule);
+			apply(*this, rule, node);
 		}
 
 		~Style()
@@ -401,7 +401,7 @@ namespace {
 			setFontFamily(m_family);
 		}
 
-		static void apply(Style& style, rules rule);
+		static void apply(Style& style, rules rule, IJiraNode* node);
 
 		Style& setColor(COLORREF color)
 		{
@@ -505,7 +505,7 @@ namespace {
 	inline FontFamilyManip fontFamily(family name) { return FontFamilyManip{ name }; }
 	inline FontFamilyManip symbols() { return FontFamilyManip{ family::symbols }; }
 
-	void Style::apply(Style& style, rules rule)
+	void Style::apply(Style& style, rules rule, IJiraNode* /*node*/)
 	{
 		switch (rule) {
 		case rules::body:
@@ -536,9 +536,10 @@ namespace {
 		};
 	}
 
+#if 0
 	void serverHeader(Styler& styler, const CTasksView::ServerInfo& item)
 	{
-		Style style{ styler, rules::header };
+		Style style{ styler, rules::header, nullptr };
 
 		auto& server = *item.m_server;
 
@@ -559,6 +560,7 @@ namespace {
 			.println(utf::widen(o.str()))
 			.skipY(0.1); // margin-bottom: 0.1em
 	}
+#endif
 
 	void plaque(Styler& styler, const std::unique_ptr<jira::node>& node)
 	{
@@ -577,14 +579,6 @@ namespace {
 		if (item.m_plaque)
 			plaque(styler, item.m_plaque);
 	}
-
-	HFONT getFont(Styler& styler, rules rule)
-	{
-		Style style{ styler, rule };
-		CFont font;
-		font.CreateFontIndirect(&styler.fontDef());
-		return font.Detach();
-	}
 };
 
 struct StyleSave
@@ -595,7 +589,7 @@ struct StyleSave
 	{
 	}
 
-	void apply(jira::styles style)
+	void apply(jira::styles style, IJiraNode* /*node*/)
 	{
 		using namespace jira;
 
@@ -615,26 +609,26 @@ struct StyleSave
 		};
 	}
 
-	void apply(rules rule)
+	void apply(rules rule, IJiraNode* node)
 	{
-		Style::apply(saved, rule);
+		Style::apply(saved, rule, node);
 	}
 };
 
-StyleSave* LinePrinter::setStyle(jira::styles style)
+StyleSave* LinePrinter::setStyle(jira::styles style, IJiraNode* node)
 {
 	if (style == jira::styles::unset)
 		return nullptr;
 
 	auto mem = std::make_unique<StyleSave>(*uplink);
-	mem->apply(style);
+	mem->apply(style, node);
 	return mem.release();
 }
 
-StyleSave* LinePrinter::setStyle(rules rule)
+StyleSave* LinePrinter::setStyle(rules rule, IJiraNode* node)
 {
 	auto mem = std::make_unique<StyleSave>(*uplink);
-	mem->apply(rule);
+	mem->apply(rule, node);
 	return mem.release();
 }
 
