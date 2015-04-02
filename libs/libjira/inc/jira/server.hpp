@@ -118,6 +118,12 @@ namespace jira
 		uint32_t sessionId() const { return m_id; }
 		const std::vector<std::string>& errors() const { return m_errors; }
 
+		void setPassword(const std::string& password);
+		void setName(const std::string& name) { m_name = name; }
+		void setLogin(const std::string& login) { m_login = login; }
+		void setUrl(const std::string& url) { m_url = url; }
+		void setView(const search_def& view) { m_view = view; }
+
 		void loadFields();
 		void refresh(const std::shared_ptr<document>&);
 		const std::shared_ptr<report>& dataset() const { return m_dataset; }

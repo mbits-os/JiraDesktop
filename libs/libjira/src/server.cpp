@@ -151,6 +151,13 @@ namespace jira
 			throw std::bad_alloc();
 	}
 
+	void server::setPassword(const std::string& password)
+	{
+		m_password.clear();
+		if (!secure::crypt({ password.begin(), password.end() }, m_password))
+			throw std::bad_alloc();
+	}
+
 	void server::onListenerAdded(const std::shared_ptr<server_listener>& listener)
 	{
 		if (m_isLoadingView)
