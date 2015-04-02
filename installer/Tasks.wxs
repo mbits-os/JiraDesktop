@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?define COMPANY="midnightBITS" ?>
+<?define PACKAGE="Tasks" ?>
+<?define VERSION_MAJOR="1" ?>
+<?define VERSION_MINOR="0" ?>
+<?define VERSION_PATCH="2" ?>
+<?define SHORT_VERSION="$(var.VERSION_MAJOR).$(var.VERSION_MINOR)" ?>
+<?define VERSION="$(var.VERSION_MAJOR).$(var.VERSION_MINOR).$(var.VERSION_PATCH)" ?>
+
+<?if $(var.VERSION_MAJOR) = "1" ?>
+<?define PRODUCT="$(var.PACKAGE)"?>
+<?else?>
+<?define PRODUCT="$(var.PACKAGE) $(var.SHORT_VERSION)"?>
+<?endif?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Name="$(var.PRODUCT)"
+			 Id="{6B8BACFA-161B-433B-9B1E-8652FE3CD90E}"
+			 UpgradeCode="{2E10A6B5-33CF-422C-810C-8B18DFC03C6E}"
+			 Language="1033"
+			 Codepage="1252"
+			 Version="$(var.VERSION)"
+			 Manufacturer="$(var.COMPANY)" >
+
+		<Package Id="*"
+				 Keywords="Installer"
+				 Description="$(var.COMPANY)' $(var.PACKAGE) $(var.VERSION) Installer"
+				 Manufacturer="$(var.COMPANY)"
+				 InstallerVersion="100"
+				 Languages="1033"
+				 Compressed="yes"
+				 SummaryCodepage="1252"
+				 />
+
+		<Property Id="ARPPRODUCTICON" Value="Tasks.ico" />
+
+		<Media Id='1' Cabinet='$(var.PACKAGE).cab' EmbedCab='yes' />
+		<Media Id='2' Cabinet='Fonts.cab' EmbedCab='yes' />
+		<Media Id='3' Cabinet='Libcurl.cab' EmbedCab='yes' />
+<?ifdef MSVCRT ?>
+		<Media Id='4' Cabinet='MSVCRT.cab' EmbedCab='yes' />
+<?endif?>
+			
+		<Directory Id='TARGETDIR' Name='SourceDir'>
+			<Directory Id='ProgramFilesFolder' Name='PFiles'>
+				<Directory Id='INSTALLDIR' Name='$(var.PACKAGE)'>
+					<Directory Id='Fonts' Name='fonts' />
+				</Directory>
+			</Directory>
+
+			<Directory Id="ProgramMenuFolder" Name="StartMenuFolder">
+				<Directory Id="ProgramMenuDir" Name="$(var.PACKAGE)">
+					<Component Id="ProgramMenuDir.Component" Guid="{15431AEE-E8CA-40BC-928C-9EB8AAAF4C3A}">
+						<RemoveFolder Id='ProgramMenuDir' On='uninstall' />
+						<RegistryValue Root='HKCU' Key='Software\$(var.COMPANY)\$(var.PACKAGE)\$(var.SHORT_VERSION)\Setup' Type='string' Value='MenuStart' KeyPath='yes' />
+					</Component>
+				</Directory>
+			</Directory>
+
+			<Directory Id="DesktopFolder" Name="Desktop" />
+		</Directory>
+		
+		<Icon Id="Tasks.ico" SourceFile="res/Tasks.ico" />
+		
+		<Component Id='MainExecutable.Component' Guid='{0BF923DF-8E07-40F6-B937-02B2FF523DC0}' Directory='INSTALLDIR'>
+			<File Id='Tasks_EXE' Name='Tasks.exe' DiskId='1' Source='artifacts/Tasks.exe' KeyPath='yes'>
+				<Shortcut Id="startmenuTask" Directory="ProgramMenuDir" Name="Tasks"
+						  WorkingDirectory='INSTALLDIR'
+						  Icon="$(var.PACKAGE).ico" IconIndex="0"
+						  Advertise="yes" />
+				<Shortcut Id="desktopTasks" Directory="DesktopFolder" Name="Tasks"
+						  WorkingDirectory='INSTALLDIR'
+						  Icon="Tasks.ico" IconIndex="0"
+						  Advertise="yes" />
+			</File>
+			<File Id='LICENSE' Name='LICENSE' DiskId='1' Source='res/LICENSE' />
+		</Component>
+
+		<Component Id='Fonts.Component' Guid='{7D0F0F45-4967-4E2D-B903-421763CF3CFF}' Directory='Fonts'>
+			<File Id='fonts_FontAwesome_OTF'
+				  Name='FontAwesome.otf' Source='fonts/FontAwesome.otf'
+				  DiskId='2' KeyPath='yes'  />
+		</Component>
+
+		<Component Id='Curl.Component' Guid='{C40018C7-B3EA-4B2F-8D1F-307F01324CD7}' Directory='INSTALLDIR'>
+			<File Id='libcurl_DLL'
+				  Name='libcurl.dll' Source='libcurl/libcurl.dll'
+				  DiskId='3' KeyPath='yes' />
+			<File Id='libeay32_DLL'
+				  Name='libeay32.dll' Source='libcurl/libeay32.dll'
+				  DiskId='3' />
+			<File Id='libssh2_DLL'
+				  Name='libssh2.dll' Source='libcurl/libssh2.dll'
+				  DiskId='3' />
+			<File Id='msvcr120_DLL'
+				  Name='msvcr120.dll' Source='libcurl/msvcr120.dll'
+				  DiskId='3' />
+			<File Id='ssleay32_DLL'
+				  Name='ssleay32.dll' Source='libcurl/ssleay32.dll'
+				  DiskId='3' />
+			<File Id='zlib1_DLL'
+				  Name='zlib1.dll' Source='libcurl/zlib1.dll'
+				  DiskId='3' />
+		</Component>
+
+<?ifdef MSVCRT ?>
+		<Component Id='MSVCRT.Component' Guid='{6D42C511-CF7F-4480-A5FE-5FC3A0C3FF5D}' Directory='INSTALLDIR'>
+			<File Id='vcruntime140_DLL'
+				  Name='vcruntime140.dll' Source='msvcrt/vcruntime140.dll'
+				  DiskId='4' KeyPath='yes' />
+			<File Id='vccorlib140_DLL'
+				  Name='vccorlib140.dll' Source='msvcrt/vccorlib140.dll'
+				  DiskId='4' />
+			<File Id='msvcp140_DLL'
+				  Name='msvcp140.dll' Source='msvcrt/msvcp140.dll'
+				  DiskId='4' />
+			<File Id='concrt140_DLL'
+				  Name='concrt140.dll' Source='msvcrt/concrt140.dll'
+				  DiskId='4' />
+		</Component>
+<?endif?>
+
+		<Feature Id='Complete' Level='1'>
+			<ComponentRef Id='MainExecutable.Component' />
+			<ComponentRef Id='Fonts.Component' />
+			<ComponentRef Id='Curl.Component' />
+<?ifdef MSVCRT ?>
+			<ComponentRef Id='MSVCRT.Component' />
+<?endif?>
+			<ComponentRef Id='ProgramMenuDir.Component' />
+		</Feature>
+	</Product>
+
+</Wix>

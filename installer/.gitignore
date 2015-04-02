@@ -1,0 +1,10 @@
+artifacts
+fonts
+libcurl
+msvcrt
+res
+
+*.msi
+*.zip
+*.wixobj
+*.wixpdb
