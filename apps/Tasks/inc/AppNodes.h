@@ -40,6 +40,9 @@ public:
 	void setCursor(cursor) override;
 	cursor getCursor() const override;
 
+	bool hasTooltip() const override;
+	const std::string& getTooltip() const override;
+
 	void openLink(const std::string& url);
 
 protected:

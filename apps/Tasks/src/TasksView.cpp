@@ -110,7 +110,12 @@ BOOL CTasksView::PreTranslateMessage(MSG* pMsg)
 
 LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	updateCursor(true);
+	RECT empty{ 0, 0, 0, 0 };
+	m_tooltip.Create(TOOLTIPS_CLASS, m_hWnd, empty, nullptr, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, WS_EX_TOPMOST);
+	m_tooltip.SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+	m_tooltip.SendMessage(TTM_SETMAXTIPWIDTH, 0, 700);
+
+	updateCursorAndTooltip(true);
 	m_background.CreateSolidBrush(0x00FFFFFF);
 	m_listener = std::make_shared<TaskViewModelListener>(m_hWnd);
 	m_model->registerListener(m_listener);
@@ -889,7 +894,7 @@ void CTasksView::updateLayout()
 	m_hovered = nodeFromPoint();
 	if (m_hovered)
 		static_cast<IJiraNode*>(m_hovered)->setHovered(true);
-	updateCursor();
+	updateCursorAndTooltip();
 }
 
 void CTasksView::updateCursor(bool force)
@@ -916,6 +921,63 @@ void CTasksView::updateCursor(bool force)
 		m_cursorObj.DestroyCursor();
 	m_cursorObj.LoadSysCursor(idc);
 	SetCursor(m_cursorObj);
+}
+
+void CTasksView::updateTooltip(bool /*force*/)
+{
+	RECT tool{ 0, 0, 0, 0 };
+	std::string tooltip;
+	auto node = m_hovered;
+	while (node) {
+		if (static_cast<IJiraNode*>(node)->hasTooltip()) {
+			auto pt = static_cast<IJiraNode*>(m_hovered)->getAbsolutePos();
+			auto sz = static_cast<IJiraNode*>(m_hovered)->getSize();
+			RECT r{ pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 4 , pt.y + (int)sz.height + 4 };
+			tool = r;
+			tooltip = static_cast<IJiraNode*>(node)->getTooltip();
+			break;
+		}
+
+		node = static_cast<IJiraNode*>(node)->getParent();
+	}
+
+	{
+		TOOLINFO ti = { 0 };
+		ti.cbSize = sizeof(TOOLINFO);
+		ti.hwnd = m_hWnd;
+		ti.hinst = _Module.GetModuleInstance();
+
+		m_tooltip.SendMessage(TTM_DELTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
+	}
+	if (!tooltip.empty()) {
+		auto tmp = utf::widen(tooltip);
+		decltype(tmp) widen;
+		widen.reserve(tmp.length() * 11 / 10);
+
+		for (auto c : tmp) {
+			if (c == L'\n')
+				widen += L"\r\n";
+			else widen.push_back(c);
+		}
+
+		TOOLINFO ti = { 0 };
+		ti.cbSize = sizeof(TOOLINFO);
+		ti.uFlags = TTF_SUBCLASS;
+		ti.hwnd = m_hWnd;
+		ti.hinst = _Module.GetModuleInstance();
+		ti.lpszText = (LPWSTR)widen.c_str();
+		ti.rect = tool;
+
+		m_tooltip.SendMessage(TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
+
+		OutputDebugString(utf::widen("Local tooltip: " + tooltip + "\n").c_str());
+	}
+}
+
+void CTasksView::updateCursorAndTooltip(bool force)
+{
+	updateCursor(force);
+	updateTooltip(force);
 }
 
 jira::node* CTasksView::nodeFromPoint()
@@ -960,7 +1022,7 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 			static_cast<IJiraNode*>(m_hovered)->setHovered(false);
 
 		m_hovered = tmp;
-		updateCursor();
+		updateCursorAndTooltip();
 		Invalidate(); // TODO: invalidate old and new hovered/their parents...
 	}
 	return 0;

@@ -56,6 +56,7 @@ private:
 	CFontHandle m_font;
 	CBrush m_background;
 	CCursor m_cursorObj;
+	CWindow m_tooltip;
 
 	int m_mouseX = 0;
 	int m_mouseY = 0;
@@ -66,6 +67,8 @@ private:
 
 	void updateLayout();
 	void updateCursor(bool force = false);
+	void updateTooltip(bool force = false);
+	void updateCursorAndTooltip(bool force = false);
 	jira::node* nodeFromPoint();
 public:
 	std::shared_ptr<CAppModel> m_model;

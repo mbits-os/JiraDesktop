@@ -115,6 +115,9 @@ struct IJiraNode : jira::node {
 	virtual void activate() = 0;
 	virtual void setCursor(cursor) = 0;
 	virtual cursor getCursor() const = 0;
+
+	virtual bool hasTooltip() const = 0;
+	virtual const std::string& getTooltip() const = 0;
 };
 
 inline IJiraNode* cast(const std::unique_ptr<jira::node>& node) {

@@ -249,6 +249,21 @@ cursor CJiraNode::getCursor() const
 	return cursor::arrow;
 }
 
+bool CJiraNode::hasTooltip() const
+{
+	auto it = m_data.find(Attr::Tooltip);
+	return it != m_data.end();
+}
+
+const std::string& CJiraNode::getTooltip() const
+{
+	auto it = m_data.find(Attr::Tooltip);
+	if (it != m_data.end())
+		return it->second;
+
+	static std::string dummy;
+	return dummy;
+}
 
 void CJiraIconNode::ImageCb::onImageChange(ImageRef*)
 {
