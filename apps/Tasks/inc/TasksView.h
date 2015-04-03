@@ -48,6 +48,7 @@ public:
 private:
 	std::shared_ptr<CAppModelListener> m_listener;
 	std::vector<ServerInfo> m_servers;
+	std::shared_ptr<IJiraNode> m_cheatsheet;
 	std::vector<ServerInfo>::iterator find(uint32_t sessionId);
 
 	std::vector<ServerInfo>::iterator insert(std::vector<ServerInfo>::const_iterator it, const std::shared_ptr<jira::server>& server);

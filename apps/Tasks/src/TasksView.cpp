@@ -120,6 +120,42 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	m_background.CreateSolidBrush(0x00FFFFFF);
 	m_listener = std::make_shared<TaskViewModelListener>(m_hWnd);
 	m_model->registerListener(m_listener);
+
+#if FA_CHEATSHEET
+	size_t pos = 0;
+	constexpr size_t width = 10;
+	auto glyphs = std::make_shared<CJiraTableNode>();
+	auto header = glyphs->addHeader();
+	for (size_t i = 0; i < width; ++i) {
+		header->addChild(std::make_shared<CJiraTextNode>("G"));
+		header->addChild(std::make_shared<CJiraTextNode>("Name"));
+	}
+
+	auto rowCount = ((size_t)fa::glyph::__last_glyph + width - 1) / width;
+	for (size_t r = 0; r < rowCount; ++r) {
+		auto row = glyphs->addRow();
+		for (size_t i = 0; i < width; ++i) {
+#ifdef FA_CHEATSHEET_ROW_FIRST
+			auto id = r * width + i;
+#else
+			auto id = i * rowCount + r;
+#endif
+			if (id >= (size_t)fa::glyph::__last_glyph)
+				continue;
+
+			wchar_t s[2] = {};
+			s[0] = fa::glyph_char((fa::glyph)id);
+			s[1] = 0;
+			auto g = std::make_shared<CJiraTextNode>(utf::narrowed(s));
+			g->setClass(rules::symbol);
+			row->addChild(g);
+			auto n = std::make_shared<CJiraTextNode>(fa::glyph_name((fa::glyph)id));
+			n->setClass(rules::classSummary);
+			row->addChild(n);
+		}
+	}
+	m_cheatsheet = glyphs;
+#endif
 	return 0;
 }
 
@@ -670,6 +706,9 @@ namespace {
 				<< fontSize((style.m_styler.getFontSize() * 8) / 10)
 				<< color(0x00555555);
 			break;
+		case rules::symbol:
+			style << symbols();
+			break;
 		};
 	}
 
@@ -699,7 +738,7 @@ namespace {
 	}
 #endif
 
-	void plaque(Styler& styler, const std::shared_ptr<jira::node>& node)
+	void paintNode(Styler& styler, const std::shared_ptr<jira::node>& node)
 	{
 		auto& painter = static_cast<IJiraPainter&>(styler.out());
 		auto orig = painter.getOrigin();
@@ -709,12 +748,6 @@ namespace {
 		orig.y += size.height;
 
 		painter.setOrigin(orig);
-	}
-
-	void server(Styler& styler, const CTasksView::ServerInfo& item)
-	{
-		if (item.m_plaque)
-			plaque(styler, item.m_plaque);
 	}
 };
 
@@ -795,98 +828,13 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	dc.SetBkMode(TRANSPARENT);
 	Styler control{ (HDC)dc, (HFONT)m_font };
 
-#if FA_CHEATSHEET
-	std::wstring textFace;
-	std::vector<std::pair<size_t, wchar_t>> ranges;
-	{
-		Style style{ control };
-		style << symbols();
-
-		{
-			auto textLen = dc.GetTextFaceLen();
-			std::unique_ptr<wchar_t[]> text{ new wchar_t[textLen] };
-			dc.GetTextFace(text.get(), textLen);
-			textFace = text.get();
-		}
-
-		{
-			auto size = dc.GetFontUnicodeRanges(nullptr);
-			std::unique_ptr<char[]> glyphsPtr{ new char[size] };
-			auto glyphs = reinterpret_cast<GLYPHSET*>(glyphsPtr.get());
-			dc.GetFontUnicodeRanges(glyphs);
-
-			for (DWORD i = 0; i < glyphs->cRanges; ++i) {
-				if (!ranges.empty()) {
-					auto& range = ranges.back();
-					auto last = std::get<0>(range) + std::get<1>(range);
-					if (last == glyphs->ranges[i].wcLow) {
-						std::get<0>(range) += glyphs->ranges[i].cGlyphs;
-						continue;
-					}
-				}
-				ranges.emplace_back(glyphs->ranges[i].cGlyphs, glyphs->ranges[i].wcLow);
-			}
-		}
-	}
-#endif
-
-	for (auto& item : m_servers)
-		server(control, item);
-
-#if FA_CHEATSHEET
-	control.out().println({}).println(L"Font face: " + textFace);
-
-	size_t pos = 0;
-	for (size_t id = 0; id < (size_t)fa::glyph::__last_glyph; ++id, ++pos) {
-		wchar_t s[2] = {};
-		s[0] = fa::glyph_char((fa::glyph)id);
-		s[1] = 0;
-		{
-			Style style{ control };
-			style << symbols();
-			control.out().print(s);
-		}
-
-		{
-			Style style{ control };
-			style << color(0x0060c060) << fontSize((control.getFontSize() * 8) / 10);
-			control.out()
-				.print(L" ")
-				.print(utf::widen(fa::glyph_name((fa::glyph)id)))
-				.print(L", ");
-		}
-
-		if (pos == 16) {
-			control.out().println({});
-			pos = 0;
-		}
+	for (auto& item : m_servers) {
+		if (item.m_plaque)
+			paintNode(control, item.m_plaque);
 	}
 
-	Style style{ control };
-	style << symbols() << fontSize((control.getFontSize() * 18) / 10);
-
-	pos = 0;
-	std::wstring line;
-
-	for (auto& range : ranges) {
-		for (USHORT cnt = 0; cnt < std::get<0>(range); ++cnt) {
-			WCHAR glyph = cnt + std::get<1>(range);
-			line.push_back(glyph);
-			line.push_back(' ');
-			pos++;
-			if (pos == 32) {
-				control.out().println(line);
-				line.clear();
-				pos = 0;
-			}
-		}
-	}
-
-	if (pos) {
-		control.out().println(line);
-		line.clear();
-	}
-#endif
+	if (m_cheatsheet)
+		paintNode(control, m_cheatsheet);
 
 	//dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x00000080, 0x00000080);
 
@@ -920,6 +868,15 @@ void CTasksView::updateLayout()
 			if (width < size.width)
 				width = size.width;
 		}
+	}
+
+	if (m_cheatsheet) {
+		styler.out().measure(m_cheatsheet, &styler);
+		auto size = m_cheatsheet->getSize();
+		m_cheatsheet->setPosition(BODY_MARGIN, BODY_MARGIN + height);
+		height += size.height;
+		if (width < size.width)
+			width = size.width;
 	}
 
 	setDocumentSize(width + 2 * BODY_MARGIN, height + 2 * BODY_MARGIN);
