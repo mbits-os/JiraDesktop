@@ -22,6 +22,9 @@
 #include "wincrypt.h"
 #pragma comment(lib, "crypt32.lib")
 
+#undef max
+
+#include <algorithm>
 
 std::string contents(LPCWSTR path)
 {
@@ -88,7 +91,13 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 	m_view.m_model = m_model;
 	m_view.setScroller([&](size_t width, size_t height) {
-		m_container.SetScrollSize(width, height, FALSE, false);
+		m_container.SetScrollSize(width, height, TRUE, false);
+		RECT client;
+		m_container.GetClientRect(&client);
+		m_view.SetWindowPos(nullptr, 0, 0,
+			std::max(width, (size_t)client.right),
+			std::max(height, (size_t)client.bottom),
+			SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 	});
 	m_view.Create(m_container, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 
