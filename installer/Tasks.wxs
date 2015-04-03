@@ -33,6 +33,12 @@
 				 SummaryCodepage="1252"
 				 />
 
+		<Upgrade Id="{2E10A6B5-33CF-422C-810C-8B18DFC03C6E}">
+			<UpgradeVersion OnlyDetect='yes' Property='NEWERFOUND'
+			  Minimum='$(var.VERSION)' IncludeMinimum='no' />
+		</Upgrade>
+		<CustomAction Id='NoDowngrade' Error='A later version of [ProductName] is already installed.' />
+
 		<Property Id="ARPPRODUCTICON" Value="Tasks.ico" />
 		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
 		<Property Id="ALLUSERS" Value="0"/>
@@ -136,6 +142,10 @@
 
 		<UIRef Id="WixUI_FeatureTree" />
 		<UIRef Id="WixUI_ErrorProgressText" />
+
+		<InstallExecuteSequence>
+			<Custom Action='NoDowngrade' After='FindRelatedProducts'>NEWERFOUND</Custom>
+		</InstallExecuteSequence>
 	</Product>
 
 </Wix>
