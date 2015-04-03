@@ -64,12 +64,14 @@ private:
 	std::shared_ptr<jira::node> m_active;
 	bool m_tracking = false;
 	cursor m_cursor = cursor::arrow;
+	std::function<void(size_t, size_t)> m_scroller;
 
 	void updateLayout();
 	void updateCursor(bool force = false);
 	void updateTooltip(bool force = false);
 	void updateCursorAndTooltip(bool force = false);
 	std::shared_ptr<jira::node> nodeFromPoint();
+	void setDocumentSize(size_t width, size_t height); 
 public:
 	std::shared_ptr<CAppModel> m_model;
 
@@ -118,4 +120,9 @@ public:
 	LRESULT OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
+
+	template <typename T>
+	void setScroller(T&& scroller) {
+		m_scroller = scroller;
+	}
 };

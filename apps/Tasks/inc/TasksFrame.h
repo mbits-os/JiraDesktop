@@ -19,6 +19,7 @@ public:
 	DECLARE_FRAME_WND_CLASS_EX(NULL, IDR_MAINFRAME, 0, COLOR_WINDOW)
 
 	CTasksView m_view;
+	CScrollContainer m_container;
 	CTaskBarIcon m_taskIcon;
 	CFont m_font;
 	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();

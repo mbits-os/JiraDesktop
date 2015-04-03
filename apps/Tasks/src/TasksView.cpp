@@ -909,18 +909,20 @@ void CTasksView::updateLayout()
 		cast(m_active)->setActive(false);
 	m_active = nullptr;
 
-	int height = 0;
-	int width = 0;
+	size_t height = 0;
+	size_t width = 0;
 	for (auto& server : m_servers) {
 		if (server.m_plaque) {
 			styler.out().measure(server.m_plaque, &styler);
 			auto size = cast(server.m_plaque)->getSize();
 			cast(server.m_plaque)->setPosition(BODY_MARGIN, BODY_MARGIN + height);
 			height += size.height;
+			if (width < size.width)
+				width = size.width;
 		}
 	}
 
-	// document size: height + 2xBODY_MARGIN, width + 2xBODY_MARGIN
+	setDocumentSize(width + 2 * BODY_MARGIN, height + 2 * BODY_MARGIN);
 
 	m_hovered = nodeFromPoint();
 	if (m_hovered)
@@ -1023,6 +1025,12 @@ std::shared_ptr<jira::node> CTasksView::nodeFromPoint()
 	}
 
 	return{};
+}
+
+void CTasksView::setDocumentSize(size_t width, size_t height)
+{
+	if (m_scroller)
+		m_scroller(width, height);
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
