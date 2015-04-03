@@ -31,6 +31,7 @@ enum class rules {
 	tableRow,
 	classEmpty,
 	classSummary,
+	symbol
 };
 
 enum class cursor {

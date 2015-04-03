@@ -134,6 +134,29 @@ public:
 	std::shared_ptr<ImageRef> createImage(const std::string& uri);
 };
 
+class CJiraTableNode : public CJiraNode {
+	std::shared_ptr<std::vector<size_t>> m_columns;
+public:
+	CJiraTableNode();
+	std::shared_ptr<jira::node> addHeader();
+	std::shared_ptr<jira::node> addRow();
+
+	void addChild(const std::shared_ptr<jira::node>& child) override final;
+	void measure(IJiraPainter* painter) override;
+};
+
+class CJiraTableRowNode : public CJiraNode {
+protected:
+	std::shared_ptr<std::vector<size_t>> m_columns;
+public:
+	explicit CJiraTableRowNode(const std::shared_ptr<std::vector<size_t>>& columns);
+
+	void measure(IJiraPainter* painter) override;
+
+	void repositionChildren();
+};
+
+
 class CJiraReportNode : public CJiraNode {
 protected:
 	CJiraReportNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);

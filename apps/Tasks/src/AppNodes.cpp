@@ -500,6 +500,90 @@ std::shared_ptr<ImageRef> CJiraDocument::createImage(const std::string& uri)
 	return image;
 }
 
+CJiraTableNode::CJiraTableNode()
+	: m_columns(std::make_shared<std::vector<size_t>>())
+{
+}
+
+std::shared_ptr<jira::node> CJiraTableNode::addHeader()
+{
+	auto node = std::make_shared<CJiraTableRowNode>(m_columns);
+	node->setClass(rules::tableHead);
+	CJiraNode::addChild(node);
+	return node;
+}
+
+std::shared_ptr<jira::node> CJiraTableNode::addRow()
+{
+	auto node = std::make_shared<CJiraTableRowNode>(m_columns);
+	node->setClass(rules::tableRow);
+	CJiraNode::addChild(node);
+	return node;
+}
+
+void CJiraTableNode::addChild(const std::shared_ptr<jira::node>& /*child*/)
+{
+	// noop
+}
+
+void CJiraTableNode::measure(IJiraPainter* painter)
+{
+	StyleSaver saver{ painter, this };
+
+	size_t columns = 0;
+	for (auto& node : m_children) {
+		auto values = node->values().size();
+		if (columns < values)
+			columns = values;
+	}
+
+	m_columns->assign(columns, 0);
+
+	size_t height = 0;
+	for (auto& node : m_children) {
+		cast(node)->measure(painter);
+
+		auto nheight = cast(node)->getSize().height;
+		cast(node)->setPosition(0, height);
+		height += nheight * 12 / 10; // 120%
+	}
+
+	for (auto& node : m_children)
+		static_cast<CJiraTableRowNode*>(node.get())->repositionChildren();
+
+	m_position.height = height;
+	m_position.width = m_children.empty() ? 0 : cast(m_children[0])->getSize().width;
+}
+
+CJiraTableRowNode::CJiraTableRowNode(const std::shared_ptr<std::vector<size_t>>& columns)
+	: m_columns(columns)
+{
+}
+
+void CJiraTableRowNode::measure(IJiraPainter* painter)
+{
+	CJiraNode::measure(painter);
+
+	auto it = m_columns->begin();
+	for (auto& node : values()) {
+		auto sz = cast(node)->getSize();
+		if (*it < sz.width)
+			*it = sz.width;
+		++it;
+	}
+}
+
+void CJiraTableRowNode::repositionChildren()
+{
+	int x = CELL_MARGIN;
+	auto it = m_columns->begin();
+	for (auto& node : values()) {
+		cast(node)->setPosition(x, 0);
+		x += *it++ + 2 * CELL_MARGIN;
+	}
+	m_position.width = x + CELL_MARGIN;
+}
+	
 CJiraReportNode::CJiraReportNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
 	: m_dataset(dataset)
 	, m_columns(columns)
