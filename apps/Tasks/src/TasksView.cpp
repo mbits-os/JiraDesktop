@@ -181,7 +181,6 @@ class LinePrinter : public IJiraPainter
 	HFONT older;
 	CFontHandle font;
 	CDCHandle dc;
-	long lineHeight;
 	int x = BODY_MARGIN;
 	int y = BODY_MARGIN;
 	Styler* uplink = nullptr;
@@ -193,7 +192,6 @@ class LinePrinter : public IJiraPainter
 	{
 		TEXTMETRIC metric = {};
 		dc.GetTextMetrics(&metric);
-		lineHeight = metric.tmHeight * 12 / 10; // 120%
 	}
 
 	void moveOrigin(int x_, int y_) override
@@ -282,46 +280,13 @@ public:
 		return *this;
 	}
 
-	LinePrinter& println(const std::wstring& line)
-	{
-		if (!line.empty())
-			dc.TextOut(x, y, line.c_str());
-		y += lineHeight;
-		x = BODY_MARGIN;
-		return *this;
-	}
-
-	LinePrinter& print(const std::wstring& line)
-	{
-		if (line.empty())
-			return *this;
-		SIZE s = {};
-		dc.GetTextExtent(line.c_str(), line.length(), &s);
-		dc.TextOut(x, y, line.c_str());
-		x += s.cx;
-		return *this;
-	}
-
-	LinePrinter& skipY(double scale)
-	{
-		y += int(lineHeight * scale);
-		x = BODY_MARGIN;
-		return *this;
-	}
-
-	LinePrinter& moveToX(int x_)
-	{
-		x = x_;
-		return *this;
-	}
-
 	LinePrinter& drawFocus(jira::node* node)
 	{
 		if (selectedFrame) {
 			selectedFrame = false;
 			auto pt = static_cast<IJiraNode*>(node)->getAbsolutePos();
 			auto sz = static_cast<IJiraNode*>(node)->getSize();
-			RECT r{pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 2, pt.y + (int)sz.height + 2 };
+			RECT r{ pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 2, pt.y + (int)sz.height + 2 };
 			dc.DrawFocusRect(&r);
 		}
 		return *this;
@@ -366,9 +331,6 @@ public:
 		color = clr;
 		return *this;
 	}
-
-	int getX() const { return x; }
-	CDCHandle native() const { return dc; }
 };
 
 namespace {
