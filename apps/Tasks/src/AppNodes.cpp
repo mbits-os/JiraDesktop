@@ -340,7 +340,7 @@ void CJiraUserNode::paint(IJiraPainter* painter)
 
 void CJiraUserNode::measure(IJiraPainter* painter)
 {
-	auto size = painter->dpiRescale(16);
+	auto size = (size_t)painter->dpiRescale(16);
 	auto selected = 0;
 
 	std::string image;
