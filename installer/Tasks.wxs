@@ -34,6 +34,8 @@
 				 />
 
 		<Property Id="ARPPRODUCTICON" Value="Tasks.ico" />
+		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+		<Property Id="ALLUSERS" Value="0"/>
 
 		<Media Id='1' Cabinet='$(var.PACKAGE).cab' EmbedCab='yes' />
 		<Media Id='2' Cabinet='Fonts.cab' EmbedCab='yes' />
@@ -49,15 +51,7 @@
 				</Directory>
 			</Directory>
 
-			<Directory Id="ProgramMenuFolder" Name="StartMenuFolder">
-				<Directory Id="ProgramMenuDir" Name="$(var.PACKAGE)">
-					<Component Id="ProgramMenuDir.Component" Guid="{15431AEE-E8CA-40BC-928C-9EB8AAAF4C3A}">
-						<RemoveFolder Id='ProgramMenuDir' On='uninstall' />
-						<RegistryValue Root='HKCU' Key='Software\$(var.COMPANY)\$(var.PACKAGE)\$(var.SHORT_VERSION)\Setup' Type='string' Value='MenuStart' KeyPath='yes' />
-					</Component>
-				</Directory>
-			</Directory>
-
+			<Directory Id="ProgramMenuFolder" Name="StartMenuFolder" />
 			<Directory Id="DesktopFolder" Name="Desktop" />
 		</Directory>
 		
@@ -65,7 +59,7 @@
 		
 		<Component Id='MainExecutable.Component' Guid='{0BF923DF-8E07-40F6-B937-02B2FF523DC0}' Directory='INSTALLDIR'>
 			<File Id='Tasks_EXE' Name='Tasks.exe' DiskId='1' Source='artifacts/Tasks.exe' KeyPath='yes'>
-				<Shortcut Id="startmenuTask" Directory="ProgramMenuDir" Name="Tasks"
+				<Shortcut Id="startmenuTask" Directory="ProgramMenuFolder" Name="Tasks"
 						  WorkingDirectory='INSTALLDIR'
 						  Icon="$(var.PACKAGE).ico" IconIndex="0"
 						  Advertise="yes" />
@@ -121,15 +115,27 @@
 		</Component>
 <?endif?>
 
-		<Feature Id='Complete' Level='1'>
+		<Feature Id='Complete' Title='$(var.PACKAGE) $(var.VERSION)'
+				 Display='expand' Description='The complete package' Level='1'
+				 ConfigurableDirectory='INSTALLDIR' AllowAdvertise='no'>
 			<ComponentRef Id='MainExecutable.Component' />
 			<ComponentRef Id='Fonts.Component' />
-			<ComponentRef Id='Curl.Component' />
+			<Feature Id='Curl' Title='libCurl'
+					 Description='The libCurl libraries. You do not need to install those, if you have a version of libCurl DLLs instaleld somewhere on your system.'
+					 AllowAdvertise='no' Level='1'>
+				<ComponentRef Id='Curl.Component' />
+			</Feature>
 <?ifdef MSVCRT ?>
-			<ComponentRef Id='MSVCRT.Component' />
+			<Feature Id='MSVCRT' Title='MSVCRT 14.0 (VS 2015)'
+					 Description='The MSVCRT140 libraries. You do not need to install those, if you have Visual Studio 2015 installed.'
+					 AllowAdvertise='no' Level='1000'>
+				<ComponentRef Id='MSVCRT.Component' />
+			</Feature>
 <?endif?>
-			<ComponentRef Id='ProgramMenuDir.Component' />
 		</Feature>
+
+		<UIRef Id="WixUI_FeatureTree" />
+		<UIRef Id="WixUI_ErrorProgressText" />
 	</Product>
 
 </Wix>

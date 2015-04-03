@@ -89,7 +89,7 @@ copyFilesFlat(ROOT, RES, resFiles)
 # sign
 if sdk is not None:
 	for f in artifactFiles:
-		call([ "signtool.exe", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", path.join(ARTIFACTS, f) ])
+		call([ "signtool.exe", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s" % VERSION, path.join(ARTIFACTS, f) ])
 
 print ZIPNAME
 
@@ -107,6 +107,9 @@ with zipfile.ZipFile(ZIPNAME, 'w') as zip:
 				dest = path.join(dir, dest)
 			zip.write(f, dest)
 
-call(["candle", "-nologo", WXS])
-call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", WIXOBJ, "-out", MSINAME])
-call(["signtool", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", MSINAME])
+msvcrtDef=[]
+if MSVCRT: msvcrtDef = ['-dMSVCRT']
+
+call(["candle", "-nologo", WXS] + msvcrtDef)
+call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-ext", "WixUIExtension", WIXOBJ, "-out", MSINAME])
+call(["signtool", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s Installer" % VERSION, MSINAME])
