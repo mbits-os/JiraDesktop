@@ -187,6 +187,7 @@ class LinePrinter : public IJiraPainter
 	bool selectedFrame = false;
 	bk backgroundMode = bk::transparent;
 	COLORREF color = 0x00FFFFFF;
+	RECT update;
 
 	void updateLineHeight()
 	{
@@ -308,6 +309,15 @@ public:
 	LinePrinter& paint(const std::shared_ptr<jira::node>& node, Styler* link)
 	{
 		uplink = link;
+		auto size = cast(node)->getSize();
+
+		RECT r = { x, y, (int)size.width + x, (int)size.height + y };
+		RECT test;
+		IntersectRect(&test, &r, &update);
+
+		if (test.left == test.right || test.top == test.bottom)
+			return *this;
+
 		cast(node)->paint(this);
 		return *this;
 	}
@@ -329,6 +339,12 @@ public:
 	{
 		backgroundMode = mode;
 		color = clr;
+		return *this;
+	}
+
+	LinePrinter& updateRect(const RECT& val)
+	{
+		update = val;
 		return *this;
 	}
 };
@@ -789,6 +805,7 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 	dc.SetBkMode(TRANSPARENT);
 	Styler control{ (HDC)dc, (HFONT)m_font };
+	control.out().updateRect(dc.m_ps.rcPaint);
 
 	for (auto& item : m_servers) {
 		if (item.m_plaque)
@@ -921,8 +938,6 @@ void CTasksView::updateTooltip(bool /*force*/)
 		ti.rect = tool;
 
 		m_tooltip.SendMessage(TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
-
-		OutputDebugString(utf::widen("Local tooltip: " + tooltip + "\n").c_str());
 	}
 }
 
@@ -981,7 +996,6 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 		m_hovered = tmp;
 		updateCursorAndTooltip();
-		Invalidate(); // TODO: invalidate old and new hovered/their parents...
 	}
 	return 0;
 }
