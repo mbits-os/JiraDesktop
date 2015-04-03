@@ -91,7 +91,19 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 		m_container.SetScrollSize(width, height, FALSE, false);
 	});
 	m_view.Create(m_container, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
+
+#if 0
 	m_font = AtlCreateControlFont();
+#else
+	int fontSize = 14;
+	{
+		CWindowDC dc{ m_hWnd };
+		fontSize = dc.GetDeviceCaps(LOGPIXELSY) * fontSize / 96;
+	}
+	m_font.CreateFont(-fontSize, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+		DEFAULT_PITCH | FF_SWISS, L"Arial");
+#endif
 	m_view.SetFont(m_font);
 
 	m_container.SetClient(m_view, false);

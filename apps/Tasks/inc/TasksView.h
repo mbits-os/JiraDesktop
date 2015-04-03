@@ -81,7 +81,7 @@ public:
 		static ATL::CWndClassInfo wc =
 		{
 			{ sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS, StartWindowProc,
-			  0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+			  0, 0, NULL, NULL, NULL, NULL, NULL, _T("TasksList"), NULL },
 			NULL, NULL, NULL, TRUE, 0, _T("")
 		};
 		return wc;

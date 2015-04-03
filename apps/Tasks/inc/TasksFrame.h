@@ -16,7 +16,7 @@ class CTasksFrame
 {
 	using CFameSuper = CFrameWindowImpl<CTasksFrame, CWindow, CTasksFrameWinTraits>;
 public:
-	DECLARE_FRAME_WND_CLASS_EX(NULL, IDR_MAINFRAME, 0, COLOR_WINDOW)
+	DECLARE_FRAME_WND_CLASS_EX(_T("TasksWindow"), IDR_MAINFRAME, 0, COLOR_WINDOW)
 
 	CTasksView m_view;
 	CScrollContainer m_container;
