@@ -853,7 +853,7 @@ void CTasksView::updateCursor(bool force)
 {
 	auto tmp = cursor::arrow;
 	if (m_hovered)
-		cast(m_hovered)->getCursor();
+		tmp = cast(m_hovered)->getCursor();
 
 	if (tmp == cursor::inherited)
 		tmp = cursor::arrow;
@@ -1028,7 +1028,7 @@ LRESULT CTasksView::OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		SetCursor(m_cursorObj);
 	}
 
-	return FALSE;
+	return bHandled;
 }
 
 LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
