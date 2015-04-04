@@ -4,6 +4,7 @@
     <Import Project="libs.api.libjira.props" />
     <Import Project="libs.api.libjson.props" />
     <Import Project="libs.api.libnet.props" />
+    <Import Project="libs.api.libgui.props" />
   </ImportGroup>
   <PropertyGroup>
     <_PropertySheetDisplayName>libjira code</_PropertySheetDisplayName>
