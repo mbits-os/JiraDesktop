@@ -25,8 +25,13 @@
 #pragma once
 
 #include <gui/hotkey.hpp>
+#include <gui/font_awesome.hh>
 #include <memory>
 #include <functional>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace gui {
 	class icon {
@@ -64,4 +69,16 @@ namespace gui {
 		return std::make_shared<action>(icon, text, hotkey, f);
 	}
 
+	struct symbol {
+		fa::glyph glyph;
+		COLORREF color;
+		int num;
+		int denom;
+
+		symbol(fa::glyph glyph, COLORREF color, int num, int denom) : glyph(glyph), color(color), num(num), denom(denom) {}
+		symbol(fa::glyph glyph, COLORREF color) : symbol(glyph, color, 1, 1) {}
+		symbol(fa::glyph glyph) : symbol(glyph, 0x000000, 1, 1) {}
+	};
+
+	std::shared_ptr<gui::icon> make_fa_icon(const std::initializer_list<symbol>&);
 };
