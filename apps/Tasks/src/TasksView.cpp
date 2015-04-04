@@ -181,6 +181,7 @@ class LinePrinter : public IJiraPainter
 	HFONT older;
 	CFontHandle font;
 	CDCHandle dc;
+	CPen focusPen;
 	int x = BODY_MARGIN;
 	int y = BODY_MARGIN;
 	Styler* uplink = nullptr;
@@ -282,7 +283,15 @@ public:
 			auto pt = static_cast<IJiraNode*>(node)->getAbsolutePos();
 			auto sz = static_cast<IJiraNode*>(node)->getSize();
 			RECT r{ pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 2, pt.y + (int)sz.height + 2 };
-			dc.DrawFocusRect(&r);
+			if (!focusPen)
+				focusPen.CreatePen(PS_DOT, 1, 0xc0c0c0);
+			auto prev = dc.SelectPen(focusPen);
+			dc.MoveTo(r.left, r.top);
+			dc.LineTo(r.right - 1, r.top);
+			dc.LineTo(r.right - 1, r.bottom - 1);
+			dc.LineTo(r.left, r.bottom - 1);
+			dc.LineTo(r.left, r.top);
+			dc.SelectPen(prev);
 		}
 		return *this;
 	}
