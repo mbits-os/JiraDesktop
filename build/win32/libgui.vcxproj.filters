@@ -29,6 +29,15 @@
     <ClCompile Include="..\..\libs\libgui\src\settings.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\hotkey.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_action.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\font_awesome.cc">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libs\libgui\pch\pch.h">
@@ -41,6 +50,30 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libs\libgui\inc\gui\settings.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\hotkey.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\image.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\painter.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\node.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\listeners.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\document.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\action.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\font_awesome.hh">
       <Filter>inc\gui</Filter>
     </ClInclude>
   </ItemGroup>
