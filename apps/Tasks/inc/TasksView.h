@@ -64,7 +64,7 @@ private:
 	std::shared_ptr<jira::node> m_hovered;
 	std::shared_ptr<jira::node> m_active;
 	bool m_tracking = false;
-	cursor m_cursor = cursor::arrow;
+	gui::cursor m_cursor = gui::cursor::arrow;
 	std::function<void(size_t, size_t)> m_scroller;
 
 	void updateLayout();

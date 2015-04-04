@@ -13,7 +13,7 @@
 #include "AppNodes.h"
 
 #if FA_CHEATSHEET
-#include "font_awesome.hh"
+#include "gui/font_awesome.hh"
 #endif
 
 class TaskViewModelListener : public CAppModelListener {
@@ -212,16 +212,10 @@ class LinePrinter : public IJiraPainter
 		y = orig.y;
 	}
 
-	void paintImage(const std::string& /*url*/, size_t width, size_t height) override
-	{
-		// TODO: get url from pixmap cache
-		dc.Rectangle(x, y, x + width, y + height);
-	}
-
-	void paintImage(const ImageRef* img, size_t width, size_t height) override
+	void paintImage(const gui::image_ref* img, size_t width, size_t height) override
 	{
 		auto bmp = reinterpret_cast<Gdiplus::Bitmap*>(img ? img->getNativeHandle() : nullptr);
-		if (img && img->getState() != load_state::pixmap_available)
+		if (img && img->getState() != gui::load_state::pixmap_available)
 			bmp = nullptr;
 
 		if (!bmp) {
@@ -868,12 +862,12 @@ void CTasksView::updateLayout()
 
 void CTasksView::updateCursor(bool force)
 {
-	auto tmp = cursor::arrow;
+	auto tmp = gui::cursor::arrow;
 	if (m_hovered)
 		tmp = cast(m_hovered)->getCursor();
 
-	if (tmp == cursor::inherited)
-		tmp = cursor::arrow;
+	if (tmp == gui::cursor::inherited)
+		tmp = gui::cursor::arrow;
 
 	if (tmp == m_cursor && !force)
 		return;
@@ -881,7 +875,7 @@ void CTasksView::updateCursor(bool force)
 	m_cursor = tmp;
 	LPCWSTR idc = IDC_ARROW;
 	switch (m_cursor) {
-	case cursor::pointer:
+	case gui::cursor::pointer:
 		idc = IDC_HAND;
 		break;
 	};

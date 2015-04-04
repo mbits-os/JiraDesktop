@@ -17,28 +17,28 @@ public:
 	jira::styles getStyles() const override;
 	void setClass(rules) override;
 	rules getRules() const override;
-	const std::vector<std::shared_ptr<node>>& values() const override;
+	const std::vector<std::shared_ptr<node>>& children() const override;
 
-	void paint(IJiraPainter* painter) override;
-	void measure(IJiraPainter* painter) override;
+	void paint(gui::painter* painter) override;
+	void measure(gui::painter* painter) override;
 	void setPosition(int x, int y) override;
 	point getPosition() override;
 	point getAbsolutePos() override;
 	size getSize() override;
 
-	std::shared_ptr<IJiraNode> getParent() const override;
-	void setParent(const std::shared_ptr<IJiraNode>&) override;
+	std::shared_ptr<gui::node> getParent() const override;
+	void setParent(const std::shared_ptr<gui::node>&) override;
 	void invalidate() override;
 	void invalidate(int x, int y, size_t width, size_t height) override;
 
-	std::shared_ptr<jira::node> nodeFromPoint(int x, int y) override;
+	std::shared_ptr<gui::node> nodeFromPoint(int x, int y) override;
 	void setHovered(bool hovered) override;
 	bool getHovered() const override;
 	void setActive(bool active) override;
 	bool getActive() const override;
 	void activate() override;
-	void setCursor(cursor) override;
-	cursor getCursor() const override;
+	void setCursor(gui::cursor) override;
+	gui::cursor getCursor() const override;
 
 	bool hasTooltip() const override;
 	const std::string& getTooltip() const override;
@@ -47,10 +47,10 @@ public:
 
 protected:
 	std::map<Attr, std::string> m_data;
-	std::vector<std::shared_ptr<jira::node>> m_children;
+	std::vector<std::shared_ptr<node>> m_children;
 	jira::styles m_class = jira::styles::unset;
 	rules m_rule = rules::body;
-	std::weak_ptr<IJiraNode> m_parent;
+	std::weak_ptr<node> m_parent;
 	struct {
 		int x = 0;
 		int y = 0;
@@ -60,36 +60,36 @@ protected:
 
 	std::atomic<int> m_hoverCount{ 0 };
 	std::atomic<int> m_activeCount{ 0 };
-	cursor m_cursor = cursor::inherited;
+	gui::cursor m_cursor = gui::cursor::inherited;
 };
 
 class CJiraRoot : public CJiraNode {};
 
 class ImageCb
-	: public ImageRefCallback
+	: public gui::image_ref_callback
 	, public std::enable_shared_from_this<ImageCb> {
 
 public:
 	std::weak_ptr<IJiraNode> parent;
-	void onImageChange(ImageRef*) override;
+	void onImageChange(gui::image_ref*) override;
 };
 
 class CJiraIconNode : public CJiraNode {
-	std::shared_ptr<ImageRef> m_image;
+	std::shared_ptr<gui::image_ref> m_image;
 	std::shared_ptr<ImageCb> m_cb;
 public:
-	CJiraIconNode(const std::string& uri, const std::shared_ptr<ImageRef>& image, const std::string& tooltip);
+	CJiraIconNode(const std::string& uri, const std::shared_ptr<gui::image_ref>& image, const std::string& tooltip);
 	~CJiraIconNode();
 	void attach();
 	void addChild(const std::shared_ptr<node>& child) override;
-	void paint(IJiraPainter* painter) override;
-	void measure(IJiraPainter* painter) override;
+	void paint(gui::painter* painter) override;
+	void measure(gui::painter* painter) override;
 };
 
 class CJiraDocument;
 class CJiraUserNode : public CJiraNode {
 	std::weak_ptr<CJiraDocument> m_document;
-	std::shared_ptr<ImageRef> m_image;
+	std::shared_ptr<gui::image_ref> m_image;
 	std::shared_ptr<ImageCb> m_cb;
 	std::map<uint32_t, std::string> m_urls;
 	int m_selectedSize;
@@ -97,8 +97,8 @@ public:
 	CJiraUserNode(const std::weak_ptr<CJiraDocument>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip);
 	~CJiraUserNode();
 	void addChild(const std::shared_ptr<node>& child) override;
-	void paint(IJiraPainter* painter) override;
-	void measure(IJiraPainter* painter) override;
+	void paint(gui::painter* painter) override;
+	void measure(gui::painter* painter) override;
 };
 
 class CJiraLinkNode : public CJiraNode {
@@ -109,40 +109,40 @@ public:
 class CJiraTextNode : public CJiraNode {
 public:
 	CJiraTextNode(const std::string& text);
-	void paint(IJiraPainter* painter) override;
-	void measure(IJiraPainter* painter) override;
+	void paint(gui::painter* painter) override;
+	void measure(gui::painter* painter) override;
 };
 
 class CJiraDocument : public jira::document, public std::enable_shared_from_this<CJiraDocument> {
 	void setCurrent(const std::shared_ptr<jira::server>&) override;
-	std::shared_ptr<jira::node> createTableRow() override;
-	std::shared_ptr<jira::node> createEmpty() override;
-	std::shared_ptr<jira::node> createSpan() override;
-	std::shared_ptr<jira::node> createIcon(const std::string& uri, const std::string& text, const std::string& description) override;
-	std::shared_ptr<jira::node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) override;
-	std::shared_ptr<jira::node> createLink(const std::string& href) override;
-	std::shared_ptr<jira::node> createText(const std::string& text) override;
+	std::shared_ptr<gui::node> createTableRow() override;
+	std::shared_ptr<gui::node> createEmpty() override;
+	std::shared_ptr<gui::node> createSpan() override;
+	std::shared_ptr<gui::node> createIcon(const std::string& uri, const std::string& text, const std::string& description) override;
+	std::shared_ptr<gui::node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) override;
+	std::shared_ptr<gui::node> createLink(const std::string& href) override;
+	std::shared_ptr<gui::node> createText(const std::string& text) override;
 
 	std::mutex m_guard;
-	std::map<std::string, std::shared_ptr<ImageRef>> m_cache;
+	std::map<std::string, std::shared_ptr<gui::image_ref>> m_cache;
 	std::shared_ptr<jira::server> m_server;
-	std::shared_ptr<ImageRef>(*m_creator)(const std::shared_ptr<jira::server>&, const std::string&);
+	std::shared_ptr<gui::image_ref>(*m_creator)(const std::shared_ptr<jira::server>&, const std::string&);
 
 public:
-	explicit CJiraDocument(std::shared_ptr<ImageRef>(*creator)(const std::shared_ptr<jira::server>&, const std::string&));
+	explicit CJiraDocument(std::shared_ptr<gui::image_ref>(*creator)(const std::shared_ptr<jira::server>&, const std::string&));
 
-	std::shared_ptr<ImageRef> createImage(const std::string& uri);
+	std::shared_ptr<gui::image_ref> createImage(const std::string& uri);
 };
 
 class CJiraTableNode : public CJiraNode {
 	std::shared_ptr<std::vector<size_t>> m_columns;
 public:
 	CJiraTableNode();
-	std::shared_ptr<jira::node> addHeader();
-	std::shared_ptr<jira::node> addRow();
+	std::shared_ptr<node> addHeader();
+	std::shared_ptr<node> addRow();
 
-	void addChild(const std::shared_ptr<jira::node>& child) override final;
-	void measure(IJiraPainter* painter) override;
+	void addChild(const std::shared_ptr<node>& child) override final;
+	void measure(gui::painter* painter) override;
 };
 
 class CJiraTableRowNode : public CJiraNode {
@@ -151,7 +151,7 @@ protected:
 public:
 	explicit CJiraTableRowNode(const std::shared_ptr<std::vector<size_t>>& columns);
 
-	void measure(IJiraPainter* painter) override;
+	void measure(gui::painter* painter) override;
 
 	void repositionChildren();
 };
@@ -174,20 +174,20 @@ public:
 
 	std::string text() const override;
 	void setTooltip(const std::string& text) override;
-	void addChild(const std::shared_ptr<jira::node>& child) override;
+	void addChild(const std::shared_ptr<node>& child) override;
 	void setClass(jira::styles) override;
 	jira::styles getStyles() const override;
-	const std::vector<std::shared_ptr<jira::node>>& values() const override;
+	const std::vector<std::shared_ptr<node>>& children() const override;
 
-	void paint(IJiraPainter* painter) override;
-	void measure(IJiraPainter* painter) override;
+	void paint(gui::painter* painter) override;
+	void measure(gui::painter* painter) override;
 	void setPosition(int x, int y) override;
 
-	std::shared_ptr<IJiraNode> getParent() const override;
-	void setParent(const std::shared_ptr<IJiraNode>&) override;
+	std::shared_ptr<node> getParent() const override;
+	void setParent(const std::shared_ptr<node>&) override;
 
 	void repositionChildren() override;
-	std::shared_ptr<jira::node> nodeFromPoint(int x, int y) override;
+	std::shared_ptr<node> nodeFromPoint(int x, int y) override;
 };
 
 class CJiraHeaderNode : public CJiraReportNode {
@@ -195,8 +195,8 @@ public:
 	CJiraHeaderNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
 	void addChildren();
 
-	void addChild(const std::shared_ptr<jira::node>& child) override final;
-	void measure(IJiraPainter* painter) override;
+	void addChild(const std::shared_ptr<node>& child) override final;
+	void measure(gui::painter* painter) override;
 	void repositionChildren() override;
 };
 
@@ -206,8 +206,8 @@ public:
 	explicit CJiraReportTableNode(const std::shared_ptr<jira::report>& dataset);
 	void addChildren(const std::shared_ptr<jira::report>& dataset);
 
-	void addChild(const std::shared_ptr<jira::node>& child) override final;
-	void measure(IJiraPainter* painter) override;
+	void addChild(const std::shared_ptr<node>& child) override final;
+	void measure(gui::painter* painter) override;
 };
 
 class CJiraReportElement : public CJiraNode {
@@ -217,7 +217,7 @@ public:
 	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(int, int, int, int)>& invalidator);
 	void addChildren(const jira::server& server);
 
-	void addChild(const std::shared_ptr<jira::node>& child) override final;
-	void measure(IJiraPainter* painter) override;
+	void addChild(const std::shared_ptr<node>& child) override final;
+	void measure(gui::painter* painter) override;
 	void invalidate(int x, int y, size_t width, size_t height) override;
 };

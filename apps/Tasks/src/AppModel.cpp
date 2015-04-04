@@ -4,14 +4,15 @@
 #include "AppSettings.h"
 #include <thread>
 #include <net/xhr.hpp>
+#include <net/utf8.hpp>
 
-class CJiraImageRef : public ImageRef, public std::enable_shared_from_this<CJiraImageRef> {
-	load_state getState() const override { return m_state; }
+class CJiraImageRef : public gui::image_ref, public std::enable_shared_from_this<CJiraImageRef> {
+	gui::load_state getState() const override { return m_state; }
 	size_t getWidth() const override { return m_width; }
 	size_t getHeight() const override { return m_height; }
 	void* getNativeHandle() const override { return m_bitmap; }
 
-	load_state m_state = load_state::image_missing;
+	gui::load_state m_state = gui::load_state::image_missing;
 	size_t m_width = 0;
 	size_t m_height = 0;
 
@@ -33,7 +34,7 @@ void CAppModel::onListChanged(uint32_t addedOrRemoved)
 	emit([addedOrRemoved](CAppModelListener* listener) { listener->onListChanged(addedOrRemoved); });
 }
 
-std::shared_ptr<ImageRef> CAppModel::image_creator(const std::shared_ptr<jira::server>& srv, const std::string& uri)
+std::shared_ptr<gui::image_ref> CAppModel::image_creator(const std::shared_ptr<jira::server>& srv, const std::string& uri)
 {
 	auto ref = std::make_shared<CJiraImageRef>();
 	ref->start(srv, uri);
@@ -145,11 +146,11 @@ void CJiraImageRef::start(const std::shared_ptr<jira::server>& srv, const std::s
 {
 	using namespace net::http::client;
 	auto local = shared_from_this();
-	m_state = load_state::image_missing;
+	m_state = gui::load_state::image_missing;
 	srv->get(uri, [srv, uri, local](XmlHttpRequest* req) {
 		auto thiz = local.get();
 		if ((req->getStatus() / 100) != 2) {
-			thiz->emit([thiz](ImageRefCallback* cb) { cb->onImageChange(thiz); });
+			thiz->emit([thiz](gui::image_ref_callback* cb) { cb->onImageChange(thiz); });
 			return;
 		}
 
@@ -162,8 +163,8 @@ void CJiraImageRef::start(const std::shared_ptr<jira::server>& srv, const std::s
 		thiz->m_bitmap = Gdiplus::Bitmap::FromStream(stream);
 
 		if (thiz->m_bitmap)
-			thiz->m_state = load_state::pixmap_available;
+			thiz->m_state = gui::load_state::pixmap_available;
 
-		thiz->emit([thiz](ImageRefCallback* cb) { cb->onImageChange(thiz); });
+		thiz->emit([thiz](gui::image_ref_callback* cb) { cb->onImageChange(thiz); });
 	});
 }
