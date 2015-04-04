@@ -125,7 +125,7 @@ namespace jira
 			auto it = object.find(id());
 			if (it == object.end() || it->second.is<nullptr_t>()) {
 				auto node = doc->createText("Unresolved");
-				node->setClass(styles::none); // font-style: italic; color: #555
+				std::static_pointer_cast<Jnode>(node)->setClass(styles::none); // font-style: italic; color: #555
 				return std::move(node); 
 			}
 
@@ -143,7 +143,7 @@ namespace jira
 			}
 
 			auto node = doc->createText("{!}"); // color:#E60026
-			node->setClass(styles::error);
+			std::static_pointer_cast<Jnode>(node)->setClass(styles::error);
 			return std::move(node);
 		}
 
@@ -258,7 +258,7 @@ namespace jira
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::vector>()) {
 				auto node = doc->createText("None");
-				node->setClass(styles::none); // font-style: italic; color: #555
+				std::static_pointer_cast<Jnode>(node)->setClass(styles::none); // font-style: italic; color: #555
 				return std::move(node);
 			}
 
@@ -277,7 +277,7 @@ namespace jira
 
 			if (first) { // no items added to the span, return empty...
 				auto node = doc->createText("None");
-				node->setClass(styles::none); // font-style: italic; color: #555
+				std::static_pointer_cast<Jnode>(node)->setClass(styles::none); // font-style: italic; color: #555
 				return std::move(node);
 			}
 

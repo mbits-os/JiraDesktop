@@ -26,6 +26,8 @@
 #define __JIRA_JIRA_HPP__
 
 #include <json/json.hpp>
+#include <gui/node.hpp>
+#include <gui/document.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -41,25 +43,14 @@ namespace jira
 		tableHeader
 	};
 
-	struct node {
-		virtual ~node() {}
-		virtual void setTooltip(const std::string& text) = 0;
-		virtual void addChild(const std::shared_ptr<node>& child) = 0;
+	using gui::node;
+	struct Jnode : node {
 		virtual void setClass(styles) = 0;
-		virtual const std::vector<std::shared_ptr<node>>& values() const = 0;
 	};
 
 	class server;
-	struct document {
-		virtual ~document() {}
+	struct document : gui::document {
 		virtual void setCurrent(const std::shared_ptr<server>&) = 0;
-		virtual std::shared_ptr<node> createTableRow() = 0;
-		virtual std::shared_ptr<node> createEmpty() = 0;
-		virtual std::shared_ptr<node> createSpan() = 0;
-		virtual std::shared_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
-		virtual std::shared_ptr<node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) = 0;
-		virtual std::shared_ptr<node> createLink(const std::string& href) = 0;
-		virtual std::shared_ptr<node> createText(const std::string& text) = 0;
 	};
 
 	class record {
@@ -87,7 +78,7 @@ namespace jira
 		const std::shared_ptr<node>& getRow() const { return m_row; }
 		void addVal(const std::shared_ptr<node>&);
 
-		const std::vector<std::shared_ptr<node>>& values() const { return m_row->values(); }
+		const std::vector<std::shared_ptr<node>>& values() const { return m_row->children(); }
 	};
 
 	struct type {
