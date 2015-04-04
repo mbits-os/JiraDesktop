@@ -7,6 +7,12 @@
 #include "TaskBarIcon.h"
 #include "AppModel.h"
 
+class CScrollContainerEx : public CScrollContainerImpl<CScrollContainerEx>
+{
+public:
+	DECLARE_WND_CLASS_EX(_T("ScrollContainerView"), 0, -1)
+};
+
 using CTasksFrameWinTraits = CWinTraits<WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_APPWINDOW>;
 class CTasksFrame
 	: public CFrameWindowImpl<CTasksFrame, CWindow, CTasksFrameWinTraits>
@@ -19,7 +25,7 @@ public:
 	DECLARE_FRAME_WND_CLASS_EX(_T("TasksWindow"), IDR_MAINFRAME, 0, COLOR_WINDOW)
 
 	CTasksView m_view;
-	CScrollContainer m_container;
+	CScrollContainerEx m_container;
 	CTaskBarIcon m_taskIcon;
 	CFont m_font;
 	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();
@@ -55,4 +61,10 @@ public:
 	LRESULT OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnTasksRefersh(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+
+	void newConnection();
+	void refreshAll();
+	void exitApplication();
+	void showLicence();
+	void about();
 };

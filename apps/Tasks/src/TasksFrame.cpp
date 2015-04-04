@@ -85,11 +85,12 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	if (SUCCEEDED(hRet) && dwMajor >= 6)
 		uResID = IDR_MAINFRAME;
 
-	CreateSimpleToolBar(uResID);
+	//CreateSimpleToolBar(uResID);
+
+	m_view.m_model = m_model;
 
 	m_hWndClient = m_container.Create(m_hWnd, rcDefault, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 
-	m_view.m_model = m_model;
 	m_view.setScroller([&](size_t width, size_t height) {
 		m_container.SetScrollSize(width, height, TRUE, false);
 		RECT client;
@@ -100,6 +101,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 			SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 	});
 	m_view.Create(m_container, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
+	m_container.SetClient(m_view, false);
 
 #if 0
 	m_font = AtlCreateControlFont();
@@ -114,8 +116,6 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 		DEFAULT_PITCH | FF_SWISS, L"Arial");
 #endif
 	m_view.SetFont(m_font);
-
-	m_container.SetClient(m_view, false);
 
 	// register object for message filtering and idle updates
 	CMessageLoop* pLoop = _Module.GetMessageLoop();
@@ -151,21 +151,38 @@ LRESULT CTasksFrame::OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
 
 LRESULT CTasksFrame::OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	PostMessage(WM_CLOSE);
+	exitApplication();
 	return 0;
 }
 
 LRESULT CTasksFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	newConnection();
+	return 0;
+}
+
+LRESULT CTasksFrame::OnTasksRefersh(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	refreshAll();
+	return 0;
+}
+
+LRESULT CTasksFrame::OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	about();
+	return 0;
+}
+
+void CTasksFrame::newConnection()
 {
 	CConnectionDlg dlg;
 	if (dlg.DoModal() == IDOK) {
 		auto conn = std::make_shared<jira::server>(dlg.serverName, dlg.userName, dlg.userPassword, dlg.serverUrl, jira::search_def{});
 		m_model->add(conn);
 	};
-	return 0;
 }
 
-LRESULT CTasksFrame::OnTasksRefersh(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+void CTasksFrame::refreshAll()
 {
 	auto local = m_model->servers();
 	auto document = m_model->document();
@@ -175,13 +192,19 @@ LRESULT CTasksFrame::OnTasksRefersh(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*h
 			server->refresh(document);
 		} }.detach();
 	}
-
-	return 0;
 }
 
-LRESULT CTasksFrame::OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+void CTasksFrame::exitApplication()
+{
+	PostMessage(WM_CLOSE);
+}
+
+void CTasksFrame::showLicence()
+{
+}
+
+void CTasksFrame::about()
 {
 	CAboutDlg dlg;
 	dlg.DoModal();
-	return 0;
 }
