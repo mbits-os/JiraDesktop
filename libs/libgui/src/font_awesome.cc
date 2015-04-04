@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include "font_awesome.hh"
+#include "pch.h"
+#include "gui/font_awesome.hh"
 
 namespace fa {
 	wchar_t glyph_char(glyph id)

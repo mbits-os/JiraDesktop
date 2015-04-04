@@ -20,7 +20,7 @@ with open("variables.less") as f:
 		if not m: continue
 		glyphs.append(glyph(m.group(1), m.group(2)))
 
-with open("font_awesome.hh", "w") as f:
+with open("inc/gui/font_awesome.hh", "w") as f:
 	print >>f, "#pragma once"
 	print >>f
 	
@@ -36,8 +36,8 @@ with open("font_awesome.hh", "w") as f:
 	print >>f, "};"
 
 
-with open("font_awesome.cc", "w") as f:
-	print >>f, "#include \"font_awesome.hh\""
+with open("src/font_awesome.cc", "w") as f:
+	print >>f, "#include \"inc/font_awesome.hh\""
 	print >>f
 	
 	print >>f, "namespace fa {"
