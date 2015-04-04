@@ -26,7 +26,7 @@
 #define __JIRA_SERVER_HPP__
 
 #include <jira/jira.hpp>
-#include <jira/listeners.hpp>
+#include <gui/listeners.hpp>
 #include <memory>
 #include <string>
 #include <vector>
