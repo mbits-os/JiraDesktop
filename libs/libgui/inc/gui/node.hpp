@@ -29,6 +29,22 @@
 #include <vector>
 
 namespace gui {
+	enum class elem {
+		body,
+		block,
+		header,
+		span,
+		text,
+		link,
+		image,
+		icon,
+		table,
+		table_head,
+		table_row,
+		th,
+		td
+	};
+
 	enum class cursor {
 		inherited,
 		arrow,
@@ -42,6 +58,7 @@ namespace gui {
 		virtual void addChild(const std::shared_ptr<node>& child) = 0;
 		virtual const std::vector<std::shared_ptr<node>>& children() const = 0;
 
+		virtual elem getNodeName() const = 0;
 		virtual std::string text() const = 0;
 		virtual void paint(painter* painter) = 0;
 		virtual void measure(painter* painter) = 0;

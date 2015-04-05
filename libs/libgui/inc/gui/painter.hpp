@@ -28,6 +28,9 @@
 
 namespace gui {
 	struct image_ref;
+	struct node;
+	struct style_save { int __unused; };
+	using style_handle = style_save*;
 
 	struct painter {
 		struct point { int x; int y; };
@@ -42,6 +45,9 @@ namespace gui {
 		virtual void paintString(const std::string& text) = 0;
 		virtual size measureString(const std::string& text) = 0;
 		virtual int dpiRescale(int size) = 0;
+
+		virtual style_handle applyStyle(node*) = 0;
+		virtual void restoreStyle(style_handle) = 0;
 	};
 
 	class push_origin {
