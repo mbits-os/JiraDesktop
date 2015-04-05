@@ -12,6 +12,9 @@ class CJiraNode : public IJiraNode, public std::enable_shared_from_this<IJiraNod
 public:
 	CJiraNode(gui::elem name);
 	gui::elem getNodeName() const override;
+	void addClass(const std::string& name) override;
+	void removeClass(const std::string& name) override;
+	bool hasClass(const std::string& name) const override;
 	std::string text() const override;
 	void setTooltip(const std::string& text) override;
 	void addChild(const std::shared_ptr<node>& child) override;
@@ -49,6 +52,7 @@ protected:
 	gui::elem m_nodeName;
 	std::map<Attr, std::string> m_data;
 	std::vector<std::shared_ptr<node>> m_children;
+	std::vector<std::string> m_classes;
 	jira::styles m_class;
 	std::weak_ptr<node> m_parent;
 	struct {

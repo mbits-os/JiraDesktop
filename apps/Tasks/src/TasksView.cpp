@@ -147,10 +147,10 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 			s[0] = fa::glyph_char((fa::glyph)id);
 			s[1] = 0;
 			auto g = std::make_shared<CJiraTextNode>(utf::narrowed(s));
-			//g->addClass("symbol");
+			g->addClass("symbol");
 			row->addChild(g);
 			auto n = std::make_shared<CJiraTextNode>(fa::glyph_name((fa::glyph)id));
-			//n->addClass("summary");
+			n->addClass("summary");
 			row->addChild(n);
 		}
 	}
@@ -668,9 +668,6 @@ namespace {
 				<< fontSize((style.m_styler.getFontSize() * 18) / 10)
 				<< color(0x00883333);
 			break;
-		//case rules::error: -> should be a 'class'
-		//	style << color(0x00171BC1);
-		//	break;
 		case gui::elem::table_head:
 			style << bold();
 			break;
@@ -679,18 +676,26 @@ namespace {
 			if (node && node->getHovered())
 				style << background(0x00f8f8f8);
 			break;
-		//case rules::classEmpty:
-		//	style << italic() << color(0x00555555);
-		//	break;
-		//case rules::classSummary:
-		//	style
-		//		<< fontSize((style.m_styler.getFontSize() * 8) / 10)
-		//		<< color(0x00555555);
-		//	break;
-		//case rules::symbol:
-		//	style << symbols();
-		//	break;
 		};
+
+		if (node->hasClass("error")) {
+			style << color(0x00171BC1);
+		}
+
+		if (node->hasClass("empty")) {
+			style << italic() << color(0x00555555);
+		}
+
+		if (node->hasClass("summary")) {
+			style
+				<< fontSize((style.m_styler.getFontSize() * 8) / 10)
+				<< color(0x00555555);
+		}
+
+		if (node->hasClass("symbol")) {
+			style << symbols();
+		}
+
 	}
 
 #if 0

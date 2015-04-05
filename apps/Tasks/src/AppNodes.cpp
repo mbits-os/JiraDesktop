@@ -26,6 +26,26 @@ gui::elem CJiraNode::getNodeName() const
 	return m_nodeName;
 }
 
+void CJiraNode::addClass(const std::string& name)
+{
+	auto it = std::find(std::begin(m_classes), std::end(m_classes), name);
+	if (it == std::end(m_classes))
+		m_classes.push_back(name);
+}
+
+void CJiraNode::removeClass(const std::string& name)
+{
+	auto it = std::find(std::begin(m_classes), std::end(m_classes), name);
+	if (it != std::end(m_classes))
+		m_classes.erase(it);
+}
+
+bool CJiraNode::hasClass(const std::string& name) const
+{
+	auto it = std::find(std::begin(m_classes), std::end(m_classes), name);
+	return it != std::end(m_classes);
+}
+
 std::string CJiraNode::text() const
 {
 	auto it = m_data.find(Attr::Text);
@@ -849,7 +869,7 @@ void CJiraReportElement::addChildren(const jira::server& server)
 
 	for (auto& error : server.errors()) {
 		auto note = std::make_shared<CJiraTextNode>(error);
-		//note->addClass("error");
+		note->addClass("error");
 		CJiraNode::addChild(std::move(note));
 	}
 
@@ -866,11 +886,11 @@ void CJiraReportElement::addChildren(const jira::server& server)
 			<< " of " << dataset->total << ")";
 
 		auto note = std::make_shared<CJiraTextNode>(o.str());
-		//note->addClass("summary");
+		note->addClass("summary");
 		CJiraNode::addChild(std::move(note));
 	} else {
 		auto note = std::make_shared<CJiraTextNode>("Empty");
-		//note->addClass("empty");
+		note->addClass("empty");
 		CJiraNode::addChild(std::move(note));
 	}
 }
