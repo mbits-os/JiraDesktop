@@ -10,13 +10,13 @@ enum class Attr {
 
 class CJiraNode : public IJiraNode, public std::enable_shared_from_this<IJiraNode> {
 public:
+	CJiraNode(gui::elem name);
+	gui::elem getNodeName() const override;
 	std::string text() const override;
 	void setTooltip(const std::string& text) override;
 	void addChild(const std::shared_ptr<node>& child) override;
 	void setClass(jira::styles) override;
 	jira::styles getStyles() const override;
-	void setClass(rules) override;
-	rules getRules() const override;
 	const std::vector<std::shared_ptr<node>>& children() const override;
 
 	void paint(gui::painter* painter) override;
@@ -46,10 +46,10 @@ public:
 	void openLink(const std::string& url);
 
 protected:
+	gui::elem m_nodeName;
 	std::map<Attr, std::string> m_data;
 	std::vector<std::shared_ptr<node>> m_children;
-	jira::styles m_class = jira::styles::unset;
-	rules m_rule = rules::body;
+	jira::styles m_class;
 	std::weak_ptr<node> m_parent;
 	struct {
 		int x = 0;
@@ -62,8 +62,6 @@ protected:
 	std::atomic<int> m_activeCount{ 0 };
 	gui::cursor m_cursor = gui::cursor::inherited;
 };
-
-class CJiraRoot : public CJiraNode {};
 
 class ImageCb
 	: public gui::image_ref_callback
@@ -149,7 +147,7 @@ class CJiraTableRowNode : public CJiraNode {
 protected:
 	std::shared_ptr<std::vector<size_t>> m_columns;
 public:
-	explicit CJiraTableRowNode(const std::shared_ptr<std::vector<size_t>>& columns);
+	CJiraTableRowNode(gui::elem name, const std::shared_ptr<std::vector<size_t>>& columns);
 
 	void measure(gui::painter* painter) override;
 
@@ -159,7 +157,7 @@ public:
 
 class CJiraReportNode : public CJiraNode {
 protected:
-	CJiraReportNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
+	CJiraReportNode(gui::elem name, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
 	std::weak_ptr<jira::report> m_dataset;
 	std::shared_ptr<std::vector<size_t>> m_columns;
 public:

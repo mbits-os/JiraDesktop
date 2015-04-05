@@ -12,24 +12,11 @@ struct CAppModelListener {
 	virtual void onListChanged(uint32_t addedOrRemoved) = 0;
 };
 
-enum class rules {
-	body,
-	header,
-	error,
-	tableHead,
-	tableRow,
-	classEmpty,
-	classSummary,
-	symbol
-};
-
 struct StyleSave;
 
 struct IJiraNode;
 struct IJiraPainter : gui::painter {
-	virtual StyleSave* setStyle(jira::styles, IJiraNode*) = 0;
-	virtual StyleSave* setStyle(rules, IJiraNode*) = 0;
-	virtual void restoreStyle(StyleSave*) = 0;
+	virtual gui::style_handle setStyle(jira::styles, IJiraNode*) = 0;
 };
 
 struct IJiraNode : jira::Jnode {
@@ -37,8 +24,6 @@ struct IJiraNode : jira::Jnode {
 	using size = IJiraPainter::size;
 
 	virtual jira::styles getStyles() const = 0;
-	virtual void setClass(rules) = 0;
-	virtual rules getRules() const = 0;
 };
 
 inline std::shared_ptr<IJiraNode> cast(const std::shared_ptr<jira::node>& node) {
@@ -47,7 +32,7 @@ inline std::shared_ptr<IJiraNode> cast(const std::shared_ptr<jira::node>& node) 
 
 class StyleSaver {
 	IJiraPainter* painter;
-	StyleSave* save;
+	gui::style_handle save;
 public:
 	explicit StyleSaver(IJiraPainter* painter, IJiraNode* node) : painter(painter), save(nullptr)
 	{
@@ -56,7 +41,7 @@ public:
 
 		auto style = node->getStyles();
 		if (style == jira::styles::unset)
-			save = painter->setStyle(node->getRules(), node);
+			save = painter->applyStyle(node);
 		else
 			save = painter->setStyle(style, node);
 	}

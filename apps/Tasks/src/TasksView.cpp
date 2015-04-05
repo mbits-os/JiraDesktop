@@ -147,10 +147,10 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 			s[0] = fa::glyph_char((fa::glyph)id);
 			s[1] = 0;
 			auto g = std::make_shared<CJiraTextNode>(utf::narrowed(s));
-			g->setClass(rules::symbol);
+			//g->addClass("symbol");
 			row->addChild(g);
 			auto n = std::make_shared<CJiraTextNode>(fa::glyph_name((fa::glyph)id));
-			n->setClass(rules::classSummary);
+			//n->addClass("summary");
 			row->addChild(n);
 		}
 	}
@@ -253,9 +253,9 @@ class LinePrinter : public IJiraPainter
 		return{ (size_t)s.cx, (size_t)s.cy };
 	}
 
-	StyleSave* setStyle(jira::styles, IJiraNode*) override;
-	StyleSave* setStyle(rules, IJiraNode*) override;
-	void restoreStyle(StyleSave* save) override;
+	gui::style_handle setStyle(jira::styles, IJiraNode*) override;
+	gui::style_handle applyStyle(gui::node*) override;
+	void restoreStyle(gui::style_handle save) override;
 	int dpiRescale(int size) override;
 public:
 	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
@@ -481,7 +481,7 @@ namespace {
 		{
 		}
 
-		explicit Style(Styler& styler, rules rule, IJiraNode* node)
+		explicit Style(Styler& styler, gui::elem name, IJiraNode* node)
 			: m_styler(styler)
 			, m_color(styler.getColor())
 			, m_weight(styler.getFontWeight())
@@ -490,7 +490,7 @@ namespace {
 			, m_underline(styler.getFontUnderline())
 			, m_family(styler.getFontFamily())
 		{
-			apply(*this, rule, node);
+			apply(*this, name, node);
 		}
 
 		~Style()
@@ -503,7 +503,7 @@ namespace {
 			setFontFamily(m_family);
 		}
 
-		static void apply(Style& style, rules rule, IJiraNode* node);
+		static void apply(Style& style, gui::elem name, IJiraNode* node);
 
 		Style& setColor(COLORREF color)
 		{
@@ -657,39 +657,39 @@ namespace {
 
 	inline BackgroundManip background(COLORREF color) { return BackgroundManip{ bk::solid, color }; }
 
-	void Style::apply(Style& style, rules rule, IJiraNode* node)
+	void Style::apply(Style& style, gui::elem name, IJiraNode* node)
 	{
-		switch (rule) {
-		case rules::body:
+		switch (name) {
+		case gui::elem::body:
 			// from UI
 			break;
-		case rules::header:
+		case gui::elem::header:
 			style
 				<< fontSize((style.m_styler.getFontSize() * 18) / 10)
 				<< color(0x00883333);
 			break;
-		case rules::error:
-			style << color(0x00171BC1);
-			break;
-		case rules::tableHead:
+		//case rules::error: -> should be a 'class'
+		//	style << color(0x00171BC1);
+		//	break;
+		case gui::elem::table_head:
 			style << bold();
 			break;
-		case rules::tableRow:
+		case gui::elem::table_row:
 			// same as parent
 			if (node && node->getHovered())
 				style << background(0x00f8f8f8);
 			break;
-		case rules::classEmpty:
-			style << italic() << color(0x00555555);
-			break;
-		case rules::classSummary:
-			style
-				<< fontSize((style.m_styler.getFontSize() * 8) / 10)
-				<< color(0x00555555);
-			break;
-		case rules::symbol:
-			style << symbols();
-			break;
+		//case rules::classEmpty:
+		//	style << italic() << color(0x00555555);
+		//	break;
+		//case rules::classSummary:
+		//	style
+		//		<< fontSize((style.m_styler.getFontSize() * 8) / 10)
+		//		<< color(0x00555555);
+		//	break;
+		//case rules::symbol:
+		//	style << symbols();
+		//	break;
 		};
 	}
 
@@ -732,7 +732,7 @@ namespace {
 	}
 };
 
-struct StyleSave
+struct StyleSave: gui::style_save
 {
 	Style saved;
 	explicit StyleSave(Styler& styler)
@@ -764,13 +764,13 @@ struct StyleSave
 		};
 	}
 
-	void apply(rules rule, IJiraNode* node)
+	void apply(gui::elem name, IJiraNode* node)
 	{
-		Style::apply(saved, rule, node);
+		Style::apply(saved, name, node);
 	}
 };
 
-StyleSave* LinePrinter::setStyle(jira::styles style, IJiraNode* node)
+gui::style_handle LinePrinter::setStyle(jira::styles style, IJiraNode* node)
 {
 	if (style == jira::styles::unset)
 		return nullptr;
@@ -782,18 +782,18 @@ StyleSave* LinePrinter::setStyle(jira::styles style, IJiraNode* node)
 	return mem.release();
 }
 
-StyleSave* LinePrinter::setStyle(rules rule, IJiraNode* node)
+gui::style_handle LinePrinter::applyStyle(gui::node* node)
 {
 	auto mem = std::make_unique<StyleSave>(*uplink);
-	mem->apply(rule, node);
+	mem->apply(node->getNodeName(), static_cast<IJiraNode*>(node));
 	drawBackground(node);
 	drawFocus(node);
 	return mem.release();
 }
 
-void LinePrinter::restoreStyle(StyleSave* save)
+void LinePrinter::restoreStyle(gui::style_handle save)
 {
-	std::unique_ptr<StyleSave> mem{ save };
+	std::unique_ptr<StyleSave> mem{ (StyleSave*)save };
 }
 
 int LinePrinter::dpiRescale(int size)
