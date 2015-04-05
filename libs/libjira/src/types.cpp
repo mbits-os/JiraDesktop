@@ -78,7 +78,7 @@ namespace jira
 			return T{ it->second.as<T>() };
 		}
 
-		std::shared_ptr<node> key::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& /*object*/) const
+		std::shared_ptr<gui::node> key::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& /*object*/) const
 		{
 			auto link = doc->createLink(issue.issue_uri());
 			link->addChild(doc->createText(issue.issue_key()));
@@ -87,7 +87,7 @@ namespace jira
 
 		string::string(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::shared_ptr<node> string::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
+		std::shared_ptr<gui::node> string::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end())
@@ -98,7 +98,7 @@ namespace jira
 
 		label::label(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::shared_ptr<node> label::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::value& object) const
+		std::shared_ptr<gui::node> label::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::value& object) const
 		{
 			std::string text;
 			if (object.is<std::string>())
@@ -120,12 +120,12 @@ namespace jira
 
 		resolution::resolution(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::shared_ptr<node> resolution::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
+		std::shared_ptr<gui::node> resolution::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || it->second.is<nullptr_t>()) {
 				auto node = doc->createText("Unresolved");
-				std::static_pointer_cast<Jnode>(node)->setClass(styles::none); // font-style: italic; color: #555
+				node->addClass("none"); // font-style: italic; color: #555
 				return std::move(node); 
 			}
 
@@ -143,13 +143,13 @@ namespace jira
 			}
 
 			auto node = doc->createText("{!}"); // color:#E60026
-			std::static_pointer_cast<Jnode>(node)->setClass(styles::error);
+			node->addClass("unexpected");
 			return std::move(node);
 		}
 
 		summary::summary(const std::string& id, const std::string& title) : type(id, title) {}
 
-		std::shared_ptr<node> summary::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const
+		std::shared_ptr<gui::node> summary::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const
 		{
 			auto it = object.find(id());
 			std::string label = "Untitled";
@@ -183,7 +183,7 @@ namespace jira
 			return out;
 		}
 
-		std::shared_ptr<node> user::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
+		std::shared_ptr<gui::node> user::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
@@ -225,7 +225,7 @@ namespace jira
 				m_title = utf8initial(title);
 		}
 
-		std::shared_ptr<node> icon::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
+		std::shared_ptr<gui::node> icon::visit(const std::shared_ptr<document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
@@ -253,12 +253,12 @@ namespace jira
 		{
 		}
 
-		std::shared_ptr<node> array::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const
+		std::shared_ptr<gui::node> array::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::vector>()) {
 				auto node = doc->createText("None");
-				std::static_pointer_cast<Jnode>(node)->setClass(styles::none); // font-style: italic; color: #555
+				node->addClass("none"); // font-style: italic; color: #555
 				return std::move(node);
 			}
 
@@ -277,7 +277,7 @@ namespace jira
 
 			if (first) { // no items added to the span, return empty...
 				auto node = doc->createText("None");
-				std::static_pointer_cast<Jnode>(node)->setClass(styles::none); // font-style: italic; color: #555
+				node->addClass("none"); // font-style: italic; color: #555
 				return std::move(node);
 			}
 

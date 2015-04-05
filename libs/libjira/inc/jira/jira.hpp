@@ -35,26 +35,13 @@
 
 namespace jira
 {
-	enum class styles {
-		unset,
-		none,
-		error,
-		link,
-		tableHeader
-	};
-
-	using gui::node;
-	struct Jnode : node {
-		virtual void setClass(styles) = 0;
-	};
-
 	class server;
 	struct document : gui::document {
 		virtual void setCurrent(const std::shared_ptr<server>&) = 0;
 	};
 
 	class record {
-		std::shared_ptr<node> m_row;
+		std::shared_ptr<gui::node> m_row;
 
 		std::string m_uri;
 		std::string m_key;
@@ -74,11 +61,11 @@ namespace jira
 		const std::string& issue_key() const { return m_key; }
 		const std::string& issue_id() const { return m_id; }
 
-		void setRow(const std::shared_ptr<node>&);
-		const std::shared_ptr<node>& getRow() const { return m_row; }
-		void addVal(const std::shared_ptr<node>&);
+		void setRow(const std::shared_ptr<gui::node>&);
+		const std::shared_ptr<gui::node>& getRow() const { return m_row; }
+		void addVal(const std::shared_ptr<gui::node>&);
 
-		const std::vector<std::shared_ptr<node>>& values() const { return m_row->children(); }
+		const std::vector<std::shared_ptr<gui::node>>& values() const { return m_row->children(); }
 	};
 
 	struct type {
@@ -87,8 +74,8 @@ namespace jira
 		virtual const std::string& id() const { return m_id; }
 		virtual const std::string& title() const { return titleFull(); }
 		virtual const std::string& titleFull() const { return m_title; }
-		virtual std::shared_ptr<node> visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const = 0;
-		virtual std::shared_ptr<node> visit(const std::shared_ptr<document>& doc, const record& issue, const json::value& value) const;
+		virtual std::shared_ptr<gui::node> visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const = 0;
+		virtual std::shared_ptr<gui::node> visit(const std::shared_ptr<document>& doc, const record& issue, const json::value& value) const;
 	private:
 		std::string m_id;
 		std::string m_title;
