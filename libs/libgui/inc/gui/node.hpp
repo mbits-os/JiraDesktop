@@ -30,6 +30,7 @@
 
 namespace gui {
 	enum class elem {
+		unspecified,
 		body,
 		block,
 		header,

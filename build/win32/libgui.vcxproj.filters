@@ -76,5 +76,8 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\font_awesome.hh">
       <Filter>inc\gui</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\styles.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

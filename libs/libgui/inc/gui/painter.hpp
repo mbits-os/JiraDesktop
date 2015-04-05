@@ -45,6 +45,7 @@ namespace gui {
 		virtual void paintString(const std::string& text) = 0;
 		virtual size measureString(const std::string& text) = 0;
 		virtual int dpiRescale(int size) = 0;
+		virtual long double dpiRescale(long double size) = 0;
 
 		virtual style_handle applyStyle(node*) = 0;
 		virtual void restoreStyle(style_handle) = 0;
