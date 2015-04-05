@@ -14,36 +14,16 @@ struct CAppModelListener {
 
 struct StyleSave;
 
-struct IJiraNode;
-struct IJiraPainter : gui::painter {
-	virtual gui::style_handle setStyle(jira::styles, IJiraNode*) = 0;
-};
-
-struct IJiraNode : jira::Jnode {
-	using point = IJiraPainter::point;
-	using size = IJiraPainter::size;
-
-	virtual jira::styles getStyles() const = 0;
-};
-
-inline std::shared_ptr<IJiraNode> cast(const std::shared_ptr<jira::node>& node) {
-	return std::static_pointer_cast<IJiraNode>(node);
-}
-
 class StyleSaver {
-	IJiraPainter* painter;
+	gui::painter* painter;
 	gui::style_handle save;
 public:
-	explicit StyleSaver(IJiraPainter* painter, IJiraNode* node) : painter(painter), save(nullptr)
+	explicit StyleSaver(gui::painter* painter, gui::node* node) : painter(painter), save(nullptr)
 	{
 		if (!node)
 			return;
 
-		auto style = node->getStyles();
-		if (style == jira::styles::unset)
-			save = painter->applyStyle(node);
-		else
-			save = painter->setStyle(style, node);
+		save = painter->applyStyle(node);
 	}
 
 	~StyleSaver()

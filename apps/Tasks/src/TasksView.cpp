@@ -176,7 +176,7 @@ enum class bk {
 	solid
 };
 
-class LinePrinter : public IJiraPainter
+class LinePrinter : public gui::painter
 {
 	HFONT older;
 	CFontHandle font;
@@ -253,7 +253,6 @@ class LinePrinter : public IJiraPainter
 		return{ (size_t)s.cx, (size_t)s.cy };
 	}
 
-	gui::style_handle setStyle(jira::styles, IJiraNode*) override;
 	gui::style_handle applyStyle(gui::node*) override;
 	void restoreStyle(gui::style_handle save) override;
 	int dpiRescale(int size) override;
@@ -276,12 +275,12 @@ public:
 		return *this;
 	}
 
-	LinePrinter& drawFocus(jira::node* node)
+	LinePrinter& drawFocus(gui::node* node)
 	{
 		if (selectedFrame) {
 			selectedFrame = false;
-			auto pt = static_cast<IJiraNode*>(node)->getAbsolutePos();
-			auto sz = static_cast<IJiraNode*>(node)->getSize();
+			auto pt = node->getAbsolutePos();
+			auto sz = node->getSize();
 			RECT r{ pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 2, pt.y + (int)sz.height + 2 };
 			if (!focusPen)
 				focusPen.CreatePen(PS_DOT, 1, 0xc0c0c0);
@@ -296,12 +295,12 @@ public:
 		return *this;
 	}
 
-	LinePrinter& drawBackground(jira::node* node)
+	LinePrinter& drawBackground(gui::node* node)
 	{
 		if (backgroundMode == bk::solid) {
 			backgroundMode = bk::transparent;
-			auto pt = static_cast<IJiraNode*>(node)->getAbsolutePos();
-			auto sz = static_cast<IJiraNode*>(node)->getSize();
+			auto pt = node->getAbsolutePos();
+			auto sz = node->getSize();
 			RECT r{ pt.x - 1, pt.y - 1, pt.x + (int)sz.width + 1, pt.y + (int)sz.height + 1 };
 			dc.FillSolidRect(&r, color);
 		}
@@ -309,10 +308,10 @@ public:
 		return *this;
 	}
 
-	LinePrinter& paint(const std::shared_ptr<jira::node>& node, Styler* link)
+	LinePrinter& paint(const std::shared_ptr<gui::node>& node, Styler* link)
 	{
 		uplink = link;
-		auto size = cast(node)->getSize();
+		auto size = node->getSize();
 
 		RECT r = { x, y, (int)size.width + x, (int)size.height + y };
 		RECT test;
@@ -321,14 +320,14 @@ public:
 		if (test.left == test.right || test.top == test.bottom)
 			return *this;
 
-		cast(node)->paint(this);
+		node->paint(this);
 		return *this;
 	}
 
-	LinePrinter& measure(const std::shared_ptr<jira::node>& node, Styler* link)
+	LinePrinter& measure(const std::shared_ptr<gui::node>& node, Styler* link)
 	{
 		uplink = link;
-		cast(node)->measure(this);
+		node->measure(this);
 		return *this;
 	}
 
@@ -481,7 +480,7 @@ namespace {
 		{
 		}
 
-		explicit Style(Styler& styler, gui::elem name, IJiraNode* node)
+		explicit Style(Styler& styler, gui::elem name, gui::node* node)
 			: m_styler(styler)
 			, m_color(styler.getColor())
 			, m_weight(styler.getFontWeight())
@@ -503,7 +502,7 @@ namespace {
 			setFontFamily(m_family);
 		}
 
-		static void apply(Style& style, gui::elem name, IJiraNode* node);
+		static void apply(Style& style, gui::elem name, gui::node* node);
 
 		Style& setColor(COLORREF color)
 		{
@@ -657,7 +656,7 @@ namespace {
 
 	inline BackgroundManip background(COLORREF color) { return BackgroundManip{ bk::solid, color }; }
 
-	void Style::apply(Style& style, gui::elem name, IJiraNode* node)
+	void Style::apply(Style& style, gui::elem name, gui::node* node)
 	{
 		switch (name) {
 		case gui::elem::body:
@@ -676,13 +675,20 @@ namespace {
 			if (node && node->getHovered())
 				style << background(0x00f8f8f8);
 			break;
+		case gui::elem::link:
+			style << color(0x00AF733B);
+			if (node && node->getHovered())
+				style << underline();
+			if (node && node->getActive())
+				style << frameSelect();
+			break;
 		};
 
 		if (node->hasClass("error")) {
 			style << color(0x00171BC1);
 		}
 
-		if (node->hasClass("empty")) {
+		if (node->hasClass("empty") || node->hasClass("none")) {
 			style << italic() << color(0x00555555);
 		}
 
@@ -694,6 +700,10 @@ namespace {
 
 		if (node->hasClass("symbol")) {
 			style << symbols();
+		}
+
+		if (node->hasClass("unexpected")) {
+			style << color(0x002600E6);
 		}
 
 	}
@@ -724,13 +734,13 @@ namespace {
 	}
 #endif
 
-	void paintNode(Styler& styler, const std::shared_ptr<jira::node>& node)
+	void paintNode(Styler& styler, const std::shared_ptr<gui::node>& node)
 	{
-		auto& painter = static_cast<IJiraPainter&>(styler.out());
+		auto& painter = static_cast<gui::painter&>(styler.out());
 		auto orig = painter.getOrigin();
 
 		styler.out().paint(node, &styler);
-		auto size = cast(node)->getSize();
+		auto size = node->getSize();
 		orig.y += size.height;
 
 		painter.setOrigin(orig);
@@ -745,52 +755,16 @@ struct StyleSave: gui::style_save
 	{
 	}
 
-	void apply(jira::styles style, IJiraNode* node)
-	{
-		using namespace jira;
-
-		switch (style) {
-		case styles::unset:
-			// from UI
-			break;
-		case styles::none:
-			saved << italic() << color(0x00555555);
-			break;
-		case styles::error:
-			saved << color(0x002600E6);
-			break;
-		case styles::link:
-			saved << color(0x00AF733B);
-			if (node && node->getHovered())
-				saved << underline();
-			if (node && node->getActive())
-				saved << frameSelect();
-			break;
-		};
-	}
-
-	void apply(gui::elem name, IJiraNode* node)
+	void apply(gui::elem name, gui::node* node)
 	{
 		Style::apply(saved, name, node);
 	}
 };
 
-gui::style_handle LinePrinter::setStyle(jira::styles style, IJiraNode* node)
-{
-	if (style == jira::styles::unset)
-		return nullptr;
-
-	auto mem = std::make_unique<StyleSave>(*uplink);
-	mem->apply(style, node);
-	drawBackground(node);
-	drawFocus(node);
-	return mem.release();
-}
-
 gui::style_handle LinePrinter::applyStyle(gui::node* node)
 {
 	auto mem = std::make_unique<StyleSave>(*uplink);
-	mem->apply(node->getNodeName(), static_cast<IJiraNode*>(node));
+	mem->apply(node->getNodeName(), node);
 	drawBackground(node);
 	drawFocus(node);
 	return mem.release();
@@ -837,11 +811,11 @@ void CTasksView::updateLayout()
 	Styler styler{ (HDC) dc, (HFONT) m_font };
 
 	if (m_hovered)
-		cast(m_hovered)->setHovered(false);
+		m_hovered->setHovered(false);
 	m_hovered = nullptr;
 
 	if (m_active)
-		cast(m_active)->setActive(false);
+		m_active->setActive(false);
 	m_active = nullptr;
 
 	size_t height = 0;
@@ -849,8 +823,8 @@ void CTasksView::updateLayout()
 	for (auto& server : m_servers) {
 		if (server.m_plaque) {
 			styler.out().measure(server.m_plaque, &styler);
-			auto size = cast(server.m_plaque)->getSize();
-			cast(server.m_plaque)->setPosition(BODY_MARGIN, BODY_MARGIN + height);
+			auto size = server.m_plaque->getSize();
+			server.m_plaque->setPosition(BODY_MARGIN, BODY_MARGIN + height);
 			height += size.height;
 			if (width < size.width)
 				width = size.width;
@@ -870,7 +844,7 @@ void CTasksView::updateLayout()
 
 	m_hovered = nodeFromPoint();
 	if (m_hovered)
-		cast(m_hovered)->setHovered(true);
+		m_hovered->setHovered(true);
 	updateCursorAndTooltip();
 }
 
@@ -878,7 +852,7 @@ void CTasksView::updateCursor(bool force)
 {
 	auto tmp = gui::cursor::arrow;
 	if (m_hovered)
-		tmp = cast(m_hovered)->getCursor();
+		tmp = m_hovered->getCursor();
 
 	if (tmp == gui::cursor::inherited)
 		tmp = gui::cursor::arrow;
@@ -906,16 +880,16 @@ void CTasksView::updateTooltip(bool /*force*/)
 	std::string tooltip;
 	auto node = m_hovered;
 	while (node) {
-		if (cast(node)->hasTooltip()) {
-			auto pt = cast(m_hovered)->getAbsolutePos();
-			auto sz = cast(m_hovered)->getSize();
+		if (node->hasTooltip()) {
+			auto pt = m_hovered->getAbsolutePos();
+			auto sz = m_hovered->getSize();
 			RECT r{ pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 4 , pt.y + (int)sz.height + 4 };
 			tool = r;
-			tooltip = cast(node)->getTooltip();
+			tooltip = node->getTooltip();
 			break;
 		}
 
-		node = cast(node)->getParent();
+		node = node->getParent();
 	}
 
 	{
@@ -955,13 +929,13 @@ void CTasksView::updateCursorAndTooltip(bool force)
 	updateTooltip(force);
 }
 
-std::shared_ptr<jira::node> CTasksView::nodeFromPoint()
+std::shared_ptr<gui::node> CTasksView::nodeFromPoint()
 {
 	for (auto& server : m_servers) {
 		if (!server.m_plaque)
 			continue;
 
-		auto tmp = cast(server.m_plaque)->nodeFromPoint(m_mouseX, m_mouseY);
+		auto tmp = server.m_plaque->nodeFromPoint(m_mouseX, m_mouseY);
 		if (tmp)
 			return tmp;
 	}
@@ -998,9 +972,9 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	auto tmp = nodeFromPoint();
 	if (tmp != m_hovered) {
 		if (tmp)
-			cast(tmp)->setHovered(true);
+			tmp->setHovered(true);
 		if (m_hovered)
-			cast(m_hovered)->setHovered(false);
+			m_hovered->setHovered(false);
 
 		m_hovered = tmp;
 		updateCursorAndTooltip();
@@ -1016,9 +990,9 @@ LRESULT CTasksView::OnMouseDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	auto tmp = m_active;
 	m_active = nodeFromPoint();
 	if (m_active)
-		cast(m_active)->setActive(true);
+		m_active->setActive(true);
 	if (tmp)
-		cast(tmp)->setActive(false);
+		tmp->setActive(false);
 
 	m_tracking = true;
 	SetCapture();
@@ -1038,7 +1012,7 @@ LRESULT CTasksView::OnMouseUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	Invalidate();
 
 	if (tmp && tmp == m_active)
-		cast(m_active)->activate();
+		m_active->activate();
 
 	return 0;
 }

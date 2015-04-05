@@ -35,7 +35,7 @@ public:
 		bool m_loading = false;
 		bool m_gotProgress = false;
 		// TODO : relation to UI element
-		std::shared_ptr<jira::node> m_plaque;
+		std::shared_ptr<gui::node> m_plaque;
 
 		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener, HWND hWnd);
 		~ServerInfo();
@@ -48,7 +48,7 @@ public:
 private:
 	std::shared_ptr<CAppModelListener> m_listener;
 	std::vector<ServerInfo> m_servers;
-	std::shared_ptr<IJiraNode> m_cheatsheet;
+	std::shared_ptr<gui::node> m_cheatsheet;
 	std::vector<ServerInfo>::iterator find(uint32_t sessionId);
 
 	std::vector<ServerInfo>::iterator insert(std::vector<ServerInfo>::const_iterator it, const std::shared_ptr<jira::server>& server);
@@ -61,8 +61,8 @@ private:
 
 	int m_mouseX = 0;
 	int m_mouseY = 0;
-	std::shared_ptr<jira::node> m_hovered;
-	std::shared_ptr<jira::node> m_active;
+	std::shared_ptr<gui::node> m_hovered;
+	std::shared_ptr<gui::node> m_active;
 	bool m_tracking = false;
 	gui::cursor m_cursor = gui::cursor::arrow;
 	std::function<void(size_t, size_t)> m_scroller;
@@ -71,7 +71,7 @@ private:
 	void updateCursor(bool force = false);
 	void updateTooltip(bool force = false);
 	void updateCursorAndTooltip(bool force = false);
-	std::shared_ptr<jira::node> nodeFromPoint();
+	std::shared_ptr<gui::node> nodeFromPoint();
 	void setDocumentSize(size_t width, size_t height); 
 public:
 	std::shared_ptr<CAppModel> m_model;

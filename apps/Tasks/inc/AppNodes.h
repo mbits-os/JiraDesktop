@@ -8,7 +8,7 @@ enum class Attr {
 	Tooltip
 };
 
-class CJiraNode : public IJiraNode, public std::enable_shared_from_this<IJiraNode> {
+class CJiraNode : public gui::node, public std::enable_shared_from_this<gui::node> {
 public:
 	CJiraNode(gui::elem name);
 	gui::elem getNodeName() const override;
@@ -18,8 +18,6 @@ public:
 	std::string text() const override;
 	void setTooltip(const std::string& text) override;
 	void addChild(const std::shared_ptr<node>& child) override;
-	void setClass(jira::styles) override;
-	jira::styles getStyles() const override;
 	const std::vector<std::shared_ptr<node>>& children() const override;
 
 	void paint(gui::painter* painter) override;
@@ -53,7 +51,6 @@ protected:
 	std::map<Attr, std::string> m_data;
 	std::vector<std::shared_ptr<node>> m_children;
 	std::vector<std::string> m_classes;
-	jira::styles m_class;
 	std::weak_ptr<node> m_parent;
 	struct {
 		int x = 0;
@@ -72,7 +69,7 @@ class ImageCb
 	, public std::enable_shared_from_this<ImageCb> {
 
 public:
-	std::weak_ptr<IJiraNode> parent;
+	std::weak_ptr<gui::node> parent;
 	void onImageChange(gui::image_ref*) override;
 };
 
@@ -170,15 +167,16 @@ public:
 
 class CJiraRowProxy : public CJiraReportNode {
 	size_t m_id;
-	std::shared_ptr<IJiraNode> m_proxy;
+	std::shared_ptr<gui::node> m_proxy;
 public:
 	CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
 
 	std::string text() const override;
+	void addClass(const std::string& name) override;
+	void removeClass(const std::string& name) override;
+	bool hasClass(const std::string& name) const override;
 	void setTooltip(const std::string& text) override;
 	void addChild(const std::shared_ptr<node>& child) override;
-	void setClass(jira::styles) override;
-	jira::styles getStyles() const override;
 	const std::vector<std::shared_ptr<node>>& children() const override;
 
 	void paint(gui::painter* painter) override;
