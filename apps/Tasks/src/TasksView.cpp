@@ -9,6 +9,7 @@
 #include <net/utf8.hpp>
 #include <algorithm>
 #include <sstream>
+#include <gui/styles.hpp>
 
 #include "AppNodes.h"
 
@@ -117,7 +118,7 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	m_tooltip.SendMessage(TTM_SETMAXTIPWIDTH, 0, 700);
 
 	updateCursorAndTooltip(true);
-	m_background.CreateSolidBrush(0x00FFFFFF);
+	m_background.CreateSolidBrush(0xFFFFFF);
 	m_listener = std::make_shared<TaskViewModelListener>(m_hWnd);
 	m_model->registerListener(m_listener);
 
@@ -187,14 +188,8 @@ class LinePrinter : public gui::painter
 	Styler* uplink = nullptr;
 	bool selectedFrame = false;
 	bk backgroundMode = bk::transparent;
-	COLORREF color = 0x00FFFFFF;
+	COLORREF color = 0xFFFFFF;
 	RECT update;
-
-	void updateLineHeight()
-	{
-		TEXTMETRIC metric = {};
-		dc.GetTextMetrics(&metric);
-	}
 
 	void moveOrigin(int x_, int y_) override
 	{
@@ -241,7 +236,7 @@ class LinePrinter : public gui::painter
 		TEXTMETRIC tm = {};
 		dc.GetTextExtent(widen.c_str(), widen.length(), &s);
 		dc.GetTextMetrics(&tm);
-		dc.FillSolidRect(x, y + tm.tmAscent, s.cx - 1, 1, 0x003333FF);
+		dc.FillSolidRect(x, y + tm.tmAscent, s.cx - 1, 1, 0x3333FF);
 #endif
 	}
 
@@ -256,11 +251,11 @@ class LinePrinter : public gui::painter
 	gui::style_handle applyStyle(gui::node*) override;
 	void restoreStyle(gui::style_handle save) override;
 	int dpiRescale(int size) override;
+	long double dpiRescale(long double size) override;
 public:
 	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
 	{
 		older = dc.SelectFont(font);
-		updateLineHeight();
 	}
 	~LinePrinter()
 	{
@@ -271,7 +266,6 @@ public:
 	{
 		font = font_;
 		dc.SelectFont(font);
-		updateLineHeight();
 		return *this;
 	}
 
@@ -353,19 +347,24 @@ public:
 
 namespace {
 
-	enum class family {
-		base,
-		symbols
-	};
-
 	class Styler {
 		LinePrinter printer;
 		CDCHandle dc;
 		CFont font;
 		LOGFONT logFont;
 		COLORREF lastColor;
-		family lastFamily;
 		std::wstring baseName;
+
+	public:
+		Styler(HDC dc_, HFONT font_)
+			: printer(dc_, font_)
+			, dc(dc_)
+			, lastColor(0)
+		{
+			CFontHandle{ font_ }.GetLogFont(&logFont);
+			lastColor = dc.GetTextColor();
+			baseName = logFont.lfFaceName;
+		}
 
 		void update()
 		{
@@ -373,18 +372,6 @@ namespace {
 				font.DeleteObject();
 			font.CreateFontIndirect(&logFont);
 			printer.select(font);
-		}
-	public:
-		Styler(HDC dc_, HFONT font_)
-			: printer(dc_, font_)
-			, dc(dc_)
-			, lastColor(0)
-			, lastFamily(family::base)
-		{
-			CFontHandle{ font_ }.GetLogFont(&logFont);
-			lastColor = dc.GetTextColor();
-			baseName = logFont.lfFaceName;
-			update();
 		}
 
 		void setColor(COLORREF color)
@@ -396,42 +383,40 @@ namespace {
 		void setFontItalic(bool italic)
 		{
 			logFont.lfItalic = italic ? TRUE : FALSE;
-			update();
 		}
 
 		void setFontUnderline(bool underline)
 		{
 			logFont.lfUnderline = underline ? TRUE : FALSE;
-			update();
 		}
 
 		void setFontWeight(int weight)
 		{
 			logFont.lfWeight = weight;
-			update();
 		}
 
-		void setFontSize(int size)
+		void setFontSize(styles::pixels px)
+		{
+			logFont.lfHeight = (int)(static_cast<gui::painter&>(printer).dpiRescale(px.value()) + 0.5);
+		}
+
+		void setFontSize(styles::ems em)
+		{
+			logFont.lfHeight = (int)(logFont.lfHeight * em.value());
+		}
+
+		void setFontSizeAbs(int size)
 		{
 			logFont.lfHeight = size;
-			update();
 		}
 
-		void setFontFamily(family f)
+		void setFontFamily(const std::wstring& faceName)
 		{
-			switch (f) {
-			case family::base:
+			if (faceName.empty()) {
 				wcscpy(logFont.lfFaceName, baseName.c_str());
-				lastFamily = f;
-				break;
-			case family::symbols:
-				wcscpy(logFont.lfFaceName, L"FontAwesome");
-				lastFamily = f;
-				break;
-			default:
-				return;
+			} else {
+				wcscpy(logFont.lfFaceName, faceName.c_str());
 			}
-			update();
 		}
 
 		void setFrameSelect()
@@ -449,7 +434,7 @@ namespace {
 		bool getFontUnderline() const { return !!logFont.lfUnderline; }
 		int getFontWeight() const { return logFont.lfWeight; }
 		int getFontSize() const { return logFont.lfHeight; }
-		family getFontFamily() const { return lastFamily; }
+		const wchar_t* getFontFamily() const { return logFont.lfFaceName; }
 		LinePrinter& out() { return printer; }
 
 		const LOGFONT& fontDef() const { return this->logFont; }
@@ -462,7 +447,7 @@ namespace {
 		int m_size;
 		bool m_italic;
 		bool m_underline;
-		family m_family;
+		std::wstring m_family;
 
 	public:
 		Style() = delete;
@@ -496,10 +481,11 @@ namespace {
 		{
 			setColor(m_color);
 			setFontWeight(m_weight);
-			setFontSize(m_size);
+			m_styler.setFontSizeAbs(m_size);
 			setFontItalic(m_italic);
 			setFontUnderline(m_underline);
-			setFontFamily(m_family);
+			m_styler.setFontFamily(m_family);
+			m_styler.update();
 		}
 
 		static void apply(Style& style, gui::elem name, gui::node* node);
@@ -532,20 +518,6 @@ namespace {
 			return *this;
 		}
 
-		Style& setFontSize(int size)
-		{
-			if (size != m_styler.getFontSize())
-				m_styler.setFontSize(size);
-			return *this;
-		}
-
-		Style& setFontFamily(family f)
-		{
-			if (f != m_styler.getFontFamily())
-				m_styler.setFontFamily(f);
-			return *this;
-		}
-
 		Style& setFrameSelect()
 		{
 			m_styler.setFrameSelect();
@@ -557,8 +529,53 @@ namespace {
 			m_styler.setBackground(mode, color);
 			return *this;
 		}
+
+		static int calc(styles::weight w)
+		{
+			using namespace styles;
+			switch (w) {
+			case weight::normal: return FW_NORMAL;
+			case weight::bold: return FW_BOLD;
+			case weight::bolder: return FW_BOLD; // TODO: http://www.w3.org/TR/CSS2/fonts.html#propdef-font-weight bolder/lighter table
+			case weight::lighter: return FW_NORMAL;
+			default:
+				break;
+			}
+
+			return (int)w;
+		}
+
+		Style& batchApply(const styles::rule_storage& rules)
+		{
+			bool update = false;
+
+			if (rules.has(styles::prop_color))
+				m_styler.setColor(rules.get(styles::prop_color)), update = true;
+			if (rules.has(styles::prop_background))
+				m_styler.setBackground(bk::solid, rules.get(styles::prop_background)), update = true;
+			if (rules.has(styles::prop_italic))
+				m_styler.setFontItalic(rules.get(styles::prop_italic)), update = true;
+			if (rules.has(styles::prop_underline))
+				m_styler.setFontUnderline(rules.get(styles::prop_underline)), update = true;
+			if (rules.has(styles::prop_font_weight))
+				m_styler.setFontWeight(calc(rules.get(styles::prop_font_weight))), update = true;
+			if (rules.has(styles::prop_font_size))
+				m_styler.setFontSize(rules.get(styles::prop_font_size)), update = true;
+			if (rules.has(styles::prop_font_size_em))
+				m_styler.setFontSize(rules.get(styles::prop_font_size_em)), update = true;
+			if (rules.has(styles::prop_font_family)) {
+				auto family = utf::widen(rules.get(styles::prop_font_family));
+				if (family != m_styler.getFontFamily())
+					m_styler.setFontFamily(family), update = true;
+			}
+
+			if (update)
+				m_styler.update();
+			return *this;
+		}
 	};
 
+#if 0
 	template <typename T>
 	class ManipBase {
 	protected:
@@ -655,9 +672,48 @@ namespace {
 	};
 
 	inline BackgroundManip background(COLORREF color) { return BackgroundManip{ bk::solid, color }; }
+#endif
 
-	void Style::apply(Style& style, gui::elem name, gui::node* node)
+	styles::stylesheet stylesheetCreate()
 	{
+		using namespace styles::literals;
+		using namespace styles;
+
+		auto none_empty = styles::italic() << styles::color(0x555555);
+
+		return styles::stylesheet{}
+			.add(gui::elem::header,                               fontSize(1.8_em) << styles::color(0x883333))
+			.add(gui::elem::table_head,                           fontWeight(styles::weight::bold) << textAlign(styles::align::center))
+			.add({ gui::elem::table_row, styles::pseudo::hover }, styles::background(0xf8f8f8))
+			.add(gui::elem::link,                                 styles::color(0xAF733B))
+			.add({ gui::elem::link, styles::pseudo::hover },      styles::underline())
+			.add({ gui::elem::link, styles::pseudo::active },     border(styles::line::dot, 1_px, 0xc0c0c0))
+			.add(styles::class_name{ "error" },                   styles::color(0x171BC1))
+			.add(styles::class_name{ "empty" },                   none_empty)
+			.add(styles::class_name{ "none" },                    none_empty)
+			.add(styles::class_name{ "summary" },                 fontSize(.8_em) << styles::color(0x555555))
+			.add(styles::class_name{ "symbol" },                  styles::fontFamily("FontAwesome"))
+			.add(styles::class_name{ "unexpected" },              styles::color(0x2600E6));
+	};
+
+	const styles::stylesheet& stylesheet()
+	{
+		static styles::stylesheet sheet = stylesheetCreate();
+		return sheet;
+	}
+
+	void Style::apply(Style& style, gui::elem /*name*/, gui::node* node)
+	{
+		auto& sheet = stylesheet();
+
+		styles::rule_storage active;
+		for (auto& rules : sheet.m_rules) {
+			if (rules.m_sel.selects(node))
+				active <<= rules;
+		}
+
+		style.batchApply(active);
+#if 0
 		switch (name) {
 		case gui::elem::body:
 			// from UI
@@ -665,7 +721,7 @@ namespace {
 		case gui::elem::header:
 			style
 				<< fontSize((style.m_styler.getFontSize() * 18) / 10)
-				<< color(0x00883333);
+				<< color(0x883333);
 			break;
 		case gui::elem::table_head:
 			style << bold();
@@ -673,10 +729,10 @@ namespace {
 		case gui::elem::table_row:
 			// same as parent
 			if (node && node->getHovered())
-				style << background(0x00f8f8f8);
+				style << background(0xf8f8f8);
 			break;
 		case gui::elem::link:
-			style << color(0x00AF733B);
+			style << color(0xAF733B);
 			if (node && node->getHovered())
 				style << underline();
 			if (node && node->getActive())
@@ -685,17 +741,17 @@ namespace {
 		};
 
 		if (node->hasClass("error")) {
-			style << color(0x00171BC1);
+			style << color(0x171BC1);
 		}
 
 		if (node->hasClass("empty") || node->hasClass("none")) {
-			style << italic() << color(0x00555555);
+			style << italic() << color(0x555555);
 		}
 
 		if (node->hasClass("summary")) {
 			style
 				<< fontSize((style.m_styler.getFontSize() * 8) / 10)
-				<< color(0x00555555);
+				<< color(0x555555);
 		}
 
 		if (node->hasClass("symbol")) {
@@ -703,8 +759,9 @@ namespace {
 		}
 
 		if (node->hasClass("unexpected")) {
-			style << color(0x002600E6);
+			style << color(0x2600E6);
 		}
+#endif
 
 	}
 
@@ -780,6 +837,11 @@ int LinePrinter::dpiRescale(int size)
 	return dc.GetDeviceCaps(LOGPIXELSX) * size / 96;
 }
 
+long double LinePrinter::dpiRescale(long double size)
+{
+	return dc.GetDeviceCaps(LOGPIXELSX) * size / 96;
+}
+
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	CPaintDC dc(m_hWnd);
@@ -797,10 +859,7 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	if (m_cheatsheet)
 		paintNode(control, m_cheatsheet);
 
-	//dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x00000080, 0x00000080);
-
-	//if (m_active)
-	//	paintGrayFrame((HDC)dc, 0x00, m_active);
+	//dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x000080, 0x000080);
 
 	return 0;
 }
