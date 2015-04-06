@@ -46,19 +46,22 @@ namespace gui {
 	class action {
 		std::shared_ptr<icon> m_icon;
 		std::string m_text;
+		std::string m_tooltip;
 		hotkey m_hotkey;
 		std::function<void()> m_fn;
 		uint16_t m_osId = 0;
 	public:
-		action(const std::shared_ptr<icon>& icon, const std::string& text, const hotkey& hotkey, const std::function<void()>& f)
+		action(const std::shared_ptr<icon>& icon, const std::string& text, const hotkey& hotkey, const std::string& tooltip, const std::function<void()>& f)
 			: m_icon(icon)
 			, m_text(text)
+			, m_tooltip(tooltip)
 			, m_hotkey(hotkey)
 			, m_fn(f)
 		{}
 
 		const std::shared_ptr<icon>& icon() const { return m_icon; }
 		const std::string& text() const { return m_text; }
+		const std::string& tooltip() const { return m_tooltip; }
 		const hotkey& hotkey() const { return m_hotkey; }
 		uint16_t id() const { return m_osId; }
 		void id(uint16_t val) { m_osId = val; }
@@ -67,9 +70,9 @@ namespace gui {
 	};
 
 	inline std::shared_ptr<action>
-		make_action(const std::shared_ptr<icon>& icon, const std::string& text, const hotkey& hotkey = {}, const std::function<void()>& f = {})
+		make_action(const std::shared_ptr<icon>& icon, const std::string& text, const hotkey& hotkey = {}, const std::string& tooltip = {}, const std::function<void()>& f = {})
 	{
-		return std::make_shared<action>(icon, text, hotkey, f);
+		return std::make_shared<action>(icon, text, hotkey, tooltip, f);
 	}
 
 	struct symbol {
