@@ -28,6 +28,11 @@
 #include <memory>
 #include <vector>
 
+namespace styles {
+	struct rule_storage;
+	struct stylesheet;
+};
+
 namespace gui {
 	enum class elem {
 		unspecified,
@@ -88,5 +93,9 @@ namespace gui {
 		virtual void setTooltip(const std::string& text) = 0;
 		virtual bool hasTooltip() const = 0;
 		virtual const std::string& getTooltip() const = 0;
+
+		virtual std::shared_ptr<styles::rule_storage> calculatedStyle() const = 0;
+		virtual std::shared_ptr<styles::stylesheet> styles() const = 0;
+		virtual void applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet) = 0;
 	};
 };

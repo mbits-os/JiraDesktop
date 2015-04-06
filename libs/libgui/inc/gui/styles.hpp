@@ -364,7 +364,7 @@ namespace styles {
 		};
 	};
 
-	rule_storage operator<< (const rule_storage& lhs, const rule_storage& rhs)
+	inline rule_storage operator<< (const rule_storage& lhs, const rule_storage& rhs)
 	{
 		rule_storage copy = lhs;
 		return std::move(copy <<= rhs);
@@ -408,12 +408,9 @@ namespace styles {
 		pseudo m_pseudoClass = pseudo::unspecified;
 		std::vector<std::string> m_classes;
 
-		bool selects(gui::node* node) const
+		bool selects(const gui::node* node) const
 		{
-			if (!node)
-				return false;
-
-			if (m_elemName != gui::elem::unspecified && m_elemName != node->getNodeName())
+			if (!maySelect(node))
 				return false;
 
 			switch (m_pseudoClass) {
@@ -426,6 +423,18 @@ namespace styles {
 					return false;
 				break;
 			};
+
+			return true;
+		}
+
+		// same as selects, but doesn't take pseudo classes into account
+		bool maySelect(const gui::node* node) const
+		{
+			if (!node)
+				return false;
+
+			if (m_elemName != gui::elem::unspecified && m_elemName != node->getNodeName())
+				return false;
 
 			for (auto& cl : m_classes) {
 				if (!node->hasClass(cl))
@@ -457,10 +466,10 @@ namespace styles {
 	};
 
 	struct stylesheet {
-		std::vector<ruleset> m_rules;
+		std::vector<std::shared_ptr<ruleset>> m_rules;
 		stylesheet& add(const selector& sel, const rule_storage& rules)
 		{
-			m_rules.emplace_back(std::forward<const selector&>(sel), std::forward<const rule_storage&>(rules));
+			m_rules.emplace_back(std::make_shared<ruleset>(std::forward<const selector&>(sel), std::forward<const rule_storage&>(rules)));
 			return *this;
 		}
 	};
