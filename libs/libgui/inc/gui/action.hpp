@@ -40,6 +40,7 @@ namespace gui {
 #ifdef _WIN32
 		virtual HBITMAP getNativeBitmap(int size) = 0;
 		virtual HICON getNativeIcon(int size) = 0;
+		virtual HICON detachIcon() = 0;
 #endif
 	};
 

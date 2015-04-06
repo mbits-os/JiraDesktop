@@ -63,9 +63,13 @@ HMENU menu::item::createPopup(ui_manager* manager) const
 			CMenu sub = item.createPopup(manager);
 			menu.AppendMenu(MF_STRING, sub, text.c_str());
 			//sub.Detach();
-		}
-		else {
-			menu.AppendMenu(MF_STRING, manager->append(action), text.c_str());
+		} else {
+			auto id = action->id();
+			auto copy = manager->find(id);
+			if (copy && action == copy)
+				menu.AppendMenu(MF_STRING, id, text.c_str());
+			else
+				menu.AppendMenu(MF_STRING, manager->append(action), text.c_str());
 		}
 
 		auto icon = action->icon();

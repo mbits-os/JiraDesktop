@@ -135,6 +135,11 @@ namespace gui {
 			return m_icon;
 		}
 
+		HICON detachIcon() override
+		{
+			return m_icon.Detach();
+		}
+
 		void buildBitmap(int size)
 		{
 			if (m_calculated)
