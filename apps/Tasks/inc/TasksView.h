@@ -43,6 +43,8 @@ public:
 		ServerInfo& operator=(const ServerInfo&) = delete;
 		ServerInfo(ServerInfo&&) = default;
 		ServerInfo& operator=(ServerInfo&&) = default;
+
+		void buildPlaque(HWND hWnd);
 	};
 
 private:

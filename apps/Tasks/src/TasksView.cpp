@@ -136,7 +136,8 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	size_t pos = 0;
 	constexpr size_t width = 10;
 	auto glyphs = std::make_shared<CJiraTableNode>();
-	auto header = glyphs->addHeader();
+	auto header = std::make_shared<CJiraTableRowNode>(gui::elem::table_head);
+	glyphs->addChild(header);
 	for (size_t i = 0; i < width; ++i) {
 		header->addChild(std::make_shared<CJiraTextNode>("G"));
 		header->addChild(std::make_shared<CJiraTextNode>("Name"));
@@ -144,7 +145,8 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 
 	auto rowCount = ((size_t)fa::glyph::__last_glyph + width - 1) / width;
 	for (size_t r = 0; r < rowCount; ++r) {
-		auto row = glyphs->addRow();
+		auto row = std::make_shared<CJiraTableRowNode>(gui::elem::table_row);
+		glyphs->addChild(row);
 		for (size_t i = 0; i < width; ++i) {
 #ifdef FA_CHEATSHEET_ROW_FIRST
 			auto id = r * width + i;
@@ -964,12 +966,8 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 
 LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
-	//RECT r{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
-	//InvalidateRect(&r);
 	m_mouseX = GET_X_LPARAM(lParam);
 	m_mouseY = GET_Y_LPARAM(lParam);
-	//RECT r2{ m_mouseX - 4, m_mouseY - 4, m_mouseX + 4, m_mouseY + 4 };
-	//InvalidateRect(&r2);
 
 	auto tmp = nodeFromPoint();
 	if (tmp != m_hovered) {
