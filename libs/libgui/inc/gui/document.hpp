@@ -29,6 +29,8 @@
 namespace gui {
 	struct document {
 		virtual ~document() {}
+		virtual std::shared_ptr<node> createTable() = 0;
+		virtual std::shared_ptr<node> createTableHead() = 0;
 		virtual std::shared_ptr<node> createTableRow() = 0;
 		virtual std::shared_ptr<node> createEmpty() = 0;
 		virtual std::shared_ptr<node> createSpan() = 0;

@@ -126,6 +126,8 @@ public:
 
 class CJiraDocument : public jira::document, public std::enable_shared_from_this<CJiraDocument> {
 	void setCurrent(const std::shared_ptr<jira::server>&) override;
+	std::shared_ptr<gui::node> createTable() override;
+	std::shared_ptr<gui::node> createTableHead() override;
 	std::shared_ptr<gui::node> createTableRow() override;
 	std::shared_ptr<gui::node> createEmpty() override;
 	std::shared_ptr<gui::node> createSpan() override;
@@ -149,8 +151,6 @@ class CJiraTableNode : public CJiraNode {
 	std::shared_ptr<std::vector<size_t>> m_columns;
 public:
 	CJiraTableNode();
-	std::shared_ptr<node> addHeader();
-	std::shared_ptr<node> addRow();
 
 	void addChild(const std::shared_ptr<node>& child) override final;
 	void measure(gui::painter* painter) override;
@@ -160,66 +160,12 @@ class CJiraTableRowNode : public CJiraNode {
 protected:
 	std::shared_ptr<std::vector<size_t>> m_columns;
 public:
-	CJiraTableRowNode(gui::elem name, const std::shared_ptr<std::vector<size_t>>& columns);
+	CJiraTableRowNode(gui::elem name);
+	void setColumns(const std::shared_ptr<std::vector<size_t>>& columns);
 
 	void measure(gui::painter* painter) override;
 
 	void repositionChildren();
-};
-
-
-class CJiraReportNode : public CJiraNode {
-protected:
-	CJiraReportNode(gui::elem name, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
-	std::weak_ptr<jira::report> m_dataset;
-	std::shared_ptr<std::vector<size_t>> m_columns;
-public:
-	virtual void repositionChildren() = 0;
-};
-
-class CJiraRowProxy : public CJiraReportNode {
-	size_t m_id;
-	std::shared_ptr<gui::node> m_proxy;
-public:
-	CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
-
-	std::string text() const override;
-	void addClass(const std::string& name) override;
-	void removeClass(const std::string& name) override;
-	bool hasClass(const std::string& name) const override;
-	void setTooltip(const std::string& text) override;
-	void addChild(const std::shared_ptr<node>& child) override;
-	const std::vector<std::shared_ptr<node>>& children() const override;
-
-	void paint(gui::painter* painter) override;
-	void measure(gui::painter* painter) override;
-	void setPosition(int x, int y) override;
-
-	std::shared_ptr<node> getParent() const override;
-	void setParent(const std::shared_ptr<node>&) override;
-
-	void repositionChildren() override;
-	std::shared_ptr<node> nodeFromPoint(int x, int y) override;
-};
-
-class CJiraHeaderNode : public CJiraReportNode {
-public:
-	CJiraHeaderNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns);
-	void addChildren();
-
-	void addChild(const std::shared_ptr<node>& child) override final;
-	void measure(gui::painter* painter) override;
-	void repositionChildren() override;
-};
-
-class CJiraReportTableNode : public CJiraNode {
-	std::shared_ptr<std::vector<size_t>> m_columns;
-public:
-	explicit CJiraReportTableNode(const std::shared_ptr<jira::report>& dataset);
-	void addChildren(const std::shared_ptr<jira::report>& dataset);
-
-	void addChild(const std::shared_ptr<node>& child) override final;
-	void measure(gui::painter* painter) override;
 };
 
 class CJiraReportElement : public CJiraNode {

@@ -478,9 +478,19 @@ void CJiraDocument::setCurrent(const std::shared_ptr<jira::server>& server)
 	m_server = server;
 }
 
+std::shared_ptr<gui::node> CJiraDocument::createTable()
+{
+	return std::make_shared<CJiraTableNode>();
+}
+
+std::shared_ptr<gui::node> CJiraDocument::createTableHead()
+{
+	return std::make_shared<CJiraTableRowNode>(gui::elem::table_head);
+}
+
 std::shared_ptr<gui::node> CJiraDocument::createTableRow()
 {
-	return std::make_shared<CJiraNode>(gui::elem::span); // TODO: should be report row
+	return std::make_shared<CJiraTableRowNode>(gui::elem::table_row);
 }
 
 std::shared_ptr<gui::node> CJiraDocument::createEmpty()
@@ -553,23 +563,13 @@ CJiraTableNode::CJiraTableNode()
 {
 }
 
-std::shared_ptr<gui::node> CJiraTableNode::addHeader()
+void CJiraTableNode::addChild(const std::shared_ptr<gui::node>& child)
 {
-	auto node = std::make_shared<CJiraTableRowNode>(gui::elem::table_head, m_columns);
-	CJiraNode::addChild(node);
-	return node;
-}
-
-std::shared_ptr<gui::node> CJiraTableNode::addRow()
-{
-	auto node = std::make_shared<CJiraTableRowNode>(gui::elem::table_row, m_columns);
-	CJiraNode::addChild(node);
-	return node;
-}
-
-void CJiraTableNode::addChild(const std::shared_ptr<gui::node>& /*child*/)
-{
-	// noop
+	auto elem = child->getNodeName();
+	if (elem == gui::elem::table_row || elem == gui::elem::table_head) {
+		CJiraNode::addChild(child);
+		std::static_pointer_cast<CJiraTableRowNode>(child)->setColumns(m_columns);
+	}
 }
 
 void CJiraTableNode::measure(gui::painter* painter)
@@ -601,14 +601,21 @@ void CJiraTableNode::measure(gui::painter* painter)
 	m_position.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
 }
 
-CJiraTableRowNode::CJiraTableRowNode(gui::elem name, const std::shared_ptr<std::vector<size_t>>& columns)
+CJiraTableRowNode::CJiraTableRowNode(gui::elem name)
 	: CJiraNode(name)
-	, m_columns(columns)
 {
+}
+
+void CJiraTableRowNode::setColumns(const std::shared_ptr<std::vector<size_t>>& columns)
+{
+	m_columns = columns;
 }
 
 void CJiraTableRowNode::measure(gui::painter* painter)
 {
+	if (!m_columns)
+		return;
+
 	CJiraNode::measure(painter);
 
 	auto it = m_columns->begin();
@@ -629,257 +636,6 @@ void CJiraTableRowNode::repositionChildren()
 		x += *it++ + 2 * CELL_MARGIN;
 	}
 	m_position.width = x + CELL_MARGIN;
-}
-	
-CJiraReportNode::CJiraReportNode(gui::elem name, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
-	: CJiraNode(name)
-	, m_dataset(dataset)
-	, m_columns(columns)
-{
-}
-
-CJiraRowProxy::CJiraRowProxy(size_t id, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
-	: CJiraReportNode(gui::elem::table_row, dataset, columns)
-	, m_id(id)
-{
-	auto& record = dataset->data.at(m_id);
-	m_proxy = record.getRow();
-}
-
-std::string CJiraRowProxy::text() const
-{
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return{};
-	return m_proxy->text();
-}
-
-void CJiraRowProxy::addClass(const std::string& name)
-{
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return;
-	m_proxy->addClass(name);
-}
-
-void CJiraRowProxy::removeClass(const std::string& name)
-{
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return;
-	m_proxy->removeClass(name);
-}
-
-bool CJiraRowProxy::hasClass(const std::string& name) const
-{
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return false;
-	return m_proxy->hasClass(name);
-}
-
-void CJiraRowProxy::setTooltip(const std::string& text)
-{
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return;
-	m_proxy->setTooltip(text);
-}
-
-void CJiraRowProxy::addChild(const std::shared_ptr<gui::node>& child)
-{
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return;
-	m_proxy->addChild(std::move(child));
-}
-
-const std::vector<std::shared_ptr<gui::node>>& CJiraRowProxy::children() const
-{
-	auto lock = m_dataset.lock();
-	if (!lock) {
-		static std::vector<std::shared_ptr<gui::node>> dummy;
-		return dummy;
-	}
-	return m_proxy->children();
-}
-
-void CJiraRowProxy::paint(gui::painter* painter)
-{
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return;
-	CJiraReportNode::paint(painter);
-	m_proxy->paint(painter);
-}
-
-void CJiraRowProxy::measure(gui::painter* painter)
-{
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return;
-	m_proxy->measure(painter);
-
-	auto it = m_columns->begin();
-	for (auto& node : children()) {
-		auto width = node->getSize().width;
-		if (*it < width)
-			*it = width;
-		*it++;
-	}
-
-	auto size = m_proxy->getSize();
-	m_position.width = size.width;
-	m_position.height = size.height;
-}
-
-void CJiraRowProxy::setPosition(int x, int y)
-{
-	m_position.x = x;
-	m_position.y = y;
-
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return;
-	m_proxy->setPosition(0, 0);
-}
-
-std::shared_ptr<gui::node> CJiraRowProxy::getParent() const
-{
-	return m_parent.lock();
-}
-
-void CJiraRowProxy::setParent(const std::shared_ptr<gui::node>& parent_)
-{
-	m_parent = parent_;
-
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return;
-	m_proxy->setParent(shared_from_this());
-}
-
-void CJiraRowProxy::repositionChildren()
-{
-	int x = CELL_MARGIN;
-	auto it = m_columns->begin();
-	for (auto& node : children()) {
-		node->setPosition(x, 0);
-		x += *it++ + 2 * CELL_MARGIN;
-	}
-	m_position.width = x + CELL_MARGIN;
-	m_position.height = m_proxy->getSize().height;
-}
-
-std::shared_ptr<gui::node> CJiraRowProxy::nodeFromPoint(int x, int y)
-{
-	x -= m_position.x;
-	y -= m_position.y;
-
-	if (x < 0 || (size_t)x > m_position.width ||
-		y < 0 || (size_t)y > m_position.height)
-		return nullptr;
-
-	auto lock = m_dataset.lock();
-	if (!lock)
-		return shared_from_this();
-
-	for (auto& node : children()) {
-		auto tmp = node->nodeFromPoint(x, y);
-		if (tmp)
-			return tmp;
-	}
-
-	return shared_from_this();
-}
-
-CJiraHeaderNode::CJiraHeaderNode(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<std::vector<size_t>>& columns)
-	: CJiraReportNode(gui::elem::table_head, dataset, columns)
-{
-}
-
-void CJiraHeaderNode::addChildren()
-{
-	auto dataset = m_dataset.lock();
-	for (auto& col : dataset->schema.cols()) {
-		auto name = col->title();
-		auto node = std::make_shared<CJiraTextNode>(name);
-
-		auto tooltip = col->titleFull();
-		if (name != tooltip)
-			node->setTooltip(tooltip);
-
-		CJiraReportNode::addChild(std::move(node));
-	}
-}
-
-void CJiraHeaderNode::addChild(const std::shared_ptr<gui::node>& /*child*/)
-{
-	// noop
-}
-
-void CJiraHeaderNode::measure(gui::painter* painter)
-{
-	CJiraReportNode::measure(painter);
-
-	auto it = m_columns->begin();
-	for (auto& node : children()) {
-		*it++ = node->getSize().width;
-	}
-}
-
-void CJiraHeaderNode::repositionChildren()
-{
-	int x = CELL_MARGIN;
-	auto it = m_columns->begin();
-	for (auto& node : children()) {
-		node->setPosition(x, 0);
-		x += *it++ + 2 * CELL_MARGIN;
-	}
-	m_position.width = x + CELL_MARGIN;
-}
-
-CJiraReportTableNode::CJiraReportTableNode(const std::shared_ptr<jira::report>& dataset)
-	: CJiraNode(gui::elem::table)
-	, m_columns(std::make_shared<std::vector<size_t>>(dataset->schema.cols().size()))
-{
-}
-
-void CJiraReportTableNode::addChildren(const std::shared_ptr<jira::report>& dataset)
-{
-	auto header = std::make_shared<CJiraHeaderNode>(dataset, m_columns);
-	header->addChildren();
-	CJiraNode::addChild(header);
-
-	auto size = dataset->data.size();
-	for (size_t id = 0; id < size; ++id) {
-		CJiraNode::addChild(std::make_shared<CJiraRowProxy>(id, dataset, m_columns));
-	}
-}
-
-void CJiraReportTableNode::addChild(const std::shared_ptr<gui::node>& /*child*/)
-{
-	// noop
-}
-
-void CJiraReportTableNode::measure(gui::painter* painter)
-{
-	StyleSaver saver{ painter, this };
-
-	size_t height = 0;
-	for (auto& node : m_children) {
-		node->measure(painter);
-
-		auto nheight = node->getSize().height;
-		node->setPosition(0, height);
-		height += nheight * 12 / 10; // 120%
-	}
-
-	for (auto& node : m_children)
-		static_cast<CJiraReportNode*>(node.get())->repositionChildren();
-
-	m_position.height = height;
-	m_position.width = m_children[0]->getSize().width;
 }
 
 CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(int, int, int, int)>& invalidator)
@@ -907,8 +663,24 @@ void CJiraReportElement::addChildren(const jira::server& server)
 
 	auto dataset = m_dataset.lock();
 	if (dataset) {
-		auto table = std::make_shared<CJiraReportTableNode>(dataset);
-		table->addChildren(dataset);
+		auto table = std::make_shared<CJiraTableNode>();
+
+		{
+			auto header = std::make_shared<CJiraTableRowNode>(gui::elem::table_head);
+			for (auto& col : dataset->schema.cols()) {
+				auto name = col->title();
+				auto node = std::make_shared<CJiraTextNode>(name);
+
+				auto tooltip = col->titleFull();
+				if (name != tooltip)
+					node->setTooltip(tooltip);
+				header->addChild(node);
+			}
+		}
+
+		for (auto& record : dataset->data)
+			table->addChild(record.getRow());
+
 		CJiraNode::addChild(table);
 
 		std::ostringstream o;
