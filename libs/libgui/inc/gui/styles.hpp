@@ -108,7 +108,7 @@ namespace styles {
 
 		long double value() const { return m_len; }
 		template <typename Ratio>
-		length<Ratio> value(length<Ratio>& len) const {
+		length<Ratio> value(const length<Ratio>& len) const {
 			return len.value() * m_len;
 		}
 	};
@@ -305,6 +305,11 @@ namespace styles {
 					it->second = pair.second;
 			}
 		}
+
+		bool empty() const
+		{
+			return m_items.empty();
+		}
 	};
 
 	struct rule_storage {
@@ -362,6 +367,18 @@ namespace styles {
 			merge(rhs);
 			return *this;
 		};
+
+		bool empty() const
+		{
+			return m_colors.empty()
+				&& m_bools.empty()
+				&& m_strings.empty()
+				&& m_lengths.empty()
+				&& m_rel_lengths.empty()
+				&& m_font_weights.empty()
+				&& m_text_aligns.empty()
+				&& m_border_styles.empty();
+		}
 	};
 
 	inline rule_storage operator<< (const rule_storage& lhs, const rule_storage& rhs)

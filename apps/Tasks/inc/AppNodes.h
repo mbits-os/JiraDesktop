@@ -47,10 +47,14 @@ public:
 	const std::string& getTooltip() const override;
 
 	std::shared_ptr<styles::rule_storage> calculatedStyle() const override;
+	std::shared_ptr<styles::rule_storage> normalCalculatedStyles() const override;
 	std::shared_ptr<styles::stylesheet> styles() const override;
 	void applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet) override;
+	void calculateStyles();
 
 	void openLink(const std::string& url);
+	virtual void paintThis(gui::painter* painter);
+	virtual size measureThis(gui::painter* painter);
 
 protected:
 	gui::elem m_nodeName;
@@ -93,8 +97,8 @@ public:
 	~CJiraIconNode();
 	void attach();
 	void addChild(const std::shared_ptr<node>& child) override;
-	void paint(gui::painter* painter) override;
-	void measure(gui::painter* painter) override;
+	void paintThis(gui::painter* painter) override;
+	size measureThis(gui::painter* painter) override;
 };
 
 class CJiraDocument;
@@ -108,8 +112,8 @@ public:
 	CJiraUserNode(const std::weak_ptr<CJiraDocument>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip);
 	~CJiraUserNode();
 	void addChild(const std::shared_ptr<node>& child) override;
-	void paint(gui::painter* painter) override;
-	void measure(gui::painter* painter) override;
+	void paintThis(gui::painter* painter) override;
+	size measureThis(gui::painter* painter) override;
 };
 
 class CJiraLinkNode : public CJiraNode {
@@ -120,8 +124,8 @@ public:
 class CJiraTextNode : public CJiraNode {
 public:
 	CJiraTextNode(const std::string& text);
-	void paint(gui::painter* painter) override;
-	void measure(gui::painter* painter) override;
+	void paintThis(gui::painter* painter) override;
+	size measureThis(gui::painter* painter) override;
 };
 
 class CJiraDocument : public jira::document, public std::enable_shared_from_this<CJiraDocument> {
@@ -154,6 +158,7 @@ public:
 
 	void addChild(const std::shared_ptr<node>& child) override final;
 	void measure(gui::painter* painter) override;
+	size measureThis(gui::painter* painter) override;
 };
 
 class CJiraTableRowNode : public CJiraNode {
@@ -163,7 +168,7 @@ public:
 	CJiraTableRowNode(gui::elem name);
 	void setColumns(const std::shared_ptr<std::vector<size_t>>& columns);
 
-	void measure(gui::painter* painter) override;
+	size measureThis(gui::painter* painter) override;
 
 	void repositionChildren();
 };
@@ -176,6 +181,6 @@ public:
 	void addChildren(const jira::server& server);
 
 	void addChild(const std::shared_ptr<node>& child) override final;
-	void measure(gui::painter* painter) override;
+	size measureThis(gui::painter* painter) override;
 	void invalidate(int x, int y, size_t width, size_t height) override;
 };

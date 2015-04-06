@@ -11,6 +11,8 @@
 #include <net/utf8.hpp>
 #include "shellapi.h"
 
+using namespace styles::literals;
+
 enum {
 	CELL_MARGIN = 7
 };
@@ -87,6 +89,8 @@ void CJiraNode::paint(gui::painter* painter)
 {
 	StyleSaver saver{ painter, this };
 
+	paintThis(painter);
+
 	// slow, but working:
 	for (auto& node : m_children) {
 		gui::push_origin push{ painter };
@@ -97,6 +101,7 @@ void CJiraNode::paint(gui::painter* painter)
 
 void CJiraNode::measure(gui::painter* painter)
 {
+	calculateStyles();
 	StyleSaver saver{ painter, this };
 
 	size_t height = 0;
@@ -112,6 +117,13 @@ void CJiraNode::measure(gui::painter* painter)
 		node->setPosition(x, 0);
 		x += ret.width;
 	}
+
+	auto here = measureThis(painter);
+	if (height < here.height)
+		height = here.height;
+	if (width < here.width)
+		width = here.width;
+
 	m_position.height = height;
 	m_position.width = width;
 }
@@ -249,6 +261,15 @@ void CJiraNode::openLink(const std::string& url)
 	ShellExecute(nullptr, nullptr, utf::widen(url).c_str(), nullptr, nullptr, SW_SHOW);
 }
 
+void CJiraNode::paintThis(gui::painter* /*painter*/)
+{
+}
+
+gui::node::size CJiraNode::measureThis(gui::painter* /*painter*/)
+{
+	return{ 0, 0 };
+}
+
 void CJiraNode::setCursor(gui::cursor c)
 {
 	m_cursor = c;
@@ -291,6 +312,11 @@ std::shared_ptr<styles::rule_storage> CJiraNode::calculatedStyle() const
 	return getActive() ? m_calculatedActive : m_calculated;
 }
 
+std::shared_ptr<styles::rule_storage> CJiraNode::normalCalculatedStyles() const
+{
+	return m_calculated;
+}
+
 std::shared_ptr<styles::stylesheet> CJiraNode::styles() const
 {
 	return m_allApplying;
@@ -311,6 +337,71 @@ void CJiraNode::applyStyles(const std::shared_ptr<styles::stylesheet>& styleshee
 
 	for (auto& node : children())
 		node->applyStyles(stylesheet);
+}
+
+styles::pixels parentFontSize(gui::node* node)
+{
+	auto par = node->getParent();
+	if (!par)
+		return 14_px;
+
+	auto styles = par->normalCalculatedStyles();
+	if (styles && styles->has(styles::prop_font_size))
+		return styles->get(styles::prop_font_size);
+
+	return parentFontSize(par.get());
+}
+
+void calculate(styles::rule_storage& rules, gui::node* node)
+{
+	using namespace styles;
+	if (!rules.has(prop_font_size_em))
+		rules << fontSize(rules.get(prop_font_size_em).value(parentFontSize(node)));
+}
+
+void CJiraNode::calculateStyles()
+{
+	styles::rule_storage
+		normal,
+		hover,
+		active;
+
+	for (auto& rule : m_allApplying->m_rules) {
+		if (rule->m_sel.m_pseudoClass == styles::pseudo::hover)
+			hover <<= *rule;
+		else if (rule->m_sel.m_pseudoClass == styles::pseudo::active)
+			active <<= *rule;
+		else
+			normal <<= *rule;
+	}
+
+	calculate(normal, this);
+	calculate(hover, this);
+	calculate(active, this);
+
+	m_calculated = std::make_shared<styles::rule_storage>(normal);
+
+	if (hover.empty())
+		m_calculatedHover = m_calculated;
+	else {
+		m_calculatedHover = std::make_shared<styles::rule_storage>(normal);
+		*m_calculatedHover <<= hover;
+	}
+
+	if (active.empty()) {
+		m_calculatedActive = m_calculated;
+		m_calculatedHoverActive = m_calculatedHover;
+	} else {
+		m_calculatedActive = std::make_shared<styles::rule_storage>(normal);
+		*m_calculatedActive <<= active;
+
+		if (hover.empty())
+			m_calculatedHoverActive = m_calculatedActive;
+		else {
+			m_calculatedHoverActive = std::make_shared<styles::rule_storage>(*m_calculatedHover);
+			*m_calculatedHoverActive <<= active;
+		}
+	}
 }
 
 void ImageCb::onImageChange(gui::image_ref*)
@@ -347,14 +438,15 @@ void CJiraIconNode::addChild(const std::shared_ptr<node>& /*child*/)
 	 // noop
 }
 
-void CJiraIconNode::paint(gui::painter* painter)
+void CJiraIconNode::paintThis(gui::painter* painter)
 {
 	painter->paintImage(m_image.get(), m_position.width, m_position.height);
 }
 
-void CJiraIconNode::measure(gui::painter* painter)
+gui::node::size CJiraIconNode::measureThis(gui::painter* painter)
 {
-	m_position.width = m_position.height = painter->dpiRescale(16);
+	auto size = painter->dpiRescale(16);
+	return{ (size_t)size, (size_t)size };
 }
 
 CJiraUserNode::CJiraUserNode(const std::weak_ptr<CJiraDocument>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip)
@@ -379,12 +471,12 @@ void CJiraUserNode::addChild(const std::shared_ptr<node>& /*child*/)
 	// noop
 }
 
-void CJiraUserNode::paint(gui::painter* painter)
+void CJiraUserNode::paintThis(gui::painter* painter)
 {
 	painter->paintImage(m_image.get(), m_position.width, m_position.height);
 }
 
-void CJiraUserNode::measure(gui::painter* painter)
+gui::node::size CJiraUserNode::measureThis(gui::painter* painter)
 {
 	auto size = (size_t)painter->dpiRescale(16);
 	auto selected = 0;
@@ -421,10 +513,9 @@ void CJiraUserNode::measure(gui::painter* painter)
 	}
 
 	if (selected == m_selectedSize)
-		return;
+		return{ size, size };
 
 	m_selectedSize = selected;
-	m_position.width = m_position.height = size;
 
 	if (m_image)
 		m_image->unregisterListener(m_cb);
@@ -437,6 +528,8 @@ void CJiraUserNode::measure(gui::painter* painter)
 
 	if (m_image)
 		m_image->registerListener(m_cb);
+
+	return{ size, size };
 }
 
 CJiraLinkNode::CJiraLinkNode(const std::string& href)
@@ -452,20 +545,14 @@ CJiraTextNode::CJiraTextNode(const std::string& text)
 	m_data[Attr::Text] = text;
 }
 
-void CJiraTextNode::paint(gui::painter* painter)
+void CJiraTextNode::paintThis(gui::painter* painter)
 {
-	StyleSaver saver{ painter, this };
-
 	painter->paintString(m_data[Attr::Text]);
 }
 
-void CJiraTextNode::measure(gui::painter* painter)
+gui::node::size CJiraTextNode::measureThis(gui::painter* painter)
 {
-	StyleSaver saver{ painter, this };
-
-	auto size = painter->measureString(m_data[Attr::Text]);
-	m_position.width = size.width;
-	m_position.height = size.height;
+	return painter->measureString(m_data[Attr::Text]);
 }
 
 CJiraDocument::CJiraDocument(std::shared_ptr<gui::image_ref>(*creator)(const std::shared_ptr<jira::server>&, const std::string&))
@@ -574,6 +661,7 @@ void CJiraTableNode::addChild(const std::shared_ptr<gui::node>& child)
 
 void CJiraTableNode::measure(gui::painter* painter)
 {
+	calculateStyles();
 	StyleSaver saver{ painter, this };
 
 	size_t columns = 0;
@@ -601,6 +689,11 @@ void CJiraTableNode::measure(gui::painter* painter)
 	m_position.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
 }
 
+gui::node::size CJiraTableNode::measureThis(gui::painter* painter)
+{
+	return{ 0, 0 };
+}
+
 CJiraTableRowNode::CJiraTableRowNode(gui::elem name)
 	: CJiraNode(name)
 {
@@ -611,12 +704,10 @@ void CJiraTableRowNode::setColumns(const std::shared_ptr<std::vector<size_t>>& c
 	m_columns = columns;
 }
 
-void CJiraTableRowNode::measure(gui::painter* painter)
+gui::node::size CJiraTableRowNode::measureThis(gui::painter* /*painter*/)
 {
 	if (!m_columns)
-		return;
-
-	CJiraNode::measure(painter);
+		return{ 0,0 };
 
 	auto it = m_columns->begin();
 	for (auto& node : children()) {
@@ -625,6 +716,8 @@ void CJiraTableRowNode::measure(gui::painter* painter)
 			*it = sz.width;
 		++it;
 	}
+
+	return{ 0,0 };
 }
 
 void CJiraTableRowNode::repositionChildren()
@@ -704,10 +797,8 @@ void CJiraReportElement::addChild(const std::shared_ptr<gui::node>& /*child*/)
 	// noop
 }
 
-void CJiraReportElement::measure(gui::painter* painter)
+gui::node::size CJiraReportElement::measureThis(gui::painter* painter)
 {
-	StyleSaver saver{ painter, this };
-
 	size_t height = 0;
 	size_t width = 0;
 	for (auto& node : m_children) {
@@ -720,8 +811,7 @@ void CJiraReportElement::measure(gui::painter* painter)
 			width = size.width;
 	}
 
-	m_position.height = height;
-	m_position.width = width;
+	return{ width, height };
 }
 
 void CJiraReportElement::invalidate(int x, int y, size_t width, size_t height)
