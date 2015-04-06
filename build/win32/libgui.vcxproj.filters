@@ -32,11 +32,17 @@
     <ClCompile Include="..\..\libs\libgui\src\hotkey.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libs\libgui\src\win32\win32_action.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\libs\libgui\src\font_awesome.cc">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_action.cpp">
+      <Filter>src\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_menu.cpp">
+      <Filter>src\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_hotkey.cpp">
+      <Filter>src\win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -77,6 +83,9 @@
       <Filter>inc\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libs\libgui\inc\gui\styles.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\menu.hpp">
       <Filter>inc\gui</Filter>
     </ClInclude>
   </ItemGroup>

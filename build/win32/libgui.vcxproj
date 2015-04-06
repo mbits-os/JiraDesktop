@@ -54,6 +54,8 @@
     <ClCompile Include="..\..\libs\libgui\src\hotkey.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\settings.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_action.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_hotkey.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_menu.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_settings.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -63,6 +65,7 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\hotkey.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\image.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\listeners.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\menu.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\node.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\settings.hpp" />

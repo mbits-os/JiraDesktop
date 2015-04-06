@@ -48,6 +48,7 @@ namespace gui {
 		std::string m_text;
 		hotkey m_hotkey;
 		std::function<void()> m_fn;
+		uint16_t m_osId = 0;
 	public:
 		action(const std::shared_ptr<icon>& icon, const std::string& text, const hotkey& hotkey, const std::function<void()>& f)
 			: m_icon(icon)
@@ -59,6 +60,8 @@ namespace gui {
 		const std::shared_ptr<icon>& icon() const { return m_icon; }
 		const std::string& text() const { return m_text; }
 		const hotkey& hotkey() const { return m_hotkey; }
+		uint16_t id() const { return m_osId; }
+		void id(uint16_t val) { m_osId = val; }
 
 		void call() { if (m_fn) m_fn(); }
 	};

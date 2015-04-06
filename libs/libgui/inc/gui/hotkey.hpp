@@ -167,6 +167,7 @@ public:
 
 	modifiers operator|(const modifiers& mods) const { return m_value | mods.m_value; }
 	modifiers operator&(const modifiers& mods) const { return m_value & mods.m_value; }
+	bool operator==(const modifiers& mods) const { return m_value == mods.m_value; }
 
 	explicit operator bool() const { return !!m_value; }
 };
@@ -197,4 +198,15 @@ public:
 	char c_key() const { return m_c_key; }
 
 	std::string name() const;
+
+	bool operator == (const hotkey& rhs) const {
+		return m_mods == rhs.m_mods
+			&& m_v_key == rhs.m_v_key
+			&& m_c_key == rhs.m_c_key;
+	};
 };
+
+#ifdef _WIN32
+uint16_t vk2win32(vk val);
+uint8_t mods2win32(const modifiers& val);
+#endif
