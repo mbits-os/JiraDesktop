@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AppModel.h"
+#include <gui/styles.hpp>
 
 enum class Attr {
 	Text,
@@ -44,6 +45,10 @@ public:
 	bool hasTooltip() const override;
 	const std::string& getTooltip() const override;
 
+	std::shared_ptr<styles::rule_storage> calculatedStyle() const override;
+	std::shared_ptr<styles::stylesheet> styles() const override;
+	void applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet) override;
+
 	void openLink(const std::string& url);
 
 protected:
@@ -62,6 +67,12 @@ protected:
 	std::atomic<int> m_hoverCount{ 0 };
 	std::atomic<int> m_activeCount{ 0 };
 	gui::cursor m_cursor = gui::cursor::inherited;
+
+	std::shared_ptr<styles::rule_storage> m_calculated;
+	std::shared_ptr<styles::rule_storage> m_calculatedHover;
+	std::shared_ptr<styles::rule_storage> m_calculatedActive;
+	std::shared_ptr<styles::rule_storage> m_calculatedHoverActive;
+	std::shared_ptr<styles::stylesheet> m_allApplying;
 };
 
 class ImageCb

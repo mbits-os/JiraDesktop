@@ -277,6 +277,37 @@ const std::string& CJiraNode::getTooltip() const
 	return dummy;
 }
 
+std::shared_ptr<styles::rule_storage> CJiraNode::calculatedStyle() const
+{
+	if (getHovered()) {
+		return getActive() ? m_calculatedHoverActive : m_calculatedHover;
+	}
+
+	return getActive() ? m_calculatedActive : m_calculated;
+}
+
+std::shared_ptr<styles::stylesheet> CJiraNode::styles() const
+{
+	return m_allApplying;
+}
+
+void CJiraNode::applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet)
+{
+	m_calculated.reset();
+	m_calculatedHover.reset();
+	m_calculatedActive.reset();
+	m_calculatedHoverActive.reset();
+	m_allApplying = std::make_shared<styles::stylesheet>();
+
+	for (auto& rules : stylesheet->m_rules) {
+		if (rules->m_sel.maySelect(this))
+			m_allApplying->m_rules.push_back(rules);
+	}
+
+	for (auto& node : children())
+		node->applyStyles(stylesheet);
+}
+
 void ImageCb::onImageChange(gui::image_ref*)
 {
 	auto par = parent.lock();

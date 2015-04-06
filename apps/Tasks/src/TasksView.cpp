@@ -577,14 +577,16 @@ namespace {
 		}
 	};
 
-	styles::stylesheet stylesheetCreate()
+	std::shared_ptr<styles::stylesheet> stylesheetCreate()
 	{
 		using namespace styles::literals;
 		using namespace styles;
 
 		auto none_empty = italic() << color(0x555555);
 
-		return styles::stylesheet{}
+		styles::stylesheet out;
+
+		out
 			.add(gui::elem::header,                        fontSize(1.8_em) << color(0x883333))
 			.add(gui::elem::table_head,                    fontWeight(weight::bold) << textAlign(align::center))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
@@ -597,11 +599,13 @@ namespace {
 			.add(class_name{ "summary" },                  fontSize(.8_em) << color(0x555555))
 			.add(class_name{ "symbol" },                   fontFamily("FontAwesome"))
 			.add(class_name{ "unexpected" },               color(0x2600E6));
+
+		return std::make_shared<styles::stylesheet>(std::move(out));
 	};
 
-	const styles::stylesheet& stylesheet()
+	const std::shared_ptr<styles::stylesheet>& stylesheet()
 	{
-		static styles::stylesheet sheet = stylesheetCreate();
+		static std::shared_ptr<styles::stylesheet> sheet = stylesheetCreate();
 		return sheet;
 	}
 
@@ -610,7 +614,7 @@ namespace {
 		auto& sheet = stylesheet();
 
 		styles::rule_storage active;
-		for (auto& rules : sheet.m_rules) {
+		for (auto& rules : sheet->m_rules) {
 			if (rules->m_sel.selects(node))
 				active <<= *rules;
 		}
