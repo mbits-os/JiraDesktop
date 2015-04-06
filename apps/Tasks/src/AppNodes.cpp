@@ -769,6 +769,7 @@ void CJiraReportElement::addChildren(const jira::server& server)
 					node->setTooltip(tooltip);
 				header->addChild(node);
 			}
+			table->addChild(header);
 		}
 
 		for (auto& record : dataset->data)
