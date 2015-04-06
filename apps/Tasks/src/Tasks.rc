@@ -79,31 +79,6 @@ IDR_MAINFRAME_OLD       BITMAP                  "..\\res\\toolbar_old.bmp"
 // Menu
 //
 
-IDR_MAINFRAME MENU
-BEGIN
-    POPUP "&Tasks"
-    BEGIN
-        MENUITEM "New &Connection\tCtrl+N",     ID_FILE_NEW
-        MENUITEM "&Refresh All\tF5",            ID_TASKS_REFRESH
-        MENUITEM SEPARATOR
-        MENUITEM "E&xit",                       ID_APP_EXIT
-    END
-    POPUP "&Connections"
-    BEGIN
-        MENUITEM "&Edit",                       ID_CONNECTIONS_EDIT
-        MENUITEM "&Refersh",                    ID_CONNECTIONS_REFERSH
-        MENUITEM SEPARATOR
-        MENUITEM "&Go To Issue",                ID_CONNECTIONS_GOTO
-        MENUITEM "Log &Work",                   ID_CONNECTIONS_LOGWORK, INACTIVE
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "Show &Licences",              ID_HELP_SHOWLICENCES
-        MENUITEM SEPARATOR
-        MENUITEM "&About Tasks",                ID_APP_ABOUT
-    END
-END
-
 IDR_TASKBAR MENU
 BEGIN
     POPUP "Taskbar"
@@ -194,18 +169,6 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Accelerator
-//
-
-IDR_MAINFRAME ACCELERATORS
-BEGIN
-    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
-    VK_F5,          ID_TASKS_REFRESH,       VIRTKEY, NOINVERT
-END
 
 
 /////////////////////////////////////////////////////////////////////////////

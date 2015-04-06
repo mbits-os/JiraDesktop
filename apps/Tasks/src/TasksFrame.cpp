@@ -74,6 +74,12 @@ BOOL CTasksFrame::OnIdle()
 	return FALSE;
 }
 
+void CTasksFrame::rebuildAccel()
+{
+	m_hAccel = m_menubarManager.createAccel();
+}
+
+
 LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	// Check if Common Controls 6.0 are used. If yes, use 32-bit (alpha) images
@@ -84,6 +90,8 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	HRESULT hRet = AtlGetCommCtrlVersion(&dwMajor, &dwMinor);
 	if (SUCCEEDED(hRet) && dwMajor >= 6)
 		uResID = IDR_MAINFRAME;
+
+	createItems();
 
 	//CreateSimpleToolBar(uResID);
 
@@ -149,27 +157,9 @@ LRESULT CTasksFrame::OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
 	return 0;
 }
 
-LRESULT CTasksFrame::OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+LRESULT CTasksFrame::OnCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
-	exitApplication();
-	return 0;
-}
-
-LRESULT CTasksFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-{
-	newConnection();
-	return 0;
-}
-
-LRESULT CTasksFrame::OnTasksRefersh(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-{
-	refreshAll();
-	return 0;
-}
-
-LRESULT CTasksFrame::OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-{
-	about();
+	bHandled = onCommand(LOWORD(wParam)) ? TRUE : FALSE;
 	return 0;
 }
 

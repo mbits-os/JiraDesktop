@@ -55,6 +55,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\apps\Tasks\src\Tasks.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\TasksActions.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\TasksFrame.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\TasksView.cpp" />
   </ItemGroup>
@@ -70,6 +71,7 @@
     <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TaskBarIcon.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\Tasks.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\TasksActions.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksFrame.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksView.h" />
     <ClInclude Include="..\..\apps\Tasks\src\resource.h" />

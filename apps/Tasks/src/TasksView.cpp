@@ -1038,6 +1038,7 @@ void CTasksView::updateCursorAndTooltip(bool force)
 	updateCursor(force);
 	updateTooltip(force);
 
+#if 0
 	if (m_hovered) {
 		OutputDebugString(L"======================================================\n");
 		auto node = m_hovered;
@@ -1068,6 +1069,7 @@ void CTasksView::updateCursorAndTooltip(bool force)
 		}
 		OutputDebugString(L"======================================================\n");
 	}
+#endif
 }
 
 std::shared_ptr<gui::node> CTasksView::nodeFromPoint()

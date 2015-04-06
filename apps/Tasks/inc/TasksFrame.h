@@ -6,6 +6,7 @@
 
 #include "TaskBarIcon.h"
 #include "AppModel.h"
+#include "TasksActions.h"
 
 class CScrollContainerEx : public CScrollContainerImpl<CScrollContainerEx>
 {
@@ -19,6 +20,7 @@ class CTasksFrame
 	, public CUpdateUI<CTasksFrame>
 	, public CMessageFilter
 	, public CIdleHandler
+	, public CTasksActions<CTasksFrame>
 {
 	using CFameSuper = CFrameWindowImpl<CTasksFrame, CWindow, CTasksFrameWinTraits>;
 public:
@@ -33,17 +35,16 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();
 
+	void rebuildAccel();
+
 	BEGIN_UPDATE_UI_MAP(CTasksFrame)
 	END_UPDATE_UI_MAP()
 
 	BEGIN_MSG_MAP(CTasksFrame)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+		MESSAGE_HANDLER(WM_COMMAND, OnCommand)
 		TASKBAR_MESSAGE_HANDLER(m_taskIcon, WM_LBUTTONDOWN, OnTaskIconClick)
-		COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
-		COMMAND_ID_HANDLER(ID_FILE_NEW, OnFileNew)
-		COMMAND_ID_HANDLER(ID_TASKS_REFRESH, OnTasksRefersh)
-		COMMAND_ID_HANDLER(ID_APP_ABOUT, OnAppAbout)
 		CHAIN_MSG_MAP(CUpdateUI<CTasksFrame>)
 		CHAIN_MSG_MAP(CFameSuper)
 		CHAIN_MSG_MAP_MEMBER(m_taskIcon)
@@ -56,11 +57,8 @@ public:
 
 	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
+	LRESULT OnCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/);
-	LRESULT OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
-	LRESULT OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
-	LRESULT OnTasksRefersh(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
-	LRESULT OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
 	void newConnection();
 	void refreshAll();
