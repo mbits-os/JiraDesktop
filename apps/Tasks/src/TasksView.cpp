@@ -624,15 +624,9 @@ namespace {
 
 	void Style::apply(Style& style, gui::elem /*name*/, gui::node* node)
 	{
-		auto& sheet = stylesheet();
-
-		styles::rule_storage active;
-		for (auto& rules : sheet->m_rules) {
-			if (rules->m_sel.selects(node))
-				active <<= *rules;
-		}
-
-		style.batchApply(active);
+		auto active = node->calculatedStyle();
+		if (active)
+			style.batchApply(*active);
 	}
 
 #if 0
@@ -728,8 +722,6 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 	if (m_cheatsheet)
 		paintNode(control, m_cheatsheet);
-
-	//dc.Draw3dRect(m_mouseX - 3, m_mouseY - 3, 6, 6, 0x000080, 0x000080);
 
 	return 0;
 }
