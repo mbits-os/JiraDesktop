@@ -17,6 +17,10 @@
 #include "gui/font_awesome.hh"
 #endif
 
+namespace {
+	const std::shared_ptr<styles::stylesheet>& stylesheet();
+}
+
 class TaskViewModelListener : public CAppModelListener {
 	HWND m_hWnd;
 public:
@@ -73,14 +77,20 @@ CTasksView::ServerInfo::ServerInfo(const std::shared_ptr<jira::server>& server, 
 	, m_sessionId(server->sessionId())
 {
 	m_server->registerListener(m_listener);
-	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, make_invalidator(hWnd));
-	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*server);
+	buildPlaque(hWnd);
 }
 
 CTasksView::ServerInfo::~ServerInfo()
 {
 	if (m_server && m_listener)
 		m_server->unregisterListener(m_listener);
+}
+
+void CTasksView::ServerInfo::buildPlaque(HWND hWnd)
+{
+	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, make_invalidator(hWnd));
+	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*m_server);
+	m_plaque->applyStyles(stylesheet());
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
@@ -156,6 +166,7 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 		}
 	}
 	m_cheatsheet = glyphs;
+	m_cheatsheet->applyStyles(stylesheet());
 #endif
 	return 0;
 }
@@ -839,10 +850,82 @@ void CTasksView::updateTooltip(bool /*force*/)
 	}
 }
 
+static std::string to_string(gui::elem name)
+{
+	using namespace gui;
+	switch (name) {
+	case elem::unspecified: return{}; break;
+	case elem::body: return "body"; break;
+	case elem::block: return "block"; break;
+	case elem::header: return "header"; break;
+	case elem::span: return "span"; break;
+	case elem::text: return "text"; break;
+	case elem::link: return "link"; break;
+	case elem::image: return "image"; break;
+	case elem::icon: return "icon"; break;
+	case elem::table: return "table"; break;
+	case elem::table_head: return "t-head"; break;
+	case elem::table_row: return "t-row"; break;
+	case elem::th: return "th"; break;
+	case elem::td: return "td"; break;
+	};
+
+	return "{" + std::to_string((int)name) + "}";
+}
+
+static std::string to_string(const styles::selector& sel)
+{
+	std::string out = to_string(sel.m_elemName);
+
+	for (auto& cl : sel.m_classes) {
+		out.push_back('.');
+		out.append(cl);
+	}
+
+	using namespace styles;
+	switch (sel.m_pseudoClass) {
+	case pseudo::hover: out += ":hover"; break;
+	case pseudo::active: out += ":active"; break;
+	};
+
+	if (out.empty())
+		out = "*";
+	return out;
+}
+
 void CTasksView::updateCursorAndTooltip(bool force)
 {
 	updateCursor(force);
 	updateTooltip(force);
+
+	if (m_hovered) {
+		OutputDebugString(L"======================================================\n");
+		auto node = m_hovered;
+		while (node) {
+			{
+				std::string klass = "(";
+				klass.append(to_string(node->getNodeName()));
+				for (auto& kl : node->getClassNames()) {
+					klass.push_back('.');
+					klass.append(kl);
+				}
+				klass += ")\n";
+				OutputDebugStringA(klass.c_str());
+			}
+			auto styles = node->styles();
+			if (!styles) {
+				OutputDebugString(L"!!!\n");
+			} else {
+				for (auto& rule : styles->m_rules) {
+					OutputDebugStringA((to_string(rule->m_sel) + "\n").c_str());
+				}
+			}
+			node = node->getParent();
+			if (node)
+				OutputDebugString(L"------------------------------------------------------\n");
+		}
+		OutputDebugString(L"======================================================\n");
+	}
 }
 
 std::shared_ptr<gui::node> CTasksView::nodeFromPoint()
@@ -855,6 +938,9 @@ std::shared_ptr<gui::node> CTasksView::nodeFromPoint()
 		if (tmp)
 			return tmp;
 	}
+
+	if (m_cheatsheet)
+		return m_cheatsheet->nodeFromPoint(m_mouseX, m_mouseY);
 
 	return{};
 }
@@ -1033,8 +1119,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	it->m_plaque = std::make_unique<CJiraReportElement>(it->m_dataset, make_invalidator(m_hWnd));
-	std::static_pointer_cast<CJiraReportElement>(it->m_plaque)->addChildren(server);
+	it->buildPlaque(m_hWnd);
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();
