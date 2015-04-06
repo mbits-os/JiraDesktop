@@ -128,7 +128,22 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	pLoop->AddMessageFilter(this);
 	pLoop->AddIdleHandler(this);
 
-	m_taskIcon.Install(m_hWnd, 1, IDR_TASKBAR);
+	auto toolbar_menu = createMenuBar({ menu::popup({
+		toolbar_default,
+		menu::separator(),
+		tasks_new,
+		tasks_refresh,
+		menu::separator(),
+		help_licences,
+		help_about,
+		menu::separator(),
+		tasks_exit
+	})});
+
+	auto toolbar_icon = icon_taskbar->getNativeIcon(GetSystemMetrics(SM_CXSMICON));
+	icon_taskbar->detachIcon();
+
+	m_taskIcon.Install(m_hWnd, 1, toolbar_icon, toolbar_menu);
 
 	auto hwnd = m_hWnd;
 

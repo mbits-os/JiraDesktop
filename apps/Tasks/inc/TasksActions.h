@@ -18,6 +18,7 @@ public:
 struct CTasksActionsBase {
 	Win32Manager m_menubarManager{ 32782 }; // _APS_NEXT_COMMAND_VALUE at the time of writing this text
 
+	std::shared_ptr<gui::action> toolbar_default;
 	std::shared_ptr<gui::action> tasks_new;
 	std::shared_ptr<gui::action> tasks_refresh;
 	std::shared_ptr<gui::action> tasks_setup;
@@ -52,10 +53,11 @@ struct CTasksActions : CTasksActionsBase {
 		auto ico_licences = gui::make_fa_icon({ { fa::glyph::bank,    0x444444, 5, 4 } });
 		auto ico_about    = gui::make_fa_icon({ { fa::glyph::circle,  0xFFFFFF, 3, 2 },{ fa::glyph::question_circle, 0x428BCA, 3, 2 } });
 
-		icon_taskbar      = gui::make_fa_icon({ { fa::glyph::circle,  0x66cc66, 3, 2 },{ fa::glyph::globe,           0x6666cc, 3, 2 } });
+		icon_taskbar      = gui::make_fa_icon({ { fa::glyph::tasks,   0x222222, 3, 2 } });
 
 		auto pThis = static_cast<T*>(this);
 
+		toolbar_default = gui::make_action(ico_none,   "Show/hide Tasks",    {},                        {},               [pThis] { pThis->showHide(); });
 		tasks_new     = gui::make_action(ico_new_file, "New &Connection...", { modifier::ctrl, vk::N }, "New Connection", [pThis] { pThis->newConnection(); });
 		tasks_refresh = gui::make_action(ico_refresh,  "&Refresh All",       { vk::F5 },                "Refresh All",    [pThis] { pThis->refreshAll(); });
 		tasks_setup   = gui::make_action(ico_setup,    "&Settings...",       { },                       "Settings");
@@ -107,6 +109,7 @@ struct CTasksActions : CTasksActionsBase {
 		}, pThis->m_hWnd);
 	};
 
+	void showHide() {}
 	void newConnection() {}
 	void refreshAll() {}
 	void exitApplication() {}

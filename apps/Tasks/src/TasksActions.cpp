@@ -80,8 +80,6 @@ HMENU CTasksActionsBase::createMenuBar(const std::initializer_list<menu::item>& 
 	CMenu menu;
 	menu.CreateMenu();
 
-	m_menubarManager.clear();
-
 	for (auto& item : items) {
 		if (item.type() != menu::itemtype::submenu)
 			continue;
