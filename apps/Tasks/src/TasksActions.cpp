@@ -6,7 +6,6 @@
 #include <gui/menu.hpp>
 #include <map>
 
-
 Win32Manager::Win32Manager(menu::command_id firstId)
 	: m_lastId(firstId - 1)
 {
@@ -99,4 +98,61 @@ HMENU CTasksActionsBase::createMenuBar(const std::initializer_list<menu::item>& 
 	}
 
 	return menu.Detach();
+}
+
+HWND CTasksActionsBase::createToolbar(const std::initializer_list<menu::item>& items, HWND hWndParent, DWORD dwStyle, UINT nID)
+{
+	HINSTANCE hInst = ModuleHelper::GetResourceInstance();
+	size_t count = items.size();
+	auto btns = std::make_unique<TBBUTTON[]>(count);
+
+	const int cxSeparator = 8;
+	int nBmp = 0;
+
+	auto cx = GetSystemMetrics(SM_CXSMICON);
+	HIMAGELIST hImageList = ImageList_Create(cx, cx, ILC_COLOR32, 1, 5);
+	ATLASSERT(hImageList != nullptr);
+
+	auto dest = btns.get();
+	for (auto& item : items) {
+		auto& btn = *dest++;
+
+		if (item.type() == menu::itemtype::action)
+		{
+			auto image = item.action()->icon()->getNativeBitmap(cx);
+
+			btn.iBitmap = ImageList_Add(hImageList, image, nullptr);
+			btn.idCommand = item.action()->id();
+			btn.fsState = TBSTATE_ENABLED;
+			btn.fsStyle = BTNS_BUTTON;
+			btn.dwData = 0;
+			btn.iString = 0;
+		}
+		else if (item.type() == menu::itemtype::separator)
+		{
+			btn.iBitmap = cxSeparator;
+			btn.idCommand = 0;
+			btn.fsState = 0;
+			btn.fsStyle = BTNS_SEP;
+			btn.dwData = 0;
+			btn.iString = 0;
+		} else
+			--count;
+	}
+
+	HWND hWnd = ::CreateWindowEx(0, TOOLBARCLASSNAME, nullptr, dwStyle, 0, 0, 100, 100, hWndParent, (HMENU)LongToHandle(nID), ModuleHelper::GetModuleInstance(), nullptr);
+	if (hWnd == nullptr)
+	{
+		ATLASSERT(FALSE);
+		return nullptr;
+	}
+
+	::SendMessage(hWnd, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0L);
+	::SendMessage(hWnd, TB_SETIMAGELIST, 0, (LPARAM)hImageList);
+	::SendMessage(hWnd, TB_ADDBUTTONS, count, (LPARAM)btns.get());
+	::SendMessage(hWnd, TB_SETBITMAPSIZE, 0, MAKELONG(cx, cx));
+	const int cxyButtonMargin = 7;
+	::SendMessage(hWnd, TB_SETBUTTONSIZE, 0, MAKELONG(cx + cxyButtonMargin, cx + cxyButtonMargin));
+
+	return hWnd;
 }

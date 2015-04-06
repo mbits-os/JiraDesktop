@@ -36,6 +36,7 @@ struct CTasksActionsBase {
 
 	bool onCommand(menu::command_id cmd);
 	HMENU createMenuBar(const std::initializer_list<menu::item>& items);
+	HWND createToolbar(const std::initializer_list<menu::item>& items, HWND hWndParent, DWORD dwStyle = ATL_SIMPLE_TOOLBAR_STYLE, UINT nID = ATL_IDW_TOOLBAR);
 };
 
 template <typename T>
@@ -45,7 +46,7 @@ struct CTasksActions : CTasksActionsBase {
 		std::shared_ptr<gui::icon> ico_none;
 		auto ico_new_file = gui::make_fa_icon({ { fa::glyph::file,    0xFFFFFF }, { fa::glyph::file_o } });
 		auto ico_refresh  = gui::make_fa_icon({ { fa::glyph::refresh } });
-		auto ico_setup    = gui::make_fa_icon({ { fa::glyph::wrench,  0xEB9316 } });
+		auto ico_setup    = gui::make_fa_icon({ { fa::glyph::wrench,  0x444444 } });
 		auto ico_edit     = gui::make_fa_icon({ { fa::glyph::pencil } });
 		auto ico_link     = gui::make_fa_icon({ { fa::glyph::chain,   0x419641, 5, 4 } });
 		auto ico_licences = gui::make_fa_icon({ { fa::glyph::bank,    0x444444, 5, 4 } });
@@ -55,10 +56,10 @@ struct CTasksActions : CTasksActionsBase {
 
 		auto pThis = static_cast<T*>(this);
 
-		tasks_new     = gui::make_action(ico_new_file, "New &Connection...", { modifier::ctrl, vk::N }, [pThis] { pThis->newConnection(); });
-		tasks_refresh = gui::make_action(ico_refresh,  "&Refresh All",       { vk::F5 },                [pThis] { pThis->refreshAll(); });
-		tasks_setup   = gui::make_action(ico_setup,    "&Settings...");
-		tasks_exit    = gui::make_action(ico_none,     "E&xit",              { modifier::alt, vk::F4 }, [pThis] { pThis->exitApplication(); });
+		tasks_new     = gui::make_action(ico_new_file, "New &Connection...", { modifier::ctrl, vk::N }, "New Connection", [pThis] { pThis->newConnection(); });
+		tasks_refresh = gui::make_action(ico_refresh,  "&Refresh All",       { vk::F5 },                "Refresh All",    [pThis] { pThis->refreshAll(); });
+		tasks_setup   = gui::make_action(ico_setup,    "&Settings...",       { },                       "Settings");
+		tasks_exit    = gui::make_action(ico_none,     "E&xit",              { modifier::alt, vk::F4 }, "Exit",           [pThis] { pThis->exitApplication(); });
 
 		conn_edit     = gui::make_action(ico_edit,     "&Edit...");
 		conn_refresh  = gui::make_action(ico_none,     "&Refresh");
@@ -66,8 +67,8 @@ struct CTasksActions : CTasksActionsBase {
 		conn_goto     = gui::make_action(ico_link,     "&Go To Issue");
 		conn_logwork  = gui::make_action(ico_none,     "Log &Work...");
 
-		help_licences = gui::make_action(ico_licences, "Show &Licences",    {},                         [pThis] { pThis->showLicence(); });
-		help_about    = gui::make_action(ico_about,    "&About Tasks...",   {},                         [pThis] { pThis->about(); });
+		help_licences = gui::make_action(ico_licences, "Show &Licences",    {},                         "Licences",       [pThis] { pThis->showLicence(); });
+		help_about    = gui::make_action(ico_about,    "&About Tasks...",   {},                         "About Tasks",    [pThis] { pThis->about(); });
 
 		pThis->SetMenu(createMenuBar({
 			menu::submenu(gui::make_action({}, "&Tasks"),{
@@ -94,6 +95,16 @@ struct CTasksActions : CTasksActionsBase {
 				help_about,
 			}),
 		}));
+
+		pThis->m_hWndToolBar = createToolbar({
+			tasks_new,
+			menu::separator(),
+			tasks_refresh,
+			tasks_setup,
+			menu::separator(),
+			help_licences,
+			help_about,
+		}, pThis->m_hWnd);
 	};
 
 	void newConnection() {}

@@ -79,7 +79,6 @@ void CTasksFrame::rebuildAccel()
 	m_hAccel = m_menubarManager.createAccel();
 }
 
-
 LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	// Check if Common Controls 6.0 are used. If yes, use 32-bit (alpha) images
@@ -92,8 +91,6 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 		uResID = IDR_MAINFRAME;
 
 	createItems();
-
-	//CreateSimpleToolBar(uResID);
 
 	m_view.m_model = m_model;
 
@@ -160,6 +157,67 @@ LRESULT CTasksFrame::OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
 LRESULT CTasksFrame::OnCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
 	bHandled = onCommand(LOWORD(wParam)) ? TRUE : FALSE;
+	return 0;
+}
+
+std::string Wide2ACP(const std::wstring& s) {
+	auto size = WideCharToMultiByte(CP_ACP, 0, (wchar_t*)s.c_str(), -1, nullptr, 0, nullptr, nullptr);
+	std::unique_ptr<char[]> out{ new char[size + 1] };
+	WideCharToMultiByte(CP_ACP, 0, (wchar_t*)s.c_str(), -1, out.get(), size + 1, nullptr, nullptr);
+	return out.get();
+}
+
+LRESULT CTasksFrame::OnToolTipTextA(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/)
+{
+	LPNMTTDISPINFOA pDispInfo = (LPNMTTDISPINFOA)pnmh;
+	if ((idCtrl != 0) && !(pDispInfo->uFlags & TTF_IDISHWND))
+	{
+		const int cchBuff = 256;
+		char szBuff[cchBuff] = { 0 };
+		auto action = m_menubarManager.find(LOWORD(idCtrl));
+		if (action) {
+			auto tool = action->tooltip();
+			if (!tool.empty()) {
+				auto key = action->hotkey().name();
+				if (!key.empty())
+					tool += " (" + key + ")";
+
+				auto ui = Wide2ACP(utf::widen(tool));
+				SecureHelper::strncpyA_x(pDispInfo->szText, _countof(pDispInfo->szText), ui.c_str(), _TRUNCATE);
+#if (_WIN32_IE >= 0x0300)
+				pDispInfo->uFlags |= TTF_DI_SETITEM;
+#endif // (_WIN32_IE >= 0x0300)
+			}
+		}
+	}
+
+	return 0;
+}
+
+LRESULT CTasksFrame::OnToolTipTextW(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/)
+{
+	LPNMTTDISPINFOW pDispInfo = (LPNMTTDISPINFOW)pnmh;
+	if ((idCtrl != 0) && !(pDispInfo->uFlags & TTF_IDISHWND))
+	{
+		const int cchBuff = 256;
+		char szBuff[cchBuff] = { 0 };
+		auto action = m_menubarManager.find(LOWORD(idCtrl));
+		if (action) {
+			auto tool = action->tooltip();
+			if (!tool.empty()) {
+				auto key = action->hotkey().name();
+				if (!key.empty())
+					tool += " (" + key + ")";
+
+				auto ui = utf::widen(tool);
+				SecureHelper::strncpyW_x(pDispInfo->szText, _countof(pDispInfo->szText), ui.c_str(), _TRUNCATE);
+#if (_WIN32_IE >= 0x0300)
+				pDispInfo->uFlags |= TTF_DI_SETITEM;
+#endif // (_WIN32_IE >= 0x0300)
+			}
+		}
+	}
+
 	return 0;
 }
 
