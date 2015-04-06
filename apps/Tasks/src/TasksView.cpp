@@ -895,6 +895,152 @@ static std::string to_string(const styles::selector& sel)
 	return out;
 }
 
+std::string to_string(styles::color_prop prop) {
+	switch(prop) {
+	case styles::prop_color: return "color";
+	case styles::prop_background: return "background";
+	case styles::prop_border_color: return "border-color";
+	};
+
+	return "{" + std::to_string((int)prop) + "}";
+};
+
+std::string to_string(styles::bool_prop prop) {
+	switch(prop) {
+	case styles::prop_italic: return "italic";
+	case styles::prop_underline: return "underline";
+	}
+
+	return "{" + std::to_string((int)prop) + "}";
+};
+std::string to_string(styles::string_prop prop) {
+	switch(prop) {
+	case styles::prop_font_family: return "font-family";
+	}
+
+	return "{" + std::to_string((int)prop) + "}";
+};
+
+std::string to_string(styles::length_prop prop) {
+	switch(prop) {
+	case styles::prop_border_length: return "border-length";
+	case styles::prop_font_size: return "font-size";
+	}
+
+	return "{" + std::to_string((int)prop) + "}";
+};
+std::string to_string(styles::rel_length_prop prop) {
+	switch(prop) {
+	case styles::prop_font_size_em: return "font-size";
+	}
+
+	return "{" + std::to_string((int)prop) + "}";
+};
+
+std::string to_string(styles::font_weight_prop /*prop*/) { return "font-weight"; }
+std::string to_string(styles::text_align_prop /*prop*/) { return "text-align"; }
+std::string to_string(styles::border_style_prop /*prop*/) { return "border-style"; }
+
+std::string to_string(styles::colorref col)
+{
+	char buffer[100];
+	sprintf_s(buffer, "#%06X", col);
+	return buffer;
+};
+
+std::string to_string(bool val)
+{
+	return val ? "true" : "false";
+};
+
+const std::string& to_string(const std::string& val)
+{
+	return val;
+};
+
+std::string to_string(const styles::pixels& val)
+{
+	return std::to_string(val.value()) + "px";
+};
+
+std::string to_string(const styles::ems& val)
+{
+	return std::to_string(val.value()) + "em";
+};
+
+std::string to_string(styles::weight val)
+{
+	switch (val) {
+	case styles::weight::normal: return "normal";
+	case styles::weight::bold: return "bold";
+	case styles::weight::bolder: return "bolder";
+	case styles::weight::lighter: return "lighter";
+	case styles::weight::w100: return "100";
+	case styles::weight::w200: return "200";
+	case styles::weight::w300: return "300";
+	case styles::weight::w400: return "400";
+	case styles::weight::w500: return "500";
+	case styles::weight::w600: return "600";
+	case styles::weight::w700: return "700";
+	case styles::weight::w800: return "800";
+	case styles::weight::w900: return "900";
+	}
+
+	return std::to_string((int)val);
+}
+
+std::string to_string(styles::align val)
+{
+	switch (val) {
+	case styles::align::left: return "left";
+	case styles::align::right: return "right";
+	case styles::align::center: return "center";
+	}
+
+	return std::to_string((int)val);
+}
+
+std::string to_string(styles::line val)
+{
+	switch (val) {
+	case styles::line::none: return "none";
+	case styles::line::solid: return "solid";
+	case styles::line::dot: return "dat";
+	case styles::line::dash: return "dash";
+	}
+
+	return std::to_string((int)val);
+}
+
+template <typename Prop>
+void debug_rule(std::vector<std::pair<std::string, std::string>>& values, Prop prop, const styles::rule_storage* rules) {
+	if (!rules->has(prop))
+		return;
+
+	values.emplace_back(to_string(prop), to_string(rules->get(prop)));
+}
+
+void debug_rules(const styles::rule_storage* rules) {
+	std::vector<std::pair<std::string, std::string>> values;
+	debug_rule(values, styles::prop_color, rules);
+	debug_rule(values, styles::prop_background, rules);
+	debug_rule(values, styles::prop_border_color, rules);
+	debug_rule(values, styles::prop_italic, rules);
+	debug_rule(values, styles::prop_underline, rules);
+	debug_rule(values, styles::prop_font_family, rules);
+	debug_rule(values, styles::prop_border_length, rules);
+	debug_rule(values, styles::prop_font_size, rules);
+	debug_rule(values, styles::prop_font_size_em, rules);
+	debug_rule(values, styles::prop_font_weight, rules);
+	debug_rule(values, styles::prop_text_align, rules);
+	debug_rule(values, styles::prop_border_style, rules);
+
+	std::sort(std::begin(values), std::end(values));
+
+	for (auto& pair : values)
+		OutputDebugStringA(("   " + pair.first + ": " + pair.second + ";\n").c_str());
+};
+
 void CTasksView::updateCursorAndTooltip(bool force)
 {
 	updateCursor(force);
@@ -919,7 +1065,9 @@ void CTasksView::updateCursorAndTooltip(bool force)
 				OutputDebugString(L"!!!\n");
 			} else {
 				for (auto& rule : styles->m_rules) {
-					OutputDebugStringA((to_string(rule->m_sel) + "\n").c_str());
+					OutputDebugStringA((to_string(rule->m_sel) + " {\n").c_str());
+					debug_rules(rule.get());
+					OutputDebugString(L"}\n");
 				}
 			}
 			node = node->getParent();
