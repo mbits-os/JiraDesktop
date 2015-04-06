@@ -549,22 +549,24 @@ namespace {
 		{
 			bool update = false;
 
-			if (rules.has(styles::prop_color))
-				m_styler.setColor(rules.get(styles::prop_color)), update = true;
-			if (rules.has(styles::prop_background))
-				m_styler.setBackground(bk::solid, rules.get(styles::prop_background)), update = true;
-			if (rules.has(styles::prop_italic))
-				m_styler.setFontItalic(rules.get(styles::prop_italic)), update = true;
-			if (rules.has(styles::prop_underline))
-				m_styler.setFontUnderline(rules.get(styles::prop_underline)), update = true;
-			if (rules.has(styles::prop_font_weight))
-				m_styler.setFontWeight(calc(rules.get(styles::prop_font_weight))), update = true;
-			if (rules.has(styles::prop_font_size))
-				m_styler.setFontSize(rules.get(styles::prop_font_size)), update = true;
-			if (rules.has(styles::prop_font_size_em))
-				m_styler.setFontSize(rules.get(styles::prop_font_size_em)), update = true;
-			if (rules.has(styles::prop_font_family)) {
-				auto family = utf::widen(rules.get(styles::prop_font_family));
+			using namespace styles;
+
+			if (rules.has(prop_color))
+				m_styler.setColor(rules.get(prop_color)), update = true;
+			if (rules.has(prop_background))
+				m_styler.setBackground(bk::solid, rules.get(prop_background)), update = true;
+			if (rules.has(prop_italic))
+				m_styler.setFontItalic(rules.get(prop_italic)), update = true;
+			if (rules.has(prop_underline))
+				m_styler.setFontUnderline(rules.get(prop_underline)), update = true;
+			if (rules.has(prop_font_weight))
+				m_styler.setFontWeight(calc(rules.get(prop_font_weight))), update = true;
+			if (rules.has(prop_font_size))
+				m_styler.setFontSize(rules.get(prop_font_size)), update = true;
+			if (rules.has(prop_font_size_em))
+				m_styler.setFontSize(rules.get(prop_font_size_em)), update = true;
+			if (rules.has(prop_font_family)) {
+				auto family = utf::widen(rules.get(prop_font_family));
 				if (family != m_styler.getFontFamily())
 					m_styler.setFontFamily(family), update = true;
 			}
@@ -580,21 +582,21 @@ namespace {
 		using namespace styles::literals;
 		using namespace styles;
 
-		auto none_empty = styles::italic() << styles::color(0x555555);
+		auto none_empty = italic() << color(0x555555);
 
 		return styles::stylesheet{}
-			.add(gui::elem::header,                               fontSize(1.8_em) << styles::color(0x883333))
-			.add(gui::elem::table_head,                           fontWeight(styles::weight::bold) << textAlign(styles::align::center))
-			.add({ gui::elem::table_row, styles::pseudo::hover }, styles::background(0xf8f8f8))
-			.add(gui::elem::link,                                 styles::color(0xAF733B))
-			.add({ gui::elem::link, styles::pseudo::hover },      styles::underline())
-			.add({ gui::elem::link, styles::pseudo::active },     border(styles::line::dot, 1_px, 0xc0c0c0))
-			.add(styles::class_name{ "error" },                   styles::color(0x171BC1))
-			.add(styles::class_name{ "empty" },                   none_empty)
-			.add(styles::class_name{ "none" },                    none_empty)
-			.add(styles::class_name{ "summary" },                 fontSize(.8_em) << styles::color(0x555555))
-			.add(styles::class_name{ "symbol" },                  styles::fontFamily("FontAwesome"))
-			.add(styles::class_name{ "unexpected" },              styles::color(0x2600E6));
+			.add(gui::elem::header,                        fontSize(1.8_em) << color(0x883333))
+			.add(gui::elem::table_head,                    fontWeight(weight::bold) << textAlign(align::center))
+			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
+			.add(gui::elem::link,                          color(0xAF733B))
+			.add({ gui::elem::link, pseudo::hover },       underline())
+			.add({ gui::elem::link, pseudo::active },      border(line::dot, 1_px, 0xc0c0c0))
+			.add(class_name{ "error" },                    color(0x171BC1))
+			.add(class_name{ "empty" },                    none_empty)
+			.add(class_name{ "none" },                     none_empty)
+			.add(class_name{ "summary" },                  fontSize(.8_em) << color(0x555555))
+			.add(class_name{ "symbol" },                   fontFamily("FontAwesome"))
+			.add(class_name{ "unexpected" },               color(0x2600E6));
 	};
 
 	const styles::stylesheet& stylesheet()
@@ -609,8 +611,8 @@ namespace {
 
 		styles::rule_storage active;
 		for (auto& rules : sheet.m_rules) {
-			if (rules.m_sel.selects(node))
-				active <<= rules;
+			if (rules->m_sel.selects(node))
+				active <<= *rules;
 		}
 
 		style.batchApply(active);
