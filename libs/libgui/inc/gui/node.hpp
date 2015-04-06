@@ -68,6 +68,7 @@ namespace gui {
 		virtual void addClass(const std::string& name) = 0;
 		virtual void removeClass(const std::string& name) = 0;
 		virtual bool hasClass(const std::string& name) const = 0;
+		virtual const std::vector<std::string>& getClassNames() const = 0;
 		virtual std::string text() const = 0;
 		virtual void paint(painter* painter) = 0;
 		virtual void measure(painter* painter) = 0;

@@ -16,6 +16,7 @@ public:
 	void addClass(const std::string& name) override;
 	void removeClass(const std::string& name) override;
 	bool hasClass(const std::string& name) const override;
+	const std::vector<std::string>& getClassNames() const override;
 	std::string text() const override;
 	void setTooltip(const std::string& text) override;
 	void addChild(const std::shared_ptr<node>& child) override;

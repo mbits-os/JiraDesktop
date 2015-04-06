@@ -45,6 +45,11 @@ bool CJiraNode::hasClass(const std::string& name) const
 	return it != std::end(m_classes);
 }
 
+const std::vector<std::string>& CJiraNode::getClassNames() const
+{
+	return m_classes;
+}
+
 std::string CJiraNode::text() const
 {
 	auto it = m_data.find(Attr::Text);
