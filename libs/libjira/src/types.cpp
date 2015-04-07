@@ -111,8 +111,9 @@ namespace jira
 			}
 
 			if (!text.empty()) {
-				// TODO: styling - background:#f5f5f5;border:1px solid #ccc;border-radius:3.01px;display:inline-block;padding:1px 5px; margin:0 3px 0 0;
-				return doc->createText(text);
+				auto node = doc->createText(text);
+				node->addClass("label");
+				return node;
 			}
 
 			return doc->createEmpty();
