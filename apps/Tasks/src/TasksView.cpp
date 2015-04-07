@@ -612,7 +612,7 @@ namespace {
 
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
 
-			.add(gui::elem::link,                          color(0xAF733B) << cursor(cur::hand))
+			.add(gui::elem::link,                          color(0xAF733B) << cursor(pointer::hand))
 
 			.add({ gui::elem::link, pseudo::hover },       underline())
 
@@ -796,12 +796,12 @@ void CTasksView::updateLayout()
 
 void CTasksView::updateCursor(bool force)
 {
-	auto tmp = styles::cur::arrow;
+	auto tmp = styles::pointer::arrow;
 	if (m_hovered)
 		tmp = m_hovered->getCursor();
 
-	if (tmp == styles::cur::inherited)
-		tmp = styles::cur::arrow;
+	if (tmp == styles::pointer::inherited)
+		tmp = styles::pointer::arrow;
 
 	if (tmp == m_cursor && !force)
 		return;
@@ -809,7 +809,7 @@ void CTasksView::updateCursor(bool force)
 	m_cursor = tmp;
 	LPCWSTR idc = IDC_ARROW;
 	switch (m_cursor) {
-	case styles::cur::hand:
+	case styles::pointer::hand:
 		idc = IDC_HAND;
 		break;
 	};

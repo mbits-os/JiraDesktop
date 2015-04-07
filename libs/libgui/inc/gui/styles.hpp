@@ -87,7 +87,7 @@ namespace styles {
 		w900 = 900
 	};
 
-	enum class cur {
+	enum class pointer {
 		inherited,
 		arrow,
 		hand
@@ -311,7 +311,7 @@ namespace styles {
 
 	ENUM_PROP(font_weight, weight);
 	ENUM_PROP(text_align, align);
-	ENUM_PROP(cursor, cur);
+	ENUM_PROP(cursor, pointer);
 
 	template <typename Prop>
 	struct storage {
@@ -440,7 +440,7 @@ namespace styles {
 		LENGTH_PROP(font_size, prop_font_size)
 		inline rule_storage font_weight(weight w) { return rule(prop_font_weight, w); }
 		inline rule_storage font_family(const std::string& face) { return rule(prop_font_family, face); }
-		inline rule_storage cursor(cur value) { return rule(prop_cursor, value); }
+		inline rule_storage cursor(pointer value) { return rule(prop_cursor, value); }
 
 #define BORDER_STYLE(side) \
 	inline rule_storage border_ ## side ## _style(line style) { return rule(prop_border_ ## side ## _style, style); }
