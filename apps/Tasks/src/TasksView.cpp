@@ -938,7 +938,17 @@ std::string to_string(styles::length_prop prop) {
 
 std::string to_string(styles::font_weight_prop /*prop*/) { return "font-weight"; }
 std::string to_string(styles::text_align_prop /*prop*/) { return "text-align"; }
-std::string to_string(styles::border_style_prop /*prop*/) { return "border-style"; }
+
+std::string to_string(styles::border_style_prop prop) {
+	switch (prop) {
+	case styles::prop_border_top_style: return "border-top-style";
+	case styles::prop_border_right_style: return "border-right-style";
+	case styles::prop_border_bottom_style: return "border-bottom-style";
+	case styles::prop_border_left_style: return "border-left-style";
+	};
+
+	return "{" + std::to_string((int)prop) + "}";
+}
 
 std::string to_string(styles::colorref col)
 {
@@ -1049,7 +1059,10 @@ void debug_rules(const styles::rule_storage* rules) {
 	debug_rule(values, styles::prop_padding_left, rules);
 	debug_rule(values, styles::prop_font_weight, rules);
 	debug_rule(values, styles::prop_text_align, rules);
-	debug_rule(values, styles::prop_border_style, rules);
+	debug_rule(values, styles::prop_border_top_style, rules);
+	debug_rule(values, styles::prop_border_right_style, rules);
+	debug_rule(values, styles::prop_border_bottom_style, rules);
+	debug_rule(values, styles::prop_border_left_style, rules);
 
 	std::sort(std::begin(values), std::end(values));
 

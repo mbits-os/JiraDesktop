@@ -269,13 +269,20 @@ namespace styles {
 	};
 	template <> struct prop_traits<length_prop> : prop_traits_impl<length_u, const length_u&>{};
 
+	enum border_style_prop {
+		prop_border_top_style,
+		prop_border_right_style,
+		prop_border_bottom_style,
+		prop_border_left_style
+	};
+	template <> struct prop_traits<border_style_prop> : prop_traits_impl<line>{};
+
 #define ENUM_PROP(name_base, type) \
 	enum name_base ## _prop { prop_ ## name_base }; \
 	template <> struct prop_traits<name_base ## _prop> : prop_traits_impl<type>{};
 
 	ENUM_PROP(font_weight, weight);
 	ENUM_PROP(text_align, align);
-	ENUM_PROP(border_style, line);
 
 	template <typename Prop>
 	struct storage {
@@ -392,11 +399,21 @@ namespace styles {
 	inline rule_storage fontSize(const length<Ratio>& size) { return fontSize(length_cast<pixels>(size)); }
 	inline rule_storage fontWeight(weight w) { return rule(prop_font_weight, w); }
 	inline rule_storage fontFamily(const std::string& face) { return rule(prop_font_family, face); }
-	inline rule_storage border_style(line style) { return rule(prop_border_style, style); }
+	inline rule_storage border_top_style(line style) { return rule(prop_border_top_style, style); }
+	inline rule_storage border_right_style(line style) { return rule(prop_border_right_style, style); }
+	inline rule_storage border_bottom_style(line style) { return rule(prop_border_bottom_style, style); }
+	inline rule_storage border_left_style(line style) { return rule(prop_border_left_style, style); }
+
+	inline rule_storage border_style(line style)
+	{
+		return border_top_style(style) << border_right_style(style) << border_bottom_style(style) << border_left_style(style);
+	}
+
 	inline rule_storage border_top_color(colorref color) { return rule(prop_border_top_color, color); }
 	inline rule_storage border_right_color(colorref color) { return rule(prop_border_right_color, color); }
 	inline rule_storage border_bottom_color(colorref color) { return rule(prop_border_bottom_color, color); }
 	inline rule_storage border_left_color(colorref color) { return rule(prop_border_left_color, color); }
+
 	inline rule_storage border_color(colorref color)
 	{
 		return border_top_color(color) << border_right_color(color) << border_bottom_color(color) << border_left_color(color);
