@@ -602,7 +602,7 @@ namespace {
 		styles::stylesheet out;
 
 		out
-			.add(gui::elem::header,                        fontSize(1.8_em) << color(0x883333))
+			.add(gui::elem::header,                        fontSize(1.8_em) << color(0x883333) << padding(.25_em, 0_px, .1_em))
 			.add(gui::elem::table_head,                    fontWeight(weight::bold) << textAlign(align::center))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
 			.add(gui::elem::link,                          color(0xAF733B))
@@ -630,32 +630,6 @@ namespace {
 		if (active)
 			style.batchApply(*active);
 	}
-
-#if 0
-	void serverHeader(Styler& styler, const CTasksView::ServerInfo& item)
-	{
-		Style style{ styler, rules::header, nullptr };
-
-		auto& server = *item.m_server;
-
-		std::ostringstream o;
-		o << server.login() << "@" << server.displayName();
-		if (item.m_loading) {
-			if (!item.m_gotProgress) {
-				o << " ...";
-			} else if (item.m_progress.calculable) {
-				o << " " << (100 * item.m_progress.loaded / item.m_progress.content) << "%";
-			} else {
-				o << " " << item.m_progress.loaded << "B";
-			}
-		}
-
-		styler.out()
-			.skipY(0.25) // margin-top: 0.25em
-			.println(utf::widen(o.str()))
-			.skipY(0.1); // margin-bottom: 0.1em
-	}
-#endif
 
 	void paintNode(Styler& styler, const std::shared_ptr<gui::node>& node)
 	{
@@ -1026,8 +1000,12 @@ void debug_rules(const styles::rule_storage* rules) {
 	debug_rule(values, styles::prop_italic, rules);
 	debug_rule(values, styles::prop_underline, rules);
 	debug_rule(values, styles::prop_font_family, rules);
-	debug_rule(values, styles::prop_border_length, rules);
 	debug_rule(values, styles::prop_font_size, rules);
+	debug_rule(values, styles::prop_border_length, rules);
+	debug_rule(values, styles::prop_padding_top, rules);
+	debug_rule(values, styles::prop_padding_right, rules);
+	debug_rule(values, styles::prop_padding_bottom, rules);
+	debug_rule(values, styles::prop_padding_left, rules);
 	debug_rule(values, styles::prop_font_weight, rules);
 	debug_rule(values, styles::prop_text_align, rules);
 	debug_rule(values, styles::prop_border_style, rules);
