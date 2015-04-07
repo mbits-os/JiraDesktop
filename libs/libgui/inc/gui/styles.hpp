@@ -389,6 +389,7 @@ namespace styles {
 		return std::move(copy <<= rhs);
 	};
 
+	namespace def {
 #define MAKE_FOURWAY(x) \
 	x(top) \
 	x(right) \
@@ -400,45 +401,46 @@ namespace styles {
 	inline rule_storage creator(const pixels& px) { return rule(prop, px); } \
 	template <typename Ratio> inline rule_storage creator(const length<Ratio>& size) { return creator(length_cast<pixels>(size)); }
 
-	template <typename Prop>
-	inline rule_storage rule(Prop prop, prop_arg_t<Prop> value) { return rule_storage{}.set(prop, std::forward<prop_arg_t<Prop>>(value)); }
-	inline rule_storage color(colorref color) { return rule(prop_color, color); }
-	inline rule_storage background(colorref color) { return rule(prop_background, color); }
-	inline rule_storage italic(bool value = true) { return rule(prop_italic, value); }
-	inline rule_storage underline(bool value = true) { return rule(prop_underline, value); }
-	inline rule_storage text_align(align a) { return rule(prop_text_align, a); }
-	LENGTH_PROP(font_size, prop_font_size)
-	inline rule_storage font_weight(weight w) { return rule(prop_font_weight, w); }
-	inline rule_storage font_family(const std::string& face) { return rule(prop_font_family, face); }
-	inline rule_storage border_top_style(line style) { return rule(prop_border_top_style, style); }
-	inline rule_storage border_right_style(line style) { return rule(prop_border_right_style, style); }
-	inline rule_storage border_bottom_style(line style) { return rule(prop_border_bottom_style, style); }
-	inline rule_storage border_left_style(line style) { return rule(prop_border_left_style, style); }
+		template <typename Prop>
+		inline rule_storage rule(Prop prop, prop_arg_t<Prop> value) { return rule_storage{}.set(prop, std::forward<prop_arg_t<Prop>>(value)); }
+		inline rule_storage color(colorref color) { return rule(prop_color, color); }
+		inline rule_storage background(colorref color) { return rule(prop_background, color); }
+		inline rule_storage italic(bool value = true) { return rule(prop_italic, value); }
+		inline rule_storage underline(bool value = true) { return rule(prop_underline, value); }
+		inline rule_storage text_align(align a) { return rule(prop_text_align, a); }
+		LENGTH_PROP(font_size, prop_font_size)
+		inline rule_storage font_weight(weight w) { return rule(prop_font_weight, w); }
+		inline rule_storage font_family(const std::string& face) { return rule(prop_font_family, face); }
 
-	inline rule_storage border_style(line style)
-	{
-		return border_top_style(style) << border_right_style(style) << border_bottom_style(style) << border_left_style(style);
-	}
+#define BORDER_STYLE(side) \
+	inline rule_storage border_ ## side ## _style(line style) { return rule(prop_border_ ## side ## _style, style); }
+		MAKE_FOURWAY(BORDER_STYLE)
+#undef BORDER_STYLE
 
-	inline rule_storage border_top_color(colorref color) { return rule(prop_border_top_color, color); }
-	inline rule_storage border_right_color(colorref color) { return rule(prop_border_right_color, color); }
-	inline rule_storage border_bottom_color(colorref color) { return rule(prop_border_bottom_color, color); }
-	inline rule_storage border_left_color(colorref color) { return rule(prop_border_left_color, color); }
+		inline rule_storage border_style(line style)
+		{
+			return border_top_style(style) << border_right_style(style) << border_bottom_style(style) << border_left_style(style);
+		}
 
-	inline rule_storage border_color(colorref color)
-	{
-		return border_top_color(color) << border_right_color(color) << border_bottom_color(color) << border_left_color(color);
-	}
+#define BORDER_COLOR(side) \
+	inline rule_storage border_ ## side ## _color(colorref color) { return rule(prop_border_ ## side ## _color, color); }
+		MAKE_FOURWAY(BORDER_COLOR)
+#undef BORDER_STYLE
+
+		inline rule_storage border_color(colorref color)
+		{
+			return border_top_color(color) << border_right_color(color) << border_bottom_color(color) << border_left_color(color);
+		}
 
 #define BORDER_WIDTH(side) LENGTH_PROP(border_ ## side ## _width, prop_border_ ## side ## _width)
-	MAKE_FOURWAY(BORDER_WIDTH)
+		MAKE_FOURWAY(BORDER_WIDTH)
 #undef BORDER_WIDTH
 
-	template <typename Length>
-	inline rule_storage border_width(const Length& width)
-	{
-		return border_top_width(width) << border_right_width(width) << border_bottom_width(width) << border_left_width(width);
-	}
+		template <typename Length>
+		inline rule_storage border_width(const Length& width)
+		{
+			return border_top_width(width) << border_right_width(width) << border_bottom_width(width) << border_left_width(width);
+		}
 
 #define BORDER(side) \
 	template <typename Length> \
@@ -446,57 +448,42 @@ namespace styles {
 	{ \
 		return border_ ## side ## _width(width) << border_ ## side ## _style(style) << border_ ## side ## _color(color); \
 	}
-	MAKE_FOURWAY(BORDER)
+		MAKE_FOURWAY(BORDER)
 #undef BORDER
 
-	template <typename Length>
-	inline rule_storage border(const Length& width, line style, colorref color)
-	{
-		return border_width(width) << border_style(style) << border_color(color);
-	}
+		template <typename Length>
+		inline rule_storage border(const Length& width, line style, colorref color)
+		{
+			return border_width(width) << border_style(style) << border_color(color);
+		}
 
-	inline rule_storage padding_top(const ems& em) { return rule(prop_padding_top, em); }
-	inline rule_storage padding_top(const pixels& px) { return rule(prop_padding_top, px); }
-	template <typename Ratio>
-	inline rule_storage padding_top(const length<Ratio>& size) { return padding_top(length_cast<pixels>(size)); }
+#define PADDING(side) LENGTH_PROP(padding_ ## side, prop_padding_ ## side)
+		MAKE_FOURWAY(PADDING)
+#undef PADDING
 
-	inline rule_storage padding_right(const ems& em) { return rule(prop_padding_right, em); }
-	inline rule_storage padding_right(const pixels& px) { return rule(prop_padding_right, px); }
-	template <typename Ratio>
-	inline rule_storage padding_right(const length<Ratio>& size) { return padding_right(length_cast<pixels>(size)); }
+		template <typename Top>
+		inline rule_storage padding(const Top& top)
+		{
+			return padding_left(top) << padding_top(top) << padding_right(top) << padding_bottom(top);
+		}
 
-	inline rule_storage padding_bottom(const ems& em) { return rule(prop_padding_bottom, em); }
-	inline rule_storage padding_bottom(const pixels& px) { return rule(prop_padding_bottom, px); }
-	template <typename Ratio>
-	inline rule_storage padding_bottom(const length<Ratio>& size) { return padding_bottom(length_cast<pixels>(size)); }
+		template <typename Top, typename Right>
+		inline rule_storage padding(const Top& top, const Right& right)
+		{
+			return padding_left(right) << padding_top(top) << padding_right(right) << padding_bottom(top);
+		}
 
-	inline rule_storage padding_left(const ems& em) { return rule(prop_padding_left, em); }
-	inline rule_storage padding_left(const pixels& px) { return rule(prop_padding_left, px); }
-	template <typename Ratio>
-	inline rule_storage padding_left(const length<Ratio>& size) { return padding_left(length_cast<pixels>(size)); }
+		template <typename Top, typename Right, typename Bottom>
+		inline rule_storage padding(const Top& top, const Right& right, const Bottom& bottom)
+		{
+			return padding_left(right) << padding_top(top) << padding_right(right) << padding_bottom(bottom);
+		}
 
-	template <typename Top>
-	inline rule_storage padding(const Top& top)
-	{
-		return padding_left(top) << padding_top(top) << padding_right(top) << padding_bottom(top);
-	}
-
-	template <typename Top, typename Right>
-	inline rule_storage padding(const Top& top, const Right& right)
-	{
-		return padding_left(right) << padding_top(top) << padding_right(right) << padding_bottom(top);
-	}
-
-	template <typename Top, typename Right, typename Bottom>
-	inline rule_storage padding(const Top& top, const Right& right, const Bottom& bottom)
-	{
-		return padding_left(right) << padding_top(top) << padding_right(right) << padding_bottom(bottom);
-	}
-
-	template <typename Top, typename Right, typename Bottom, typename Left>
-	inline rule_storage padding(const Top& top, const Right& right, const Bottom& bottom, const Left& left)
-	{
-		return padding_left(left) << padding_top(top) << padding_right(right) << padding_bottom(bottom);
+		template <typename Top, typename Right, typename Bottom, typename Left>
+		inline rule_storage padding(const Top& top, const Right& right, const Bottom& bottom, const Left& left)
+		{
+			return padding_left(left) << padding_top(top) << padding_right(right) << padding_bottom(bottom);
+		}
 	}
 
 	struct selector {

@@ -401,7 +401,7 @@ styles::pixels calculate(styles::rule_storage& rules,
 		if (u.which() == styles::length_u::second_type) {
 			auto em = u.second();
 			auto ret = em.value(px);
-			rules <<= styles::rule(prop, ret);
+			rules <<= def::rule(prop, ret);
 			return ret;
 		}
 	}
@@ -753,7 +753,7 @@ void CJiraTableNode::measure(gui::painter* painter)
 	m_position.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
 }
 
-gui::node::size CJiraTableNode::measureThis(gui::painter* painter)
+gui::node::size CJiraTableNode::measureThis(gui::painter* /*painter*/)
 {
 	return{ 0, 0 };
 }

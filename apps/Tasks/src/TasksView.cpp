@@ -596,6 +596,7 @@ namespace {
 	std::shared_ptr<styles::stylesheet> stylesheetCreate()
 	{
 		using namespace styles::literals;
+		using namespace styles::def;
 		using namespace styles;
 
 		auto none_empty = italic() << color(0x555555);
