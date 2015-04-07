@@ -145,6 +145,15 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 	m_taskIcon.Install(m_hWnd, 1, toolbar_icon, toolbar_menu);
 
+	icon_frame->getNativeIcon(GetSystemMetrics(SM_CXSMICON));
+	m_smallIcon = icon_frame->detachIcon();
+
+	icon_frame->getNativeIcon(GetSystemMetrics(SM_CXICON));
+	m_bigIcon = icon_frame->detachIcon();
+
+	SetIcon(m_smallIcon, FALSE);
+	SetIcon(m_bigIcon, TRUE);
+
 	auto hwnd = m_hWnd;
 
 	m_model->startup();

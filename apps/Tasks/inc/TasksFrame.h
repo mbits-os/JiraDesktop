@@ -30,6 +30,8 @@ public:
 	CScrollContainerEx m_container;
 	CTaskBarIcon m_taskIcon;
 	CFont m_font;
+	CIcon m_bigIcon;
+	CIcon m_smallIcon;
 	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);

@@ -34,6 +34,7 @@ struct CTasksActionsBase {
 	std::shared_ptr<gui::action> help_about;
 
 	std::shared_ptr<gui::icon> icon_taskbar;
+	std::shared_ptr<gui::icon> icon_frame;
 
 	bool onCommand(menu::command_id cmd);
 	HMENU createMenuBar(const std::initializer_list<menu::item>& items);
@@ -45,15 +46,16 @@ struct CTasksActions : CTasksActionsBase {
 
 	void createItems() {
 		std::shared_ptr<gui::icon> ico_none;
-		auto ico_new_file = gui::make_fa_icon({ { fa::glyph::file,    0xFFFFFF }, { fa::glyph::file_o } });
-		auto ico_refresh  = gui::make_fa_icon({ { fa::glyph::refresh } });
-		auto ico_setup    = gui::make_fa_icon({ { fa::glyph::wrench,  0x444444 } });
-		auto ico_edit     = gui::make_fa_icon({ { fa::glyph::pencil } });
-		auto ico_link     = gui::make_fa_icon({ { fa::glyph::chain,   0x419641, 5, 4 } });
-		auto ico_licences = gui::make_fa_icon({ { fa::glyph::bank,    0x444444, 5, 4 } });
-		auto ico_about    = gui::make_fa_icon({ { fa::glyph::circle,  0xFFFFFF, 3, 2 },{ fa::glyph::question_circle, 0x428BCA, 3, 2 } });
+		auto ico_new_file = gui::make_fa_icon({ { fa::glyph::file,    0xFFFFFF       }, { fa::glyph::file_o                          } });
+		auto ico_refresh  = gui::make_fa_icon({ { fa::glyph::refresh                 }                                                 });
+		auto ico_setup    = gui::make_fa_icon({ { fa::glyph::wrench,  0x444444       }                                                 });
+		auto ico_edit     = gui::make_fa_icon({ { fa::glyph::pencil                  }                                                 });
+		auto ico_link     = gui::make_fa_icon({ { fa::glyph::chain,   0x419641, 5, 4 }                                                 });
+		auto ico_licences = gui::make_fa_icon({ { fa::glyph::bank,    0x444444, 5, 4 }                                                 });
+		auto ico_about    = gui::make_fa_icon({ { fa::glyph::circle,  0xFFFFFF, 3, 2 }, { fa::glyph::question_circle, 0x428BCA, 3, 2 } });
 
-		icon_taskbar      = gui::make_fa_icon({ { fa::glyph::tasks,   0x222222, 3, 2 } });
+		icon_taskbar      = gui::make_fa_icon({ { fa::glyph::stop,    0x000000, 3, 2 }, { fa::glyph::tasks,           0xFFFFFF       } });
+		icon_frame        = gui::make_fa_icon({ { fa::glyph::stop,    0xFFFFFF, 3, 2 }, { fa::glyph::tasks,                          } });
 
 		auto pThis = static_cast<T*>(this);
 
