@@ -604,17 +604,30 @@ namespace {
 		styles::stylesheet out;
 
 		out
-			.add(gui::elem::header,                        font_size(1.8_em) << color(0x883333) << padding(.5_em, 0_px, .2_em) << border_bottom(2_px, line::solid, 0x883333))
+			.add(gui::elem::header,                        font_size(1.8_em) << color(0x883333) <<
+			                                               padding(.5_em, 0_px, .2_em) <<
+			                                               border_bottom(2_px, line::solid, 0x883333))
+
 			.add(gui::elem::table_head,                    font_weight(weight::bold) << text_align(align::center))
+
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
+
 			.add(gui::elem::link,                          color(0xAF733B))
+
 			.add({ gui::elem::link, pseudo::hover },       underline())
+
 			.add({ gui::elem::link, pseudo::active },      border(1_px, line::dot, 0xc0c0c0))
+
 			.add(class_name{ "error" },                    color(0x171BC1))
+
 			.add(class_name{ "empty" },                    none_empty)
+
 			.add(class_name{ "none" },                     none_empty)
+
 			.add(class_name{ "summary" },                  font_size(.8_em) << color(0x555555))
+
 			.add(class_name{ "symbol" },                   font_family("FontAwesome"))
+
 			.add(class_name{ "unexpected" },               color(0x2600E6));
 
 		return std::make_shared<styles::stylesheet>(std::move(out));
