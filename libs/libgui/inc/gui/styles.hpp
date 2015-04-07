@@ -389,20 +389,19 @@ namespace styles {
 	inline rule_storage fontSize(const length<Ratio>& size) { return fontSize(length_cast<pixels>(size)); }
 	inline rule_storage fontWeight(weight w) { return rule(prop_font_weight, w); }
 	inline rule_storage fontFamily(const std::string& face) { return rule(prop_font_family, face); }
-	inline rule_storage border(line style, const ems& length, colorref color)
-	{
-		return rule(prop_border_style, style)
-			.set(prop_border_length, length)
-			.set(prop_border_color, color);
-	}
-	inline rule_storage border(line style, const pixels& length, colorref color)
-	{
-		return rule(prop_border_style, style)
-			.set(prop_border_length, length)
-			.set(prop_border_color, color);
-	}
+	inline rule_storage border_style(line style) { return rule(prop_border_style, style); }
+	inline rule_storage border_color(colorref color) { return rule(prop_border_color, color); }
+
+	inline rule_storage border_length(const ems& length) { return rule(prop_border_length, length); }
+	inline rule_storage border_length(const pixels& length) { return rule(prop_border_length, length); }
 	template <typename Ratio>
-	inline rule_storage border(line type, const length<Ratio>& size, colorref color) { return border(type, length_cast<pixels>(size), color); }
+	inline rule_storage border_length(const length<Ratio>& size) { return border_length(length_cast<pixels>(size)); }
+
+	template <typename Length>
+	inline rule_storage border(line style, const Length& length, colorref color)
+	{
+		return border_style(style) << border_length(length) << border_color(color);
+	}
 
 	inline rule_storage padding_top(const ems& em) { return rule(prop_padding_top, em); }
 	inline rule_storage padding_top(const pixels& px) { return rule(prop_padding_top, px); }
