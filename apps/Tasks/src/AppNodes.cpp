@@ -120,7 +120,8 @@ void CJiraNode::measure(gui::painter* painter)
 
 	size_t height = 0;
 	size_t width = 0;
-	int x = 0;
+	int x = int(offsetLeft(painter) + 0.5);
+	int y = int(offsetTop(painter) + 0.5);
 	for (auto& node : m_children) {
 		node->measure(painter);
 		auto ret = node->getSize();
@@ -128,7 +129,7 @@ void CJiraNode::measure(gui::painter* painter)
 			height = ret.height;
 
 		width += ret.width;
-		node->setPosition(x, 0);
+		node->setPosition(x, y);
 		x += ret.width;
 	}
 
@@ -138,17 +139,8 @@ void CJiraNode::measure(gui::painter* painter)
 	if (width < here.width)
 		width = here.width;
 
-	long double dheight = 0.5;
-	dheight += calculated(*styles, painter, styles::prop_border_top_width);
-	dheight += calculated(*styles, painter, styles::prop_padding_top);
-	dheight += calculated(*styles, painter, styles::prop_padding_bottom);
-	dheight += calculated(*styles, painter, styles::prop_border_bottom_width);
-
-	long double dwidth = 0.5;
-	dwidth += calculated(*styles, painter, styles::prop_border_left_width);
-	dwidth += calculated(*styles, painter, styles::prop_padding_left);
-	dwidth += calculated(*styles, painter, styles::prop_padding_right);
-	dwidth += calculated(*styles, painter, styles::prop_border_right_width);
+	long double dheight = 0.5 + offsetTop(painter) + offsetBottom(painter);
+	long double dwidth = 0.5 + offsetLeft(painter) + offsetRight(painter);
 
 	m_position.height = height + (int)dheight;
 	m_position.width = width + (int)dwidth;
@@ -469,6 +461,42 @@ void CJiraNode::calculateStyles()
 	}
 }
 
+long double CJiraNode::offsetLeft(gui::painter* painter) const
+{
+	auto style = calculatedStyle();
+	auto& ref = *style;
+	return
+		calculated(ref, painter, styles::prop_border_left_width) +
+		calculated(ref, painter, styles::prop_padding_left);
+}
+
+long double CJiraNode::offsetTop(gui::painter* painter) const
+{
+	auto style = calculatedStyle();
+	auto& ref = *style;
+	return
+		calculated(ref, painter, styles::prop_border_top_width) +
+		calculated(ref, painter, styles::prop_padding_top);
+}
+
+long double CJiraNode::offsetRight(gui::painter* painter) const
+{
+	auto style = calculatedStyle();
+	auto& ref = *style;
+	return
+		calculated(ref, painter, styles::prop_border_right_width) +
+		calculated(ref, painter, styles::prop_padding_right);
+}
+
+long double CJiraNode::offsetBottom(gui::painter* painter) const
+{
+	auto style = calculatedStyle();
+	auto& ref = *style;
+	return
+		calculated(ref, painter, styles::prop_border_bottom_width) +
+		calculated(ref, painter, styles::prop_padding_bottom);
+}
+
 void ImageCb::onImageChange(gui::image_ref*)
 {
 	auto par = parent.lock();
@@ -737,19 +765,22 @@ void CJiraTableNode::measure(gui::painter* painter)
 
 	m_columns->assign(columns, 0);
 
-	size_t height = 0;
+	auto topOffset = size_t(offsetTop(painter) + 0.5);
+	size_t height = topOffset;
+	int x = int(offsetLeft(painter) + 0.5);
 	for (auto& node : m_children) {
 		node->measure(painter);
 
-		node->setPosition(0, height);
+		node->setPosition(x, height);
 		height += node->getSize().height;
 	}
 
 	for (auto& node : m_children)
-		static_cast<CJiraTableRowNode*>(node.get())->repositionChildren();
+		static_cast<CJiraTableRowNode*>(node.get())->repositionChildren(painter);
 
-	m_position.height = height;
+	m_position.height = height - topOffset + size_t(0.5 + offsetTop(painter) + offsetBottom(painter));
 	m_position.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
+	m_position.width += size_t(0.5 + offsetLeft(painter) + offsetRight(painter));
 }
 
 gui::node::size CJiraTableNode::measureThis(gui::painter* /*painter*/)
@@ -783,12 +814,13 @@ gui::node::size CJiraTableRowNode::measureThis(gui::painter* /*painter*/)
 	return{ 0,0 };
 }
 
-void CJiraTableRowNode::repositionChildren()
+void CJiraTableRowNode::repositionChildren(gui::painter* painter)
 {
-	int x = CELL_MARGIN;
+	int x = CELL_MARGIN + int(offsetLeft(painter) + 0.5);
+	int y = int(offsetTop(painter) + 0.5);
 	auto it = m_columns->begin();
 	for (auto& node : children()) {
-		node->setPosition(x, 0);
+		node->setPosition(x, y);
 		x += *it++ + 2 * CELL_MARGIN;
 	}
 	m_position.width = x + CELL_MARGIN;
@@ -863,19 +895,21 @@ void CJiraReportElement::addChild(const std::shared_ptr<gui::node>& /*child*/)
 
 gui::node::size CJiraReportElement::measureThis(gui::painter* painter)
 {
-	size_t height = 0;
+	auto topOffset = size_t(offsetTop(painter) + 0.5);
+	size_t height = topOffset;
 	size_t width = 0;
+	int x = int(offsetLeft(painter) + 0.5);
 	for (auto& node : m_children) {
 		node->measure(painter);
 
 		auto size = node->getSize();
-		node->setPosition(0, height);
+		node->setPosition(x, height);
 		height += size.height;
 		if (width < size.width)
 			width = size.width;
 	}
 
-	return{ width, height };
+	return{ width, height - topOffset };
 }
 
 void CJiraReportElement::invalidate(int x, int y, size_t width, size_t height)

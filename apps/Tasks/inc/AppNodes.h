@@ -50,6 +50,10 @@ public:
 	std::shared_ptr<styles::stylesheet> styles() const override;
 	void applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet) override;
 	void calculateStyles();
+	long double offsetLeft(gui::painter* painter) const; // border-left-width + padding-left
+	long double offsetTop(gui::painter* painter) const; // border-top-width + padding-top
+	long double offsetRight(gui::painter* painter) const; // border-right-width + padding-right
+	long double offsetBottom(gui::painter* painter) const; // border-bottom-width + padding-bottom
 
 	void openLink(const std::string& url);
 	virtual void paintThis(gui::painter* painter);
@@ -168,7 +172,7 @@ public:
 
 	size measureThis(gui::painter* painter) override;
 
-	void repositionChildren();
+	void repositionChildren(gui::painter* painter);
 };
 
 class CJiraReportElement : public CJiraNode {
