@@ -608,7 +608,7 @@ namespace {
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
 			.add(gui::elem::link,                          color(0xAF733B))
 			.add({ gui::elem::link, pseudo::hover },       underline())
-			.add({ gui::elem::link, pseudo::active },      border(line::dot, 1_px, 0xc0c0c0))
+			.add({ gui::elem::link, pseudo::active },      border(1_px, line::dot, 0xc0c0c0))
 			.add(class_name{ "error" },                    color(0x171BC1))
 			.add(class_name{ "empty" },                    none_empty)
 			.add(class_name{ "none" },                     none_empty)
@@ -675,10 +675,10 @@ struct StyleSave: gui::style_save
 
 		auto styles = node->calculatedStyle();
 		auto padx = 0.5 +
-			calculated(*styles, painter, styles::prop_border_length) +
+			calculated(*styles, painter, styles::prop_border_width) +
 			calculated(*styles, painter, styles::prop_padding_left);
 		auto pady = 0.5 +
-			calculated(*styles, painter, styles::prop_border_length) +
+			calculated(*styles, painter, styles::prop_border_width) +
 			calculated(*styles, painter, styles::prop_padding_top);
 
 		painter->moveOrigin({ int(padx), int(pady) });
@@ -902,7 +902,10 @@ std::string to_string(styles::color_prop prop) {
 	switch(prop) {
 	case styles::prop_color: return "color";
 	case styles::prop_background: return "background";
-	case styles::prop_border_color: return "border-color";
+	case styles::prop_border_top_color: return "border-top-color";
+	case styles::prop_border_right_color: return "border-right-color";
+	case styles::prop_border_bottom_color: return "border-bottom-color";
+	case styles::prop_border_left_color: return "border-left-color";
 	};
 
 	return "{" + std::to_string((int)prop) + "}";
@@ -926,7 +929,7 @@ std::string to_string(styles::string_prop prop) {
 
 std::string to_string(styles::length_prop prop) {
 	switch(prop) {
-	case styles::prop_border_length: return "border-length";
+	case styles::prop_border_width: return "border-length";
 	case styles::prop_font_size: return "font-size";
 	}
 
@@ -1031,12 +1034,15 @@ void debug_rules(const styles::rule_storage* rules) {
 	std::vector<std::pair<std::string, std::string>> values;
 	debug_rule(values, styles::prop_color, rules);
 	debug_rule(values, styles::prop_background, rules);
-	debug_rule(values, styles::prop_border_color, rules);
+	debug_rule(values, styles::prop_border_top_color, rules);
+	debug_rule(values, styles::prop_border_right_color, rules);
+	debug_rule(values, styles::prop_border_bottom_color, rules);
+	debug_rule(values, styles::prop_border_left_color, rules);
 	debug_rule(values, styles::prop_italic, rules);
 	debug_rule(values, styles::prop_underline, rules);
 	debug_rule(values, styles::prop_font_family, rules);
 	debug_rule(values, styles::prop_font_size, rules);
-	debug_rule(values, styles::prop_border_length, rules);
+	debug_rule(values, styles::prop_border_width, rules);
 	debug_rule(values, styles::prop_padding_top, rules);
 	debug_rule(values, styles::prop_padding_right, rules);
 	debug_rule(values, styles::prop_padding_bottom, rules);

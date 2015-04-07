@@ -139,16 +139,16 @@ void CJiraNode::measure(gui::painter* painter)
 		width = here.width;
 
 	long double dheight = 0.5;
-	dheight += calculated(*styles, painter, styles::prop_border_length); // _top
+	dheight += calculated(*styles, painter, styles::prop_border_width); // _top
 	dheight += calculated(*styles, painter, styles::prop_padding_top);
 	dheight += calculated(*styles, painter, styles::prop_padding_bottom);
-	dheight += calculated(*styles, painter, styles::prop_border_length); // _bottom
+	dheight += calculated(*styles, painter, styles::prop_border_width); // _bottom
 
 	long double dwidth = 0.5;
-	dwidth += calculated(*styles, painter, styles::prop_border_length); // _left
+	dwidth += calculated(*styles, painter, styles::prop_border_width); // _left
 	dwidth += calculated(*styles, painter, styles::prop_padding_left);
 	dwidth += calculated(*styles, painter, styles::prop_padding_right);
-	dwidth += calculated(*styles, painter, styles::prop_border_length); // _right
+	dwidth += calculated(*styles, painter, styles::prop_border_width); // _right
 
 	m_position.height = height + (int)dheight;
 	m_position.width = width + (int)dwidth;
@@ -413,7 +413,7 @@ void calculate(styles::rule_storage& rules, gui::node* node)
 {
 	using namespace styles;
 	auto fontSize = calculate(rules, prop_font_size, parentFontSize(node));
-	calculate(rules, prop_border_length, fontSize);
+	calculate(rules, prop_border_width, fontSize);
 	calculate(rules, prop_padding_top, fontSize);
 	calculate(rules, prop_padding_right, fontSize);
 	calculate(rules, prop_padding_bottom, fontSize);
