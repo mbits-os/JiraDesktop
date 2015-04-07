@@ -317,6 +317,108 @@ public:
 		return *this;
 	}
 
+	struct Border {
+		int width;
+		styles::line style;
+		styles::colorref color;
+
+		Border(const styles::rule_storage& styles,
+			gui::painter* painter,
+			styles::length_prop width_prop,
+			styles::border_style_prop style_prop,
+			styles::color_prop color_prop)
+			: width(0)
+			, style(styles::line::none)
+			, color(0x000000)
+		{
+			if (styles.has(width_prop)) {
+				auto u = styles.get(width_prop);
+				ATLASSERT(u.which() == styles::length_u::first_type);
+				width = (int)(painter->dpiRescale(u.first().value()) + 0.5);
+			}
+
+			if (styles.has(style_prop))
+				style = styles.get(style_prop);
+
+			if (styles.has(color_prop))
+				color = styles.get(color_prop);
+
+			if (width == 0 ||
+				style == styles::line::none)
+			{
+				width = 0;
+				style = styles::line::none;
+			}
+		};
+
+		bool present() const { return style != styles::line::none; }
+	};
+
+	void drawBorder(const gui::point& from, const gui::point& to, styles::line style, COLORREF color)
+	{
+		RECT r{ from.x, from.y, to.x, to.y };
+		dc.FillSolidRect(&r, color);
+	}
+
+	LinePrinter& drawBorder(gui::node* node)
+	{
+		auto styles = node->calculatedStyle();
+#define BORDER_(side) \
+Border border_ ## side{*styles, this, \
+	styles::prop_border_ ## side ## _width, \
+	styles::prop_border_ ## side ## _style, \
+	styles::prop_border_ ## side ## _color};
+		MAKE_FOURWAY(BORDER_)
+#undef BORDER_
+
+		auto pt = node->getAbsolutePos();
+		auto sz = node->getSize();
+
+		if (border_top.present()) {
+			auto orig = pt;
+			auto dest = pt + size{ sz.width, (size_t)border_top.width };
+
+			if (border_right.present())
+				dest.x -= border_right.width;
+
+			drawBorder(orig, dest, border_top.style, border_top.color);
+		}
+
+		if (border_right.present()) {
+			auto orig = pt;
+			auto dest = pt + size{ sz.width, sz.height };
+			orig.x = dest.x - border_right.width;
+
+			if (border_bottom.present())
+				dest.y -= border_bottom.width;
+
+			drawBorder(orig, dest, border_right.style, border_right.color);
+		}
+
+		if (border_bottom.present()) {
+			auto orig = pt;
+			auto dest = pt + size{ sz.width, sz.height };
+			orig.y = dest.y - border_bottom.width;
+
+			if (border_left.present())
+				orig.x += border_left.width;
+
+			drawBorder(orig, dest, border_bottom.style, border_bottom.color);
+		}
+
+		if (border_left.present()) {
+			auto orig = pt;
+			auto dest = pt + size{ (size_t)border_left.width, sz.height };
+
+			if (border_top.present())
+				orig.y += border_top.width;
+
+			drawBorder(orig, dest, border_left.style, border_left.color);
+		}
+
+		return *this;
+	}
+
 	LinePrinter& paint(const std::shared_ptr<gui::node>& node, Styler* link)
 	{
 		uplink = link;
@@ -625,14 +727,21 @@ namespace {
 
 		out
 			.add(gui::elem::header,                        font_size(1.8_em) << color(0x883333) <<
-			                                               padding(.5_em, 0_px, .2_em) <<
-			                                               border_bottom(2_px, line::solid, 0x883333))
+			                                               padding(.5_em, .2_px, .4_em))
 
-			.add(gui::elem::table_head,                    font_weight(weight::bold) << text_align(align::center))
+			.add(gui::elem::table,                         border(1_px, line::solid, 0x444444))
+
+			.add(gui::elem::table_head,                    font_weight(weight::bold) <<
+			                                               text_align(align::center) <<
+			                                               padding(.2_em))
+
+			.add(gui::elem::table_row,                     border_top(1_px, line::solid, 0xc0c0c0) <<
+			                                               padding(.2_em))
 
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
 
-			.add(gui::elem::link,                          color(0xAF733B) << cursor(pointer::hand))
+			.add(gui::elem::link,                          color(0xAF733B) << cursor(pointer::hand) <<
+			                                               padding(2_px) << border(1_px, line::none, 0xc0c0c0))
 
 			.add({ gui::elem::link, pseudo::hover },       underline())
 
@@ -648,7 +757,11 @@ namespace {
 
 			.add(class_name{ "symbol" },                   font_family("FontAwesome"))
 
-			.add(class_name{ "unexpected" },               color(0x2600E6));
+			.add(class_name{ "unexpected" },               color(0x2600E6))
+
+			.add(class_name{"label"},                      background(0xF5F5F5) <<
+			                                               border(1_px, line::solid, 0xCCCCCC) <<
+			                                               padding(1_px, 5_px));
 
 		return std::make_shared<styles::stylesheet>(std::move(out));
 	};
@@ -729,6 +842,7 @@ gui::style_handle LinePrinter::applyStyle(gui::node* node)
 	auto mem = std::make_unique<StyleSave>(*uplink, this);
 	mem->apply(node->getNodeName(), node);
 	drawBackground(node);
+	drawBorder(node);
 	drawFocus(node);
 
 	return mem.release();

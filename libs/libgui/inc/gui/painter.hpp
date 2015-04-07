@@ -56,6 +56,10 @@ namespace gui {
 		size& operator=(size&&) = default;
 	};
 
+	inline point operator + (const point& lhs, const size& rhs) {
+		return{ (int)(lhs.x + rhs.width), (int)(lhs.y + rhs.height) };
+	}
+
 	struct painter {
 		using point = gui::point;
 		using size = gui::size;
