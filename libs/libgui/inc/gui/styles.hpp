@@ -406,10 +406,10 @@ namespace styles {
 	inline rule_storage background(colorref color) { return rule(prop_background, color); }
 	inline rule_storage italic(bool value = true) { return rule(prop_italic, value); }
 	inline rule_storage underline(bool value = true) { return rule(prop_underline, value); }
-	inline rule_storage textAlign(align a) { return rule(prop_text_align, a); }
-	LENGTH_PROP(fontSize, prop_font_size)
-	inline rule_storage fontWeight(weight w) { return rule(prop_font_weight, w); }
-	inline rule_storage fontFamily(const std::string& face) { return rule(prop_font_family, face); }
+	inline rule_storage text_align(align a) { return rule(prop_text_align, a); }
+	LENGTH_PROP(font_size, prop_font_size)
+	inline rule_storage font_weight(weight w) { return rule(prop_font_weight, w); }
+	inline rule_storage font_family(const std::string& face) { return rule(prop_font_family, face); }
 	inline rule_storage border_top_style(line style) { return rule(prop_border_top_style, style); }
 	inline rule_storage border_right_style(line style) { return rule(prop_border_right_style, style); }
 	inline rule_storage border_bottom_style(line style) { return rule(prop_border_bottom_style, style); }
