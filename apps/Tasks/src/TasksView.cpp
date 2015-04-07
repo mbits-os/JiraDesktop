@@ -548,14 +548,34 @@ namespace {
 			return *this;
 		}
 
-		static int calc(styles::weight w)
+		// See <http://www.w3.org/TR/CSS2/fonts.html#propdef-font-weight>
+		static int bolderThan(int inherited)
+		{
+			if (inherited < FW_NORMAL)
+				return FW_NORMAL;
+			if (inherited > FW_SEMIBOLD)
+				return FW_HEAVY;
+			return FW_BOLD;
+		}
+
+		// See <http://www.w3.org/TR/CSS2/fonts.html#propdef-font-weight>
+		static int lighterThan(int inherited)
+		{
+			if (inherited < FW_SEMIBOLD)
+				return FW_THIN;
+			if (inherited >= FW_EXTRABOLD)
+				return FW_BOLD;
+			return FW_NORMAL;
+		}
+
+		static int calc(styles::weight w, int inherited)
 		{
 			using namespace styles;
 			switch (w) {
 			case weight::normal: return FW_NORMAL;
 			case weight::bold: return FW_BOLD;
-			case weight::bolder: return FW_BOLD; // TODO: http://www.w3.org/TR/CSS2/fonts.html#propdef-font-weight bolder/lighter table
-			case weight::lighter: return FW_NORMAL;
+			case weight::bolder: return bolderThan(inherited);
+			case weight::lighter: return lighterThan(inherited);
 			default:
 				break;
 			}
@@ -578,7 +598,7 @@ namespace {
 			if (rules.has(prop_underline))
 				m_styler.setFontUnderline(rules.get(prop_underline)), update = true;
 			if (rules.has(prop_font_weight))
-				m_styler.setFontWeight(calc(rules.get(prop_font_weight))), update = true;
+				m_styler.setFontWeight(calc(rules.get(prop_font_weight), m_styler.getFontWeight())), update = true;
 			if (rules.has(prop_font_size))
 				update = m_styler.setFontSize(rules.get(prop_font_size));
 			if (rules.has(prop_font_family)) {
