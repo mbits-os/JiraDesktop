@@ -68,6 +68,12 @@ namespace styles {
 		w900 = 900
 	};
 
+	enum class cur {
+		inherited,
+		arrow,
+		hand
+	};
+
 	template <typename Ratio>
 	class length {
 		long double m_len;
@@ -286,6 +292,7 @@ namespace styles {
 
 	ENUM_PROP(font_weight, weight);
 	ENUM_PROP(text_align, align);
+	ENUM_PROP(cursor, cur);
 
 	template <typename Prop>
 	struct storage {
@@ -343,6 +350,7 @@ namespace styles {
 		STORAGE(font_weight)
 		STORAGE(text_align)
 		STORAGE(border_style)
+		STORAGE(cursor)
 
 		template <typename key, typename val>
 		void merge(std::map<key, val>& lhs, const std::map<key, val>& rhs) {
@@ -363,6 +371,7 @@ namespace styles {
 			m_font_weights.merge(rhs.m_font_weights);
 			m_text_aligns.merge(rhs.m_text_aligns);
 			m_border_styles.merge(rhs.m_border_styles);
+			m_cursors.merge(rhs.m_cursors);
 		}
 
 		rule_storage& operator<<= (const rule_storage& rhs)
@@ -379,7 +388,8 @@ namespace styles {
 				&& m_lengths.empty()
 				&& m_font_weights.empty()
 				&& m_text_aligns.empty()
-				&& m_border_styles.empty();
+				&& m_border_styles.empty()
+				&& m_cursors.empty();
 		}
 	};
 
@@ -411,6 +421,7 @@ namespace styles {
 		LENGTH_PROP(font_size, prop_font_size)
 		inline rule_storage font_weight(weight w) { return rule(prop_font_weight, w); }
 		inline rule_storage font_family(const std::string& face) { return rule(prop_font_family, face); }
+		inline rule_storage cursor(cur value) { return rule(prop_cursor, value); }
 
 #define BORDER_STYLE(side) \
 	inline rule_storage border_ ## side ## _style(line style) { return rule(prop_border_ ## side ## _style, style); }

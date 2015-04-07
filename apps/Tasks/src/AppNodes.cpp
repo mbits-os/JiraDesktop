@@ -296,21 +296,22 @@ gui::node::size CJiraNode::measureThis(gui::painter* /*painter*/)
 	return{ 0, 0 };
 }
 
-void CJiraNode::setCursor(gui::cursor c)
+int CJiraNode::getCursor() const
 {
-	m_cursor = c;
-}
-
-gui::cursor CJiraNode::getCursor() const
-{
-	if (m_cursor != gui::cursor::inherited)
-		return m_cursor;
+	auto styles = calculatedStyle();
+	if (styles) {
+		if (styles->has(styles::prop_cursor)) {
+			auto c = styles->get(styles::prop_cursor);
+			if (c != styles::cur::inherited)
+				return (int)c;
+		}
+	}
 
 	auto parent = m_parent.lock();
 	if (parent)
 		return parent->getCursor();
 
-	return gui::cursor::arrow;
+	return (int)styles::cur::inherited;
 }
 
 bool CJiraNode::hasTooltip() const
@@ -600,7 +601,6 @@ CJiraLinkNode::CJiraLinkNode(const std::string& href)
 	: CJiraNode(gui::elem::link)
 {
 	m_data[Attr::Href] = href;
-	CJiraNode::setCursor(gui::cursor::pointer);
 }
 
 CJiraTextNode::CJiraTextNode(const std::string& text)

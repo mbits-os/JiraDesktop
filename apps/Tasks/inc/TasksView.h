@@ -5,6 +5,7 @@
 #pragma once
 
 #include "AppModel.h"
+#include <gui/styles.hpp>
 
 enum {
 	UM_LISTCHANGED = WM_USER, // wParam - server's session ID, lParam - unused
@@ -66,7 +67,7 @@ private:
 	std::shared_ptr<gui::node> m_hovered;
 	std::shared_ptr<gui::node> m_active;
 	bool m_tracking = false;
-	gui::cursor m_cursor = gui::cursor::arrow;
+	styles::cur m_cursor = styles::cur::arrow;
 	std::function<void(size_t, size_t)> m_scroller;
 
 	void updateLayout();

@@ -51,12 +51,6 @@ namespace gui {
 		td
 	};
 
-	enum class cursor {
-		inherited,
-		arrow,
-		pointer
-	};
-
 	struct node {
 		using point = painter::point;
 		using size = painter::size;
@@ -88,8 +82,7 @@ namespace gui {
 		virtual void setActive(bool active) = 0;
 		virtual bool getActive() const = 0;
 		virtual void activate() = 0;
-		virtual void setCursor(cursor) = 0;
-		virtual cursor getCursor() const = 0;
+		virtual int getCursor() const = 0;
 
 		virtual void setTooltip(const std::string& text) = 0;
 		virtual bool hasTooltip() const = 0;

@@ -40,8 +40,7 @@ public:
 	void setActive(bool active) override;
 	bool getActive() const override;
 	void activate() override;
-	void setCursor(gui::cursor) override;
-	gui::cursor getCursor() const override;
+	int getCursor() const override;
 
 	bool hasTooltip() const override;
 	const std::string& getTooltip() const override;
@@ -71,7 +70,6 @@ protected:
 
 	std::atomic<int> m_hoverCount{ 0 };
 	std::atomic<int> m_activeCount{ 0 };
-	gui::cursor m_cursor = gui::cursor::inherited;
 
 	std::shared_ptr<styles::rule_storage> m_calculated;
 	std::shared_ptr<styles::rule_storage> m_calculatedHover;
