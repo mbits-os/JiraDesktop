@@ -339,24 +339,59 @@ void CJiraNode::applyStyles(const std::shared_ptr<styles::stylesheet>& styleshee
 		node->applyStyles(stylesheet);
 }
 
-styles::pixels parentFontSize(gui::node* node)
+styles::pixels calculatedFontSize(gui::node* node)
 {
-	auto par = node->getParent();
-	if (!par)
+	using namespace styles;
+
+	if (!node)
 		return 14_px;
 
-	auto styles = par->normalCalculatedStyles();
-	if (styles && styles->has(styles::prop_font_size))
-		return styles->get(styles::prop_font_size);
+	auto styles = node->normalCalculatedStyles();
+	if (styles && styles->has(prop_font_size)) {
+		auto u = styles->get(prop_font_size);
+		ATLASSERT(u.which() == length_u::first_type);
+		if (u.which() == length_u::first_type)
+			return u.first();
+		else if (u.which() == length_u::second_type) {
+			return u.second().value(calculatedFontSize(node->getParent().get()));
+		}
+	}
 
-	return parentFontSize(par.get());
+	return calculatedFontSize(node->getParent().get());
+}
+
+styles::pixels parentFontSize(gui::node* node)
+{
+	return calculatedFontSize(node->getParent().get());
+}
+
+styles::pixels calculate(styles::rule_storage& rules,
+	styles::length_prop prop,
+	const styles::pixels& px)
+{
+	using namespace styles;
+	if (rules.has(prop)) {
+		auto u = rules.get(prop);
+
+		if (u.which() == styles::length_u::first_type)
+			return u.first();
+
+		if (u.which() == styles::length_u::second_type) {
+			auto& em = rules.get(prop_font_size).second();
+			auto ret = em.value(px);
+			rules << fontSize(ret);
+			return ret;
+		}
+	}
+
+	return px;
 }
 
 void calculate(styles::rule_storage& rules, gui::node* node)
 {
 	using namespace styles;
-	if (!rules.has(prop_font_size_em))
-		rules << fontSize(rules.get(prop_font_size_em).value(parentFontSize(node)));
+	auto fontSize = calculate(rules, prop_font_size, parentFontSize(node));
+	calculate(rules, prop_border_length, fontSize);
 }
 
 void CJiraNode::calculateStyles()

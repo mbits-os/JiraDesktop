@@ -263,9 +263,10 @@ class LinePrinter : public gui::painter
 
 	gui::style_handle applyStyle(gui::node*) override;
 	void restoreStyle(gui::style_handle save) override;
+public:
 	int dpiRescale(int size) override;
 	long double dpiRescale(long double size) override;
-public:
+
 	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
 	{
 		older = dc.SelectFont(font);
@@ -408,14 +409,17 @@ namespace {
 			logFont.lfWeight = weight;
 		}
 
-		void setFontSize(styles::pixels px)
+		bool setFontSize(const styles::length_u& len)
 		{
-			logFont.lfHeight = (int)(static_cast<gui::painter&>(printer).dpiRescale(px.value()) + 0.5);
-		}
+			if (len.which() == styles::length_u::first_type) {
+				logFont.lfHeight = (int)(printer.dpiRescale(len.first().value()) + 0.5);
+			} else if (len.which() == styles::length_u::second_type) {
+				logFont.lfHeight = (int)(logFont.lfHeight * len.second().value() + 0.5);
+			} else {
+				return false;
+			}
 
-		void setFontSize(styles::ems em)
-		{
-			logFont.lfHeight = (int)(logFont.lfHeight * em.value());
+			return true;
 		}
 
 		void setFontSizeAbs(int size)
@@ -575,9 +579,7 @@ namespace {
 			if (rules.has(prop_font_weight))
 				m_styler.setFontWeight(calc(rules.get(prop_font_weight))), update = true;
 			if (rules.has(prop_font_size))
-				m_styler.setFontSize(rules.get(prop_font_size)), update = true;
-			if (rules.has(prop_font_size_em))
-				m_styler.setFontSize(rules.get(prop_font_size_em)), update = true;
+				update = m_styler.setFontSize(rules.get(prop_font_size));
 			if (rules.has(prop_font_family)) {
 				auto family = utf::widen(rules.get(prop_font_family));
 				if (family != m_styler.getFontFamily())
@@ -921,13 +923,6 @@ std::string to_string(styles::length_prop prop) {
 
 	return "{" + std::to_string((int)prop) + "}";
 };
-std::string to_string(styles::rel_length_prop prop) {
-	switch(prop) {
-	case styles::prop_font_size_em: return "font-size";
-	}
-
-	return "{" + std::to_string((int)prop) + "}";
-};
 
 std::string to_string(styles::font_weight_prop /*prop*/) { return "font-weight"; }
 std::string to_string(styles::text_align_prop /*prop*/) { return "text-align"; }
@@ -958,6 +953,17 @@ std::string to_string(const styles::pixels& val)
 std::string to_string(const styles::ems& val)
 {
 	return std::to_string(val.value()) + "em";
+};
+
+std::string to_string(const styles::length_u& len)
+{
+	if (len.which() == styles::length_u::first_type) {
+		return to_string(len.first());
+	} else if (len.which() == styles::length_u::second_type) {
+		return to_string(len.second());
+	} else {
+		return "nullptr";
+	}
 };
 
 std::string to_string(styles::weight val)
@@ -1022,7 +1028,6 @@ void debug_rules(const styles::rule_storage* rules) {
 	debug_rule(values, styles::prop_font_family, rules);
 	debug_rule(values, styles::prop_border_length, rules);
 	debug_rule(values, styles::prop_font_size, rules);
-	debug_rule(values, styles::prop_font_size_em, rules);
 	debug_rule(values, styles::prop_font_weight, rules);
 	debug_rule(values, styles::prop_text_align, rules);
 	debug_rule(values, styles::prop_border_style, rules);

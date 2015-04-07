@@ -116,18 +116,18 @@ namespace styles {
 	template <typename T1, typename T2>
 	struct union_t
 	{
-		enum class which { neither, first, second };
+		enum which_t { neither_type, first_type, second_type };
 
-		union_t() : set(which::neither), deleter(nullptr), copier(nullptr) {}
-		explicit union_t(const T1& arg)
-			: set(which::first)
+		union_t() : set(which_t::neither_type), deleter(nullptr), copier(nullptr) {}
+		union_t(const T1& arg)
+			: set(which_t::first_type)
 			, deleter(del<T1>)
 			, copier(copy<T1>)
 		{
 			copier(ptr, &arg);
 		}
-		explicit union_t(const T2& arg)
-			: set(which::second)
+		union_t(const T2& arg)
+			: set(which_t::second_type)
 			, deleter(del<T2>)
 			, copier(copy<T2>)
 		{
@@ -169,7 +169,7 @@ namespace styles {
 			, copier(u.copier)
 			, ptr(u.ptr)
 		{
-			u.set = which::neither;
+			u.set = which_t::neither_type;
 			u.copier = nullptr;
 			u.deleter = nullptr;
 			u.ptr = nullptr;
@@ -190,8 +190,12 @@ namespace styles {
 			if (deleter)
 				deleter(ptr);
 		}
+
+		which_t which() const { return set; }
+		const T1& first() const { return *reinterpret_cast<const T1*>(ptr); }
+		const T2& second() const { return *reinterpret_cast<const T2*>(ptr); }
 	private:
-		which set;
+		which_t set;
 		void* ptr = nullptr;
 		void(*deleter)(void*& ptr);
 		void(*copier)(void*& lhs, const void* rhs);
@@ -251,16 +255,12 @@ namespace styles {
 	};
 	template <> struct prop_traits<string_prop> : prop_traits_impl<std::string, const std::string&>{};
 
+	using length_u = union_t<pixels, ems>;
 	enum length_prop {
 		prop_border_length,
 		prop_font_size
 	};
-	template <> struct prop_traits<length_prop> : prop_traits_impl<pixels, const pixels&>{};
-
-	enum rel_length_prop {
-		prop_font_size_em
-	};
-	template <> struct prop_traits<rel_length_prop> : prop_traits_impl<ems, const ems&>{};
+	template <> struct prop_traits<length_prop> : prop_traits_impl<length_u, const length_u&>{};
 
 #define ENUM_PROP(name_base, type) \
 	enum name_base ## _prop { prop_ ## name_base }; \
@@ -323,7 +323,6 @@ namespace styles {
 		STORAGE(bool)
 		STORAGE(string)
 		STORAGE(length)
-		STORAGE(rel_length)
 		STORAGE(font_weight)
 		STORAGE(text_align)
 		STORAGE(border_style)
@@ -344,22 +343,9 @@ namespace styles {
 			m_bools.merge(rhs.m_bools);
 			m_strings.merge(rhs.m_strings);
 			m_lengths.merge(rhs.m_lengths);
-			m_rel_lengths.merge(rhs.m_rel_lengths);
 			m_font_weights.merge(rhs.m_font_weights);
 			m_text_aligns.merge(rhs.m_text_aligns);
 			m_border_styles.merge(rhs.m_border_styles);
-
-			if (rhs.has(prop_font_size)) {
-				auto it = m_rel_lengths.m_items.find(prop_font_size_em);
-				if (it != m_rel_lengths.m_items.end())
-					m_rel_lengths.m_items.erase(it);
-			}
-
-			if (rhs.has(prop_font_size_em)) {
-				auto it = m_lengths.m_items.find(prop_font_size);
-				if (it != m_lengths.m_items.end())
-					m_lengths.m_items.erase(it);
-			}
 		}
 
 		rule_storage& operator<<= (const rule_storage& rhs)
@@ -374,7 +360,6 @@ namespace styles {
 				&& m_bools.empty()
 				&& m_strings.empty()
 				&& m_lengths.empty()
-				&& m_rel_lengths.empty()
 				&& m_font_weights.empty()
 				&& m_text_aligns.empty()
 				&& m_border_styles.empty();
@@ -394,7 +379,7 @@ namespace styles {
 	inline rule_storage italic(bool value = true) { return rule(prop_italic, value); }
 	inline rule_storage underline(bool value = true) { return rule(prop_underline, value); }
 	inline rule_storage textAlign(align a) { return rule(prop_text_align, a); }
-	inline rule_storage fontSize(ems em) { return rule(prop_font_size_em, em); }
+	inline rule_storage fontSize(ems em) { return rule(prop_font_size, em); }
 	inline rule_storage fontSize(pixels px) { return rule(prop_font_size, px); }
 	template <typename Ratio>
 	inline rule_storage fontSize(length<Ratio> size) { return fontSize(length_cast<pixels>(size)); }
