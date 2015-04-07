@@ -256,9 +256,10 @@ class LinePrinter : public gui::painter
 	size measureString(const std::string& text) override
 	{
 		auto line = utf::widen(text);
-		SIZE s;
-		dc.GetTextExtent(line.c_str(), line.length(), &s);
-		return{ (size_t)s.cx, (size_t)s.cy };
+		SIZE s = {};
+		if (dc.GetTextExtent(line.c_str(), line.length(), &s))
+			return{ (size_t)s.cx, (size_t)s.cy };
+		return{};
 	}
 
 	gui::style_handle applyStyle(gui::node*) override;
@@ -602,7 +603,7 @@ namespace {
 		styles::stylesheet out;
 
 		out
-			.add(gui::elem::header,                        fontSize(1.8_em) << color(0x883333) << padding(.25_em, 0_px, .1_em))
+			.add(gui::elem::header,                        fontSize(1.8_em) << color(0x883333) << padding(.5_em, 0_px, .2_em))
 			.add(gui::elem::table_head,                    fontWeight(weight::bold) << textAlign(align::center))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
 			.add(gui::elem::link,                          color(0xAF733B))

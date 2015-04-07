@@ -32,9 +32,33 @@ namespace gui {
 	struct style_save { int __unused; };
 	using style_handle = style_save*;
 
+	struct point {
+		int x;
+		int y;
+
+		point() : x(0), y(0) {}
+		point(int x, int y) : x(x), y(y) {}
+		point(const point&) = default;
+		point& operator=(const point&) = default;
+		point(point&&) = default;
+		point& operator=(point&&) = default;
+	};
+
+	struct size {
+		size_t width;
+		size_t height;
+
+		size() : width(0), height(0) {}
+		size(size_t width, size_t height) : width(width), height(height) {}
+		size(const size&) = default;
+		size& operator=(const size&) = default;
+		size(size&&) = default;
+		size& operator=(size&&) = default;
+	};
+
 	struct painter {
-		struct point { int x; int y; };
-		struct size { size_t width; size_t height; };
+		using point = gui::point;
+		using size = gui::size;
 
 		virtual ~painter() {}
 		virtual void moveOrigin(int x, int y) = 0;

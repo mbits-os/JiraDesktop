@@ -99,9 +99,23 @@ void CJiraNode::paint(gui::painter* painter)
 	}
 }
 
+static long double calculated(const styles::rule_storage& rules,
+	gui::painter* painter, styles::length_prop prop)
+{
+	if (!rules.has(prop))
+		return 0.0;
+
+	auto u = rules.get(prop);
+	ATLASSERT(u.which() == styles::length_u::first_type);
+
+	return painter->dpiRescale(u.first().value());
+};
+
 void CJiraNode::measure(gui::painter* painter)
 {
 	calculateStyles();
+
+	auto styles = calculatedStyle();
 	StyleSaver saver{ painter, this };
 
 	size_t height = 0;
@@ -124,8 +138,20 @@ void CJiraNode::measure(gui::painter* painter)
 	if (width < here.width)
 		width = here.width;
 
-	m_position.height = height;
-	m_position.width = width;
+	long double dheight = 0.5;
+	dheight += calculated(*styles, painter, styles::prop_border_length); // _top
+	dheight += calculated(*styles, painter, styles::prop_padding_top);
+	dheight += calculated(*styles, painter, styles::prop_padding_bottom);
+	dheight += calculated(*styles, painter, styles::prop_border_length); // _bottom
+
+	long double dwidth = 0.5;
+	dwidth += calculated(*styles, painter, styles::prop_border_length); // _left
+	dwidth += calculated(*styles, painter, styles::prop_padding_left);
+	dwidth += calculated(*styles, painter, styles::prop_padding_right);
+	dwidth += calculated(*styles, painter, styles::prop_border_length); // _right
+
+	m_position.height = height + (int)dheight;
+	m_position.width = width + (int)dwidth;
 }
 
 void CJiraNode::setPosition(int x, int y)
@@ -373,9 +399,9 @@ styles::pixels calculate(styles::rule_storage& rules,
 			return u.first();
 
 		if (u.which() == styles::length_u::second_type) {
-			auto& em = rules.get(prop_font_size).second();
+			auto em = u.second();
 			auto ret = em.value(px);
-			rules << fontSize(ret);
+			rules <<= styles::rule(prop, ret);
 			return ret;
 		}
 	}
