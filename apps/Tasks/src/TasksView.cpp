@@ -645,32 +645,66 @@ namespace {
 	}
 };
 
+static long double calculated(const styles::rule_storage& rules,
+	gui::painter* painter, styles::length_prop prop)
+{
+	if (!rules.has(prop))
+		return 0.0;
+
+	auto u = rules.get(prop);
+	ATLASSERT(u.which() == styles::length_u::first_type);
+
+	return painter->dpiRescale(u.first().value());
+};
+
 struct StyleSave: gui::style_save
 {
 	Style saved;
-	explicit StyleSave(Styler& styler)
+	gui::point origin;
+	gui::painter* painter;
+	explicit StyleSave(Styler& styler, gui::painter* painter)
 		: saved{ styler }
+		, painter{ painter }
 	{
+		origin = painter->getOrigin();
 	}
 
 	void apply(gui::elem name, gui::node* node)
 	{
 		Style::apply(saved, name, node);
+
+		auto styles = node->calculatedStyle();
+		auto padx = 0.5 +
+			calculated(*styles, painter, styles::prop_border_length) +
+			calculated(*styles, painter, styles::prop_padding_left);
+		auto pady = 0.5 +
+			calculated(*styles, painter, styles::prop_border_length) +
+			calculated(*styles, painter, styles::prop_padding_top);
+
+		painter->moveOrigin({ int(padx), int(pady) });
+	}
+
+	void restorePadding()
+	{
+		painter->setOrigin(origin);
 	}
 };
 
 gui::style_handle LinePrinter::applyStyle(gui::node* node)
 {
-	auto mem = std::make_unique<StyleSave>(*uplink);
+	auto mem = std::make_unique<StyleSave>(*uplink, this);
 	mem->apply(node->getNodeName(), node);
 	drawBackground(node);
 	drawFocus(node);
+
 	return mem.release();
 }
 
 void LinePrinter::restoreStyle(gui::style_handle save)
 {
 	std::unique_ptr<StyleSave> mem{ (StyleSave*)save };
+	if (mem)
+		mem->restorePadding();
 }
 
 int LinePrinter::dpiRescale(int size)
