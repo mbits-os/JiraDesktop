@@ -261,7 +261,10 @@ namespace styles {
 	using length_u = union_t<pixels, ems>;
 	enum length_prop {
 		prop_font_size,
-		prop_border_width,
+		prop_border_top_width,
+		prop_border_right_width,
+		prop_border_bottom_width,
+		prop_border_left_width,
 		prop_padding_top,
 		prop_padding_right,
 		prop_padding_bottom,
@@ -386,6 +389,17 @@ namespace styles {
 		return std::move(copy <<= rhs);
 	};
 
+#define MAKE_FOURWAY(x) \
+	x(top) \
+	x(right) \
+	x(bottom) \
+	x(left)
+
+#define LENGTH_PROP(creator, prop) \
+	inline rule_storage creator(const ems& em) { return rule(prop, em); } \
+	inline rule_storage creator(const pixels& px) { return rule(prop, px); } \
+	template <typename Ratio> inline rule_storage creator(const length<Ratio>& size) { return creator(length_cast<pixels>(size)); }
+
 	template <typename Prop>
 	inline rule_storage rule(Prop prop, prop_arg_t<Prop> value) { return rule_storage{}.set(prop, std::forward<prop_arg_t<Prop>>(value)); }
 	inline rule_storage color(colorref color) { return rule(prop_color, color); }
@@ -393,10 +407,7 @@ namespace styles {
 	inline rule_storage italic(bool value = true) { return rule(prop_italic, value); }
 	inline rule_storage underline(bool value = true) { return rule(prop_underline, value); }
 	inline rule_storage textAlign(align a) { return rule(prop_text_align, a); }
-	inline rule_storage fontSize(const ems& em) { return rule(prop_font_size, em); }
-	inline rule_storage fontSize(const pixels& px) { return rule(prop_font_size, px); }
-	template <typename Ratio>
-	inline rule_storage fontSize(const length<Ratio>& size) { return fontSize(length_cast<pixels>(size)); }
+	LENGTH_PROP(fontSize, prop_font_size)
 	inline rule_storage fontWeight(weight w) { return rule(prop_font_weight, w); }
 	inline rule_storage fontFamily(const std::string& face) { return rule(prop_font_family, face); }
 	inline rule_storage border_top_style(line style) { return rule(prop_border_top_style, style); }
@@ -419,10 +430,24 @@ namespace styles {
 		return border_top_color(color) << border_right_color(color) << border_bottom_color(color) << border_left_color(color);
 	}
 
-	inline rule_storage border_width(const ems& width) { return rule(prop_border_width, width); }
-	inline rule_storage border_width(const pixels& width) { return rule(prop_border_width, width); }
-	template <typename Ratio>
-	inline rule_storage border_width(const length<Ratio>& width) { return border_width(length_cast<pixels>(width)); }
+#define BORDER_WIDTH(side) LENGTH_PROP(border_ ## side ## _width, prop_border_ ## side ## _width)
+	MAKE_FOURWAY(BORDER_WIDTH)
+#undef BORDER_WIDTH
+
+	template <typename Length>
+	inline rule_storage border_width(const Length& width)
+	{
+		return border_top_width(width) << border_right_width(width) << border_bottom_width(width) << border_left_width(width);
+	}
+
+#define BORDER(side) \
+	template <typename Length> \
+	inline rule_storage border_ ## side(const Length& width, line style, colorref color) \
+	{ \
+		return border_ ## side ## _width(width) << border_ ## side ## _style(style) << border_ ## side ## _color(color); \
+	}
+	MAKE_FOURWAY(BORDER)
+#undef BORDER
 
 	template <typename Length>
 	inline rule_storage border(const Length& width, line style, colorref color)

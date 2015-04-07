@@ -603,7 +603,7 @@ namespace {
 		styles::stylesheet out;
 
 		out
-			.add(gui::elem::header,                        fontSize(1.8_em) << color(0x883333) << padding(.5_em, 0_px, .2_em))
+			.add(gui::elem::header,                        fontSize(1.8_em) << color(0x883333) << padding(.5_em, 0_px, .2_em) << border_bottom(2_px, line::solid, 0x883333))
 			.add(gui::elem::table_head,                    fontWeight(weight::bold) << textAlign(align::center))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
 			.add(gui::elem::link,                          color(0xAF733B))
@@ -675,10 +675,10 @@ struct StyleSave: gui::style_save
 
 		auto styles = node->calculatedStyle();
 		auto padx = 0.5 +
-			calculated(*styles, painter, styles::prop_border_width) +
+			calculated(*styles, painter, styles::prop_border_left_width) +
 			calculated(*styles, painter, styles::prop_padding_left);
 		auto pady = 0.5 +
-			calculated(*styles, painter, styles::prop_border_width) +
+			calculated(*styles, painter, styles::prop_border_top_width) +
 			calculated(*styles, painter, styles::prop_padding_top);
 
 		painter->moveOrigin({ int(padx), int(pady) });
@@ -929,7 +929,10 @@ std::string to_string(styles::string_prop prop) {
 
 std::string to_string(styles::length_prop prop) {
 	switch(prop) {
-	case styles::prop_border_width: return "border-length";
+	case styles::prop_border_top_width: return "border-top-width";
+	case styles::prop_border_right_width: return "border-right-width";
+	case styles::prop_border_bottom_width: return "border-bottom-width";
+	case styles::prop_border_left_width: return "border-left-width";
 	case styles::prop_font_size: return "font-size";
 	}
 
@@ -1052,7 +1055,10 @@ void debug_rules(const styles::rule_storage* rules) {
 	debug_rule(values, styles::prop_underline, rules);
 	debug_rule(values, styles::prop_font_family, rules);
 	debug_rule(values, styles::prop_font_size, rules);
-	debug_rule(values, styles::prop_border_width, rules);
+	debug_rule(values, styles::prop_border_top_width, rules);
+	debug_rule(values, styles::prop_border_right_width, rules);
+	debug_rule(values, styles::prop_border_bottom_width, rules);
+	debug_rule(values, styles::prop_border_left_width, rules);
 	debug_rule(values, styles::prop_padding_top, rules);
 	debug_rule(values, styles::prop_padding_right, rules);
 	debug_rule(values, styles::prop_padding_bottom, rules);
