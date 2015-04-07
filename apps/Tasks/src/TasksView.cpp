@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <sstream>
 #include <gui/styles.hpp>
+#include <gui/gdi_painter.hpp>
 
 #include "AppNodes.h"
 
@@ -262,6 +263,15 @@ class LinePrinter : public gui::painter
 		return{};
 	}
 
+	bool visible(gui::node* node) const override
+	{
+		auto br = gui::point{x, y} + node->getSize();
+
+		RECT r = { x, y, br.x, br.y };
+		RECT test;
+
+		return !!IntersectRect(&test, &r, &update);
+	}
 	gui::style_handle applyStyle(gui::node*) override;
 	void restoreStyle(gui::style_handle save) override;
 public:
@@ -790,6 +800,30 @@ namespace {
 
 		painter.setOrigin(orig);
 	}
+
+	void paintNode(gui::painter& painter, const std::shared_ptr<gui::node>& node)
+	{
+		auto orig = painter.getOrigin();
+
+		node->paint(&painter);
+
+		auto size = node->getSize();
+		orig.y += size.height;
+
+		painter.setOrigin(orig);
+	}
+
+	size_t measureNode(gui::painter& painter, const std::shared_ptr<gui::node>& node, size_t& width, size_t height)
+	{
+		node->measure(&painter);
+		auto size = node->getSize();
+		node->setPosition(BODY_MARGIN, BODY_MARGIN + height);
+		height += size.height;
+		if (width < size.width)
+			width = size.width;
+
+		return height;
+	}
 };
 
 static long double calculated(const styles::rule_storage& rules,
@@ -871,16 +905,15 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	dc.FillRect(&dc.m_ps.rcPaint, m_background);
 
 	dc.SetBkMode(TRANSPARENT);
-	Styler control{ (HDC)dc, (HFONT)m_font };
-	control.out().updateRect(dc.m_ps.rcPaint);
+	gui::gdi::painter paint{ (HDC)dc, dc.m_ps.rcPaint, (HFONT)m_font };
 
 	for (auto& item : m_servers) {
 		if (item.m_plaque)
-			paintNode(control, item.m_plaque);
+			paintNode(paint, item.m_plaque);
 	}
 
 	if (m_cheatsheet)
-		paintNode(control, m_cheatsheet);
+		paintNode(paint, m_cheatsheet);
 
 	return 0;
 }
@@ -888,7 +921,7 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 void CTasksView::updateLayout()
 {
 	CWindowDC dc{m_hWnd};
-	Styler styler{ (HDC) dc, (HFONT) m_font };
+	gui::gdi::painter paint{ (HDC)dc, (HFONT)m_font };
 
 	if (m_hovered)
 		m_hovered->setHovered(false);
@@ -902,22 +935,12 @@ void CTasksView::updateLayout()
 	size_t width = 0;
 	for (auto& server : m_servers) {
 		if (server.m_plaque) {
-			styler.out().measure(server.m_plaque, &styler);
-			auto size = server.m_plaque->getSize();
-			server.m_plaque->setPosition(BODY_MARGIN, BODY_MARGIN + height);
-			height += size.height;
-			if (width < size.width)
-				width = size.width;
+			height = measureNode(paint, server.m_plaque, width, height);
 		}
 	}
 
 	if (m_cheatsheet) {
-		styler.out().measure(m_cheatsheet, &styler);
-		auto size = m_cheatsheet->getSize();
-		m_cheatsheet->setPosition(BODY_MARGIN, BODY_MARGIN + height);
-		height += size.height;
-		if (width < size.width)
-			width = size.width;
+		height = measureNode(paint, m_cheatsheet, width, height);
 	}
 
 	setDocumentSize(width + 2 * BODY_MARGIN, height + 2 * BODY_MARGIN);

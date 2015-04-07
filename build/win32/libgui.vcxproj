@@ -55,6 +55,8 @@
     <ClCompile Include="..\..\libs\libgui\src\settings.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\styles.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_action.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_gdi_painter.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_gdi_style_handle.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_hotkey.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_menu.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_settings.cpp" />
@@ -63,6 +65,8 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\action.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\document.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\font_awesome.hh" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\gdi_painter.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\gdi_style_handle.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\hotkey.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\image.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\listeners.hpp" />
