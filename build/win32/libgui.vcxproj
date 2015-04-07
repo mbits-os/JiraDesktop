@@ -53,6 +53,7 @@
     <ClCompile Include="..\..\libs\libgui\src\font_awesome.cc" />
     <ClCompile Include="..\..\libs\libgui\src\hotkey.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\settings.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\styles.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_action.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_hotkey.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_menu.cpp" />

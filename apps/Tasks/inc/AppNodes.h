@@ -40,7 +40,7 @@ public:
 	void setActive(bool active) override;
 	bool getActive() const override;
 	void activate() override;
-	int getCursor() const override;
+	styles::cur getCursor() const override;
 
 	bool hasTooltip() const override;
 	const std::string& getTooltip() const override;

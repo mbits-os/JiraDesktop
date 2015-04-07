@@ -25,32 +25,11 @@
 #pragma once
 
 #include <gui/painter.hpp>
+#include <gui/styles.hpp>
 #include <memory>
 #include <vector>
 
-namespace styles {
-	struct rule_storage;
-	struct stylesheet;
-};
-
 namespace gui {
-	enum class elem {
-		unspecified,
-		body,
-		block,
-		header,
-		span,
-		text,
-		link,
-		image,
-		icon,
-		table,
-		table_head,
-		table_row,
-		th,
-		td
-	};
-
 	struct node {
 		using point = painter::point;
 		using size = painter::size;
@@ -82,7 +61,7 @@ namespace gui {
 		virtual void setActive(bool active) = 0;
 		virtual bool getActive() const = 0;
 		virtual void activate() = 0;
-		virtual int getCursor() const = 0;
+		virtual styles::cur getCursor() const = 0;
 
 		virtual void setTooltip(const std::string& text) = 0;
 		virtual bool hasTooltip() const = 0;

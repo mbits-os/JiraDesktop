@@ -296,14 +296,14 @@ gui::node::size CJiraNode::measureThis(gui::painter* /*painter*/)
 	return{ 0, 0 };
 }
 
-int CJiraNode::getCursor() const
+styles::cur CJiraNode::getCursor() const
 {
 	auto styles = calculatedStyle();
 	if (styles) {
 		if (styles->has(styles::prop_cursor)) {
 			auto c = styles->get(styles::prop_cursor);
 			if (c != styles::cur::inherited)
-				return (int)c;
+				return c;
 		}
 	}
 
@@ -311,7 +311,7 @@ int CJiraNode::getCursor() const
 	if (parent)
 		return parent->getCursor();
 
-	return (int)styles::cur::inherited;
+	return styles::cur::inherited;
 }
 
 bool CJiraNode::hasTooltip() const

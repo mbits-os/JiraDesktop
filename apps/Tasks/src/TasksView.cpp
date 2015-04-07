@@ -798,7 +798,7 @@ void CTasksView::updateCursor(bool force)
 {
 	auto tmp = styles::cur::arrow;
 	if (m_hovered)
-		tmp = (styles::cur)m_hovered->getCursor();
+		tmp = m_hovered->getCursor();
 
 	if (tmp == styles::cur::inherited)
 		tmp = styles::cur::arrow;

@@ -24,11 +24,30 @@
 
 #pragma once
 
-#include <gui/node.hpp>
-
 #include <ratio>
 #include <string>
 #include <map>
+
+namespace gui {
+	enum class elem {
+		unspecified,
+		body,
+		block,
+		header,
+		span,
+		text,
+		link,
+		image,
+		icon,
+		table,
+		table_head,
+		table_row,
+		th,
+		td
+	};
+
+	struct node;
+}
 
 namespace styles {
 	using colorref = uint32_t;
@@ -513,41 +532,10 @@ namespace styles {
 		pseudo m_pseudoClass = pseudo::unspecified;
 		std::vector<std::string> m_classes;
 
-		bool selects(const gui::node* node) const
-		{
-			if (!maySelect(node))
-				return false;
-
-			switch (m_pseudoClass) {
-			case pseudo::hover:
-				if (!node->getHovered())
-					return false;
-				break;
-			case pseudo::active:
-				if (!node->getActive())
-					return false;
-				break;
-			};
-
-			return true;
-		}
+		bool selects(const gui::node* node) const;
 
 		// same as selects, but doesn't take pseudo classes into account
-		bool maySelect(const gui::node* node) const
-		{
-			if (!node)
-				return false;
-
-			if (m_elemName != gui::elem::unspecified && m_elemName != node->getNodeName())
-				return false;
-
-			for (auto& cl : m_classes) {
-				if (!node->hasClass(cl))
-					return false;
-			}
-
-			return true;
-		}
+		bool maySelect(const gui::node* node) const;
 	};
 
 	struct class_name : selector {
