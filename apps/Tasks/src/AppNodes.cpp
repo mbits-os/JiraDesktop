@@ -741,9 +741,8 @@ void CJiraTableNode::measure(gui::painter* painter)
 	for (auto& node : m_children) {
 		node->measure(painter);
 
-		auto nheight = node->getSize().height;
 		node->setPosition(0, height);
-		height += nheight * 12 / 10; // 120%
+		height += node->getSize().height;
 	}
 
 	for (auto& node : m_children)
