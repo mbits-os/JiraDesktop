@@ -350,11 +350,7 @@ styles::pixels calculatedFontSize(gui::node* node)
 	if (styles && styles->has(prop_font_size)) {
 		auto u = styles->get(prop_font_size);
 		ATLASSERT(u.which() == length_u::first_type);
-		if (u.which() == length_u::first_type)
-			return u.first();
-		else if (u.which() == length_u::second_type) {
-			return u.second().value(calculatedFontSize(node->getParent().get()));
-		}
+		return u.first();
 	}
 
 	return calculatedFontSize(node->getParent().get());
@@ -392,6 +388,10 @@ void calculate(styles::rule_storage& rules, gui::node* node)
 	using namespace styles;
 	auto fontSize = calculate(rules, prop_font_size, parentFontSize(node));
 	calculate(rules, prop_border_length, fontSize);
+	calculate(rules, prop_padding_top, fontSize);
+	calculate(rules, prop_padding_right, fontSize);
+	calculate(rules, prop_padding_bottom, fontSize);
+	calculate(rules, prop_padding_left, fontSize);
 }
 
 void CJiraNode::calculateStyles()
