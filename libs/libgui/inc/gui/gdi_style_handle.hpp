@@ -25,6 +25,7 @@
 #pragma once
 #include <gui/painter.hpp>
 #include <gui/styles.hpp>
+#include <windows.h>
 
 namespace gui { namespace gdi {
 	struct style_save : gui::style_save {
@@ -33,13 +34,36 @@ namespace gui { namespace gdi {
 			virtual void drawBackground(gui::node*, styles::colorref) = 0;
 			virtual void drawBorder(gui::node*) = 0;
 			virtual gui::painter* getPainter() = 0;
-		};
+			virtual COLORREF getColor() const = 0;
+			virtual const LOGFONT& getFont() const = 0;
 
-		callback* m_caller = nullptr;
-		gui::node* m_target = nullptr;
-		point m_origin;
+			virtual void setColor(COLORREF) = 0;
+			virtual void setFont(const LOGFONT&) = 0;
+		};
 
 		void apply(callback*, gui::node*);
 		void restore();
+
+	private:
+		callback* m_caller = nullptr;
+		gui::node* m_target = nullptr;
+		point m_origin;
+		LOGFONT m_originalFont;
+		LOGFONT m_modifiedFont;
+		bool m_fontChanged;
+		COLORREF m_originalTextColor;
+		COLORREF m_modifiedTextColor;
+
+		void batch_apply(styles::rule_storage&);
+		void lower_layer(styles::rule_storage&);
+		void move_padding(styles::rule_storage&);
+
+		bool set_color(COLORREF);
+		bool set_font_italic(bool);
+		bool set_font_underline(bool);
+		bool set_font_weight(int);
+		bool set_font_size(const styles::length_u&);
+		bool set_font_family(const std::wstring&);
+		void store();
 	};
 }};

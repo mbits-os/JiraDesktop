@@ -56,7 +56,11 @@ namespace gui { namespace gdi {
 	private:
 		void drawBackground(gui::node*, styles::colorref) override;
 		void drawBorder(gui::node* node) override;
-		gui::painter* getPainter();
+		gui::painter* getPainter() override;
+		COLORREF getColor() const override;
+		const LOGFONT& getFont() const override;
+		void setColor(COLORREF) override;
+		void setFont(const LOGFONT&) override;
 
 		void drawBorder(const gui::point& from, const gui::point& to, styles::line style, COLORREF color);
 
@@ -64,6 +68,7 @@ namespace gui { namespace gdi {
 		HDC m_dc;
 		HFONT m_font;
 		HFONT m_original;
+		HFONT m_modified;
 		LOGFONT m_lf;
 		point m_origin;
 		RECT m_clip;

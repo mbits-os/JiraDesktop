@@ -43,9 +43,11 @@ namespace gui { namespace gdi {
 	painter::painter(HDC dc, const RECT& clip, HFONT font)
 		: m_dc{ dc }
 		, m_font{ font }
+		, m_modified{ nullptr }
 		, m_origin{ 0, 0 }
 		, m_clip{ clip.left, clip.top, clip.right, clip.bottom }
 	{
+		memset(&m_lf, 0, sizeof(m_lf));
 		m_original = (HFONT)::SelectObject(m_dc, m_font);
 		::GetObject(m_dc, sizeof(m_lf), &m_lf);
 	}
@@ -58,6 +60,8 @@ namespace gui { namespace gdi {
 	painter::~painter()
 	{
 		::SelectObject(m_dc, m_original);
+		if (m_modified)
+			DeleteObject(m_modified);
 	}
 
 	void painter::moveOrigin(int x, int y)
@@ -274,6 +278,32 @@ Border border_ ## side{*styles, this, \
 	gui::painter* painter::getPainter()
 	{
 		return this;
+	}
+
+	COLORREF painter::getColor() const
+	{
+		return GetTextColor(m_dc);
+	}
+
+	const LOGFONT& painter::getFont() const
+	{
+		return m_lf;
+	}
+
+	void painter::setColor(COLORREF color)
+	{
+		SetTextColor(m_dc, color);
+	}
+
+	void painter::setFont(const LOGFONT& lf)
+	{
+		m_lf = lf;
+
+		if (m_modified)
+			DeleteObject(m_modified);
+
+		m_modified = CreateFontIndirect(&m_lf);
+		SelectObject(m_dc, m_modified);
 	}
 
 	void painter::drawBorder(const gui::point& from, const gui::point& to, styles::line /*style*/, COLORREF color)
