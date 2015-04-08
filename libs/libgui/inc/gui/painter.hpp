@@ -26,6 +26,8 @@
 
 #include <string>
 
+#include <gui/types.hpp>
+
 namespace gui {
 	struct image_ref;
 	struct node;

@@ -47,6 +47,9 @@ namespace gui { namespace gdi {
 		, m_origin{ 0, 0 }
 		, m_clip{ clip.left, clip.top, clip.right, clip.bottom }
 	{
+		m_zoom.num = ::GetDeviceCaps(m_dc, LOGPIXELSX);
+		m_zoom.denom = 96;
+
 		memset(&m_lf, 0, sizeof(m_lf));
 		m_original = (HFONT)::SelectObject(m_dc, m_font);
 		::GetObject(m_font, sizeof(m_lf), &m_lf);
@@ -122,19 +125,19 @@ namespace gui { namespace gdi {
 	}
 
 	template<typename T>
-	static inline T xp2dev(HDC dc, T value)
+	static inline T xp2dev(const gdi::ratio& r, T value)
 	{
-		return ::GetDeviceCaps(dc, LOGPIXELSX) * value / 96;
+		return r.num * value / r.denom;
 	}
 
 	int painter::dpiRescale(int size)
 	{
-		return xp2dev(m_dc, size);
+		return xp2dev(m_zoom, size);
 	}
 
 	long double painter::dpiRescale(long double size)
 	{
-		return xp2dev(m_dc, size);
+		return xp2dev(m_zoom, size);
 	}
 
 	bool painter::visible(node* node) const
@@ -168,7 +171,7 @@ namespace gui { namespace gdi {
 		::SetBkColor(dc, clrOld);
 	}
 
-	void painter::drawBackground(gui::node* node, styles::colorref)
+	void painter::drawBackground(gui::node* node, colorref)
 	{
 		auto style = node->calculatedStyle();
 		auto& ref = *style;
@@ -183,8 +186,8 @@ namespace gui { namespace gdi {
 
 	struct Border {
 		int width;
-		styles::line style;
-		styles::colorref color;
+		line_style style;
+		colorref color;
 
 		Border(const styles::rule_storage& styles,
 			gui::painter* painter,
@@ -192,7 +195,7 @@ namespace gui { namespace gdi {
 			styles::border_style_prop style_prop,
 			styles::color_prop color_prop)
 			: width(0)
-			, style(styles::line::none)
+			, style(line_style::none)
 			, color(0x000000)
 		{
 			if (styles.has(width_prop)) {
@@ -208,14 +211,14 @@ namespace gui { namespace gdi {
 				color = styles.get(color_prop);
 
 			if (width == 0 ||
-				style == styles::line::none)
+				style == line_style::none)
 			{
 				width = 0;
-				style = styles::line::none;
+				style = line_style::none;
 			}
 		};
 
-		bool present() const { return style != styles::line::none; }
+		bool present() const { return style != line_style::none; }
 	};
 
 	void painter::drawBorder(gui::node* node)
@@ -306,7 +309,7 @@ Border border_ ## side{*styles, this, \
 		SelectObject(m_dc, m_modified);
 	}
 
-	void painter::drawBorder(const gui::point& from, const gui::point& to, styles::line /*style*/, COLORREF color)
+	void painter::drawBorder(const gui::point& from, const gui::point& to, line_style /*style*/, COLORREF color)
 	{
 		RECT r{ from.x, from.y, to.x, to.y };
 		FillSolidRect(m_dc, &r, color);

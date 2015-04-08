@@ -94,9 +94,8 @@ namespace gui { namespace gdi {
 		return FW_NORMAL;
 	}
 
-	static int calc(styles::weight w, int inherited)
+	static int calc(weight w, int inherited)
 	{
-		using namespace styles;
 		switch (w) {
 		case weight::normal: return FW_NORMAL;
 		case weight::bold: return FW_BOLD;

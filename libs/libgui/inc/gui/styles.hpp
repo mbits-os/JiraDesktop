@@ -49,7 +49,7 @@ namespace styles {
 
 		long double value() const { return m_len; }
 		template <typename Ratio>
-		length<Ratio> value(const length<Ratio>& len) const {
+		gui::length<Ratio> value(const gui::length<Ratio>& len) const {
 			return len.value() * m_len;
 		}
 	};
@@ -395,7 +395,7 @@ namespace styles {
 
 #define BORDER(side) \
 	template <typename Length> \
-	inline rule_storage border_ ## side(const Length& width, line style, colorref color) \
+	inline rule_storage border_ ## side(const Length& width, gui::line_style style, gui::colorref color) \
 	{ \
 		return border_ ## side ## _width(width) << border_ ## side ## _style(style) << border_ ## side ## _color(color); \
 	}
@@ -403,7 +403,7 @@ namespace styles {
 #undef BORDER
 
 			template <typename Length>
-		inline rule_storage border(const Length& width, line style, colorref color)
+		inline rule_storage border(const Length& width, gui::line_style style, gui::colorref color)
 		{
 			return border_width(width) << border_style(style) << border_color(color);
 		}

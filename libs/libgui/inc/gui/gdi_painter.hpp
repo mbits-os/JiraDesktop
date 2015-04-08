@@ -31,6 +31,11 @@
 #include <windows.h>
 
 namespace gui { namespace gdi {
+	struct ratio {
+		int num;
+		int denom;
+	};
+
 	class painter
 		: public gui::painter
 		, private gui::gdi::style_save::callback {
@@ -54,7 +59,7 @@ namespace gui { namespace gdi {
 		void restoreStyle(gui::style_handle) override;
 
 	private:
-		void drawBackground(gui::node*, styles::colorref) override;
+		void drawBackground(gui::node*, colorref) override;
 		void drawBorder(gui::node* node) override;
 		gui::painter* getPainter() override;
 		COLORREF getColor() const override;
@@ -62,9 +67,10 @@ namespace gui { namespace gdi {
 		void setColor(COLORREF) override;
 		void setFont(const LOGFONT&) override;
 
-		void drawBorder(const gui::point& from, const gui::point& to, styles::line style, COLORREF color);
+		void drawBorder(const gui::point& from, const gui::point& to, line_style style, COLORREF color);
 
 	private:
+		ratio m_zoom;
 		HDC m_dc;
 		HFONT m_font;
 		HFONT m_original;

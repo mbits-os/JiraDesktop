@@ -31,7 +31,7 @@ namespace gui { namespace gdi {
 	struct style_save : gui::style_save {
 		struct callback {
 			virtual ~callback() {}
-			virtual void drawBackground(gui::node*, styles::colorref) = 0;
+			virtual void drawBackground(gui::node*, colorref) = 0;
 			virtual void drawBorder(gui::node*) = 0;
 			virtual gui::painter* getPainter() = 0;
 			virtual COLORREF getColor() const = 0;

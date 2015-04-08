@@ -61,7 +61,7 @@ namespace gui {
 		virtual void setActive(bool active) = 0;
 		virtual bool getActive() const = 0;
 		virtual void activate() = 0;
-		virtual styles::pointer getCursor() const = 0;
+		virtual gui::pointer getCursor() const = 0;
 
 		virtual void setTooltip(const std::string& text) = 0;
 		virtual bool hasTooltip() const = 0;
