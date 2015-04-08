@@ -50,6 +50,7 @@
     <ClCompile Include="..\..\libs\libgui\pch\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\cairo_painter.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\font_awesome.cc" />
     <ClCompile Include="..\..\libs\libgui\src\hotkey.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\settings.cpp" />
@@ -63,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libs\libgui\inc\gui\action.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\cairo_painter.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\document.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\font_awesome.hh" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\gdi_painter.hpp" />

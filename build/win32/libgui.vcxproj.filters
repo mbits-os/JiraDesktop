@@ -53,6 +53,9 @@
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_gdi_style_handle.cpp">
       <Filter>src\win32</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\cairo_painter.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libs\libgui\pch\pch.h">
@@ -104,6 +107,9 @@
       <Filter>inc\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libs\libgui\inc\gui\types.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\cairo_painter.hpp">
       <Filter>inc\gui</Filter>
     </ClInclude>
   </ItemGroup>
