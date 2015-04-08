@@ -98,6 +98,14 @@ namespace gui {
 			return (long double)value * denom / num;
 		}
 
+		pixels invert(double value) const {
+			return (long double)value * denom / num;
+		}
+
+		pixels invert(long double value) const {
+			return value * denom / num;
+		}
+
 		static int GCD(int a, int b) {
 			if (!b)
 				return a;

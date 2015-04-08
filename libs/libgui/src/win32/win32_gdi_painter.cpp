@@ -129,7 +129,7 @@ namespace gui { namespace gdi {
 		auto line = utf::widen(text);
 		SIZE s = {};
 		if (::GetTextExtentPoint32(m_dc, line.c_str(), line.length(), &s))
-			return{ (size_t)s.cx, (size_t)s.cy };
+			return{ m_zoom.invert(s.cx), m_zoom.invert(s.cy) };
 		return{};
 	}
 
