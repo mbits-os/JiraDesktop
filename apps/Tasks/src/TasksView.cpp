@@ -196,40 +196,44 @@ namespace {
 
 		styles::stylesheet out;
 
+		// "Default" stylesheet
 		out
-			.add(gui::elem::header,                        font_size(1.8_em) << color(0x883333) <<
-			                                               padding(.5_em, .2_px, .4_em))
+			// GENERIC ELEMENTS
+			.add(gui::elem::body,                          display(disp::block) << padding(7_px))
+			.add(gui::elem::block,                         display(disp::block))
+			.add(gui::elem::header,                        display(disp::block) <<
+			                                               font_size(1.8_em) <<
+			                                               margin(.3_em, 0_px, .2_em) <<
+			                                               padding(.2_em, .2_px, .2_em))
 
+			// TABLE
+			.add(gui::elem::table,                         display(disp::table))
+			.add(gui::elem::table_head,                    display(disp::table_header))
+			.add(gui::elem::table_row,                     display(disp::table_row))
+			.add(gui::elem::td,                            padding(.2_em))
+			.add(gui::elem::th,                            text_align(align::center) <<
+			                                               font_weight(weight::bold) <<
+			                                               padding(.2_em))
+
+			// LINK
+			.add(gui::elem::link,                          color(0xAF733B) << cursor(pointer::hand))
+			.add({ gui::elem::link, pseudo::hover },       underline());
+
+		// Application styleshet
+		out
+			.add(gui::elem::header,                        color(0x883333))
 			.add(gui::elem::table,                         border(1_px, line::solid, 0x444444))
-
-			.add(gui::elem::table_head,                    font_weight(weight::bold) <<
-			                                               text_align(align::center) <<
-			                                               padding(.2_em))
-
-			.add(gui::elem::table_row,                     border_top(1_px, line::solid, 0xc0c0c0) <<
-			                                               padding(.2_em))
-
+			.add(gui::elem::table_row,                     border_top(1_px, line::solid, 0xc0c0c0))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
-
-			.add(gui::elem::link,                          color(0xAF733B) << cursor(pointer::hand) <<
-			                                               padding(2_px) << border(1_px, line::none, 0xc0c0c0))
-
-			.add({ gui::elem::link, pseudo::hover },       underline())
-
+			.add(gui::elem::link,                          padding(2_px) << border(1_px, line::none, 0xc0c0c0))
 			.add({ gui::elem::link, pseudo::active },      border(1_px, line::dot, 0xc0c0c0))
 
 			.add(class_name{ "error" },                    color(0x171BC1))
-
 			.add(class_name{ "empty" },                    none_empty)
-
 			.add(class_name{ "none" },                     none_empty)
-
 			.add(class_name{ "summary" },                  font_size(.8_em) << color(0x555555))
-
 			.add(class_name{ "symbol" },                   font_family("FontAwesome"))
-
 			.add(class_name{ "unexpected" },               color(0x2600E6))
-
 			.add(class_name{ "label" },                    background(0xF5F5F5) <<
 			                                               border(1_px, line::solid, 0xCCCCCC) <<
 			                                               padding(1_px, 5_px));
