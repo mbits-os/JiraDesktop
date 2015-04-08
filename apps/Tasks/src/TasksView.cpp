@@ -184,546 +184,7 @@ enum {
 	BODY_MARGIN = 7
 };
 
-namespace { class Styler; };
-
-enum class bk {
-	transparent,
-	solid
-};
-
-class LinePrinter : public gui::painter
-{
-	HFONT older;
-	CFontHandle font;
-	CDCHandle dc;
-	CPen focusPen;
-	int x = BODY_MARGIN;
-	int y = BODY_MARGIN;
-	Styler* uplink = nullptr;
-	bool selectedFrame = false;
-	bk backgroundMode = bk::transparent;
-	COLORREF color = 0xFFFFFF;
-	RECT update;
-
-	void moveOrigin(int x_, int y_) override
-	{
-		x += x_;
-		y += y_;
-	}
-
-	point getOrigin() const override
-	{
-		return{ x, y };
-	}
-
-	void setOrigin(const point& orig) override
-	{
-		x = orig.x;
-		y = orig.y;
-	}
-
-	void paintImage(const gui::image_ref* img, size_t width, size_t height) override
-	{
-		auto bmp = reinterpret_cast<Gdiplus::Bitmap*>(img ? img->getNativeHandle() : nullptr);
-		if (img && img->getState() != gui::load_state::pixmap_available)
-			bmp = nullptr;
-
-		if (!bmp) {
-			dc.Rectangle(x, y, x + width, y + height);
-			return;
-		}
-
-		Gdiplus::Graphics gfx{ (HDC)dc };
-		gfx.DrawImage(bmp, x, y, width, height);
-	}
-
-	void paintString(const std::string& text) override
-	{
-		if (text.empty())
-			return;
-
-		auto widen = utf::widen(text);
-		dc.TextOut(x, y, widen.c_str());
-
-#if 0
-		SIZE s = {};
-		TEXTMETRIC tm = {};
-		dc.GetTextExtent(widen.c_str(), widen.length(), &s);
-		dc.GetTextMetrics(&tm);
-		dc.FillSolidRect(x, y + tm.tmAscent, s.cx - 1, 1, 0x3333FF);
-#endif
-	}
-
-	size measureString(const std::string& text) override
-	{
-		auto line = utf::widen(text);
-		SIZE s = {};
-		if (dc.GetTextExtent(line.c_str(), line.length(), &s))
-			return{ (size_t)s.cx, (size_t)s.cy };
-		return{};
-	}
-
-	bool visible(gui::node* node) const override
-	{
-		auto br = gui::point{x, y} + node->getSize();
-
-		RECT r = { x, y, br.x, br.y };
-		RECT test;
-
-		return !!IntersectRect(&test, &r, &update);
-	}
-	gui::style_handle applyStyle(gui::node*) override;
-	void restoreStyle(gui::style_handle save) override;
-public:
-	int dpiRescale(int size) override;
-	long double dpiRescale(long double size) override;
-
-	explicit LinePrinter(HDC dc_, HFONT font_) : dc(dc_), font(font_)
-	{
-		older = dc.SelectFont(font);
-	}
-	~LinePrinter()
-	{
-		dc.SelectFont(older);
-	}
-
-	LinePrinter& select(HFONT font_)
-	{
-		font = font_;
-		dc.SelectFont(font);
-		return *this;
-	}
-
-	LinePrinter& drawFocus(gui::node* node)
-	{
-		if (selectedFrame) {
-			selectedFrame = false;
-			auto pt = node->getAbsolutePos();
-			auto sz = node->getSize();
-			RECT r{ pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 2, pt.y + (int)sz.height + 2 };
-			if (!focusPen)
-				focusPen.CreatePen(PS_DOT, 1, 0xc0c0c0);
-			auto prev = dc.SelectPen(focusPen);
-			dc.MoveTo(r.left, r.top);
-			dc.LineTo(r.right - 1, r.top);
-			dc.LineTo(r.right - 1, r.bottom - 1);
-			dc.LineTo(r.left, r.bottom - 1);
-			dc.LineTo(r.left, r.top);
-			dc.SelectPen(prev);
-		}
-		return *this;
-	}
-
-	LinePrinter& drawBackground(gui::node* node)
-	{
-		if (backgroundMode == bk::solid) {
-			backgroundMode = bk::transparent;
-			auto pt = node->getAbsolutePos();
-			auto sz = node->getSize();
-			RECT r{ pt.x - 1, pt.y - 1, pt.x + (int)sz.width + 1, pt.y + (int)sz.height + 1 };
-			dc.FillSolidRect(&r, color);
-		}
-
-		return *this;
-	}
-
-	struct Border {
-		int width;
-		styles::line style;
-		styles::colorref color;
-
-		Border(const styles::rule_storage& styles,
-			gui::painter* painter,
-			styles::length_prop width_prop,
-			styles::border_style_prop style_prop,
-			styles::color_prop color_prop)
-			: width(0)
-			, style(styles::line::none)
-			, color(0x000000)
-		{
-			if (styles.has(width_prop)) {
-				auto u = styles.get(width_prop);
-				ATLASSERT(u.which() == styles::length_u::first_type);
-				width = (int)(painter->dpiRescale(u.first().value()) + 0.5);
-			}
-
-			if (styles.has(style_prop))
-				style = styles.get(style_prop);
-
-			if (styles.has(color_prop))
-				color = styles.get(color_prop);
-
-			if (width == 0 ||
-				style == styles::line::none)
-			{
-				width = 0;
-				style = styles::line::none;
-			}
-		};
-
-		bool present() const { return style != styles::line::none; }
-	};
-
-	void drawBorder(const gui::point& from, const gui::point& to, styles::line style, COLORREF color)
-	{
-		RECT r{ from.x, from.y, to.x, to.y };
-		dc.FillSolidRect(&r, color);
-	}
-
-	LinePrinter& drawBorder(gui::node* node)
-	{
-		auto styles = node->calculatedStyle();
-#define BORDER_(side) \
-Border border_ ## side{*styles, this, \
-	styles::prop_border_ ## side ## _width, \
-	styles::prop_border_ ## side ## _style, \
-	styles::prop_border_ ## side ## _color};
-		MAKE_FOURWAY(BORDER_)
-#undef BORDER_
-
-		auto pt = node->getAbsolutePos();
-		auto sz = node->getSize();
-
-		if (border_top.present()) {
-			auto orig = pt;
-			auto dest = pt + size{ sz.width, (size_t)border_top.width };
-
-			if (border_right.present())
-				dest.x -= border_right.width;
-
-			drawBorder(orig, dest, border_top.style, border_top.color);
-		}
-
-		if (border_right.present()) {
-			auto orig = pt;
-			auto dest = pt + size{ sz.width, sz.height };
-			orig.x = dest.x - border_right.width;
-
-			if (border_bottom.present())
-				dest.y -= border_bottom.width;
-
-			drawBorder(orig, dest, border_right.style, border_right.color);
-		}
-
-		if (border_bottom.present()) {
-			auto orig = pt;
-			auto dest = pt + size{ sz.width, sz.height };
-			orig.y = dest.y - border_bottom.width;
-
-			if (border_left.present())
-				orig.x += border_left.width;
-
-			drawBorder(orig, dest, border_bottom.style, border_bottom.color);
-		}
-
-		if (border_left.present()) {
-			auto orig = pt;
-			auto dest = pt + size{ (size_t)border_left.width, sz.height };
-
-			if (border_top.present())
-				orig.y += border_top.width;
-
-			drawBorder(orig, dest, border_left.style, border_left.color);
-		}
-
-		return *this;
-	}
-
-	LinePrinter& paint(const std::shared_ptr<gui::node>& node, Styler* link)
-	{
-		uplink = link;
-		auto size = node->getSize();
-
-		RECT r = { x, y, (int)size.width + x, (int)size.height + y };
-		RECT test;
-		IntersectRect(&test, &r, &update);
-
-		if (test.left == test.right || test.top == test.bottom)
-			return *this;
-
-		node->paint(this);
-		return *this;
-	}
-
-	LinePrinter& measure(const std::shared_ptr<gui::node>& node, Styler* link)
-	{
-		uplink = link;
-		node->measure(this);
-		return *this;
-	}
-
-	LinePrinter& setFrameSelect()
-	{
-		selectedFrame = true;
-		return *this;
-	}
-
-	LinePrinter& setBackground(bk mode, COLORREF clr)
-	{
-		backgroundMode = mode;
-		color = clr;
-		return *this;
-	}
-
-	LinePrinter& updateRect(const RECT& val)
-	{
-		update = val;
-		return *this;
-	}
-};
-
 namespace {
-
-	class Styler {
-		LinePrinter printer;
-		CDCHandle dc;
-		CFont font;
-		LOGFONT logFont;
-		COLORREF lastColor;
-		std::wstring baseName;
-
-	public:
-		Styler(HDC dc_, HFONT font_)
-			: printer(dc_, font_)
-			, dc(dc_)
-			, lastColor(0)
-		{
-			CFontHandle{ font_ }.GetLogFont(&logFont);
-			lastColor = dc.GetTextColor();
-			baseName = logFont.lfFaceName;
-		}
-
-		void update()
-		{
-			if (font)
-				font.DeleteObject();
-			font.CreateFontIndirect(&logFont);
-			printer.select(font);
-		}
-
-		void setColor(COLORREF color)
-		{
-			lastColor = color;
-			dc.SetTextColor(color);
-		}
-
-		void setFontItalic(bool italic)
-		{
-			logFont.lfItalic = italic ? TRUE : FALSE;
-		}
-
-		void setFontUnderline(bool underline)
-		{
-			logFont.lfUnderline = underline ? TRUE : FALSE;
-		}
-
-		void setFontWeight(int weight)
-		{
-			logFont.lfWeight = weight;
-		}
-
-		bool setFontSize(const styles::length_u& len)
-		{
-			if (len.which() == styles::length_u::first_type) {
-				logFont.lfHeight = (int)(printer.dpiRescale(len.first().value()) + 0.5);
-			} else if (len.which() == styles::length_u::second_type) {
-				logFont.lfHeight = (int)(logFont.lfHeight * len.second().value() + 0.5);
-			} else {
-				return false;
-			}
-
-			return true;
-		}
-
-		void setFontSizeAbs(int size)
-		{
-			logFont.lfHeight = size;
-		}
-
-		void setFontFamily(const std::wstring& faceName)
-		{
-			if (faceName.empty()) {
-				wcscpy(logFont.lfFaceName, baseName.c_str());
-			} else {
-				wcscpy(logFont.lfFaceName, faceName.c_str());
-			}
-		}
-
-		void setFrameSelect()
-		{
-			printer.setFrameSelect();
-		}
-
-		void setBackground(bk mode, COLORREF color)
-		{
-			printer.setBackground(mode, color);
-		}
-
-		COLORREF getColor() const { return lastColor; }
-		bool getFontItalic() const { return !!logFont.lfItalic; }
-		bool getFontUnderline() const { return !!logFont.lfUnderline; }
-		int getFontWeight() const { return logFont.lfWeight; }
-		int getFontSize() const { return logFont.lfHeight; }
-		const wchar_t* getFontFamily() const { return logFont.lfFaceName; }
-		LinePrinter& out() { return printer; }
-
-		const LOGFONT& fontDef() const { return this->logFont; }
-	};
-
-	class Style {
-		Styler& m_styler;
-		COLORREF m_color;
-		int m_weight;
-		int m_size;
-		bool m_italic;
-		bool m_underline;
-		std::wstring m_family;
-
-	public:
-		Style() = delete;
-		Style(const Style&) = delete;
-		Style& operator=(const Style&) = delete;
-
-		explicit Style(Styler& styler)
-			: m_styler(styler)
-			, m_color(styler.getColor())
-			, m_weight(styler.getFontWeight())
-			, m_size(styler.getFontSize())
-			, m_italic(styler.getFontItalic())
-			, m_underline(styler.getFontUnderline())
-			, m_family(styler.getFontFamily())
-		{
-		}
-
-		explicit Style(Styler& styler, gui::elem name, gui::node* node)
-			: m_styler(styler)
-			, m_color(styler.getColor())
-			, m_weight(styler.getFontWeight())
-			, m_size(styler.getFontSize())
-			, m_italic(styler.getFontItalic())
-			, m_underline(styler.getFontUnderline())
-			, m_family(styler.getFontFamily())
-		{
-			apply(*this, name, node);
-		}
-
-		~Style()
-		{
-			setColor(m_color);
-			setFontWeight(m_weight);
-			m_styler.setFontSizeAbs(m_size);
-			setFontItalic(m_italic);
-			setFontUnderline(m_underline);
-			m_styler.setFontFamily(m_family);
-			m_styler.update();
-		}
-
-		static void apply(Style& style, gui::elem name, gui::node* node);
-
-		Style& setColor(COLORREF color)
-		{
-			if (color != m_styler.getColor())
-				m_styler.setColor(color);
-			return *this;
-		}
-
-		Style& setFontItalic(bool italic)
-		{
-			if (italic != m_styler.getFontItalic())
-				m_styler.setFontItalic(italic);
-			return *this;
-		}
-
-		Style& setFontUnderline(bool underline)
-		{
-			if (underline != m_styler.getFontUnderline())
-				m_styler.setFontUnderline(underline);
-			return *this;
-		}
-
-		Style& setFontWeight(int weight)
-		{
-			if (weight != m_styler.getFontWeight())
-				m_styler.setFontWeight(weight);
-			return *this;
-		}
-
-		Style& setFrameSelect()
-		{
-			m_styler.setFrameSelect();
-			return *this;
-		}
-
-		Style& setBackground(bk mode, COLORREF color)
-		{
-			m_styler.setBackground(mode, color);
-			return *this;
-		}
-
-		// See <http://www.w3.org/TR/CSS2/fonts.html#propdef-font-weight>
-		static int bolderThan(int inherited)
-		{
-			if (inherited < FW_NORMAL)
-				return FW_NORMAL;
-			if (inherited > FW_SEMIBOLD)
-				return FW_HEAVY;
-			return FW_BOLD;
-		}
-
-		// See <http://www.w3.org/TR/CSS2/fonts.html#propdef-font-weight>
-		static int lighterThan(int inherited)
-		{
-			if (inherited < FW_SEMIBOLD)
-				return FW_THIN;
-			if (inherited >= FW_EXTRABOLD)
-				return FW_BOLD;
-			return FW_NORMAL;
-		}
-
-		static int calc(styles::weight w, int inherited)
-		{
-			using namespace styles;
-			switch (w) {
-			case weight::normal: return FW_NORMAL;
-			case weight::bold: return FW_BOLD;
-			case weight::bolder: return bolderThan(inherited);
-			case weight::lighter: return lighterThan(inherited);
-			default:
-				break;
-			}
-
-			return (int)w;
-		}
-
-		Style& batchApply(const styles::rule_storage& rules)
-		{
-			bool update = false;
-
-			using namespace styles;
-
-			if (rules.has(prop_color))
-				m_styler.setColor(rules.get(prop_color)), update = true;
-			if (rules.has(prop_background))
-				m_styler.setBackground(bk::solid, rules.get(prop_background)), update = true;
-			if (rules.has(prop_italic))
-				m_styler.setFontItalic(rules.get(prop_italic)), update = true;
-			if (rules.has(prop_underline))
-				m_styler.setFontUnderline(rules.get(prop_underline)), update = true;
-			if (rules.has(prop_font_weight))
-				m_styler.setFontWeight(calc(rules.get(prop_font_weight), m_styler.getFontWeight())), update = true;
-			if (rules.has(prop_font_size))
-				update = m_styler.setFontSize(rules.get(prop_font_size));
-			if (rules.has(prop_font_family)) {
-				auto family = utf::widen(rules.get(prop_font_family));
-				if (family != m_styler.getFontFamily())
-					m_styler.setFontFamily(family), update = true;
-			}
-
-			if (update)
-				m_styler.update();
-			return *this;
-		}
-	};
 
 	std::shared_ptr<styles::stylesheet> stylesheetCreate()
 	{
@@ -769,7 +230,7 @@ namespace {
 
 			.add(class_name{ "unexpected" },               color(0x2600E6))
 
-			.add(class_name{"label"},                      background(0xF5F5F5) <<
+			.add(class_name{ "label" },                    background(0xF5F5F5) <<
 			                                               border(1_px, line::solid, 0xCCCCCC) <<
 			                                               padding(1_px, 5_px));
 
@@ -780,25 +241,6 @@ namespace {
 	{
 		static std::shared_ptr<styles::stylesheet> sheet = stylesheetCreate();
 		return sheet;
-	}
-
-	void Style::apply(Style& style, gui::elem /*name*/, gui::node* node)
-	{
-		auto active = node->calculatedStyle();
-		if (active)
-			style.batchApply(*active);
-	}
-
-	void paintNode(Styler& styler, const std::shared_ptr<gui::node>& node)
-	{
-		auto& painter = static_cast<gui::painter&>(styler.out());
-		auto orig = painter.getOrigin();
-
-		styler.out().paint(node, &styler);
-		auto size = node->getSize();
-		orig.y += size.height;
-
-		painter.setOrigin(orig);
 	}
 
 	void paintNode(gui::painter& painter, const std::shared_ptr<gui::node>& node)
@@ -825,79 +267,6 @@ namespace {
 		return height;
 	}
 };
-
-static long double calculated(const styles::rule_storage& rules,
-	gui::painter* painter, styles::length_prop prop)
-{
-	if (!rules.has(prop))
-		return 0.0;
-
-	auto u = rules.get(prop);
-	ATLASSERT(u.which() == styles::length_u::first_type);
-
-	return painter->dpiRescale(u.first().value());
-};
-
-struct StyleSave: gui::style_save
-{
-	Style saved;
-	gui::point origin;
-	gui::painter* painter;
-	explicit StyleSave(Styler& styler, gui::painter* painter)
-		: saved{ styler }
-		, painter{ painter }
-	{
-		origin = painter->getOrigin();
-	}
-
-	void apply(gui::elem name, gui::node* node)
-	{
-		Style::apply(saved, name, node);
-
-		auto styles = node->calculatedStyle();
-		auto padx = 0.5 +
-			calculated(*styles, painter, styles::prop_border_left_width) +
-			calculated(*styles, painter, styles::prop_padding_left);
-		auto pady = 0.5 +
-			calculated(*styles, painter, styles::prop_border_top_width) +
-			calculated(*styles, painter, styles::prop_padding_top);
-
-		painter->moveOrigin({ int(padx), int(pady) });
-	}
-
-	void restorePadding()
-	{
-		painter->setOrigin(origin);
-	}
-};
-
-gui::style_handle LinePrinter::applyStyle(gui::node* node)
-{
-	auto mem = std::make_unique<StyleSave>(*uplink, this);
-	mem->apply(node->getNodeName(), node);
-	drawBackground(node);
-	drawBorder(node);
-	drawFocus(node);
-
-	return mem.release();
-}
-
-void LinePrinter::restoreStyle(gui::style_handle save)
-{
-	std::unique_ptr<StyleSave> mem{ (StyleSave*)save };
-	if (mem)
-		mem->restorePadding();
-}
-
-int LinePrinter::dpiRescale(int size)
-{
-	return dc.GetDeviceCaps(LOGPIXELSX) * size / 96;
-}
-
-long double LinePrinter::dpiRescale(long double size)
-{
-	return dc.GetDeviceCaps(LOGPIXELSX) * size / 96;
-}
 
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
@@ -1069,7 +438,7 @@ static std::string to_string(const styles::selector& sel)
 	return out;
 }
 
-std::string to_string(styles::color_prop prop) {
+static std::string to_string(styles::color_prop prop) {
 	switch(prop) {
 	case styles::prop_color: return "color";
 	case styles::prop_background: return "background";
@@ -1082,7 +451,7 @@ std::string to_string(styles::color_prop prop) {
 	return "{" + std::to_string((int)prop) + "}";
 };
 
-std::string to_string(styles::bool_prop prop) {
+static std::string to_string(styles::bool_prop prop) {
 	switch(prop) {
 	case styles::prop_italic: return "italic";
 	case styles::prop_underline: return "underline";
@@ -1090,7 +459,8 @@ std::string to_string(styles::bool_prop prop) {
 
 	return "{" + std::to_string((int)prop) + "}";
 };
-std::string to_string(styles::string_prop prop) {
+
+static std::string to_string(styles::string_prop prop) {
 	switch(prop) {
 	case styles::prop_font_family: return "font-family";
 	}
@@ -1098,7 +468,7 @@ std::string to_string(styles::string_prop prop) {
 	return "{" + std::to_string((int)prop) + "}";
 };
 
-std::string to_string(styles::length_prop prop) {
+static std::string to_string(styles::length_prop prop) {
 	switch(prop) {
 	case styles::prop_border_top_width: return "border-top-width";
 	case styles::prop_border_right_width: return "border-right-width";
@@ -1110,10 +480,10 @@ std::string to_string(styles::length_prop prop) {
 	return "{" + std::to_string((int)prop) + "}";
 };
 
-std::string to_string(styles::font_weight_prop /*prop*/) { return "font-weight"; }
-std::string to_string(styles::text_align_prop /*prop*/) { return "text-align"; }
+static std::string to_string(styles::font_weight_prop /*prop*/) { return "font-weight"; }
+static std::string to_string(styles::text_align_prop /*prop*/) { return "text-align"; }
 
-std::string to_string(styles::border_style_prop prop) {
+static std::string to_string(styles::border_style_prop prop) {
 	switch (prop) {
 	case styles::prop_border_top_style: return "border-top-style";
 	case styles::prop_border_right_style: return "border-right-style";
@@ -1124,34 +494,34 @@ std::string to_string(styles::border_style_prop prop) {
 	return "{" + std::to_string((int)prop) + "}";
 }
 
-std::string to_string(styles::colorref col)
+static std::string to_string(styles::colorref col)
 {
 	char buffer[100];
 	sprintf_s(buffer, "#%06X", col);
 	return buffer;
 };
 
-std::string to_string(bool val)
+static std::string to_string(bool val)
 {
 	return val ? "true" : "false";
 };
 
-const std::string& to_string(const std::string& val)
+static const std::string& to_string(const std::string& val)
 {
 	return val;
 };
 
-std::string to_string(const styles::pixels& val)
+static std::string to_string(const styles::pixels& val)
 {
 	return std::to_string(val.value()) + "px";
 };
 
-std::string to_string(const styles::ems& val)
+static std::string to_string(const styles::ems& val)
 {
 	return std::to_string(val.value()) + "em";
 };
 
-std::string to_string(const styles::length_u& len)
+static std::string to_string(const styles::length_u& len)
 {
 	if (len.which() == styles::length_u::first_type) {
 		return to_string(len.first());
@@ -1162,7 +532,7 @@ std::string to_string(const styles::length_u& len)
 	}
 };
 
-std::string to_string(styles::weight val)
+static std::string to_string(styles::weight val)
 {
 	switch (val) {
 	case styles::weight::normal: return "normal";
@@ -1183,7 +553,7 @@ std::string to_string(styles::weight val)
 	return std::to_string((int)val);
 }
 
-std::string to_string(styles::align val)
+static std::string to_string(styles::align val)
 {
 	switch (val) {
 	case styles::align::left: return "left";
@@ -1194,7 +564,7 @@ std::string to_string(styles::align val)
 	return std::to_string((int)val);
 }
 
-std::string to_string(styles::line val)
+static std::string to_string(styles::line val)
 {
 	switch (val) {
 	case styles::line::none: return "none";
@@ -1207,14 +577,14 @@ std::string to_string(styles::line val)
 }
 
 template <typename Prop>
-void debug_rule(std::vector<std::pair<std::string, std::string>>& values, Prop prop, const styles::rule_storage* rules) {
+static void debug_rule(std::vector<std::pair<std::string, std::string>>& values, Prop prop, const styles::rule_storage* rules) {
 	if (!rules->has(prop))
 		return;
 
 	values.emplace_back(to_string(prop), to_string(rules->get(prop)));
 }
 
-void debug_rules(const styles::rule_storage* rules) {
+static void debug_rules(const styles::rule_storage* rules) {
 	std::vector<std::pair<std::string, std::string>> values;
 	debug_rule(values, styles::prop_color, rules);
 	debug_rule(values, styles::prop_background, rules);
