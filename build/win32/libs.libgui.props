@@ -3,6 +3,7 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="libs.api.libgui.props" />
     <Import Project="libs.api.libnet.props" />
+    <Import Project="CairoRoot.props" />
   </ImportGroup>
   <PropertyGroup>
     <_PropertySheetDisplayName>libgui code</_PropertySheetDisplayName>
