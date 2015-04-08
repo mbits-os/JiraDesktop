@@ -65,9 +65,19 @@ public:
 	}
 };
 
-std::function<void(int, int, int, int)> make_invalidator(HWND hWnd) {
-	return [hWnd](int x, int y, size_t width, size_t height) {
-		RECT r{ x, y, x + (int)width, y + (int)height };
+std::function<void(const gui::point&, const gui::size&)> make_invalidator(HWND hWnd) {
+	return [hWnd](const gui::point& pt, const gui::size& sz) {
+		HDC dc = GetWindowDC(hWnd);
+		auto dpi = ::GetDeviceCaps(dc, LOGPIXELSX);
+		ReleaseDC(hWnd, dc);
+
+		gui::ratio zoom = { dpi, 96 };
+		RECT r{
+			zoom.scaleL(pt.x) - 2,
+			zoom.scaleL(pt.y) - 2,
+			zoom.scaleL(pt.x + sz.width) + 2 ,
+			zoom.scaleL(pt.y + sz.height) + 2
+		};
 		::InvalidateRect(hWnd, &r, TRUE);
 	};
 }
@@ -123,6 +133,8 @@ BOOL CTasksView::PreTranslateMessage(MSG* pMsg)
 
 LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	m_lastGdiRatio.num = m_lastGdiRatio.denom = 96;
+
 	RECT empty{ 0, 0, 0, 0 };
 	m_tooltip.Create(TOOLTIPS_CLASS, m_hWnd, empty, nullptr, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, WS_EX_TOPMOST);
 	m_tooltip.SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -260,11 +272,11 @@ namespace {
 		painter.setOrigin(orig);
 	}
 
-	size_t measureNode(gui::painter& painter, const std::shared_ptr<gui::node>& node, size_t& width, size_t height)
+	gui::pixels measureNode(gui::painter& painter, const std::shared_ptr<gui::node>& node, gui::pixels& width, gui::pixels height)
 	{
 		node->measure(&painter);
 		auto size = node->getSize();
-		node->setPosition(BODY_MARGIN, BODY_MARGIN + height);
+		node->setPosition(BODY_MARGIN, gui::pixels{ BODY_MARGIN } +height);
 		height += size.height;
 		if (width < size.width)
 			width = size.width;
@@ -280,6 +292,7 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 	dc.SetBkMode(TRANSPARENT);
 	gui::gdi::painter paint{ (HDC)dc, dc.m_ps.rcPaint, (HFONT)m_font };
+	m_lastGdiRatio = paint.gdiRatio();
 
 	for (auto& item : m_servers) {
 		if (item.m_plaque)
@@ -296,6 +309,7 @@ void CTasksView::updateLayout()
 {
 	CWindowDC dc{m_hWnd};
 	gui::gdi::painter paint{ (HDC)dc, (HFONT)m_font };
+	m_lastGdiRatio = paint.gdiRatio();
 
 	if (m_hovered)
 		m_hovered->setHovered(false);
@@ -305,8 +319,8 @@ void CTasksView::updateLayout()
 		m_active->setActive(false);
 	m_active = nullptr;
 
-	size_t height = 0;
-	size_t width = 0;
+	gui::pixels height = 0;
+	gui::pixels width = 0;
 	for (auto& server : m_servers) {
 		if (server.m_plaque) {
 			height = measureNode(paint, server.m_plaque, width, height);
@@ -317,7 +331,8 @@ void CTasksView::updateLayout()
 		height = measureNode(paint, m_cheatsheet, width, height);
 	}
 
-	setDocumentSize(width + 2 * BODY_MARGIN, height + 2 * BODY_MARGIN);
+	setDocumentSize(size_t(0.5 + paint.dpiRescale(width.value()) + 2 * BODY_MARGIN),
+		size_t(0.5 + paint.dpiRescale(height.value()) + 2 * BODY_MARGIN));
 
 	m_hovered = nodeFromPoint();
 	if (m_hovered)
@@ -360,7 +375,12 @@ void CTasksView::updateTooltip(bool /*force*/)
 		if (node->hasTooltip()) {
 			auto pt = m_hovered->getAbsolutePos();
 			auto sz = m_hovered->getSize();
-			RECT r{ pt.x - 2, pt.y - 2, pt.x + (int)sz.width + 4 , pt.y + (int)sz.height + 4 };
+			RECT r{
+				m_lastGdiRatio.scaleL(pt.x) - 2,
+				m_lastGdiRatio.scaleL(pt.y) - 2,
+				m_lastGdiRatio.scaleL(pt.x + sz.width) + 2 ,
+				m_lastGdiRatio.scaleL(pt.y + sz.height) + 2
+			};
 			tool = r;
 			tooltip = node->getTooltip();
 			break;
@@ -690,13 +710,13 @@ std::shared_ptr<gui::node> CTasksView::nodeFromPoint()
 		if (!server.m_plaque)
 			continue;
 
-		auto tmp = server.m_plaque->nodeFromPoint(m_mouseX, m_mouseY);
+		auto tmp = server.m_plaque->nodeFromPoint(m_mouse.x, m_mouse.y);
 		if (tmp)
 			return tmp;
 	}
 
 	if (m_cheatsheet)
-		return m_cheatsheet->nodeFromPoint(m_mouseX, m_mouseY);
+		return m_cheatsheet->nodeFromPoint(m_mouse.x, m_mouse.y);
 
 	return{};
 }
@@ -705,6 +725,13 @@ void CTasksView::setDocumentSize(size_t width, size_t height)
 {
 	if (m_scroller)
 		m_scroller(width, height);
+}
+
+void CTasksView::mouseFromMessage(LPARAM lParam)
+{
+	auto mouseX = GET_X_LPARAM(lParam);
+	auto mouseY = GET_Y_LPARAM(lParam);
+	m_mouse = { m_lastGdiRatio.invert(mouseX), m_lastGdiRatio.invert(mouseY) };
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -720,8 +747,7 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 
 LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
-	m_mouseX = GET_X_LPARAM(lParam);
-	m_mouseY = GET_Y_LPARAM(lParam);
+	mouseFromMessage(lParam);
 
 	auto tmp = nodeFromPoint();
 	if (tmp != m_hovered) {
@@ -738,8 +764,7 @@ LRESULT CTasksView::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 LRESULT CTasksView::OnMouseDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
-	m_mouseX = GET_X_LPARAM(lParam);
-	m_mouseY = GET_Y_LPARAM(lParam);
+	mouseFromMessage(lParam);
 
 	auto tmp = m_active;
 	m_active = nodeFromPoint();
@@ -757,10 +782,9 @@ LRESULT CTasksView::OnMouseDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 LRESULT CTasksView::OnMouseUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
-	m_mouseX = GET_X_LPARAM(lParam);
-	m_mouseY = GET_Y_LPARAM(lParam);
-	auto tmp = nodeFromPoint();
+	mouseFromMessage(lParam);
 
+	auto tmp = nodeFromPoint();
 	m_tracking = false;
 	ReleaseCapture();
 	Invalidate();

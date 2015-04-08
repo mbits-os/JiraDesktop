@@ -62,8 +62,8 @@ private:
 	CCursor m_cursorObj;
 	CWindow m_tooltip;
 
-	int m_mouseX = 0;
-	int m_mouseY = 0;
+	gui::ratio m_lastGdiRatio;
+	gui::point m_mouse;
 	std::shared_ptr<gui::node> m_hovered;
 	std::shared_ptr<gui::node> m_active;
 	bool m_tracking = false;
@@ -76,6 +76,8 @@ private:
 	void updateCursorAndTooltip(bool force = false);
 	std::shared_ptr<gui::node> nodeFromPoint();
 	void setDocumentSize(size_t width, size_t height); 
+
+	void mouseFromMessage(LPARAM lParam);
 public:
 	std::shared_ptr<CAppModel> m_model;
 
