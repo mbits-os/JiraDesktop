@@ -103,5 +103,8 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\gdi_style_handle.hpp">
       <Filter>inc\gui</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\types.hpp">
+      <Filter>inc\gui</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

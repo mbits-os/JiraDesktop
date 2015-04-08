@@ -75,6 +75,7 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\settings.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\styles.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\types.hpp" />
     <ClInclude Include="..\..\libs\libgui\pch\pch.h" />
     <ClInclude Include="..\..\libs\libgui\src\settings_impl.hpp" />
     <ClInclude Include="..\..\libs\libgui\src\win32\win32_settings.hpp" />
