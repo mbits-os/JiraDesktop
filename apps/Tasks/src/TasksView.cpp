@@ -22,6 +22,25 @@ namespace {
 	const std::shared_ptr<styles::stylesheet>& stylesheet();
 }
 
+gui::ratio zooms[] = {
+	{  1,  4 },
+	{  1,  3 },
+	{  1,  2 },
+	{  2,  3 },
+	{  9, 10 },
+	{  1,  1 }, /* 5 */
+	{ 11, 10 },
+	{  5,  4 },
+	{  3,  2 },
+	{  7,  4 },
+	{  2,  1 },
+	{  3,  1 },
+	{  4,  1 },
+	{  5,  1 }
+};
+
+size_t defaultZoom = 5;
+
 class TaskViewModelListener : public CAppModelListener {
 	HWND m_hWnd;
 public:
@@ -65,13 +84,12 @@ public:
 	}
 };
 
-std::function<void(const gui::point&, const gui::size&)> make_invalidator(HWND hWnd) {
-	return [hWnd](const gui::point& pt, const gui::size& sz) {
-		HDC dc = GetWindowDC(hWnd);
-		auto dpi = ::GetDeviceCaps(dc, LOGPIXELSX);
-		ReleaseDC(hWnd, dc);
-
-		gui::ratio zoom = { dpi, 96 };
+std::function<void(const gui::point&, const gui::size&)>
+	make_invalidator(HWND hWnd, const std::shared_ptr<ZoomInfo>& info)
+{
+	auto info_ = info;
+	return [hWnd, info_](const gui::point& pt, const gui::size& sz) {
+		gui::ratio zoom = info_->mul;
 		RECT r{
 			zoom.scaleL(pt.x) - 2,
 			zoom.scaleL(pt.y) - 2,
@@ -82,13 +100,16 @@ std::function<void(const gui::point&, const gui::size&)> make_invalidator(HWND h
 	};
 }
 
-CTasksView::ServerInfo::ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener, HWND hWnd)
+CTasksView::ServerInfo::ServerInfo(
+	const std::shared_ptr<jira::server>& server,
+	const std::shared_ptr<jira::server_listener>& listener,
+	HWND hWnd, const std::shared_ptr<ZoomInfo>& info)
 	: m_server(server)
 	, m_listener(listener)
 	, m_sessionId(server->sessionId())
 {
 	m_server->registerListener(m_listener);
-	buildPlaque(hWnd);
+	buildPlaque(hWnd, info);
 }
 
 CTasksView::ServerInfo::~ServerInfo()
@@ -97,9 +118,9 @@ CTasksView::ServerInfo::~ServerInfo()
 		m_server->unregisterListener(m_listener);
 }
 
-void CTasksView::ServerInfo::buildPlaque(HWND hWnd)
+void CTasksView::ServerInfo::buildPlaque(HWND hWnd, const std::shared_ptr<ZoomInfo>& info)
 {
-	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, make_invalidator(hWnd));
+	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, make_invalidator(hWnd, info));
 	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*m_server);
 	m_plaque->applyStyles(stylesheet());
 }
@@ -114,7 +135,7 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<Ser
 	// TODO: create UI element
 	// TDOD: attach refresh listener to the server
 	auto listener = std::make_shared<ServerListener>(m_hWnd, server->sessionId());
-	return m_servers.emplace(it, server, listener, m_hWnd);
+	return m_servers.emplace(it, server, listener, m_hWnd, std::cref(m_zoom));
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<ServerInfo>::const_iterator it)
@@ -133,7 +154,10 @@ BOOL CTasksView::PreTranslateMessage(MSG* pMsg)
 
 LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	m_lastGdiRatio.num = m_lastGdiRatio.denom = 96;
+	m_currentZoom = defaultZoom;
+	m_zoom->device = { 1, 1 };
+	m_zoom->zoom = zooms[m_currentZoom];
+	m_zoom->mul = m_zoom->device * m_zoom->zoom;
 
 	RECT empty{ 0, 0, 0, 0 };
 	m_tooltip.Create(TOOLTIPS_CLASS, m_hWnd, empty, nullptr, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, WS_EX_TOPMOST);
@@ -291,8 +315,9 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	dc.FillRect(&dc.m_ps.rcPaint, m_background);
 
 	dc.SetBkMode(TRANSPARENT);
-	gui::gdi::painter paint{ (HDC)dc, dc.m_ps.rcPaint, (HFONT)m_font };
-	m_lastGdiRatio = paint.gdiRatio();
+	gui::gdi::painter paint{ (HDC)dc, zooms[m_currentZoom], dc.m_ps.rcPaint, (HFONT)m_font };
+	m_zoom->device = paint.gdiRatio();
+	m_zoom->mul = m_zoom->device * m_zoom->zoom;
 
 	for (auto& item : m_servers) {
 		if (item.m_plaque)
@@ -308,8 +333,9 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 void CTasksView::updateLayout()
 {
 	CWindowDC dc{m_hWnd};
-	gui::gdi::painter paint{ (HDC)dc, (HFONT)m_font };
-	m_lastGdiRatio = paint.gdiRatio();
+	gui::gdi::painter paint{ (HDC)dc, zooms[m_currentZoom], (HFONT)m_font };
+	m_zoom->device = paint.gdiRatio();
+	m_zoom->mul = m_zoom->device * m_zoom->zoom;
 
 	if (m_hovered)
 		m_hovered->setHovered(false);
@@ -331,8 +357,7 @@ void CTasksView::updateLayout()
 		height = measureNode(paint, m_cheatsheet, width, height);
 	}
 
-	setDocumentSize(size_t(0.5 + paint.dpiRescale(width.value()) + 2 * BODY_MARGIN),
-		size_t(0.5 + paint.dpiRescale(height.value()) + 2 * BODY_MARGIN));
+	setDocumentSize({ width.value() + 2 * BODY_MARGIN, height.value() + 2 * BODY_MARGIN });
 
 	m_hovered = nodeFromPoint();
 	if (m_hovered)
@@ -373,13 +398,14 @@ void CTasksView::updateTooltip(bool /*force*/)
 	auto node = m_hovered;
 	while (node) {
 		if (node->hasTooltip()) {
+			auto zoom = m_zoom->mul;
 			auto pt = m_hovered->getAbsolutePos();
 			auto sz = m_hovered->getSize();
 			RECT r{
-				m_lastGdiRatio.scaleL(pt.x) - 2,
-				m_lastGdiRatio.scaleL(pt.y) - 2,
-				m_lastGdiRatio.scaleL(pt.x + sz.width) + 2 ,
-				m_lastGdiRatio.scaleL(pt.y + sz.height) + 2
+				zoom.scaleL(pt.x) - 2,
+				zoom.scaleL(pt.y) - 2,
+				zoom.scaleL(pt.x + sz.width) + 2 ,
+				zoom.scaleL(pt.y + sz.height) + 2
 			};
 			tool = r;
 			tooltip = node->getTooltip();
@@ -721,17 +747,55 @@ std::shared_ptr<gui::node> CTasksView::nodeFromPoint()
 	return{};
 }
 
-void CTasksView::setDocumentSize(size_t width, size_t height)
+void CTasksView::setDocumentSize(const gui::size& newSize)
+{
+	m_docSize = newSize;
+	updateDocumentSize();
+}
+
+void CTasksView::updateDocumentSize()
 {
 	if (m_scroller)
-		m_scroller(width, height);
+		m_scroller(m_zoom->mul.scaleL(m_docSize.width), m_zoom->mul.scaleL(m_docSize.height));
 }
 
 void CTasksView::mouseFromMessage(LPARAM lParam)
 {
 	auto mouseX = GET_X_LPARAM(lParam);
 	auto mouseY = GET_Y_LPARAM(lParam);
-	m_mouse = { m_lastGdiRatio.invert(mouseX), m_lastGdiRatio.invert(mouseY) };
+	m_mouse = { m_zoom->mul.invert(mouseX), m_zoom->mul.invert(mouseY) };
+}
+
+void CTasksView::zoomIn()
+{
+	if (m_currentZoom < (sizeof(zooms)/sizeof(zooms[0]) - 1))
+		setZoom(m_currentZoom + 1);
+}
+
+void CTasksView::zoomOut()
+{
+	if (m_currentZoom > 0)
+		setZoom(m_currentZoom - 1);
+}
+
+void CTasksView::setZoom(size_t newLevel)
+{
+	m_currentZoom = newLevel;
+	m_zoom->zoom = zooms[m_currentZoom];
+	m_zoom->mul = m_zoom->device * m_zoom->zoom;
+	Invalidate();
+	updateDocumentSize();
+
+	auto tmp = nodeFromPoint();
+	if (tmp != m_hovered) {
+		if (tmp)
+			tmp->setHovered(true);
+		if (m_hovered)
+			m_hovered->setHovered(false);
+
+		m_hovered = tmp;
+		updateCursorAndTooltip();
+	}
 }
 
 LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -895,7 +959,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	it->buildPlaque(m_hWnd);
+	it->buildPlaque(m_hWnd, m_zoom);
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();
@@ -915,6 +979,20 @@ LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 	it->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
 	it->m_gotProgress = true;
 	Invalidate();
+
+	return 0;
+}
+
+LRESULT CTasksView::OnZoom(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	int lines = (int)wParam;
+	if (lParam){
+		while (lines--)
+			zoomOut();
+	} else {
+		while (lines--)
+			zoomIn();
+	}
 
 	return 0;
 }

@@ -12,6 +12,49 @@ class CScrollContainerEx : public CScrollContainerImpl<CScrollContainerEx>
 {
 public:
 	DECLARE_WND_CLASS_EX(_T("ScrollContainerView"), 0, -1)
+
+	BEGIN_MSG_MAP(CScrollWindowImpl)
+		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnMouseWheel)
+		CHAIN_MSG_MAP(CScrollContainerImpl<CScrollContainerEx>)
+	END_MSG_MAP()
+
+	int m_zoomDelta = 0;
+
+	LRESULT OnMouseWheel(UINT uMsg, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+	{
+		if (LOWORD(wParam) & MK_CONTROL) {
+#if (_WIN32_WINNT >= 0x0400) || (_WIN32_WINDOWS > 0x0400) || defined(_WIN32_WCE)
+			uMsg;
+			int zDelta = (int)GET_WHEEL_DELTA_WPARAM(wParam);
+#else
+			int zDelta = (uMsg == WM_MOUSEWHEEL) ? (int)GET_WHEEL_DELTA_WPARAM(wParam) : (int)wParam;
+#endif // !((_WIN32_WINNT >= 0x0400) || (_WIN32_WINDOWS > 0x0400) || defined(_WIN32_WCE))
+
+			m_zoomDelta += zDelta;   // cumulative
+			int levels = m_zoomDelta / WHEEL_DELTA;
+			m_zoomDelta %= WHEEL_DELTA;
+
+			if (levels < 0) {
+				levels = -levels;
+				zoomOut(levels);
+			} else {
+				zoomIn(levels);
+			}
+
+			return 0;
+		}
+
+		bHandled = FALSE;
+		return 0;
+	}
+
+	void zoomIn(int level) {
+		::SendMessage(m_wndClient, AM_ZOOM, (WPARAM)level, 0);
+	}
+
+	void zoomOut(int level) {
+		::SendMessage(m_wndClient, AM_ZOOM, (WPARAM)level, 1);
+	}
 };
 
 using CTasksFrameWinTraits = CWinTraits<WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_APPWINDOW>;

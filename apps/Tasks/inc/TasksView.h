@@ -14,10 +14,20 @@ enum {
 	UM_PROGRESS,              // wParam - server's session ID, lParam - ProgressInfo*
 };
 
+enum {
+	AM_ZOOM = WM_APP + 1
+};
+
 struct ProgressInfo {
 	uint64_t content;
 	uint64_t loaded;
 	bool calculable;
+};
+
+struct ZoomInfo {
+	gui::ratio zoom;
+	gui::ratio device;
+	gui::ratio mul;
 };
 
 using CTasksViewWinTraits = CWinTraits<WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_COMPOSITED>;
@@ -38,14 +48,14 @@ public:
 		// TODO : relation to UI element
 		std::shared_ptr<gui::node> m_plaque;
 
-		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener, HWND hWnd);
+		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener, HWND hWnd, const std::shared_ptr<ZoomInfo>& info);
 		~ServerInfo();
 		ServerInfo(const ServerInfo&) = delete;
 		ServerInfo& operator=(const ServerInfo&) = delete;
 		ServerInfo(ServerInfo&&) = default;
 		ServerInfo& operator=(ServerInfo&&) = default;
 
-		void buildPlaque(HWND hWnd);
+		void buildPlaque(HWND hWnd, const std::shared_ptr<ZoomInfo>& info);
 	};
 
 private:
@@ -62,22 +72,29 @@ private:
 	CCursor m_cursorObj;
 	CWindow m_tooltip;
 
-	gui::ratio m_lastGdiRatio;
+	size_t m_currentZoom;
+	std::shared_ptr<ZoomInfo> m_zoom = std::make_shared<ZoomInfo>();
 	gui::point m_mouse;
 	std::shared_ptr<gui::node> m_hovered;
 	std::shared_ptr<gui::node> m_active;
 	bool m_tracking = false;
 	gui::pointer m_cursor = gui::pointer::arrow;
 	std::function<void(size_t, size_t)> m_scroller;
+	gui::size m_docSize;
 
 	void updateLayout();
 	void updateCursor(bool force = false);
 	void updateTooltip(bool force = false);
 	void updateCursorAndTooltip(bool force = false);
 	std::shared_ptr<gui::node> nodeFromPoint();
-	void setDocumentSize(size_t width, size_t height); 
+	void setDocumentSize(const gui::size& newSize);
+	void updateDocumentSize();
 
 	void mouseFromMessage(LPARAM lParam);
+
+	void zoomIn();
+	void zoomOut();
+	void setZoom(size_t newLevel);
 public:
 	std::shared_ptr<CAppModel> m_model;
 
@@ -99,14 +116,15 @@ public:
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
 		MESSAGE_HANDLER(WM_SETFONT, OnSetFont)
-		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove);
-		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnMouseDown);
-		MESSAGE_HANDLER(WM_LBUTTONUP, OnMouseUp);
+		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove)
+		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnMouseDown)
+		MESSAGE_HANDLER(WM_LBUTTONUP, OnMouseUp)
 		MESSAGE_HANDLER(WM_SETCURSOR, OnSetCursor)
 		MESSAGE_HANDLER(UM_LISTCHANGED, OnListChanged)
 		MESSAGE_HANDLER(UM_REFRESHSTART, OnRefreshStart)
 		MESSAGE_HANDLER(UM_REFRESHSTOP, OnRefreshStop)
 		MESSAGE_HANDLER(UM_PROGRESS, OnProgress)
+		MESSAGE_HANDLER(AM_ZOOM, OnZoom)
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):
@@ -126,6 +144,7 @@ public:
 	LRESULT OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
+	LRESULT OnZoom(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
 	template <typename T>
 	void setScroller(T&& scroller) {
