@@ -12,6 +12,7 @@
 #include "shellapi.h"
 
 using namespace styles::literals;
+using namespace gui::literals;
 
 enum {
 	CELL_MARGIN = 7
@@ -99,8 +100,8 @@ void CJiraNode::paint(gui::painter* painter)
 	}
 }
 
-static long double calculated(const styles::rule_storage& rules,
-	gui::painter* painter, styles::length_prop prop)
+static gui::pixels calculated(const styles::rule_storage& rules,
+	styles::length_prop prop)
 {
 	if (!rules.has(prop))
 		return 0.0;
@@ -108,7 +109,7 @@ static long double calculated(const styles::rule_storage& rules,
 	auto u = rules.get(prop);
 	ATLASSERT(u.which() == styles::length_u::first_type);
 
-	return painter->dpiRescale(u.first().value());
+	return u.first();
 };
 
 void CJiraNode::measure(gui::painter* painter)
@@ -118,43 +119,40 @@ void CJiraNode::measure(gui::painter* painter)
 	auto styles = calculatedStyle();
 	StyleSaver saver{ painter, this };
 
-	size_t height = 0;
-	size_t width = 0;
-	int x = int(offsetLeft(painter) + 0.5);
-	int y = int(offsetTop(painter) + 0.5);
+	gui::size sz;
+	auto x = offsetLeft();
+	auto y = offsetTop();
 	for (auto& node : m_children) {
 		node->measure(painter);
 		auto ret = node->getSize();
-		if (height < ret.height)
-			height = ret.height;
+		if (sz.height < ret.height)
+			sz.height = ret.height;
 
-		width += ret.width;
+		sz.width += ret.width;
 		node->setPosition(x, y);
 		x += ret.width;
 	}
 
 	auto here = measureThis(painter);
-	if (height < here.height)
-		height = here.height;
-	if (width < here.width)
-		width = here.width;
+	if (sz.height < here.height)
+		sz.height = here.height;
+	if (sz.width < here.width)
+		sz.width = here.width;
 
-	long double dheight = 0.5 + offsetTop(painter) + offsetBottom(painter);
-	long double dwidth = 0.5 + offsetLeft(painter) + offsetRight(painter);
+	gui::point offset{ offsetTop() + offsetBottom(), offsetLeft() + offsetRight() };
+	auto p = offset + sz;
 
-	m_position.height = height + (int)dheight;
-	m_position.width = width + (int)dwidth;
+	m_position.size = {p.x, p.y};
 }
 
-void CJiraNode::setPosition(int x, int y)
+void CJiraNode::setPosition(const gui::pixels& x, const gui::pixels& y)
 {
-	m_position.x = x;
-	m_position.y = y;
+	m_position.pt = { x, y };
 }
 
 gui::node::point CJiraNode::getPosition()
 {
-	return{ m_position.x, m_position.y };
+	return m_position.pt;
 }
 
 gui::node::point CJiraNode::getAbsolutePos()
@@ -163,12 +161,12 @@ gui::node::point CJiraNode::getAbsolutePos()
 	if (!parent)
 		return getPosition();
 	auto pt = parent->getAbsolutePos();
-	return{ pt.x + m_position.x, pt.y + m_position.y };
+	return pt + m_position.pt;
 }
 
 gui::node::size CJiraNode::getSize()
 {
-	return{ m_position.width, m_position.height };
+	return m_position.size;
 }
 
 std::shared_ptr<gui::node> CJiraNode::getParent() const
@@ -183,25 +181,24 @@ void CJiraNode::setParent(const std::shared_ptr<gui::node>& node)
 
 void CJiraNode::invalidate()
 {
-	invalidate(0, 0, m_position.width, m_position.height);
+	invalidate({ 0, 0 }, m_position.size);
 }
 
-void CJiraNode::invalidate(int x, int y, size_t width, size_t height)
+void CJiraNode::invalidate(const point& pt, const size& size)
 {
-	x += m_position.x;
-	y += m_position.y;
+	auto p = pt + m_position.pt;
 	auto parent = m_parent.lock();
 	if (parent)
-		parent->invalidate(x, y, width, height);
+		parent->invalidate(p, size);
 }
 
-std::shared_ptr<gui::node> CJiraNode::nodeFromPoint(int x, int y)
+std::shared_ptr<gui::node> CJiraNode::nodeFromPoint(const gui::pixels& x_, const gui::pixels& y_)
 {
-	x -= m_position.x;
-	y -= m_position.y;
+	auto x = x_ - m_position.pt.x;
+	auto y = y_ - m_position.pt.y;
 
-	if (x < 0 || (size_t)x > m_position.width ||
-		y < 0 || (size_t)y > m_position.height)
+	if (x < 0 || x > m_position.size.width ||
+		y < 0 || y > m_position.size.height)
 		return nullptr;
 
 	for (auto& node : m_children) {
@@ -462,40 +459,40 @@ void CJiraNode::calculateStyles()
 	}
 }
 
-long double CJiraNode::offsetLeft(gui::painter* painter) const
+gui::pixels CJiraNode::offsetLeft() const
 {
 	auto style = calculatedStyle();
 	auto& ref = *style;
 	return
-		calculated(ref, painter, styles::prop_border_left_width) +
-		calculated(ref, painter, styles::prop_padding_left);
+		calculated(ref, styles::prop_border_left_width) +
+		calculated(ref, styles::prop_padding_left);
 }
 
-long double CJiraNode::offsetTop(gui::painter* painter) const
+gui::pixels CJiraNode::offsetTop() const
 {
 	auto style = calculatedStyle();
 	auto& ref = *style;
 	return
-		calculated(ref, painter, styles::prop_border_top_width) +
-		calculated(ref, painter, styles::prop_padding_top);
+		calculated(ref, styles::prop_border_top_width) +
+		calculated(ref, styles::prop_padding_top);
 }
 
-long double CJiraNode::offsetRight(gui::painter* painter) const
+gui::pixels CJiraNode::offsetRight() const
 {
 	auto style = calculatedStyle();
 	auto& ref = *style;
 	return
-		calculated(ref, painter, styles::prop_border_right_width) +
-		calculated(ref, painter, styles::prop_padding_right);
+		calculated(ref, styles::prop_border_right_width) +
+		calculated(ref, styles::prop_padding_right);
 }
 
-long double CJiraNode::offsetBottom(gui::painter* painter) const
+gui::pixels CJiraNode::offsetBottom() const
 {
 	auto style = calculatedStyle();
 	auto& ref = *style;
 	return
-		calculated(ref, painter, styles::prop_border_bottom_width) +
-		calculated(ref, painter, styles::prop_padding_bottom);
+		calculated(ref, styles::prop_border_bottom_width) +
+		calculated(ref, styles::prop_padding_bottom);
 }
 
 void ImageCb::onImageChange(gui::image_ref*)
@@ -512,7 +509,7 @@ CJiraIconNode::CJiraIconNode(const std::string& uri, const std::shared_ptr<gui::
 {
 	m_data[Attr::Href] = uri;
 	CJiraNode::setTooltip(tooltip);
-	m_position.width = m_position.height = 16;
+	m_position.size.width = m_position.size.height = 16_px;
 }
 
 CJiraIconNode::~CJiraIconNode()
@@ -534,7 +531,7 @@ void CJiraIconNode::addChild(const std::shared_ptr<node>& /*child*/)
 
 void CJiraIconNode::paintThis(gui::painter* painter)
 {
-	painter->paintImage(m_image.get(), m_position.width, m_position.height);
+	painter->paintImage(m_image.get(), m_position.size.width, m_position.size.height);
 }
 
 gui::node::size CJiraIconNode::measureThis(gui::painter* painter)
@@ -551,7 +548,7 @@ CJiraUserNode::CJiraUserNode(const std::weak_ptr<CJiraDocument>& document, std::
 	, m_selectedSize(0)
 {
 	CJiraNode::setTooltip(tooltip);
-	m_position.width = m_position.height = 16;
+	m_position.size.width = m_position.size.height = 16_px;
 }
 
 CJiraUserNode::~CJiraUserNode()
@@ -567,26 +564,27 @@ void CJiraUserNode::addChild(const std::shared_ptr<node>& /*child*/)
 
 void CJiraUserNode::paintThis(gui::painter* painter)
 {
-	painter->paintImage(m_image.get(), m_position.width, m_position.height);
+	painter->paintImage(m_image.get(), m_position.size.width, m_position.size.height);
 }
 
 gui::node::size CJiraUserNode::measureThis(gui::painter* painter)
 {
-	auto size = (size_t)painter->dpiRescale(16);
+	auto size = 16_px;
+	auto scaled = (size_t)(0.5 + painter->dpiRescale(size.value()));
 	auto selected = 0;
 
 	std::string image;
-	auto it = m_urls.find(size);
+	auto it = m_urls.find(scaled);
 	if (it != m_urls.end()) {
 		image = it->second;
 		selected = it->first;
 	} else {
 		size_t delta = std::numeric_limits<size_t>::max();
 		for (auto& pair : m_urls) {
-			if (pair.first < size)
+			if (pair.first < scaled)
 				continue;
 
-			size_t d =  pair.first - size;
+			size_t d =  pair.first - scaled;
 			if (d < delta) {
 				delta = d;
 				image = pair.second;
@@ -594,10 +592,10 @@ gui::node::size CJiraUserNode::measureThis(gui::painter* painter)
 			}
 		}
 		for (auto& pair : m_urls) {
-			if (pair.first > size)
+			if (pair.first > scaled)
 				continue;
 
-			size_t d = size - pair.first;
+			size_t d = scaled - pair.first;
 			if (d < delta) {
 				delta = d;
 				image = pair.second;
@@ -605,6 +603,8 @@ gui::node::size CJiraUserNode::measureThis(gui::painter* painter)
 			}
 		}
 	}
+
+	size = m_position.size.width;
 
 	if (selected == m_selectedSize)
 		return{ size, size };
@@ -739,7 +739,7 @@ std::shared_ptr<gui::image_ref> CJiraDocument::createImage(const std::string& ur
 
 CJiraTableNode::CJiraTableNode()
 	: CJiraNode(gui::elem::table)
-	, m_columns(std::make_shared<std::vector<size_t>>())
+	, m_columns(std::make_shared<std::vector<gui::pixels>>())
 {
 }
 
@@ -766,9 +766,9 @@ void CJiraTableNode::measure(gui::painter* painter)
 
 	m_columns->assign(columns, 0);
 
-	auto topOffset = size_t(offsetTop(painter) + 0.5);
-	size_t height = topOffset;
-	int x = int(offsetLeft(painter) + 0.5);
+	auto topOffset = offsetTop();
+	auto height = topOffset;
+	auto x = offsetLeft();
 	for (auto& node : m_children) {
 		node->measure(painter);
 
@@ -779,9 +779,9 @@ void CJiraTableNode::measure(gui::painter* painter)
 	for (auto& node : m_children)
 		static_cast<CJiraTableRowNode*>(node.get())->repositionChildren(painter);
 
-	m_position.height = height - topOffset + size_t(0.5 + offsetTop(painter) + offsetBottom(painter));
-	m_position.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
-	m_position.width += size_t(0.5 + offsetLeft(painter) + offsetRight(painter));
+	m_position.size.height = height - topOffset + offsetTop() + offsetBottom();
+	m_position.size.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
+	m_position.size.width += offsetLeft() + offsetRight();
 }
 
 gui::node::size CJiraTableNode::measureThis(gui::painter* /*painter*/)
@@ -794,7 +794,7 @@ CJiraTableRowNode::CJiraTableRowNode(gui::elem name)
 {
 }
 
-void CJiraTableRowNode::setColumns(const std::shared_ptr<std::vector<size_t>>& columns)
+void CJiraTableRowNode::setColumns(const std::shared_ptr<std::vector<gui::pixels>>& columns)
 {
 	m_columns = columns;
 }
@@ -815,19 +815,19 @@ gui::node::size CJiraTableRowNode::measureThis(gui::painter* /*painter*/)
 	return{ 0,0 };
 }
 
-void CJiraTableRowNode::repositionChildren(gui::painter* painter)
+void CJiraTableRowNode::repositionChildren(gui::painter* /*painter*/)
 {
-	int x = CELL_MARGIN + int(offsetLeft(painter) + 0.5);
-	int y = int(offsetTop(painter) + 0.5);
+	auto x = offsetLeft() + gui::pixels{ CELL_MARGIN };
+	auto y = offsetTop();
 	auto it = m_columns->begin();
 	for (auto& node : children()) {
 		node->setPosition(x, y);
-		x += *it++ + 2 * CELL_MARGIN;
+		x += *it++ + gui::pixels{ 2 * CELL_MARGIN };
 	}
-	m_position.width = x + CELL_MARGIN;
+	m_position.size.width = x + gui::pixels{ CELL_MARGIN };
 }
 
-CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(int, int, int, int)>& invalidator)
+CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(const gui::point&, const gui::size&)>& invalidator)
 	: CJiraNode(gui::elem::block)
 	, m_dataset(dataset)
 	, m_invalidator(invalidator)
@@ -896,10 +896,11 @@ void CJiraReportElement::addChild(const std::shared_ptr<gui::node>& /*child*/)
 
 gui::node::size CJiraReportElement::measureThis(gui::painter* painter)
 {
-	auto topOffset = size_t(offsetTop(painter) + 0.5);
-	size_t height = topOffset;
-	size_t width = 0;
-	int x = int(offsetLeft(painter) + 0.5);
+	auto topOffset = offsetTop();
+	auto height = topOffset;
+	gui::pixels width = 0;
+	auto x = offsetLeft();
+
 	for (auto& node : m_children) {
 		node->measure(painter);
 
@@ -913,10 +914,9 @@ gui::node::size CJiraReportElement::measureThis(gui::painter* painter)
 	return{ width, height - topOffset };
 }
 
-void CJiraReportElement::invalidate(int x, int y, size_t width, size_t height)
+void CJiraReportElement::invalidate(const point& pt, const size& size)
 {
-	x += m_position.x;
-	y += m_position.y;
+	auto p = pt + m_position.pt;
 	if (m_invalidator)
-		m_invalidator(x, y, width, height);
+		m_invalidator(pt, size);
 }

@@ -24,7 +24,7 @@ public:
 
 	void paint(gui::painter* painter) override;
 	void measure(gui::painter* painter) override;
-	void setPosition(int x, int y) override;
+	void setPosition(const gui::pixels& x, const gui::pixels& y) override;
 	point getPosition() override;
 	point getAbsolutePos() override;
 	size getSize() override;
@@ -32,9 +32,9 @@ public:
 	std::shared_ptr<gui::node> getParent() const override;
 	void setParent(const std::shared_ptr<gui::node>&) override;
 	void invalidate() override;
-	void invalidate(int x, int y, size_t width, size_t height) override;
+	void invalidate(const point& pt, const size& size) override;
 
-	std::shared_ptr<gui::node> nodeFromPoint(int x, int y) override;
+	std::shared_ptr<gui::node> nodeFromPoint(const gui::pixels& x, const gui::pixels& y) override;
 	void setHovered(bool hovered) override;
 	bool getHovered() const override;
 	void setActive(bool active) override;
@@ -50,10 +50,10 @@ public:
 	std::shared_ptr<styles::stylesheet> styles() const override;
 	void applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet) override;
 	void calculateStyles();
-	long double offsetLeft(gui::painter* painter) const; // border-left-width + padding-left
-	long double offsetTop(gui::painter* painter) const; // border-top-width + padding-top
-	long double offsetRight(gui::painter* painter) const; // border-right-width + padding-right
-	long double offsetBottom(gui::painter* painter) const; // border-bottom-width + padding-bottom
+	gui::pixels offsetLeft() const; // border-left-width + padding-left
+	gui::pixels offsetTop() const; // border-top-width + padding-top
+	gui::pixels offsetRight() const; // border-right-width + padding-right
+	gui::pixels offsetBottom() const; // border-bottom-width + padding-bottom
 
 	void openLink(const std::string& url);
 	virtual void paintThis(gui::painter* painter);
@@ -66,10 +66,8 @@ protected:
 	std::vector<std::string> m_classes;
 	std::weak_ptr<node> m_parent;
 	struct {
-		int x = 0;
-		int y = 0;
-		size_t width = 0;
-		size_t height = 0;
+		gui::point pt;
+		gui::size size;
 	} m_position;
 
 	std::atomic<int> m_hoverCount{ 0 };
@@ -154,7 +152,7 @@ public:
 };
 
 class CJiraTableNode : public CJiraNode {
-	std::shared_ptr<std::vector<size_t>> m_columns;
+	std::shared_ptr<std::vector<gui::pixels>> m_columns;
 public:
 	CJiraTableNode();
 
@@ -165,10 +163,10 @@ public:
 
 class CJiraTableRowNode : public CJiraNode {
 protected:
-	std::shared_ptr<std::vector<size_t>> m_columns;
+	std::shared_ptr<std::vector<gui::pixels>> m_columns;
 public:
 	CJiraTableRowNode(gui::elem name);
-	void setColumns(const std::shared_ptr<std::vector<size_t>>& columns);
+	void setColumns(const std::shared_ptr<std::vector<gui::pixels>>& columns);
 
 	size measureThis(gui::painter* painter) override;
 
@@ -177,12 +175,12 @@ public:
 
 class CJiraReportElement : public CJiraNode {
 	std::weak_ptr<jira::report> m_dataset;
-	std::function<void(int, int, int, int)> m_invalidator;
+	std::function<void(const gui::point&, const gui::size&)> m_invalidator;
 public:
-	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(int, int, int, int)>& invalidator);
+	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(const gui::point&, const gui::size&)>& invalidator);
 	void addChildren(const jira::server& server);
 
 	void addChild(const std::shared_ptr<node>& child) override final;
 	size measureThis(gui::painter* painter) override;
-	void invalidate(int x, int y, size_t width, size_t height) override;
+	void invalidate(const point& pt, const size& size) override;
 };
