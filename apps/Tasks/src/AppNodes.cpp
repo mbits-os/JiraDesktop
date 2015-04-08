@@ -150,12 +150,12 @@ void CJiraNode::setPosition(const gui::pixels& x, const gui::pixels& y)
 	m_position.pt = { x, y };
 }
 
-gui::node::point CJiraNode::getPosition()
+gui::point CJiraNode::getPosition()
 {
 	return m_position.pt;
 }
 
-gui::node::point CJiraNode::getAbsolutePos()
+gui::point CJiraNode::getAbsolutePos()
 {
 	auto parent = m_parent.lock();
 	if (!parent)
@@ -164,7 +164,7 @@ gui::node::point CJiraNode::getAbsolutePos()
 	return pt + m_position.pt;
 }
 
-gui::node::size CJiraNode::getSize()
+gui::size CJiraNode::getSize()
 {
 	return m_position.size;
 }
@@ -184,7 +184,7 @@ void CJiraNode::invalidate()
 	invalidate({ 0, 0 }, m_position.size);
 }
 
-void CJiraNode::invalidate(const point& pt, const size& size)
+void CJiraNode::invalidate(const gui::point& pt, const gui::size& size)
 {
 	auto p = pt + m_position.pt;
 	auto parent = m_parent.lock();
@@ -280,7 +280,7 @@ void CJiraNode::paintThis(gui::painter* /*painter*/)
 {
 }
 
-gui::node::size CJiraNode::measureThis(gui::painter* /*painter*/)
+gui::size CJiraNode::measureThis(gui::painter* /*painter*/)
 {
 	return{ 0, 0 };
 }
@@ -534,7 +534,7 @@ void CJiraIconNode::paintThis(gui::painter* painter)
 	painter->paintImage(m_image.get(), m_position.size.width, m_position.size.height);
 }
 
-gui::node::size CJiraIconNode::measureThis(gui::painter* painter)
+gui::size CJiraIconNode::measureThis(gui::painter* painter)
 {
 	auto size = painter->dpiRescale(16);
 	return{ (size_t)size, (size_t)size };
@@ -567,7 +567,7 @@ void CJiraUserNode::paintThis(gui::painter* painter)
 	painter->paintImage(m_image.get(), m_position.size.width, m_position.size.height);
 }
 
-gui::node::size CJiraUserNode::measureThis(gui::painter* painter)
+gui::size CJiraUserNode::measureThis(gui::painter* painter)
 {
 	auto size = 16_px;
 	auto scaled = (size_t)(0.5 + painter->dpiRescale(size.value()));
@@ -643,7 +643,7 @@ void CJiraTextNode::paintThis(gui::painter* painter)
 	painter->paintString(m_data[Attr::Text]);
 }
 
-gui::node::size CJiraTextNode::measureThis(gui::painter* painter)
+gui::size CJiraTextNode::measureThis(gui::painter* painter)
 {
 	return painter->measureString(m_data[Attr::Text]);
 }
@@ -784,7 +784,7 @@ void CJiraTableNode::measure(gui::painter* painter)
 	m_position.size.width += offsetLeft() + offsetRight();
 }
 
-gui::node::size CJiraTableNode::measureThis(gui::painter* /*painter*/)
+gui::size CJiraTableNode::measureThis(gui::painter* /*painter*/)
 {
 	return{ 0, 0 };
 }
@@ -799,7 +799,7 @@ void CJiraTableRowNode::setColumns(const std::shared_ptr<std::vector<gui::pixels
 	m_columns = columns;
 }
 
-gui::node::size CJiraTableRowNode::measureThis(gui::painter* /*painter*/)
+gui::size CJiraTableRowNode::measureThis(gui::painter* /*painter*/)
 {
 	if (!m_columns)
 		return{ 0,0 };
@@ -894,7 +894,7 @@ void CJiraReportElement::addChild(const std::shared_ptr<gui::node>& /*child*/)
 	// noop
 }
 
-gui::node::size CJiraReportElement::measureThis(gui::painter* painter)
+gui::size CJiraReportElement::measureThis(gui::painter* painter)
 {
 	auto topOffset = offsetTop();
 	auto height = topOffset;
@@ -914,7 +914,7 @@ gui::node::size CJiraReportElement::measureThis(gui::painter* painter)
 	return{ width, height - topOffset };
 }
 
-void CJiraReportElement::invalidate(const point& pt, const size& size)
+void CJiraReportElement::invalidate(const gui::point& pt, const gui::size& size)
 {
 	auto p = pt + m_position.pt;
 	if (m_invalidator)

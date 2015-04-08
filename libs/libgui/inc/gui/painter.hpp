@@ -131,9 +131,6 @@ namespace gui {
 	}
 
 	struct painter {
-		using point = gui::point;
-		using size = gui::size;
-
 		virtual ~painter() {}
 		virtual void moveOrigin(const pixels& x, const pixels& y) = 0;
 		void moveOrigin(const point& pt) { moveOrigin(pt.x, pt.y); }
@@ -151,16 +148,16 @@ namespace gui {
 	};
 
 	class push_origin {
-		gui::painter* painter;
-		gui::painter::point orig;
+		painter* m_painter;
+		point orig;
 	public:
-		explicit push_origin(gui::painter* painter) : painter(painter), orig(painter->getOrigin())
+		explicit push_origin(painter* paint) : m_painter(paint), orig(paint->getOrigin())
 		{
 		}
 
 		~push_origin()
 		{
-			painter->setOrigin(orig);
+			m_painter->setOrigin(orig);
 		}
 	};
 };
