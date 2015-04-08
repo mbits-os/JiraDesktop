@@ -35,11 +35,11 @@ namespace gui {
 	using style_handle = style_save*;
 
 	struct point {
-		int x;
-		int y;
+		pixels x;
+		pixels y;
 
 		point() : x(0), y(0) {}
-		point(int x, int y) : x(x), y(y) {}
+		point(const pixels& x, const pixels& y) : x(x), y(y) {}
 		point(const point&) = default;
 		point& operator=(const point&) = default;
 		point(point&&) = default;
@@ -47,31 +47,68 @@ namespace gui {
 	};
 
 	struct size {
-		size_t width;
-		size_t height;
+		pixels width;
+		pixels height;
 
 		size() : width(0), height(0) {}
-		size(size_t width, size_t height) : width(width), height(height) {}
+		size(const pixels& width, const pixels& height) : width(width), height(height) {}
 		size(const size&) = default;
 		size& operator=(const size&) = default;
 		size(size&&) = default;
 		size& operator=(size&&) = default;
 	};
 
-	inline point operator + (const point& lhs, const size& rhs) {
-		return{ (int)(lhs.x + rhs.width), (int)(lhs.y + rhs.height) };
+	inline point operator + (const point& lhs, const point& rhs) {
+		return{ lhs.x + rhs.x, lhs.y + rhs.y };
 	}
+
+	inline point operator + (const point& lhs, const size& rhs) {
+		return{ lhs.x + rhs.width, lhs.y + rhs.height };
+	}
+
+	inline size operator - (const point& lhs, const point& rhs) {
+		return{ std::abs((lhs.x - rhs.x).value()), std::abs((lhs.y - rhs.y).value()) };
+	}
+
+	struct ratio {
+		int num;
+		int denom;
+
+		long double scaleD(const pixels& px) const
+		{
+			return num * px.value() / denom;
+		}
+
+		float scaleF(const pixels& px) const
+		{
+			return (float)(num * px.value() / denom);
+		}
+
+		long scaleL(const pixels& px) const
+		{
+			return (long)(0.5 + num * px.value() / denom);
+		}
+
+		int scaleI(const pixels& px) const
+		{
+			return (int)(0.5 + num * px.value() / denom);
+		}
+
+		pixels invert(int value) const {
+			return (long double)value * denom / num;
+		}
+	};
 
 	struct painter {
 		using point = gui::point;
 		using size = gui::size;
 
 		virtual ~painter() {}
-		virtual void moveOrigin(int x, int y) = 0;
+		virtual void moveOrigin(const pixels& x, const pixels& y) = 0;
 		void moveOrigin(const point& pt) { moveOrigin(pt.x, pt.y); }
 		virtual point getOrigin() const = 0;
 		virtual void setOrigin(const point& orig) = 0;
-		virtual void paintImage(const image_ref* img, size_t width, size_t height) = 0;
+		virtual void paintImage(const image_ref* img, const pixels& width, const pixels& height) = 0;
 		virtual void paintString(const std::string& text) = 0;
 		virtual size measureString(const std::string& text) = 0;
 		virtual int dpiRescale(int size) = 0;

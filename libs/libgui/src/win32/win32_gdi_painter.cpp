@@ -67,7 +67,7 @@ namespace gui { namespace gdi {
 			DeleteObject(m_modified);
 	}
 
-	void painter::moveOrigin(int x, int y)
+	void painter::moveOrigin(const pixels& x, const pixels& y)
 	{
 		m_origin.x += x;
 		m_origin.y += y;
@@ -83,7 +83,7 @@ namespace gui { namespace gdi {
 		m_origin = orig;
 	}
 
-	void painter::paintImage(const image_ref* img, size_t width, size_t height)
+	void painter::paintImage(const image_ref* img, const pixels& width, const pixels& height)
 	{
 		auto bmp = reinterpret_cast<Gdiplus::Bitmap*>(img ? img->getNativeHandle() : nullptr);
 		if (img && img->getState() != gui::load_state::pixmap_available)
@@ -95,7 +95,8 @@ namespace gui { namespace gdi {
 		}
 
 		Gdiplus::Graphics gfx{ m_dc };
-		gfx.DrawImage(bmp, m_origin.x, m_origin.y, width, height);
+		gfx.DrawImage(bmp, m_zoom.scaleF(m_origin.x), m_zoom.scaleF(m_origin.y),
+			m_zoom.scaleF(width), m_zoom.scaleF(height));
 	}
 
 	void painter::paintString(const std::string& text)
@@ -104,7 +105,7 @@ namespace gui { namespace gdi {
 			return;
 
 		auto widen = utf::widen(text);
-		::TextOut(m_dc, m_origin.x, m_origin.y, widen.c_str(), widen.length());
+		::TextOut(m_dc, m_zoom.scaleL(m_origin.x), m_zoom.scaleL(m_origin.y), widen.c_str(), widen.length());
 
 #if 0
 		SIZE s = {};
@@ -125,7 +126,7 @@ namespace gui { namespace gdi {
 	}
 
 	template<typename T>
-	static inline T xp2dev(const gdi::ratio& r, T value)
+	static inline T xp2dev(const ratio& r, T value)
 	{
 		return r.num * value / r.denom;
 	}
@@ -144,7 +145,8 @@ namespace gui { namespace gdi {
 	{
 		auto br = m_origin + node->getSize();
 
-		RECT r = { m_origin.x, m_origin.y, br.x, br.y };
+		RECT r = { m_zoom.scaleI(m_origin.x), m_zoom.scaleI(m_origin.y),
+			m_zoom.scaleI(br.x), m_zoom.scaleI(br.y) };
 		RECT test;
 
 		return !!IntersectRect(&test, &r, &m_clip);
@@ -180,17 +182,17 @@ namespace gui { namespace gdi {
 
 		auto pt = node->getAbsolutePos();
 		auto sz = node->getSize();
-		RECT r{ pt.x - 1, pt.y - 1, pt.x + (int)sz.width + 1, pt.y + (int)sz.height + 1 };
+		RECT r{ m_zoom.scaleI(pt.x) - 1, m_zoom.scaleI(pt.y) - 1,
+			m_zoom.scaleI(pt.x + sz.width) + 1, m_zoom.scaleI(pt.y + sz.height) + 1 };
 		FillSolidRect(m_dc, &r, ref.get(styles::prop_background));
 	}
 
 	struct Border {
-		int width;
+		pixels width;
 		line_style style;
 		colorref color;
 
 		Border(const styles::rule_storage& styles,
-			gui::painter* painter,
 			styles::length_prop width_prop,
 			styles::border_style_prop style_prop,
 			styles::color_prop color_prop)
@@ -201,7 +203,7 @@ namespace gui { namespace gdi {
 			if (styles.has(width_prop)) {
 				auto u = styles.get(width_prop);
 				ASSERT(u.which() == styles::length_u::first_type);
-				width = (int)(painter->dpiRescale(u.first().value()) + 0.5);
+				width = u.first().value();
 			}
 
 			if (styles.has(style_prop))
@@ -210,10 +212,10 @@ namespace gui { namespace gdi {
 			if (styles.has(color_prop))
 				color = styles.get(color_prop);
 
-			if (width == 0 ||
+			if (width.value() == 0 ||
 				style == line_style::none)
 			{
-				width = 0;
+				width = pixels();
 				style = line_style::none;
 			}
 		};
@@ -225,7 +227,7 @@ namespace gui { namespace gdi {
 	{
 		auto styles = node->calculatedStyle();
 #define BORDER_(side) \
-Border border_ ## side{*styles, this, \
+Border border_ ## side{*styles, \
 	styles::prop_border_ ## side ## _width, \
 	styles::prop_border_ ## side ## _style, \
 	styles::prop_border_ ## side ## _color};
@@ -237,7 +239,7 @@ Border border_ ## side{*styles, this, \
 
 		if (border_top.present()) {
 			auto orig = pt;
-			auto dest = pt + size{ sz.width, (size_t)border_top.width };
+			auto dest = pt + size{ sz.width, border_top.width };
 
 			if (border_right.present())
 				dest.x -= border_right.width;
@@ -269,7 +271,7 @@ Border border_ ## side{*styles, this, \
 
 		if (border_left.present()) {
 			auto orig = pt;
-			auto dest = pt + size{ (size_t)border_left.width, sz.height };
+			auto dest = pt + size{ border_left.width, sz.height };
 
 			if (border_top.present())
 				orig.y += border_top.width;
@@ -311,7 +313,7 @@ Border border_ ## side{*styles, this, \
 
 	void painter::drawBorder(const gui::point& from, const gui::point& to, line_style /*style*/, COLORREF color)
 	{
-		RECT r{ from.x, from.y, to.x, to.y };
+		RECT r{ m_zoom.scaleI(from.x), m_zoom.scaleI(from.y), m_zoom.scaleI(to.x), m_zoom.scaleI(to.y) };
 		FillSolidRect(m_dc, &r, color);
 	}
 }};

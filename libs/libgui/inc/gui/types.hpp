@@ -103,7 +103,79 @@ namespace gui {
 		length(long double v) : m_len(v) {};
 
 		long double value() const { return m_len; }
+
+		length& operator += (const length<Ratio>& rhs)
+		{
+			m_len += rhs.m_len;
+			return *this;
+		}
+
+		length& operator -= (const length<Ratio>& rhs)
+		{
+			m_len -= rhs.m_len;
+			return *this;
+		}
 	};
+
+	template <typename Ratio>
+	length<Ratio> operator+ (const length<Ratio>& lhs, const length<Ratio>& rhs)
+	{
+		return lhs.value() + rhs.value();
+	}
+
+	template <typename Ratio>
+	length<Ratio> operator- (const length<Ratio>& lhs, const length<Ratio>& rhs)
+	{
+		return lhs.value() - rhs.value();
+	}
+
+	template <typename Ratio>
+	bool operator==(const length<Ratio>& lhs, const length<Ratio>& rhs)
+	{
+		return lhs.value() == rhs.value();
+	}
+
+	template <typename Ratio>
+	bool operator!=(const length<Ratio>& lhs, const length<Ratio>& rhs)
+	{
+		return lhs.value() != rhs.value();
+	}
+
+	template <typename Ratio>
+	bool operator<(const length<Ratio>& lhs, const length<Ratio>& rhs)
+	{
+		return lhs.value() < rhs.value();
+	}
+
+	template <typename Ratio>
+	bool operator>(const length<Ratio>& lhs, const length<Ratio>& rhs)
+	{
+		return lhs.value() > rhs.value();
+	}
+
+	template <typename Ratio>
+	bool operator==(const length<Ratio>& lhs, long double rhs)
+	{
+		return lhs.value() == rhs;
+	}
+
+	template <typename Ratio>
+	bool operator!=(const length<Ratio>& lhs, long double rhs)
+	{
+		return lhs.value() != rhs;
+	}
+
+	template <typename Ratio>
+	bool operator<(const length<Ratio>& lhs, long double rhs)
+	{
+		return lhs.value() < rhs;
+	}
+
+	template <typename Ratio>
+	bool operator>(const length<Ratio>& lhs, long double rhs)
+	{
+		return lhs.value() > rhs;
+	}
 
 	using pixels = length<std::ratio<1>>;
 	using points = length<std::ratio<4, 3>>;

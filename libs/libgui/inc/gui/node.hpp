@@ -45,7 +45,7 @@ namespace gui {
 		virtual std::string text() const = 0;
 		virtual void paint(painter* painter) = 0;
 		virtual void measure(painter* painter) = 0;
-		virtual void setPosition(int x, int y) = 0;
+		virtual void setPosition(const pixels& x, const pixels& y) = 0;
 		virtual point getPosition() = 0;
 		virtual point getAbsolutePos() = 0;
 		virtual size getSize() = 0;
@@ -53,9 +53,9 @@ namespace gui {
 		virtual std::shared_ptr<node> getParent() const = 0;
 		virtual void setParent(const std::shared_ptr<node>&) = 0;
 		virtual void invalidate() = 0;
-		virtual void invalidate(int x, int y, size_t width, size_t height) = 0;
+		virtual void invalidate(const point& pt, const size& size) = 0;
 
-		virtual std::shared_ptr<node> nodeFromPoint(int x, int y) = 0;
+		virtual std::shared_ptr<node> nodeFromPoint(const pixels& x, const pixels& y) = 0;
 		virtual void setHovered(bool hovered) = 0;
 		virtual bool getHovered() const = 0;
 		virtual void setActive(bool active) = 0;

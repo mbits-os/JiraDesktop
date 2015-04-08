@@ -31,11 +31,6 @@
 #include <windows.h>
 
 namespace gui { namespace gdi {
-	struct ratio {
-		int num;
-		int denom;
-	};
-
 	class painter
 		: public gui::painter
 		, private gui::gdi::style_save::callback {
@@ -45,10 +40,10 @@ namespace gui { namespace gdi {
 		~painter();
 
 		// gui::painter
-		void moveOrigin(int x, int y) override;
+		void moveOrigin(const pixels& x, const pixels& y) override;
 		point getOrigin() const override;
 		void setOrigin(const point& orig) override;
-		void paintImage(const image_ref* img, size_t width, size_t height) override;
+		void paintImage(const image_ref* img, const pixels& width, const pixels& height) override;
 		void paintString(const std::string& text) override;
 		size measureString(const std::string& text) override;
 		int dpiRescale(int size) override;
@@ -57,6 +52,8 @@ namespace gui { namespace gdi {
 		bool visible(node*) const override;
 		gui::style_handle applyStyle(node*) override;
 		void restoreStyle(gui::style_handle) override;
+
+		ratio gdiRatio() const { return m_zoom; }
 
 	private:
 		void drawBackground(gui::node*, colorref) override;
