@@ -67,7 +67,7 @@ private:
 	std::shared_ptr<gui::node> m_hovered;
 	std::shared_ptr<gui::node> m_active;
 	bool m_tracking = false;
-	styles::pointer m_cursor = styles::pointer::arrow;
+	gui::pointer m_cursor = gui::pointer::arrow;
 	std::function<void(size_t, size_t)> m_scroller;
 
 	void updateLayout();

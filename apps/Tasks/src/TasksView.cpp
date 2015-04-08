@@ -188,6 +188,7 @@ namespace {
 
 	std::shared_ptr<styles::stylesheet> stylesheetCreate()
 	{
+		using namespace gui::literals;
 		using namespace styles::literals;
 		using namespace styles::def;
 		using namespace styles;
@@ -199,34 +200,34 @@ namespace {
 		// "Default" stylesheet
 		out
 			// GENERIC ELEMENTS
-			.add(gui::elem::body,                          display(disp::block) << padding(7_px))
-			.add(gui::elem::block,                         display(disp::block))
-			.add(gui::elem::header,                        display(disp::block) <<
+			.add(gui::elem::body,                          display(gui::display::block) << padding(7_px))
+			.add(gui::elem::block,                         display(gui::display::block))
+			.add(gui::elem::header,                        display(gui::display::block) <<
 			                                               font_size(1.8_em) <<
 			                                               margin(.3_em, 0_px, .2_em) <<
 			                                               padding(.2_em, .2_px, .2_em))
 
 			// TABLE
-			.add(gui::elem::table,                         display(disp::table))
-			.add(gui::elem::table_head,                    display(disp::table_header))
-			.add(gui::elem::table_row,                     display(disp::table_row))
+			.add(gui::elem::table,                         display(gui::display::table))
+			.add(gui::elem::table_head,                    display(gui::display::table_header))
+			.add(gui::elem::table_row,                     display(gui::display::table_row))
 			.add(gui::elem::td,                            padding(.2_em))
-			.add(gui::elem::th,                            text_align(align::center) <<
-			                                               font_weight(weight::bold) <<
+			.add(gui::elem::th,                            text_align(gui::align::center) <<
+			                                               font_weight(gui::weight::bold) <<
 			                                               padding(.2_em))
 
 			// LINK
-			.add(gui::elem::link,                          color(0xAF733B) << cursor(pointer::hand))
+			.add(gui::elem::link,                          color(0xAF733B) << cursor(gui::pointer::hand))
 			.add({ gui::elem::link, pseudo::hover },       underline());
 
 		// Application styleshet
 		out
 			.add(gui::elem::header,                        color(0x883333))
-			.add(gui::elem::table,                         border(1_px, line::solid, 0x444444))
-			.add(gui::elem::table_row,                     border_top(1_px, line::solid, 0xc0c0c0))
+			.add(gui::elem::table,                         border(1_px, gui::line_style::solid, 0x444444))
+			.add(gui::elem::table_row,                     border_top(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
-			.add(gui::elem::link,                          padding(2_px) << border(1_px, line::none, 0xc0c0c0))
-			.add({ gui::elem::link, pseudo::active },      border(1_px, line::dot, 0xc0c0c0))
+			.add(gui::elem::link,                          padding(2_px) << border(1_px, gui::line_style::none, 0xc0c0c0))
+			.add({ gui::elem::link, pseudo::active },      border(1_px, gui::line_style::dot, 0xc0c0c0))
 
 			.add(class_name{ "error" },                    color(0x171BC1))
 			.add(class_name{ "empty" },                    none_empty)
@@ -235,7 +236,7 @@ namespace {
 			.add(class_name{ "symbol" },                   font_family("FontAwesome"))
 			.add(class_name{ "unexpected" },               color(0x2600E6))
 			.add(class_name{ "label" },                    background(0xF5F5F5) <<
-			                                               border(1_px, line::solid, 0xCCCCCC) <<
+			                                               border(1_px, gui::line_style::solid, 0xCCCCCC) <<
 			                                               padding(1_px, 5_px));
 
 		return std::make_shared<styles::stylesheet>(std::move(out));
@@ -326,12 +327,12 @@ void CTasksView::updateLayout()
 
 void CTasksView::updateCursor(bool force)
 {
-	auto tmp = styles::pointer::arrow;
+	auto tmp = gui::pointer::arrow;
 	if (m_hovered)
 		tmp = m_hovered->getCursor();
 
-	if (tmp == styles::pointer::inherited)
-		tmp = styles::pointer::arrow;
+	if (tmp == gui::pointer::inherited)
+		tmp = gui::pointer::arrow;
 
 	if (tmp == m_cursor && !force)
 		return;
@@ -339,7 +340,7 @@ void CTasksView::updateCursor(bool force)
 	m_cursor = tmp;
 	LPCWSTR idc = IDC_ARROW;
 	switch (m_cursor) {
-	case styles::pointer::hand:
+	case gui::pointer::hand:
 		idc = IDC_HAND;
 		break;
 	};
@@ -486,6 +487,7 @@ static std::string to_string(styles::length_prop prop) {
 
 static std::string to_string(styles::font_weight_prop /*prop*/) { return "font-weight"; }
 static std::string to_string(styles::text_align_prop /*prop*/) { return "text-align"; }
+static std::string to_string(styles::display_prop /*prop*/) { return "display"; }
 
 static std::string to_string(styles::border_style_prop prop) {
 	switch (prop) {
@@ -498,7 +500,7 @@ static std::string to_string(styles::border_style_prop prop) {
 	return "{" + std::to_string((int)prop) + "}";
 }
 
-static std::string to_string(styles::colorref col)
+static std::string to_string(gui::colorref col)
 {
 	char buffer[100];
 	sprintf_s(buffer, "#%06X", col);
@@ -515,7 +517,7 @@ static const std::string& to_string(const std::string& val)
 	return val;
 };
 
-static std::string to_string(const styles::pixels& val)
+static std::string to_string(const gui::pixels& val)
 {
 	return std::to_string(val.value()) + "px";
 };
@@ -536,45 +538,61 @@ static std::string to_string(const styles::length_u& len)
 	}
 };
 
-static std::string to_string(styles::weight val)
+static std::string to_string(gui::weight val)
 {
 	switch (val) {
-	case styles::weight::normal: return "normal";
-	case styles::weight::bold: return "bold";
-	case styles::weight::bolder: return "bolder";
-	case styles::weight::lighter: return "lighter";
-	case styles::weight::w100: return "100";
-	case styles::weight::w200: return "200";
-	case styles::weight::w300: return "300";
-	case styles::weight::w400: return "400";
-	case styles::weight::w500: return "500";
-	case styles::weight::w600: return "600";
-	case styles::weight::w700: return "700";
-	case styles::weight::w800: return "800";
-	case styles::weight::w900: return "900";
+	case gui::weight::normal: return "normal";
+	case gui::weight::bold: return "bold";
+	case gui::weight::bolder: return "bolder";
+	case gui::weight::lighter: return "lighter";
+	case gui::weight::w100: return "100";
+	case gui::weight::w200: return "200";
+	case gui::weight::w300: return "300";
+	case gui::weight::w400: return "400";
+	case gui::weight::w500: return "500";
+	case gui::weight::w600: return "600";
+	case gui::weight::w700: return "700";
+	case gui::weight::w800: return "800";
+	case gui::weight::w900: return "900";
 	}
 
 	return std::to_string((int)val);
 }
 
-static std::string to_string(styles::align val)
+static std::string to_string(gui::align val)
 {
 	switch (val) {
-	case styles::align::left: return "left";
-	case styles::align::right: return "right";
-	case styles::align::center: return "center";
+	case gui::align::left: return "left";
+	case gui::align::right: return "right";
+	case gui::align::center: return "center";
 	}
 
 	return std::to_string((int)val);
 }
 
-static std::string to_string(styles::line val)
+static std::string to_string(gui::line_style val)
 {
 	switch (val) {
-	case styles::line::none: return "none";
-	case styles::line::solid: return "solid";
-	case styles::line::dot: return "dat";
-	case styles::line::dash: return "dash";
+	case gui::line_style::none: return "none";
+	case gui::line_style::solid: return "solid";
+	case gui::line_style::dot: return "dat";
+	case gui::line_style::dash: return "dash";
+	}
+
+	return std::to_string((int)val);
+}
+
+static std::string to_string(gui::display val)
+{
+	switch (val) {
+	case gui::display::inlined: return "inline";
+	case gui::display::block: return "block";
+	case gui::display::table: return "table";
+	case gui::display::table_row: return "table-row";
+	case gui::display::table_header: return "table-header-row";
+	case gui::display::table_footer: return "table-footer-row";
+	case gui::display::table_cell: return "table-cell";
+	case gui::display::none: return "none";
 	}
 
 	return std::to_string((int)val);
@@ -596,8 +614,10 @@ static void debug_rules(const styles::rule_storage* rules) {
 	debug_rule(values, styles::prop_border_right_color, rules);
 	debug_rule(values, styles::prop_border_bottom_color, rules);
 	debug_rule(values, styles::prop_border_left_color, rules);
+	debug_rule(values, styles::prop_display, rules);
 	debug_rule(values, styles::prop_italic, rules);
 	debug_rule(values, styles::prop_underline, rules);
+	debug_rule(values, styles::prop_visibility, rules);
 	debug_rule(values, styles::prop_font_family, rules);
 	debug_rule(values, styles::prop_font_size, rules);
 	debug_rule(values, styles::prop_border_top_width, rules);
@@ -608,6 +628,10 @@ static void debug_rules(const styles::rule_storage* rules) {
 	debug_rule(values, styles::prop_padding_right, rules);
 	debug_rule(values, styles::prop_padding_bottom, rules);
 	debug_rule(values, styles::prop_padding_left, rules);
+	debug_rule(values, styles::prop_margin_top, rules);
+	debug_rule(values, styles::prop_margin_right, rules);
+	debug_rule(values, styles::prop_margin_bottom, rules);
+	debug_rule(values, styles::prop_margin_left, rules);
 	debug_rule(values, styles::prop_font_weight, rules);
 	debug_rule(values, styles::prop_text_align, rules);
 	debug_rule(values, styles::prop_border_top_style, rules);

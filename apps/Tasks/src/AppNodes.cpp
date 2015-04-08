@@ -288,13 +288,13 @@ gui::node::size CJiraNode::measureThis(gui::painter* /*painter*/)
 	return{ 0, 0 };
 }
 
-styles::pointer CJiraNode::getCursor() const
+gui::pointer CJiraNode::getCursor() const
 {
 	auto styles = calculatedStyle();
 	if (styles) {
 		if (styles->has(styles::prop_cursor)) {
 			auto c = styles->get(styles::prop_cursor);
-			if (c != styles::pointer::inherited)
+			if (c != gui::pointer::inherited)
 				return c;
 		}
 	}
@@ -303,7 +303,7 @@ styles::pointer CJiraNode::getCursor() const
 	if (parent)
 		return parent->getCursor();
 
-	return styles::pointer::inherited;
+	return gui::pointer::inherited;
 }
 
 bool CJiraNode::hasTooltip() const
@@ -358,9 +358,10 @@ void CJiraNode::applyStyles(const std::shared_ptr<styles::stylesheet>& styleshee
 		node->applyStyles(stylesheet);
 }
 
-styles::pixels calculatedFontSize(gui::node* node)
+gui::pixels calculatedFontSize(gui::node* node)
 {
 	using namespace styles;
+	using namespace gui::literals;
 
 	if (!node)
 		return 14_px;
@@ -375,14 +376,14 @@ styles::pixels calculatedFontSize(gui::node* node)
 	return calculatedFontSize(node->getParent().get());
 }
 
-styles::pixels parentFontSize(gui::node* node)
+gui::pixels parentFontSize(gui::node* node)
 {
 	return calculatedFontSize(node->getParent().get());
 }
 
-styles::pixels calculate(styles::rule_storage& rules,
+gui::pixels calculate(styles::rule_storage& rules,
 	styles::length_prop prop,
-	const styles::pixels& px)
+	const gui::pixels& px)
 {
 	using namespace styles;
 	if (rules.has(prop)) {
