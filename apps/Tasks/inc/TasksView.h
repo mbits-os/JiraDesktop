@@ -30,6 +30,8 @@ struct ZoomInfo {
 	gui::ratio mul;
 };
 
+// #define CAIRO_PAINTER
+
 using CTasksViewWinTraits = CWinTraits<WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_COMPOSITED>;
 class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 {
@@ -81,6 +83,8 @@ private:
 	gui::pointer m_cursor = gui::pointer::arrow;
 	std::function<void(size_t, size_t)> m_scroller;
 	gui::size m_docSize;
+	gui::pixels m_fontSize;
+	std::string m_fontFamily;
 
 	void updateLayout();
 	void updateCursor(bool force = false);

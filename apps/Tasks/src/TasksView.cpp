@@ -10,7 +10,12 @@
 #include <algorithm>
 #include <sstream>
 #include <gui/styles.hpp>
+#ifdef CAIRO_PAINTER
+#include <gui/cairo_painter.hpp>
+#include <cairo/cairo-win32.h>
+#else
 #include <gui/gdi_painter.hpp>
+#endif
 
 #include "AppNodes.h"
 
@@ -314,10 +319,16 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	CPaintDC dc(m_hWnd);
 	dc.FillRect(&dc.m_ps.rcPaint, m_background);
 
+#ifdef CAIRO_PAINTER
+	m_zoom->device = gui::ratio{ dc.GetDeviceCaps(LOGPIXELSX), 96 }.gcd();
+	m_zoom->mul = m_zoom->device * m_zoom->zoom;
+	gui::cairo::painter paint{ cairo_win32_surface_create(dc), m_zoom->zoom, m_zoom->device, m_fontSize, m_fontFamily };
+#else
 	dc.SetBkMode(TRANSPARENT);
 	gui::gdi::painter paint{ (HDC)dc, zooms[m_currentZoom], dc.m_ps.rcPaint, (HFONT)m_font };
 	m_zoom->device = paint.gdiRatio();
 	m_zoom->mul = m_zoom->device * m_zoom->zoom;
+#endif
 
 	for (auto& item : m_servers) {
 		if (item.m_plaque)
@@ -333,9 +344,17 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 void CTasksView::updateLayout()
 {
 	CWindowDC dc{m_hWnd};
+
+
+#ifdef CAIRO_PAINTER
+	m_zoom->device = gui::ratio{ dc.GetDeviceCaps(LOGPIXELSX), 96 }.gcd();
+	m_zoom->mul = m_zoom->device * m_zoom->zoom;
+	gui::cairo::painter paint{ cairo_win32_surface_create(dc), m_zoom->zoom, m_zoom->device, m_fontSize, m_fontFamily };
+#else
 	gui::gdi::painter paint{ (HDC)dc, zooms[m_currentZoom], (HFONT)m_font };
 	m_zoom->device = paint.gdiRatio();
 	m_zoom->mul = m_zoom->device * m_zoom->zoom;
+#endif
 
 	if (m_hovered)
 		m_hovered->setHovered(false);
@@ -802,6 +821,17 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 {
 	bHandled = FALSE;
 	m_font = (HFONT) wParam;
+
+	LOGFONT lf = {};
+	m_font.GetLogFont(lf);
+
+	{
+		CWindowDC dc{m_hWnd};
+		m_fontSize = lf.lfWidth * 96.0 / dc.GetDeviceCaps(LOGPIXELSY);
+	}
+
+	m_fontFamily = utf::narrowed(lf.lfFaceName);
+
 
 	updateLayout();
 	// TODO: redraw the report table
