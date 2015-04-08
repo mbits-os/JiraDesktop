@@ -24,117 +24,22 @@
 
 #pragma once
 
+#include <gui/types.hpp>
 #include <ratio>
 #include <string>
 #include <map>
 
 namespace gui {
-	enum class elem {
-		unspecified,
-		body,
-		block,
-		header,
-		span,
-		text,
-		link,
-		image,
-		icon,
-		table,
-		table_head,
-		table_row,
-		th,
-		td
-	};
-
 	struct node;
 }
 
 namespace styles {
-	using colorref = uint32_t;
 
 	enum class pseudo {
 		unspecified,
 		hover,
 		active
 	};
-
-	enum class align {
-		left,
-		right,
-		center
-	};
-
-	enum class line {
-		none,
-		solid,
-		dot,
-		dash
-	};
-
-	enum class weight {
-		normal,
-		bold,
-		bolder,
-		lighter,
-		w100 = 100,
-		w200 = 200,
-		w300 = 300,
-		w400 = 400,
-		w500 = 500,
-		w600 = 600,
-		w700 = 700,
-		w800 = 800,
-		w900 = 900
-	};
-
-	enum class pointer {
-		inherited,
-		arrow,
-		hand
-	};
-
-	enum class disp {
-		inlined,
-		block,
-		table,
-		table_row,
-		table_header,
-		table_footer,
-		table_cell,
-		none
-	};
-
-	template <typename Ratio>
-	class length {
-		long double m_len;
-	public:
-		using ratio = Ratio;
-		length() : m_len(0.0) {};
-		length(long double v) : m_len(v) {};
-
-		long double value() const { return m_len; }
-	};
-
-	using pixels = length<std::ratio<1>>;
-	using points = length<std::ratio<4, 3>>;
-	using inches = length<std::ratio<96>>;
-
-	template<class To, class Ratio>
-	inline To length_cast(const length<Ratio>& size)
-	{
-		typedef std::ratio_divide<Ratio, typename To::ratio> _CF;
-
-		if (_CF::num == 1 && _CF::den == 1)
-			return size.value();
-
-		if (_CF::num != 1 && _CF::den == 1)
-			return size.value() * _CF::num;
-		
-		if (_CF::num == 1 && _CF::den != 1)
-			return size.value() / _CF::den;
-
-		return return size.value() * _CF::num / _CF::den;
-	}
 
 	class ems {
 		long double m_len;
@@ -147,6 +52,11 @@ namespace styles {
 		length<Ratio> value(const length<Ratio>& len) const {
 			return len.value() * m_len;
 		}
+	};
+
+	inline namespace literals {
+		inline ems operator""_em(uint64_t v) { return (long double)v; }
+		inline ems operator""_em(long double v) { return v; }
 	};
 
 	template <typename T1, typename T2>
@@ -250,18 +160,6 @@ namespace styles {
 		}
 	};
 
-	inline namespace literals {
-		inline pixels operator""_px(uint64_t v) { return (long double)v; }
-		inline ems operator""_em(uint64_t v) { return (long double)v; }
-		inline points operator""_pt(uint64_t v) { return (long double)v; }
-		inline inches operator""_in(uint64_t v) { return (long double)v; }
-
-		inline pixels operator""_px(long double v) { return v; }
-		inline ems operator""_em(long double v) { return v; }
-		inline points operator""_pt(long double v) { return v; }
-		inline inches operator""_in(long double v) { return v; }
-	};
-
 	template <typename T> struct prop_traits;
 	template <typename T> using prop_storage_t = typename prop_traits<T>::storage_t;
 	template <typename T> using prop_arg_t = typename prop_traits<T>::arg_t;
@@ -281,7 +179,7 @@ namespace styles {
 		prop_border_bottom_color,
 		prop_border_left_color,
 	};
-	template <> struct prop_traits<color_prop> : prop_traits_impl<colorref> {};
+	template <> struct prop_traits<color_prop> : prop_traits_impl<gui::colorref>{};
 
 	enum bool_prop {
 		prop_italic,
@@ -295,7 +193,7 @@ namespace styles {
 	};
 	template <> struct prop_traits<string_prop> : prop_traits_impl<std::string, const std::string&>{};
 
-	using length_u = union_t<pixels, ems>;
+	using length_u = union_t<gui::pixels, ems>;
 	enum length_prop {
 		prop_font_size,
 		prop_border_top_width,
@@ -319,16 +217,16 @@ namespace styles {
 		prop_border_bottom_style,
 		prop_border_left_style
 	};
-	template <> struct prop_traits<border_style_prop> : prop_traits_impl<line>{};
+	template <> struct prop_traits<border_style_prop> : prop_traits_impl<gui::line_style>{};
 
 #define ENUM_PROP(name_base, type) \
 	enum name_base ## _prop { prop_ ## name_base }; \
 	template <> struct prop_traits<name_base ## _prop> : prop_traits_impl<type>{};
 
-	ENUM_PROP(font_weight, weight);
-	ENUM_PROP(text_align, align);
-	ENUM_PROP(cursor, pointer);
-	ENUM_PROP(display, disp);
+	ENUM_PROP(font_weight, gui::weight);
+	ENUM_PROP(text_align, gui::align);
+	ENUM_PROP(cursor, gui::pointer);
+	ENUM_PROP(display, gui::display);
 
 	template <typename Prop>
 	struct storage {
@@ -438,7 +336,6 @@ namespace styles {
 		return std::move(copy <<= rhs);
 	};
 
-	namespace def {
 #define MAKE_FOURWAY(x) \
 	x(top) \
 	x(right) \
@@ -447,40 +344,41 @@ namespace styles {
 
 #define LENGTH_PROP(creator, prop) \
 	inline rule_storage creator(const ems& em) { return rule(prop, em); } \
-	inline rule_storage creator(const pixels& px) { return rule(prop, px); } \
-	template <typename Ratio> inline rule_storage creator(const length<Ratio>& size) { return creator(length_cast<pixels>(size)); }
+	inline rule_storage creator(const gui::pixels& px) { return rule(prop, px); } \
+	template <typename Ratio> inline rule_storage creator(const gui::length<Ratio>& size) { return creator(gui::length_cast<pixels>(size)); }
 
+	namespace def {
 		template <typename Prop>
 		inline rule_storage rule(Prop prop, prop_arg_t<Prop> value) { return rule_storage{}.set(prop, std::forward<prop_arg_t<Prop>>(value)); }
-		inline rule_storage color(colorref color) { return rule(prop_color, color); }
-		inline rule_storage background(colorref color) { return rule(prop_background, color); }
+		inline rule_storage color(gui::colorref color) { return rule(prop_color, color); }
+		inline rule_storage background(gui::colorref color) { return rule(prop_background, color); }
 		inline rule_storage italic(bool value = true) { return rule(prop_italic, value); }
 		inline rule_storage underline(bool value = true) { return rule(prop_underline, value); }
 		inline rule_storage visible(bool value = true) { return rule(prop_visibility, value); }
 		inline rule_storage hidden() { return visible(false); }
-		inline rule_storage text_align(align a) { return rule(prop_text_align, a); }
+		inline rule_storage text_align(gui::align a) { return rule(prop_text_align, a); }
 		LENGTH_PROP(font_size, prop_font_size)
-		inline rule_storage font_weight(weight w) { return rule(prop_font_weight, w); }
+		inline rule_storage font_weight(gui::weight w) { return rule(prop_font_weight, w); }
 		inline rule_storage font_family(const std::string& face) { return rule(prop_font_family, face); }
-		inline rule_storage cursor(pointer value) { return rule(prop_cursor, value); }
-		inline rule_storage display(disp value) { return rule(prop_display, value); }
+		inline rule_storage cursor(gui::pointer value) { return rule(prop_cursor, value); }
+		inline rule_storage display(gui::display value) { return rule(prop_display, value); }
 
 #define BORDER_STYLE(side) \
-	inline rule_storage border_ ## side ## _style(line style) { return rule(prop_border_ ## side ## _style, style); }
+	inline rule_storage border_ ## side ## _style(gui::line_style style) { return rule(prop_border_ ## side ## _style, style); }
 		MAKE_FOURWAY(BORDER_STYLE)
 #undef BORDER_STYLE
 
-		inline rule_storage border_style(line style)
+		inline rule_storage border_style(gui::line_style style)
 		{
 			return border_top_style(style) << border_right_style(style) << border_bottom_style(style) << border_left_style(style);
 		}
 
 #define BORDER_COLOR(side) \
-	inline rule_storage border_ ## side ## _color(colorref color) { return rule(prop_border_ ## side ## _color, color); }
+	inline rule_storage border_ ## side ## _color(gui::colorref color) { return rule(prop_border_ ## side ## _color, color); }
 		MAKE_FOURWAY(BORDER_COLOR)
 #undef BORDER_STYLE
 
-		inline rule_storage border_color(colorref color)
+		inline rule_storage border_color(gui::colorref color)
 		{
 			return border_top_color(color) << border_right_color(color) << border_bottom_color(color) << border_left_color(color);
 		}
@@ -504,7 +402,7 @@ namespace styles {
 		MAKE_FOURWAY(BORDER)
 #undef BORDER
 
-		template <typename Length>
+			template <typename Length>
 		inline rule_storage border(const Length& width, line style, colorref color)
 		{
 			return border_width(width) << border_style(style) << border_color(color);
