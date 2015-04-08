@@ -112,23 +112,24 @@ namespace gui { namespace gdi {
 	void style_save::batch_apply(styles::rule_storage& ref)
 	{
 		bool update = false;
+		m_fontChanged = false;
 
 		using namespace styles;
 
 		if (ref.has(prop_color))
-			update |= set_color(ref.get(prop_color));
+			update = set_color(ref.get(prop_color));
 		if (ref.has(prop_italic))
-			update |= set_font_italic(ref.get(prop_italic));
+			m_fontChanged |= set_font_italic(ref.get(prop_italic));
 		if (ref.has(prop_underline))
-			update |= set_font_underline(ref.get(prop_underline));
+			m_fontChanged |= set_font_underline(ref.get(prop_underline));
 		if (ref.has(prop_font_weight))
-			update |= set_font_weight(calc(ref.get(prop_font_weight), m_originalFont.lfWeight));
+			m_fontChanged |= set_font_weight(calc(ref.get(prop_font_weight), m_originalFont.lfWeight));
 		if (ref.has(prop_font_size))
-			update |= set_font_size(ref.get(prop_font_size));
+			m_fontChanged |= set_font_size(ref.get(prop_font_size));
 		if (ref.has(prop_font_family))
-			update |= set_font_family(utf::widen(ref.get(prop_font_family)));
+			m_fontChanged |= set_font_family(utf::widen(ref.get(prop_font_family)));
 
-		if (update)
+		if (update || m_fontChanged)
 			store();
 	}
 
@@ -182,7 +183,7 @@ namespace gui { namespace gdi {
 	{
 		if (len.which() == styles::length_u::first_type) {
 			m_modifiedFont.lfHeight = 
-				(int)(m_caller->getPainter()->dpiRescale(len.first().value()) + 0.5);
+				-(int)(m_caller->getPainter()->dpiRescale(len.first().value()) + 0.5);
 		} else if (len.which() == styles::length_u::second_type) {
 			m_modifiedFont.lfHeight = 
 				(int)(m_originalFont.lfHeight * len.second().value() + 0.5);
@@ -195,7 +196,7 @@ namespace gui { namespace gdi {
 
 	bool style_save::set_font_family(const std::wstring& val)
 	{
-		wcscpy(m_modifiedFont.lfFaceName, val.c_str());
+		wcscpy_s(m_modifiedFont.lfFaceName, val.c_str());
 
 		return !!wcscmp(m_modifiedFont.lfFaceName, m_originalFont.lfFaceName);
 	}

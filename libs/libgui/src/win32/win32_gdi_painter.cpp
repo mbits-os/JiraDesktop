@@ -49,7 +49,7 @@ namespace gui { namespace gdi {
 	{
 		memset(&m_lf, 0, sizeof(m_lf));
 		m_original = (HFONT)::SelectObject(m_dc, m_font);
-		::GetObject(m_dc, sizeof(m_lf), &m_lf);
+		::GetObject(m_font, sizeof(m_lf), &m_lf);
 	}
 
 	painter::painter(HDC dc, HFONT font)
