@@ -93,6 +93,17 @@ namespace styles {
 		hand
 	};
 
+	enum class disp {
+		inlined,
+		block,
+		table,
+		table_row,
+		table_header,
+		table_footer,
+		table_cell,
+		none
+	};
+
 	template <typename Ratio>
 	class length {
 		long double m_len;
@@ -275,6 +286,7 @@ namespace styles {
 	enum bool_prop {
 		prop_italic,
 		prop_underline,
+		prop_visibility
 	};
 	template <> struct prop_traits<bool_prop> : prop_traits_impl<bool>{};
 
@@ -293,7 +305,11 @@ namespace styles {
 		prop_padding_top,
 		prop_padding_right,
 		prop_padding_bottom,
-		prop_padding_left
+		prop_padding_left,
+		prop_margin_top,
+		prop_margin_right,
+		prop_margin_bottom,
+		prop_margin_left
 	};
 	template <> struct prop_traits<length_prop> : prop_traits_impl<length_u, const length_u&>{};
 
@@ -312,6 +328,7 @@ namespace styles {
 	ENUM_PROP(font_weight, weight);
 	ENUM_PROP(text_align, align);
 	ENUM_PROP(cursor, pointer);
+	ENUM_PROP(display, disp);
 
 	template <typename Prop>
 	struct storage {
@@ -370,6 +387,7 @@ namespace styles {
 		STORAGE(text_align)
 		STORAGE(border_style)
 		STORAGE(cursor)
+		STORAGE(display)
 
 		template <typename key, typename val>
 		void merge(std::map<key, val>& lhs, const std::map<key, val>& rhs) {
@@ -391,6 +409,7 @@ namespace styles {
 			m_text_aligns.merge(rhs.m_text_aligns);
 			m_border_styles.merge(rhs.m_border_styles);
 			m_cursors.merge(rhs.m_cursors);
+			m_displays.merge(rhs.m_displays);
 		}
 
 		rule_storage& operator<<= (const rule_storage& rhs)
@@ -408,7 +427,8 @@ namespace styles {
 				&& m_font_weights.empty()
 				&& m_text_aligns.empty()
 				&& m_border_styles.empty()
-				&& m_cursors.empty();
+				&& m_cursors.empty()
+				&& m_displays.empty();
 		}
 	};
 
@@ -436,11 +456,14 @@ namespace styles {
 		inline rule_storage background(colorref color) { return rule(prop_background, color); }
 		inline rule_storage italic(bool value = true) { return rule(prop_italic, value); }
 		inline rule_storage underline(bool value = true) { return rule(prop_underline, value); }
+		inline rule_storage visible(bool value = true) { return rule(prop_visibility, value); }
+		inline rule_storage hidden() { return visible(false); }
 		inline rule_storage text_align(align a) { return rule(prop_text_align, a); }
 		LENGTH_PROP(font_size, prop_font_size)
 		inline rule_storage font_weight(weight w) { return rule(prop_font_weight, w); }
 		inline rule_storage font_family(const std::string& face) { return rule(prop_font_family, face); }
 		inline rule_storage cursor(pointer value) { return rule(prop_cursor, value); }
+		inline rule_storage display(disp value) { return rule(prop_display, value); }
 
 #define BORDER_STYLE(side) \
 	inline rule_storage border_ ## side ## _style(line style) { return rule(prop_border_ ## side ## _style, style); }
@@ -513,6 +536,34 @@ namespace styles {
 		inline rule_storage padding(const Top& top, const Right& right, const Bottom& bottom, const Left& left)
 		{
 			return padding_left(left) << padding_top(top) << padding_right(right) << padding_bottom(bottom);
+		}
+
+#define MARGIN(side) LENGTH_PROP(margin_ ## side, prop_margin_ ## side)
+		MAKE_FOURWAY(MARGIN)
+#undef MARGIN
+
+		template <typename Top>
+		inline rule_storage margin(const Top& top)
+		{
+			return margin_left(top) << margin_top(top) << margin_right(top) << margin_bottom(top);
+		}
+
+		template <typename Top, typename Right>
+		inline rule_storage margin(const Top& top, const Right& right)
+		{
+			return margin_left(right) << margin_top(top) << margin_right(right) << margin_bottom(top);
+		}
+
+		template <typename Top, typename Right, typename Bottom>
+		inline rule_storage margin(const Top& top, const Right& right, const Bottom& bottom)
+		{
+			return margin_left(right) << margin_top(top) << margin_right(right) << margin_bottom(bottom);
+		}
+
+		template <typename Top, typename Right, typename Bottom, typename Left>
+		inline rule_storage margin(const Top& top, const Right& right, const Bottom& bottom, const Left& left)
+		{
+			return margin_left(left) << margin_top(top) << margin_right(right) << margin_bottom(bottom);
 		}
 	}
 
