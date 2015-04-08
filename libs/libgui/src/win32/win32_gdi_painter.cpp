@@ -40,23 +40,31 @@
 #pragma comment (lib, "gdiplus.lib")
 
 namespace gui { namespace gdi {
-	painter::painter(HDC dc, const RECT& clip, HFONT font)
+	painter::painter(HDC dc, ratio zoom, const RECT& clip, HFONT font)
 		: m_dc{ dc }
 		, m_font{ font }
 		, m_modified{ nullptr }
 		, m_origin{ 0, 0 }
 		, m_clip{ clip.left, clip.top, clip.right, clip.bottom }
 	{
-		m_zoom.num = ::GetDeviceCaps(m_dc, LOGPIXELSX);
-		m_zoom.denom = 96;
+		m_device = ratio{ ::GetDeviceCaps(m_dc, LOGPIXELSX), 96 }.gcd();
+		m_zoom = zoom * m_device;
 
 		memset(&m_lf, 0, sizeof(m_lf));
 		m_original = (HFONT)::SelectObject(m_dc, m_font);
 		::GetObject(m_font, sizeof(m_lf), &m_lf);
+
+		if (zoom.num != zoom.denom) { // zoom is not 1:1
+			m_lf.lfHeight *= zoom.num;
+			m_lf.lfHeight /= zoom.denom;
+
+			m_modified = CreateFontIndirect(&m_lf);
+			SelectObject(m_dc, m_modified);
+		}
 	}
 
-	painter::painter(HDC dc, HFONT font)
-		: painter(dc, { 0, 0, 0, 0 }, font)
+	painter::painter(HDC dc, ratio zoom, HFONT font)
+		: painter(dc, zoom, { 0, 0, 0, 0 }, font)
 	{
 	}
 

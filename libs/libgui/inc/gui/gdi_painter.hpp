@@ -35,8 +35,8 @@ namespace gui { namespace gdi {
 		: public gui::painter
 		, private gui::gdi::style_save::callback {
 	public:
-		painter(HDC dc, const RECT& clip, HFONT font);
-		painter(HDC dc, HFONT font);
+		painter(HDC dc, ratio zoom, const RECT& clip, HFONT font);
+		painter(HDC dc, ratio zoom, HFONT font);
 		~painter();
 
 		// gui::painter
@@ -53,7 +53,7 @@ namespace gui { namespace gdi {
 		gui::style_handle applyStyle(node*) override;
 		void restoreStyle(gui::style_handle) override;
 
-		ratio gdiRatio() const { return m_zoom; }
+		ratio gdiRatio() const { return m_device; }
 
 	private:
 		void drawBackground(gui::node*, colorref) override;
@@ -68,6 +68,7 @@ namespace gui { namespace gdi {
 
 	private:
 		ratio m_zoom;
+		ratio m_device;
 		HDC m_dc;
 		HFONT m_font;
 		HFONT m_original;

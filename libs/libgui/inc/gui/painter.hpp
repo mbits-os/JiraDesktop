@@ -97,7 +97,38 @@ namespace gui {
 		pixels invert(int value) const {
 			return (long double)value * denom / num;
 		}
+
+		static int GCD(int a, int b) {
+			if (!b)
+				return a;
+
+			return GCD(b, a % b);
+		}
+
+		ratio gcd() const {
+			auto factor = GCD(num, denom);
+			return{ num / factor, denom / factor };
+		}
 	};
+
+	inline ratio operator * (const ratio& lhs, const ratio& rhs)
+	{
+		auto out = lhs.gcd();
+		auto right = rhs.gcd();
+
+		auto gcd = ratio::GCD(out.num, right.denom);
+		out.num /= gcd;
+		right.denom /= gcd;
+
+		gcd = ratio::GCD(right.num, out.denom);
+		right.num /= gcd;
+		out.denom /= gcd;
+
+		out.num *= right.num;
+		out.denom *= right.denom;
+
+		return out;
+	}
 
 	struct painter {
 		using point = gui::point;
