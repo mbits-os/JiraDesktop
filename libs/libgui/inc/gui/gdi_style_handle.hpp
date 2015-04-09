@@ -31,8 +31,6 @@ namespace gui { namespace gdi {
 	struct style_save : gui::style_save {
 		struct callback {
 			virtual ~callback() {}
-			virtual void drawBackground(gui::node*, colorref) = 0;
-			virtual void drawBorder(gui::node*) = 0;
 			virtual gui::painter* getPainter() = 0;
 			virtual COLORREF getColor() const = 0;
 			virtual const LOGFONT& getFont() const = 0;
@@ -53,10 +51,6 @@ namespace gui { namespace gdi {
 		bool m_fontChanged;
 		COLORREF m_originalTextColor;
 		COLORREF m_modifiedTextColor;
-
-		void batch_apply(styles::rule_storage&);
-		void lower_layer(styles::rule_storage&);
-		void move_padding(styles::rule_storage&);
 
 		bool set_color(COLORREF);
 		bool set_font_italic(bool);

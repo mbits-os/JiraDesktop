@@ -32,48 +32,6 @@
 #define ASSERT(x) assert(x)
 
 namespace gui { namespace gdi {
-	static long double calculated(const styles::rule_storage& rules,
-		gui::painter* painter, styles::length_prop prop)
-	{
-		if (!rules.has(prop))
-			return 0.0;
-
-		auto u = rules.get(prop);
-		ASSERT(u.which() == styles::length_u::first_type);
-
-		return painter->dpiRescale(u.first().value());
-	};
-
-	void style_save::apply(callback* cb, gui::node* node)
-	{
-		m_caller = cb;
-		m_target = node;
-		auto style = node->calculatedStyle();
-		auto& ref = *style;
-
-		m_originalFont = cb->getFont();
-		m_modifiedFont = m_originalFont;
-		m_fontChanged = false;
-
-		m_originalTextColor = cb->getColor();
-		m_modifiedTextColor = m_originalTextColor;
-
-		batch_apply(ref);
-		lower_layer(ref);
-		move_padding(ref);
-	}
-
-	void style_save::restore()
-	{
-		m_caller->getPainter()->setOrigin(m_origin);
-
-		if (m_modifiedTextColor != m_originalTextColor)
-			m_caller->setColor(m_originalTextColor);
-
-		if (m_fontChanged)
-			m_caller->setFont(m_originalFont);
-	}
-
 	// See <http://www.w3.org/TR/CSS2/fonts.html#propdef-font-weight>
 	static int bolderThan(int inherited)
 	{
@@ -108,8 +66,20 @@ namespace gui { namespace gdi {
 		return (int)w;
 	}
 
-	void style_save::batch_apply(styles::rule_storage& ref)
+	void style_save::apply(callback* cb, gui::node* node)
 	{
+		m_caller = cb;
+		m_target = node;
+		auto style = node->calculatedStyle();
+		auto& ref = *style;
+
+		m_originalFont = cb->getFont();
+		m_modifiedFont = m_originalFont;
+		m_fontChanged = false;
+
+		m_originalTextColor = cb->getColor();
+		m_modifiedTextColor = m_originalTextColor;
+
 		bool update = false;
 		m_fontChanged = false;
 
@@ -132,27 +102,15 @@ namespace gui { namespace gdi {
 			store();
 	}
 
-	void style_save::lower_layer(styles::rule_storage& ref)
+	void style_save::restore()
 	{
-		if (ref.has(styles::prop_background))
-			m_caller->drawBackground(m_target, ref.get(styles::prop_background));
+		m_caller->getPainter()->setOrigin(m_origin);
 
-		m_caller->drawBorder(m_target);
-	}
+		if (m_modifiedTextColor != m_originalTextColor)
+			m_caller->setColor(m_originalTextColor);
 
-	void style_save::move_padding(styles::rule_storage& ref)
-	{
-		auto painter = m_caller->getPainter();
-		m_origin = painter->getOrigin();
-
-		auto padx = 0.5 +
-			calculated(ref, painter, styles::prop_border_left_width) +
-			calculated(ref, painter, styles::prop_padding_left);
-		auto pady = 0.5 +
-			calculated(ref, painter, styles::prop_border_top_width) +
-			calculated(ref, painter, styles::prop_padding_top);
-
-		painter->moveOrigin({ int(padx), int(pady) });
+		if (m_fontChanged)
+			m_caller->setFont(m_originalFont);
 	}
 
 	bool style_save::set_color(COLORREF color) {

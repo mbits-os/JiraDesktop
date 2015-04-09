@@ -146,6 +146,8 @@ namespace gui {
 		virtual void setOrigin(const point& orig) = 0;
 		virtual void paintImage(const image_ref* img, const pixels& width, const pixels& height) = 0;
 		virtual void paintString(const std::string& text) = 0;
+		virtual void paintBackground(colorref, const pixels& width, const pixels& height) = 0;
+		virtual void paintBorder(node*) = 0;
 		virtual size measureString(const std::string& text) = 0;
 		virtual int dpiRescale(int size) = 0;
 		virtual long double dpiRescale(long double size) = 0;
