@@ -564,7 +564,7 @@ gui::size CJiraUserNode::measureContents(gui::painter* painter,
 {
 	auto size = 16_px;
 	m_position.size = { size, size };
-	auto scaled = (size_t)(0.5 + painter->dpiRescale(size.value()));
+	auto scaled = (size_t)(painter->trueZoom().scaleL(size.value()));
 	auto selected = 0;
 
 	std::string image;
