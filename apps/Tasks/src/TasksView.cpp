@@ -545,6 +545,14 @@ static std::string to_string(styles::length_prop prop) {
 	case styles::prop_border_bottom_width: return "border-bottom-width";
 	case styles::prop_border_left_width: return "border-left-width";
 	case styles::prop_font_size: return "font-size";
+	case styles::prop_padding_top: return "padding-top";
+	case styles::prop_padding_right: return "padding-right";
+	case styles::prop_padding_bottom: return "padding-bottom";
+	case styles::prop_padding_left: return "padding-left";
+	case styles::prop_margin_top: return "margin-top";
+	case styles::prop_margin_right: return "margin-right";
+	case styles::prop_margin_bottom: return "margin-bottom";
+	case styles::prop_margin_left: return "margin-left";
 	}
 
 	return "{" + std::to_string((int)prop) + "}";
@@ -739,6 +747,29 @@ void CTasksView::updateCursorAndTooltip(bool force)
 					debug_rules(rule.get());
 					OutputDebugString(L"}\n");
 				}
+			}
+			node = node->getParent();
+			if (node)
+				OutputDebugString(L"------------------------------------------------------\n");
+		}
+		OutputDebugString(L"######################################################\n");
+		node = m_hovered;
+		while (node) {
+			{
+				std::string klass = "(";
+				klass.append(to_string(node->getNodeName()));
+				for (auto& kl : node->getClassNames()) {
+					klass.push_back('.');
+					klass.append(kl);
+				}
+				klass += ")\n";
+				OutputDebugStringA(klass.c_str());
+			}
+			auto styles = node->calculatedStyle();
+			if (!styles) {
+				OutputDebugString(L"!!!\n");
+			} else {
+				debug_rules(styles.get());
 			}
 			node = node->getParent();
 			if (node)
