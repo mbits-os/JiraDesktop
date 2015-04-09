@@ -25,6 +25,7 @@ public:
 	void paint(gui::painter* painter) override final;
 	void measure(gui::painter* painter) override final;
 	void setPosition(const gui::pixels& x, const gui::pixels& y) override;
+	void setSize(const gui::pixels& width, const gui::pixels& height) override;
 	gui::point getPosition() override;
 	gui::point getAbsolutePos() override;
 	gui::size getSize() override;

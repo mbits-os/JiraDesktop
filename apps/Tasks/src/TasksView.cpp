@@ -251,8 +251,10 @@ namespace {
 			.add(gui::elem::table,                         display(gui::display::table))
 			.add(gui::elem::table_head,                    display(gui::display::table_header))
 			.add(gui::elem::table_row,                     display(gui::display::table_row))
-			.add(gui::elem::td,                            padding(.2_em))
-			.add(gui::elem::th,                            text_align(gui::align::center) <<
+			.add(gui::elem::td,                            display(gui::display::table_cell) <<
+			                                               padding(.2_em))
+			.add(gui::elem::th,                            display(gui::display::table_cell) <<
+			                                               text_align(gui::align::center) <<
 			                                               font_weight(gui::weight::bold) <<
 			                                               padding(.2_em))
 
@@ -265,7 +267,7 @@ namespace {
 			.add(gui::elem::header,                        color(0x883333))
 			.add(gui::elem::table,                         border(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add(gui::elem::table_row,                     border_top(1_px, gui::line_style::solid, 0xc0c0c0))
-			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
+			.add({ gui::elem::table_row, pseudo::hover },  background(0xf5f5f5))
 			.add(gui::elem::link,                          padding(2_px) << border(1_px, gui::line_style::none, 0xc0c0c0))
 			.add({ gui::elem::link, pseudo::active },      border(1_px, gui::line_style::dot, 0xc0c0c0))
 

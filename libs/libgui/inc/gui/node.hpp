@@ -43,6 +43,7 @@ namespace gui {
 		virtual void paint(painter* painter) = 0;
 		virtual void measure(painter* painter) = 0;
 		virtual void setPosition(const pixels& x, const pixels& y) = 0;
+		virtual void setSize(const pixels& width, const pixels& height) = 0;
 		virtual point getPosition() = 0;
 		virtual point getAbsolutePos() = 0;
 		virtual size getSize() = 0;

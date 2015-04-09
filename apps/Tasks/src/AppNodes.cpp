@@ -14,10 +14,6 @@
 using namespace styles::literals;
 using namespace gui::literals;
 
-enum {
-	CELL_MARGIN = 7
-};
-
 CJiraNode::CJiraNode(gui::elem name)
 	: m_nodeName(name)
 {
@@ -132,6 +128,46 @@ void CJiraNode::measure(gui::painter* painter)
 void CJiraNode::setPosition(const gui::pixels& x, const gui::pixels& y)
 {
 	m_position.pt = { x, y };
+}
+
+void CJiraNode::setSize(const gui::pixels& width, const gui::pixels& height)
+{
+	m_position.size = { width, height };
+
+	auto styles = calculatedStyle();
+	auto& ref = *styles;
+
+	auto disp = gui::display::inlined;
+	if (ref.has(styles::prop_display))
+		disp = ref.get(styles::prop_display);
+
+	if (disp == gui::display::table_cell) {
+
+		auto align = gui::align::left;
+		if (ref.has(styles::prop_text_align))
+			align = ref.get(styles::prop_text_align);
+
+		gui::pixels w;
+		if (align != gui::align::left) {
+			for (auto& child : m_children)
+				w += child->getSize().width;
+
+			w = (width - (offsetLeft() + offsetRight())) - w;
+
+			if (align == gui::align::center)
+				w = w.value() / 2;
+		}
+
+		auto h = m_position.size.height;
+		h -= offsetBottom() + offsetTop();
+
+		for (auto& child : m_children) {
+			auto pos = child->getPosition();
+			auto h_ = child->getSize().height;
+			child->setPosition(pos.x + w, pos.y +
+				gui::pixels{(h - h_).value() / 2});
+		}
+	}
 }
 
 gui::point CJiraNode::getPosition()
@@ -868,14 +904,18 @@ void CJiraTableRowNode::repositionChildren(gui::painter* /*painter*/)
 	auto it = m_columns->begin();
 
 	gui::size sz;
-	auto x = offsetLeft() + gui::pixels{ CELL_MARGIN };
+	auto x = offsetLeft();
 	auto y = offsetTop();
+	auto h = m_position.size.height;
+	h -= offsetTop() + offsetBottom();
 	for (auto& node : m_children) {
+		auto w = *it++;
 		node->setPosition(x, y);
-		x += *it++ + gui::pixels{ 2 * CELL_MARGIN };
+		node->setSize(w, h);
+		x += w;
 	}
 
-	m_position.size.width = x + gui::pixels{ CELL_MARGIN } + offsetRight();
+	m_position.size.width = x + offsetRight();
 }
 
 CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset)
