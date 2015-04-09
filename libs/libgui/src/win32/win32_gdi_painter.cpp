@@ -125,18 +125,23 @@ namespace gui { namespace gdi {
 #endif
 	}
 
-	static void FillSolidRect(HDC dc, LPCRECT lpRect, COLORREF clr)
+	struct RectF {
+		point pt;
+		size sz;
+	};
+
+	static void FillSolidRect(HDC dc, const RectF& rect, const ratio& zoom, COLORREF clr)
 	{
+		RECT r{ zoom.scaleL(rect.pt.x), zoom.scaleL(rect.pt.y),
+			zoom.scaleL(rect.pt.x + rect.sz.width), zoom.scaleL(rect.pt.y + rect.sz.height) };
 		COLORREF clrOld = ::SetBkColor(dc, clr);
-		::ExtTextOut(dc, 0, 0, ETO_OPAQUE, lpRect, NULL, 0, NULL);
+		::ExtTextOut(dc, 0, 0, ETO_OPAQUE, &r, NULL, 0, NULL);
 		::SetBkColor(dc, clrOld);
 	}
 
 	void painter::paintBackground(colorref color, const pixels& width, const pixels& height)
 	{
-		RECT r{ m_zoom.scaleL(m_origin.x), m_zoom.scaleL(m_origin.y),
-			m_zoom.scaleL(m_origin.x + width), m_zoom.scaleL(m_origin.y + height) };
-		FillSolidRect(m_dc, &r, color);
+		FillSolidRect(m_dc, { m_origin,{ width, height } }, m_zoom, color);
 	}
 
 	struct Border {
@@ -317,6 +322,6 @@ Border border_ ## side{*styles, \
 	{
 		RECT r{ m_zoom.scaleL(m_origin.x + from.x), m_zoom.scaleL(m_origin.y + from.y),
 			m_zoom.scaleL(m_origin.x + to.x), m_zoom.scaleL(m_origin.y + to.y) };
-		FillSolidRect(m_dc, &r, color);
+		FillSolidRect(m_dc, { m_origin,{ to.x - from.x, to.y - from.y } }, m_zoom, color);
 	}
 }};
