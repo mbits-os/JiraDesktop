@@ -119,30 +119,11 @@ void CJiraNode::measure(gui::painter* painter)
 	auto styles = calculatedStyle();
 	StyleSaver saver{ painter, this };
 
-	gui::size sz;
-	auto x = offsetLeft();
-	auto y = offsetTop();
-	for (auto& node : m_children) {
-		node->measure(painter);
-		auto ret = node->getSize();
-		if (sz.height < ret.height)
-			sz.height = ret.height;
+	gui::point tl{ offsetLeft(), offsetTop() };
+	gui::point br{ offsetRight(), offsetBottom() };
+	auto size = measureContents(painter, tl.x, tl.y);
 
-		sz.width += ret.width;
-		node->setPosition(x, y);
-		x += ret.width;
-	}
-
-	auto here = measureThis(painter);
-	if (sz.height < here.height)
-		sz.height = here.height;
-	if (sz.width < here.width)
-		sz.width = here.width;
-
-	gui::point offset{ offsetTop() + offsetBottom(), offsetLeft() + offsetRight() };
-	auto p = offset + sz;
-
-	m_position.size = {p.x, p.y};
+	m_position.size = { tl.x + br.x + size.width, tl.y + br.y + size.height };
 }
 
 void CJiraNode::setPosition(const gui::pixels& x, const gui::pixels& y)
@@ -278,11 +259,6 @@ void CJiraNode::openLink(const std::string& url)
 
 void CJiraNode::paintThis(gui::painter* /*painter*/)
 {
-}
-
-gui::size CJiraNode::measureThis(gui::painter* /*painter*/)
-{
-	return{ 0, 0 };
 }
 
 gui::pointer CJiraNode::getCursor() const
@@ -531,13 +507,14 @@ void CJiraIconNode::addChild(const std::shared_ptr<node>& /*child*/)
 
 void CJiraIconNode::paintThis(gui::painter* painter)
 {
+	//TODO: use offset to paint
 	painter->paintImage(m_image.get(), m_position.size.width, m_position.size.height);
 }
 
-gui::size CJiraIconNode::measureThis(gui::painter* painter)
+gui::size CJiraIconNode::measureContents(gui::painter*,
+	const gui::pixels&, const gui::pixels&)
 {
-	auto size = painter->dpiRescale(16);
-	return{ (size_t)size, (size_t)size };
+	return { 16_px, 16_px };
 }
 
 CJiraUserNode::CJiraUserNode(const std::weak_ptr<CJiraDocument>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip)
@@ -567,9 +544,11 @@ void CJiraUserNode::paintThis(gui::painter* painter)
 	painter->paintImage(m_image.get(), m_position.size.width, m_position.size.height);
 }
 
-gui::size CJiraUserNode::measureThis(gui::painter* painter)
+gui::size CJiraUserNode::measureContents(gui::painter* painter,
+	const gui::pixels&, const gui::pixels&)
 {
 	auto size = 16_px;
+	m_position.size = { size, size };
 	auto scaled = (size_t)(0.5 + painter->dpiRescale(size.value()));
 	auto selected = 0;
 
@@ -626,8 +605,60 @@ gui::size CJiraUserNode::measureThis(gui::painter* painter)
 	return{ size, size };
 }
 
+CJiraBlockNode::CJiraBlockNode(gui::elem name)
+	: CJiraNode(name)
+{
+}
+
+gui::size CJiraBlockNode::measureContents(gui::painter* painter,
+	const gui::pixels& offX, const gui::pixels& offY)
+{
+	gui::size sz;
+	auto x = offX;
+	auto y = offY;
+	for (auto& node : m_children) {
+		node->measure(painter);
+		auto ret = node->getSize();
+		if (sz.width < ret.width)
+			sz.width = ret.width;
+
+		node->setPosition(x, y);
+
+		sz.height += ret.height;
+		y += ret.height;
+	}
+
+	return sz;
+}
+
+CJiraSpanNode::CJiraSpanNode(gui::elem name)
+	: CJiraNode(name)
+{
+}
+
+gui::size CJiraSpanNode::measureContents(gui::painter* painter,
+	const gui::pixels& offX, const gui::pixels& offY)
+{
+	gui::size sz;
+	auto x = offX;
+	auto y = offY;
+	for (auto& node : m_children) {
+		node->measure(painter);
+		auto ret = node->getSize();
+		if (sz.height < ret.height)
+			sz.height = ret.height;
+
+		node->setPosition(x, y);
+
+		sz.width += ret.width;
+		x += ret.width;
+	}
+
+	return sz;
+}
+  
 CJiraLinkNode::CJiraLinkNode(const std::string& href)
-	: CJiraNode(gui::elem::link)
+	: CJiraSpanNode(gui::elem::link)
 {
 	m_data[Attr::Href] = href;
 }
@@ -640,10 +671,12 @@ CJiraTextNode::CJiraTextNode(const std::string& text)
 
 void CJiraTextNode::paintThis(gui::painter* painter)
 {
+	//TODO: use offset to paint
 	painter->paintString(m_data[Attr::Text]);
 }
 
-gui::size CJiraTextNode::measureThis(gui::painter* painter)
+gui::size CJiraTextNode::measureContents(gui::painter* painter,
+	const gui::pixels&, const gui::pixels&)
 {
 	return painter->measureString(m_data[Attr::Text]);
 }
@@ -675,12 +708,12 @@ std::shared_ptr<gui::node> CJiraDocument::createTableRow()
 
 std::shared_ptr<gui::node> CJiraDocument::createEmpty()
 {
-	return std::make_shared<CJiraNode>(gui::elem::span);
+	return std::make_shared<CJiraSpanNode>(gui::elem::span);
 }
 
 std::shared_ptr<gui::node> CJiraDocument::createSpan()
 {
-	return std::make_shared<CJiraNode>(gui::elem::span);
+	return std::make_shared<CJiraSpanNode>(gui::elem::span);
 }
 
 std::shared_ptr<gui::node> CJiraDocument::createIcon(const std::string& uri, const std::string& text, const std::string& description)
@@ -738,7 +771,7 @@ std::shared_ptr<gui::image_ref> CJiraDocument::createImage(const std::string& ur
 }
 
 CJiraTableNode::CJiraTableNode()
-	: CJiraNode(gui::elem::table)
+	: CJiraBlockNode(gui::elem::table)
 	, m_columns(std::make_shared<std::vector<gui::pixels>>())
 {
 }
@@ -752,11 +785,9 @@ void CJiraTableNode::addChild(const std::shared_ptr<gui::node>& child)
 	}
 }
 
-void CJiraTableNode::measure(gui::painter* painter)
+gui::size CJiraTableNode::measureContents(gui::painter* painter,
+	const gui::pixels& offX, const gui::pixels& offY)
 {
-	calculateStyles();
-	StyleSaver saver{ painter, this };
-
 	size_t columns = 0;
 	for (auto& node : m_children) {
 		auto values = node->children().size();
@@ -766,27 +797,13 @@ void CJiraTableNode::measure(gui::painter* painter)
 
 	m_columns->assign(columns, 0);
 
-	auto topOffset = offsetTop();
-	auto height = topOffset;
-	auto x = offsetLeft();
-	for (auto& node : m_children) {
-		node->measure(painter);
-
-		node->setPosition(x, height);
-		height += node->getSize().height;
-	}
+	auto content = CJiraBlockNode::measureContents(painter, offX, offY);
 
 	for (auto& node : m_children)
 		static_cast<CJiraTableRowNode*>(node.get())->repositionChildren(painter);
 
-	m_position.size.height = height - topOffset + offsetTop() + offsetBottom();
-	m_position.size.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
-	m_position.size.width += offsetLeft() + offsetRight();
-}
-
-gui::size CJiraTableNode::measureThis(gui::painter* /*painter*/)
-{
-	return{ 0, 0 };
+	content.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
+	return content;
 }
 
 CJiraTableRowNode::CJiraTableRowNode(gui::elem name)
@@ -799,36 +816,53 @@ void CJiraTableRowNode::setColumns(const std::shared_ptr<std::vector<gui::pixels
 	m_columns = columns;
 }
 
-gui::size CJiraTableRowNode::measureThis(gui::painter* /*painter*/)
+gui::size CJiraTableRowNode::measureContents(gui::painter* painter,
+	const gui::pixels& offX, const gui::pixels& offY)
 {
 	if (!m_columns)
-		return{ 0,0 };
+		return{ 0, 0 };
 
 	auto it = m_columns->begin();
-	for (auto& node : children()) {
-		auto sz = node->getSize();
-		if (*it < sz.width)
-			*it = sz.width;
+
+	gui::size sz;
+	auto x = offX;
+	auto y = offY;
+	for (auto& node : m_children) {
+		node->measure(painter);
+		auto ret = node->getSize();
+		if (sz.height < ret.height)
+			sz.height = ret.height;
+
+		node->setPosition(x, y);
+
+		sz.width += ret.width;
+		x += ret.width;
+
+		if (*it < ret.width)
+			*it = ret.width;
 		++it;
 	}
 
-	return{ 0,0 };
+	return sz;
 }
 
 void CJiraTableRowNode::repositionChildren(gui::painter* /*painter*/)
 {
+	auto it = m_columns->begin();
+
+	gui::size sz;
 	auto x = offsetLeft() + gui::pixels{ CELL_MARGIN };
 	auto y = offsetTop();
-	auto it = m_columns->begin();
-	for (auto& node : children()) {
+	for (auto& node : m_children) {
 		node->setPosition(x, y);
 		x += *it++ + gui::pixels{ 2 * CELL_MARGIN };
 	}
-	m_position.size.width = x + gui::pixels{ CELL_MARGIN };
+
+	m_position.size.width = x + gui::pixels{ CELL_MARGIN } + offsetRight();
 }
 
 CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(const gui::point&, const gui::size&)>& invalidator)
-	: CJiraNode(gui::elem::block)
+	: CJiraBlockNode(gui::elem::block)
 	, m_dataset(dataset)
 	, m_invalidator(invalidator)
 {
@@ -839,7 +873,7 @@ void CJiraReportElement::addChildren(const jira::server& server)
 	{
 		auto text = server.login() + "@" + server.displayName();
 		auto title = std::make_shared<CJiraTextNode>(text);
-		auto block = std::make_shared<CJiraNode>(gui::elem::header);
+		auto block = std::make_shared<CJiraSpanNode>(gui::elem::header);
 		block->addChild(title);
 		CJiraNode::addChild(block);
 	}
@@ -892,26 +926,6 @@ void CJiraReportElement::addChildren(const jira::server& server)
 void CJiraReportElement::addChild(const std::shared_ptr<gui::node>& /*child*/)
 {
 	// noop
-}
-
-gui::size CJiraReportElement::measureThis(gui::painter* painter)
-{
-	auto topOffset = offsetTop();
-	auto height = topOffset;
-	gui::pixels width = 0;
-	auto x = offsetLeft();
-
-	for (auto& node : m_children) {
-		node->measure(painter);
-
-		auto size = node->getSize();
-		node->setPosition(x, height);
-		height += size.height;
-		if (width < size.width)
-			width = size.width;
-	}
-
-	return{ width, height - topOffset };
 }
 
 void CJiraReportElement::invalidate(const gui::point& pt, const gui::size& size)

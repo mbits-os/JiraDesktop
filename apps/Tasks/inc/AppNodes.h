@@ -23,7 +23,7 @@ public:
 	const std::vector<std::shared_ptr<node>>& children() const override;
 
 	void paint(gui::painter* painter) override;
-	void measure(gui::painter* painter) override;
+	void measure(gui::painter* painter) override final;
 	void setPosition(const gui::pixels& x, const gui::pixels& y) override;
 	gui::point getPosition() override;
 	gui::point getAbsolutePos() override;
@@ -57,7 +57,8 @@ public:
 
 	void openLink(const std::string& url);
 	virtual void paintThis(gui::painter* painter);
-	virtual gui::size measureThis(gui::painter* painter);
+	virtual gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) = 0;
 
 protected:
 	gui::elem m_nodeName;
@@ -98,7 +99,8 @@ public:
 	void attach();
 	void addChild(const std::shared_ptr<node>& child) override;
 	void paintThis(gui::painter* painter) override;
-	gui::size measureThis(gui::painter* painter) override;
+	gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
 };
 
 class CJiraDocument;
@@ -113,10 +115,25 @@ public:
 	~CJiraUserNode();
 	void addChild(const std::shared_ptr<node>& child) override;
 	void paintThis(gui::painter* painter) override;
-	gui::size measureThis(gui::painter* painter) override;
+	gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
 };
 
-class CJiraLinkNode : public CJiraNode {
+class CJiraBlockNode : public CJiraNode {
+public:
+	CJiraBlockNode(gui::elem name);
+	gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
+};
+
+class CJiraSpanNode : public CJiraNode {
+public:
+	CJiraSpanNode(gui::elem name);
+	gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
+};
+
+class CJiraLinkNode : public CJiraSpanNode {
 public:
 	CJiraLinkNode(const std::string& href);
 };
@@ -125,7 +142,8 @@ class CJiraTextNode : public CJiraNode {
 public:
 	CJiraTextNode(const std::string& text);
 	void paintThis(gui::painter* painter) override;
-	gui::size measureThis(gui::painter* painter) override;
+	gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
 };
 
 class CJiraDocument : public jira::document, public std::enable_shared_from_this<CJiraDocument> {
@@ -151,14 +169,14 @@ public:
 	std::shared_ptr<gui::image_ref> createImage(const std::string& uri);
 };
 
-class CJiraTableNode : public CJiraNode {
+class CJiraTableNode : public CJiraBlockNode {
 	std::shared_ptr<std::vector<gui::pixels>> m_columns;
 public:
 	CJiraTableNode();
 
 	void addChild(const std::shared_ptr<node>& child) override final;
-	void measure(gui::painter* painter) override;
-	gui::size measureThis(gui::painter* painter) override;
+	gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
 };
 
 class CJiraTableRowNode : public CJiraNode {
@@ -168,12 +186,13 @@ public:
 	CJiraTableRowNode(gui::elem name);
 	void setColumns(const std::shared_ptr<std::vector<gui::pixels>>& columns);
 
-	gui::size measureThis(gui::painter* painter) override;
+	gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
 
 	void repositionChildren(gui::painter* painter);
 };
 
-class CJiraReportElement : public CJiraNode {
+class CJiraReportElement : public CJiraBlockNode {
 	std::weak_ptr<jira::report> m_dataset;
 	std::function<void(const gui::point&, const gui::size&)> m_invalidator;
 public:
@@ -181,6 +200,5 @@ public:
 	void addChildren(const jira::server& server);
 
 	void addChild(const std::shared_ptr<node>& child) override final;
-	gui::size measureThis(gui::painter* painter) override;
 	void invalidate(const gui::point& pt, const gui::size& size) override;
 };
