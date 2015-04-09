@@ -89,15 +89,7 @@ const std::vector<std::shared_ptr<gui::node>>& CJiraNode::children() const
 void CJiraNode::paint(gui::painter* painter)
 {
 	StyleSaver saver{ painter, this };
-
-	paintThis(painter);
-
-	// slow, but working:
-	for (auto& node : m_children) {
-		gui::push_origin push{ painter };
-		painter->moveOrigin(node->getPosition());
-		node->paint(painter);
-	}
+	paintContents(painter, offsetLeft(), offsetTop());
 }
 
 static gui::pixels calculated(const styles::rule_storage& rules,
@@ -115,8 +107,6 @@ static gui::pixels calculated(const styles::rule_storage& rules,
 void CJiraNode::measure(gui::painter* painter)
 {
 	calculateStyles();
-
-	auto styles = calculatedStyle();
 	StyleSaver saver{ painter, this };
 
 	gui::point tl{ offsetLeft(), offsetTop() };
@@ -257,8 +247,14 @@ void CJiraNode::openLink(const std::string& url)
 	ShellExecute(nullptr, nullptr, utf::widen(url).c_str(), nullptr, nullptr, SW_SHOW);
 }
 
-void CJiraNode::paintThis(gui::painter* /*painter*/)
+void CJiraNode::paintContents(gui::painter* painter,
+	const gui::pixels&, const gui::pixels&)
 {
+	for (auto& node : m_children) {
+		gui::push_origin push{ painter };
+		painter->moveOrigin(node->getPosition());
+		node->paint(painter);
+	}
 }
 
 gui::pointer CJiraNode::getCursor() const
@@ -505,10 +501,12 @@ void CJiraIconNode::addChild(const std::shared_ptr<node>& /*child*/)
 	 // noop
 }
 
-void CJiraIconNode::paintThis(gui::painter* painter)
+void CJiraIconNode::paintContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY)
 {
-	//TODO: use offset to paint
-	painter->paintImage(m_image.get(), m_position.size.width, m_position.size.height);
+	gui::push_origin push{ painter };
+	painter->moveOrigin({offX, offY});
+	painter->paintImage(m_image.get(), 16_px, 16_px);
 }
 
 gui::size CJiraIconNode::measureContents(gui::painter*,
@@ -539,9 +537,12 @@ void CJiraUserNode::addChild(const std::shared_ptr<node>& /*child*/)
 	// noop
 }
 
-void CJiraUserNode::paintThis(gui::painter* painter)
+void CJiraUserNode::paintContents(gui::painter* painter,
+	const gui::pixels& offX, const gui::pixels& offY)
 {
-	painter->paintImage(m_image.get(), m_position.size.width, m_position.size.height);
+	gui::push_origin push{ painter };
+	painter->moveOrigin({ offX, offY });
+	painter->paintImage(m_image.get(), 16_px, 16_px);
 }
 
 gui::size CJiraUserNode::measureContents(gui::painter* painter,
@@ -669,9 +670,11 @@ CJiraTextNode::CJiraTextNode(const std::string& text)
 	m_data[Attr::Text] = text;
 }
 
-void CJiraTextNode::paintThis(gui::painter* painter)
+void CJiraTextNode::paintContents(gui::painter* painter,
+	const gui::pixels& offX, const gui::pixels& offY)
 {
-	//TODO: use offset to paint
+	gui::push_origin push{ painter };
+	painter->moveOrigin({ offX, offY });
 	painter->paintString(m_data[Attr::Text]);
 }
 

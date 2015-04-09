@@ -22,7 +22,7 @@ public:
 	void addChild(const std::shared_ptr<node>& child) override;
 	const std::vector<std::shared_ptr<node>>& children() const override;
 
-	void paint(gui::painter* painter) override;
+	void paint(gui::painter* painter) override final;
 	void measure(gui::painter* painter) override final;
 	void setPosition(const gui::pixels& x, const gui::pixels& y) override;
 	gui::point getPosition() override;
@@ -56,7 +56,8 @@ public:
 	gui::pixels offsetBottom() const; // border-bottom-width + padding-bottom
 
 	void openLink(const std::string& url);
-	virtual void paintThis(gui::painter* painter);
+	virtual void paintContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY);
 	virtual gui::size measureContents(gui::painter* painter,
 		const gui::pixels& offX, const gui::pixels& offY) = 0;
 
@@ -98,7 +99,8 @@ public:
 	~CJiraIconNode();
 	void attach();
 	void addChild(const std::shared_ptr<node>& child) override;
-	void paintThis(gui::painter* painter) override;
+	void paintContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
 	gui::size measureContents(gui::painter* painter,
 		const gui::pixels& offX, const gui::pixels& offY) override;
 };
@@ -114,7 +116,8 @@ public:
 	CJiraUserNode(const std::weak_ptr<CJiraDocument>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip);
 	~CJiraUserNode();
 	void addChild(const std::shared_ptr<node>& child) override;
-	void paintThis(gui::painter* painter) override;
+	void paintContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
 	gui::size measureContents(gui::painter* painter,
 		const gui::pixels& offX, const gui::pixels& offY) override;
 };
@@ -141,7 +144,8 @@ public:
 class CJiraTextNode : public CJiraNode {
 public:
 	CJiraTextNode(const std::string& text);
-	void paintThis(gui::painter* painter) override;
+	void paintContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
 	gui::size measureContents(gui::painter* painter,
 		const gui::pixels& offX, const gui::pixels& offY) override;
 };
