@@ -148,7 +148,6 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<Serv
 	return m_servers.erase(it);
 }
 
-
 BOOL CTasksView::PreTranslateMessage(MSG* pMsg)
 {
 	pMsg;
@@ -296,7 +295,7 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	gui::cairo::painter paint{ cairo_win32_surface_create(dc), m_zoom->zoom, m_zoom->device, m_fontSize, m_fontFamily };
 #else
 	dc.SetBkMode(TRANSPARENT);
-	gui::gdi::painter paint{ (HDC)dc, m_zoom->zoom, m_zoom->device, dc.m_ps.rcPaint, m_fontSize, m_fontFamily };
+	gui::gdi::painter paint{ (HDC)dc, m_zoom->mul, dc.m_ps.rcPaint, m_fontSize, m_fontFamily };
 #endif
 
 	m_body->paint(&paint);
@@ -324,7 +323,7 @@ void CTasksView::updateLayout()
 #ifdef CAIRO_PAINTER
 	gui::cairo::painter paint{ cairo_win32_surface_create(dc), m_zoom->zoom, m_zoom->device, m_fontSize, m_fontFamily };
 #else
-	gui::gdi::painter paint{ (HDC)dc, m_zoom->zoom, m_zoom->device, m_fontSize, m_fontFamily };
+	gui::gdi::painter paint{ (HDC)dc, m_zoom->mul, m_fontSize, m_fontFamily };
 #endif
 
 	if (m_hovered)
@@ -818,7 +817,7 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 
 	{
 		CWindowDC dc{m_hWnd};
-		m_fontSize = lf.lfWidth * 96.0 / dc.GetDeviceCaps(LOGPIXELSY);
+		m_fontSize = -lf.lfHeight * 96.0 / dc.GetDeviceCaps(LOGPIXELSY);
 	}
 
 	m_fontFamily = utf::narrowed(lf.lfFaceName);
