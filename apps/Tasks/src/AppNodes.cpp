@@ -89,6 +89,16 @@ const std::vector<std::shared_ptr<gui::node>>& CJiraNode::children() const
 void CJiraNode::paint(gui::painter* painter)
 {
 	StyleSaver saver{ painter, this };
+
+	auto style = calculatedStyle();
+	auto& ref = *style;
+	if (ref.has(styles::prop_background)) {
+		painter->paintBackground(ref.get(styles::prop_background),
+			m_position.size.width, m_position.size.height);
+	}
+
+	painter->paintBorder(this);
+
 	paintContents(painter, offsetLeft(), offsetTop());
 }
 
@@ -384,6 +394,10 @@ void calculate(styles::rule_storage& rules, gui::node* node)
 	calculate(rules, prop_padding_right, fontSize);
 	calculate(rules, prop_padding_bottom, fontSize);
 	calculate(rules, prop_padding_left, fontSize);
+	calculate(rules, prop_margin_top, fontSize);
+	calculate(rules, prop_margin_right, fontSize);
+	calculate(rules, prop_margin_bottom, fontSize);
+	calculate(rules, prop_margin_left, fontSize);
 }
 
 void CJiraNode::calculateStyles()
