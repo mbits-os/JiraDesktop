@@ -41,55 +41,27 @@
 
 namespace gui { namespace gdi {
 
-	painter::painter(HDC dc, ratio zoom, const RECT& clip, HFONT font)
-		: m_dc{ dc }
-		, m_font{ font }
+	painter::painter(HDC dc, ratio zoom, ratio device, const RECT& clip, const pixels& fontSize, const std::string& fontFamily)
+		: base::painter(zoom, device, fontSize, fontFamily)
+		, m_dc{ dc }
 		, m_modified{ nullptr }
-		, m_origin{ 0, 0 }
+		, m_original{ nullptr }
 		, m_clip{ clip.left, clip.top, clip.right, clip.bottom }
 	{
-		m_device = ratio{ ::GetDeviceCaps(m_dc, LOGPIXELSX), 96 }.gcd();
-		m_zoom = zoom * m_device;
-
-		memset(&m_lf, 0, sizeof(m_lf));
-		m_original = (HFONT)::SelectObject(m_dc, m_font);
-		::GetObject(m_font, sizeof(m_lf), &m_lf);
-
-		if (zoom.num != zoom.denom) { // zoom is not 1:1
-			m_lf.lfHeight *= zoom.num;
-			m_lf.lfHeight /= zoom.denom;
-
-			m_modified = CreateFontIndirect(&m_lf);
-			SelectObject(m_dc, m_modified);
-		}
+		selectFont(fontSize, fontFamily, FW_NORMAL, false, false);
 	}
 
-	painter::painter(HDC dc, ratio zoom, HFONT font)
-		: painter(dc, zoom, { 0, 0, 0, 0 }, font)
+	painter::painter(HDC dc, ratio zoom, ratio device, const pixels& fontSize, const std::string& fontFamily)
+		: painter(dc, zoom, device, { 0, 0, 0, 0 }, fontSize, fontFamily)
 	{
 	}
 
 	painter::~painter()
 	{
-		::SelectObject(m_dc, m_original);
+		if (m_original)
+			::SelectObject(m_dc, m_original);
 		if (m_modified)
 			DeleteObject(m_modified);
-	}
-
-	void painter::moveOrigin(const pixels& x, const pixels& y)
-	{
-		m_origin.x += x;
-		m_origin.y += y;
-	}
-
-	point painter::getOrigin() const
-	{
-		return m_origin;
-	}
-
-	void painter::setOrigin(const point& orig)
-	{
-		m_origin = orig;
 	}
 
 	void painter::paintImage(const image_ref* img, const pixels& width, const pixels& height)
@@ -104,8 +76,8 @@ namespace gui { namespace gdi {
 		}
 
 		Gdiplus::Graphics gfx{ m_dc };
-		gfx.DrawImage(bmp, m_zoom.scaleF(m_origin.x), m_zoom.scaleF(m_origin.y),
-			m_zoom.scaleF(width), m_zoom.scaleF(height));
+		gfx.DrawImage(bmp, zoom().scaleF(origin().x), zoom().scaleF(origin().y),
+			zoom().scaleF(width), zoom().scaleF(height));
 	}
 
 	void painter::paintString(const std::string& text)
@@ -114,7 +86,7 @@ namespace gui { namespace gdi {
 			return;
 
 		auto widen = utf::widen(text);
-		::TextOut(m_dc, m_zoom.scaleL(m_origin.x), m_zoom.scaleL(m_origin.y), widen.c_str(), widen.length());
+		::TextOut(m_dc, zoom().scaleL(origin().x), zoom().scaleL(origin().y), widen.c_str(), widen.length());
 
 #if 0
 		SIZE s = {};
@@ -139,189 +111,65 @@ namespace gui { namespace gdi {
 		::SetBkColor(dc, clrOld);
 	}
 
-	void painter::paintBackground(colorref color, const pixels& width, const pixels& height)
-	{
-		FillSolidRect(m_dc, { m_origin,{ width, height } }, m_zoom, color);
-	}
-
-	struct Border {
-		pixels width;
-		line_style style;
-		colorref color;
-
-		Border(const styles::rule_storage& styles,
-			styles::length_prop width_prop,
-			styles::border_style_prop style_prop,
-			styles::color_prop color_prop)
-			: width(0)
-			, style(line_style::none)
-			, color(0x000000)
-		{
-			if (styles.has(width_prop)) {
-				auto u = styles.get(width_prop);
-				ASSERT(u.which() == styles::length_u::first_type);
-				width = u.first().value();
-			}
-
-			if (styles.has(style_prop))
-				style = styles.get(style_prop);
-
-			if (styles.has(color_prop))
-				color = styles.get(color_prop);
-
-			if (width.value() == 0 ||
-				style == line_style::none)
-			{
-				width = pixels();
-				style = line_style::none;
-			}
-		};
-
-		bool present() const { return style != line_style::none; }
-	};
-
-	void painter::paintBorder(gui::node* node)
-	{
-		auto styles = node->calculatedStyle();
-#define BORDER_(side) \
-Border border_ ## side{*styles, \
-	styles::prop_border_ ## side ## _width, \
-	styles::prop_border_ ## side ## _style, \
-	styles::prop_border_ ## side ## _color};
-		MAKE_FOURWAY(BORDER_)
-#undef BORDER_
-
-		point pt {};
-		auto sz = node->getSize();
-
-		if (border_top.present()) {
-			auto orig = pt;
-			auto dest = pt + size{ sz.width, border_top.width };
-
-			if (border_right.present())
-				dest.x -= border_right.width;
-
-			drawBorder(orig, dest, border_top.style, border_top.color);
-		}
-
-		if (border_right.present()) {
-			auto orig = pt;
-			auto dest = pt + size{ sz.width, sz.height };
-			orig.x = dest.x - border_right.width;
-
-			if (border_bottom.present())
-				dest.y -= border_bottom.width;
-
-			drawBorder(orig, dest, border_right.style, border_right.color);
-		}
-
-		if (border_bottom.present()) {
-			auto orig = pt;
-			auto dest = pt + size{ sz.width, sz.height };
-			orig.y = dest.y - border_bottom.width;
-
-			if (border_left.present())
-				orig.x += border_left.width;
-
-			drawBorder(orig, dest, border_bottom.style, border_bottom.color);
-		}
-
-		if (border_left.present()) {
-			auto orig = pt;
-			auto dest = pt + size{ border_left.width, sz.height };
-
-			if (border_top.present())
-				orig.y += border_top.width;
-
-			drawBorder(orig, dest, border_left.style, border_left.color);
-		}
-	}
-
 	size painter::measureString(const std::string& text)
 	{
 		auto line = utf::widen(text);
 		SIZE s = {};
 		if (::GetTextExtentPoint32(m_dc, line.c_str(), line.length(), &s))
-			return{ m_zoom.invert(s.cx), m_zoom.invert(s.cy) };
+			return{ zoom().invert(s.cx), zoom().invert(s.cy) };
 		return{};
 	}
 
-	template<typename T>
-	static inline T xp2dev(const ratio& r, T value)
+	void painter::fillRectangle(colorref color, const point& pt, const size& size)
 	{
-		return r.num * value / r.denom;
+		FillSolidRect(m_dc, { origin() + pt, size }, zoom(), color);
 	}
 
-	int painter::dpiRescale(int size)
+	void painter::drawBorder(line_style /*style*/, colorref color, const gui::point& pt, const gui::size& size)
 	{
-		return xp2dev(m_zoom, size);
+		FillSolidRect(m_dc, { origin() + pt, size }, zoom(), color);
 	}
 
-	long double painter::dpiRescale(long double size)
+	static int gui2win32(weight w)
 	{
-		return xp2dev(m_zoom, size);
+		ASSERT(w != weight::bolder);
+		ASSERT(w != weight::lighter);
+		switch (w) {
+		case weight::normal: return FW_NORMAL;
+		case weight::bold: return FW_BOLD;
+		default:
+			break;
+		}
+
+		return (int)w;
 	}
 
-	bool painter::visible(node* node) const
+	void painter::setFont(const pixels& fontSize, const std::string& fontFamily, gui::weight weight, bool italic, bool underline)
 	{
-		auto br = m_origin + node->getSize();
-
-		RECT r = { m_zoom.scaleI(m_origin.x), m_zoom.scaleI(m_origin.y),
-			m_zoom.scaleI(br.x), m_zoom.scaleI(br.y) };
-		RECT test;
-
-		return !!IntersectRect(&test, &r, &m_clip);
+		selectFont(fontSize, fontFamily, gui2win32(weight), italic, underline);
 	}
 
-	gui::style_handle painter::applyStyle(node* node)
-	{
-		auto mem = std::make_unique<style_save>();
-		mem->apply(this, node);
-		return mem.release();
-	}
-
-	void painter::restoreStyle(gui::style_handle saved)
-	{
-		std::unique_ptr<style_save> mem{ (style_save*)saved };
-		if (mem)
-			mem->restore();
-	}
-
-	gui::painter* painter::getPainter()
-	{
-		return this;
-	}
-
-	COLORREF painter::getColor() const
-	{
-		return GetTextColor(m_dc);
-	}
-
-	const LOGFONT& painter::getFont() const
-	{
-		return m_lf;
-	}
-
-	void painter::setColor(COLORREF color)
+	void painter::setColor(colorref color)
 	{
 		SetTextColor(m_dc, color);
 	}
 
-	void painter::setFont(const LOGFONT& lf)
+	colorref painter::getColor() const
 	{
-		m_lf = lf;
+		return GetTextColor(m_dc);
+	}
 
+	void painter::selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool underline)
+	{
 		if (m_modified)
 			DeleteObject(m_modified);
 
-		m_modified = CreateFontIndirect(&m_lf);
-		SelectObject(m_dc, m_modified);
-	}
+		m_modified = ::CreateFont(-zoom().scaleI(fontSize), 0, 0, 0, weight, italic, underline,
+			FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+			CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, utf::widen(fontFamily).c_str());
 
-	void painter::drawBorder(const gui::point& from, const gui::point& to, line_style /*style*/, COLORREF color)
-	{
-		RECT r{ m_zoom.scaleL(m_origin.x + from.x), m_zoom.scaleL(m_origin.y + from.y),
-			m_zoom.scaleL(m_origin.x + to.x), m_zoom.scaleL(m_origin.y + to.y) };
-		FillSolidRect(m_dc, { m_origin,{ to.x - from.x, to.y - from.y } }, m_zoom, color);
+		auto tmp = (HFONT)SelectObject(m_dc, m_modified);
+		if (!m_original)
+			m_original = tmp;
 	}
 }};

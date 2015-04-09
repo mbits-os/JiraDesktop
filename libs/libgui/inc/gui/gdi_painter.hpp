@@ -26,55 +26,35 @@
 
 #if defined(_WIN32)
 
-#include <gui/painter.hpp>
-#include <gui/gdi_style_handle.hpp>
+#include <gui/painter_base.hpp>
 #include <windows.h>
 
 namespace gui { namespace gdi {
 	class painter
-		: public gui::painter
-		, private gui::gdi::style_save::callback {
+		: public gui::base::painter {
 	public:
-		painter(HDC dc, ratio zoom, const RECT& clip, HFONT font);
-		painter(HDC dc, ratio zoom, HFONT font);
+		painter(HDC dc, ratio zoom, ratio device, const RECT& clip, const pixels& fontSize, const std::string& fontFamily);
+		painter(HDC dc, ratio zoom, ratio device, const pixels& fontSize, const std::string& fontFamily);
 		~painter();
 
 		// gui::painter
-		void moveOrigin(const pixels& x, const pixels& y) override;
-		point getOrigin() const override;
-		void setOrigin(const point& orig) override;
 		void paintImage(const image_ref* img, const pixels& width, const pixels& height) override;
 		void paintString(const std::string& text) override;
-		void paintBackground(colorref, const pixels& width, const pixels& height) override;
-		void paintBorder(node*) override;
 		size measureString(const std::string& text) override;
-		int dpiRescale(int size) override;
-		long double dpiRescale(long double size) override;
-
-		bool visible(node*) const override;
-		gui::style_handle applyStyle(node*) override;
-		void restoreStyle(gui::style_handle) override;
-
-		ratio gdiRatio() const { return m_device; }
+		void fillRectangle(colorref color, const point& pt, const size& size) override;
+		void drawBorder(line_style style, colorref color, const gui::point& pt, const gui::size& size) override;
+		void setFont(const pixels& fontSize, const std::string& fontFamily, gui::weight weight,
+			bool italic, bool underline) override;
+		void setColor(colorref color) override;
+		colorref getColor() const override;
 
 	private:
-		gui::painter* getPainter() override;
-		COLORREF getColor() const override;
-		const LOGFONT& getFont() const override;
-		void setColor(COLORREF) override;
-		void setFont(const LOGFONT&) override;
-
-		void drawBorder(const gui::point& from, const gui::point& to, line_style style, COLORREF color);
+		void selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool underline);
 
 	private:
-		ratio m_zoom;
-		ratio m_device;
 		HDC m_dc;
-		HFONT m_font;
 		HFONT m_original;
 		HFONT m_modified;
-		LOGFONT m_lf;
-		point m_origin;
 		RECT m_clip;
 	};
 }};

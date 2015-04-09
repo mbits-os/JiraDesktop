@@ -53,11 +53,11 @@
     <ClCompile Include="..\..\libs\libgui\src\cairo_painter.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\font_awesome.cc" />
     <ClCompile Include="..\..\libs\libgui\src\hotkey.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\painter_base.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\settings.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\styles.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_action.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_gdi_painter.cpp" />
-    <ClCompile Include="..\..\libs\libgui\src\win32\win32_gdi_style_handle.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_hotkey.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_menu.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_settings.cpp" />
@@ -68,13 +68,13 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\document.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\font_awesome.hh" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\gdi_painter.hpp" />
-    <ClInclude Include="..\..\libs\libgui\inc\gui\gdi_style_handle.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\hotkey.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\image.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\listeners.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\menu.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\node.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\painter_base.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\settings.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\styles.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\types.hpp" />
