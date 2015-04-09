@@ -81,7 +81,7 @@ namespace jira
 		std::shared_ptr<gui::node> key::visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& /*object*/) const
 		{
 			auto link = doc->createLink(issue.issue_uri());
-			link->addChild(doc->createText(issue.issue_key()));
+			link->innerText(issue.issue_key());
 			return std::move(link);
 		}
 
@@ -91,7 +91,7 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end())
-				return doc->createEmpty();
+				return doc->createElement(gui::elem::span);
 
 			return doc->createText(it->second.as_string());
 		}
@@ -111,12 +111,13 @@ namespace jira
 			}
 
 			if (!text.empty()) {
-				auto node = doc->createText(text);
+				auto node = doc->createElement(gui::elem::span);
+				node->innerText(text);
 				node->addClass("label");
 				return node;
 			}
 
-			return doc->createEmpty();
+			return doc->createElement(gui::elem::span);
 		}
 
 		resolution::resolution(const std::string& id, const std::string& title) : type(id, title) {}
@@ -125,7 +126,8 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end() || it->second.is<nullptr_t>()) {
-				auto node = doc->createText("Unresolved");
+				auto node = doc->createElement(gui::elem::span);
+				node->innerText("Unresolved");
 				node->addClass("none"); // font-style: italic; color: #555
 				return std::move(node); 
 			}
@@ -138,12 +140,14 @@ namespace jira
 				auto name = either_or<std::string>(map, "name", "?");
 				auto description = either_or<std::string>(map, "description");
 
-				auto label = doc->createText(name);
+				auto label = doc->createElement(gui::elem::span);
+				label->innerText(name);
 				label->setTooltip(description);
 				return std::move(label);
 			}
 
-			auto node = doc->createText("{!}"); // color:#E60026
+			auto node = doc->createElement(gui::elem::span);
+			node->innerText("{!}"); // color:#E60026
 			node->addClass("unexpected");
 			return std::move(node);
 		}
@@ -158,7 +162,7 @@ namespace jira
 				label = it->second.as_string();
 
 			auto link = doc->createLink(issue.issue_uri());
-			link->addChild(doc->createText(label));
+			link->innerText(label);
 			return std::move(link);
 		}
 
@@ -188,7 +192,7 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
-				return doc->createEmpty();
+				return doc->createElement(gui::elem::span);
 
 			json::map data{ it->second };
 			auto active = either_or<json::BOOL>(data, "active", false);
@@ -230,7 +234,7 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::MAP>())
-				return doc->createEmpty();
+				return doc->createElement(gui::elem::span);
 
 			json::map data{ it->second };
 			auto uri = data["iconUrl"];
@@ -258,12 +262,13 @@ namespace jira
 		{
 			auto it = object.find(id());
 			if (it == object.end() || !it->second.is<json::vector>()) {
-				auto node = doc->createText("None");
+				auto node = doc->createElement(gui::elem::span);
+				node->innerText("None");
 				node->addClass("none"); // font-style: italic; color: #555
 				return std::move(node);
 			}
 
-			auto out = doc->createSpan();
+			auto out = doc->createElement(gui::elem::span);
 
 			bool first = true;
 			auto items = it->second.as<json::vector>();
@@ -277,7 +282,8 @@ namespace jira
 			}
 
 			if (first) { // no items added to the span, return empty...
-				auto node = doc->createText("None");
+				auto node = doc->createElement(gui::elem::span);
+				node->innerText("None");
 				node->addClass("none"); // font-style: italic; color: #555
 				return std::move(node);
 			}

@@ -60,12 +60,17 @@ namespace jira
 		out.uri(m_uri);
 		out.issue_key(key);
 		out.issue_id(id);
-		out.setRow(doc->createTableRow());
+		out.setRow(doc->createElement(gui::elem::table_row));
 
 		for (auto& col : m_cols) {
 			auto val = col->visit(doc, out, object);
-			if (val)
-				out.addVal(std::move(val));
+			if (val) {
+				auto td = doc->createElement(gui::elem::td);
+				if (td) {
+					td->addChild(val);
+					out.addVal(td);
+				}
+			}
 		}
 
 		return out;
