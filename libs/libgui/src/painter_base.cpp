@@ -321,7 +321,7 @@ Border border_ ## side{*styles, \
 			state->underline != m_underline ||
 			state->fontSize != m_fontSize;
 
-		m_fontSize = state->color;
+		m_color = state->color;
 		m_fontSize = state->fontSize;
 		m_fontFamily = state->fontFamily;
 		m_weight = state->weight;
