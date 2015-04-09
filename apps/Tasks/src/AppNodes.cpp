@@ -913,7 +913,10 @@ void CJiraReportElement::addChildren(const jira::server& server)
 				auto tooltip = col->titleFull();
 				if (name != tooltip)
 					node->setTooltip(tooltip);
-				header->addChild(node);
+
+				auto th = std::make_shared<CJiraSpanNode>(gui::elem::th);
+				th->addChild(node);
+				header->addChild(th);
 			}
 			table->addChild(header);
 		}
