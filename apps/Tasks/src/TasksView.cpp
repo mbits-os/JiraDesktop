@@ -101,7 +101,12 @@ std::function<void(const gui::point&, const gui::size&)>
 			zoom.scaleL(pt.x + sz.width) + 2 ,
 			zoom.scaleL(pt.y + sz.height) + 2
 		};
+#ifdef DEBUG_UPDATES
+		info_->updates.push_back(r);
+		::InvalidateRect(hWnd, nullptr, TRUE);
+#else
 		::InvalidateRect(hWnd, &r, TRUE);
+#endif
 	};
 }
 
@@ -300,6 +305,16 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 	m_body->paint(&paint);
 
+#ifdef DEBUG_UPDATES
+	std::vector<RECT> updates;
+	std::swap(updates, m_zoom->updates);
+
+	for (auto& r : updates) {
+		COLORREF clr = 0x66cc66;
+		dc.Draw3dRect(&r, clr, clr);
+	}
+#endif
+
 	return 0;
 }
 
@@ -430,12 +445,12 @@ static std::string to_string(gui::elem name)
 	switch (name) {
 	case elem::unspecified: return{}; break;
 	case elem::body: return "body"; break;
-	case elem::block: return "block"; break;
-	case elem::header: return "header"; break;
+	case elem::block: return "div"; break;
+	case elem::header: return "h1"; break;
 	case elem::span: return "span"; break;
-	case elem::text: return "text"; break;
-	case elem::link: return "link"; break;
-	case elem::image: return "image"; break;
+	case elem::text: return "TXT"; break;
+	case elem::link: return "a"; break;
+	case elem::image: return "img"; break;
 	case elem::icon: return "icon"; break;
 	case elem::table: return "table"; break;
 	case elem::table_head: return "t-head"; break;

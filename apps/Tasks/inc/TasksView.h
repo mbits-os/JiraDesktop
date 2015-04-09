@@ -28,6 +28,9 @@ struct ZoomInfo {
 	gui::ratio zoom;
 	gui::ratio device;
 	gui::ratio mul;
+#ifdef DEBUG_UPDATES
+	std::vector<RECT> updates;
+#endif
 };
 
 // #define CAIRO_PAINTER
