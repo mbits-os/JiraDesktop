@@ -24,6 +24,11 @@
 
 #include "pch.h"
 #include <gui/cairo_painter.hpp>
+
+#if defined(HAS_CAIRO)
+
+#pragma comment (lib, "cairo.lib")
+
 #include <gui/image.hpp>
 #include <gui/node.hpp>
 #include <net/utf8.hpp>
@@ -117,3 +122,5 @@ namespace gui { namespace cairo {
 	{
 	}
 }};
+
+#endif // defined(HAS_CAIRO)

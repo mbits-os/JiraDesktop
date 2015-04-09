@@ -24,6 +24,8 @@
 
 #pragma once
 
+#if defined(HAS_CAIRO)
+
 #include <cairo/cairo.h>
 #include <gui/painter.hpp>
 //#include <gui/cairo_style_handle.hpp>
@@ -61,3 +63,5 @@ namespace gui { namespace cairo {
 		cairo_t* m_cr;
 	};
 }};
+
+#endif // defined(HAS_CAIRO)
