@@ -85,6 +85,14 @@ namespace gui { namespace cairo {
 		cairo_show_text(m_cr, text.c_str());
 	}
 
+	void painter::paintBackground(colorref, const pixels&, const pixels&)
+	{
+	}
+
+	void painter::paintBorder(node*)
+	{
+	}
+
 	size painter::measureString(const std::string& text)
 	{
 		cairo_text_extents_t te;

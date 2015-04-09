@@ -43,6 +43,8 @@ namespace gui { namespace cairo {
 		void setOrigin(const point& orig) override;
 		void paintImage(const image_ref* img, const pixels& width, const pixels& height) override;
 		void paintString(const std::string& text) override;
+		void paintBackground(colorref, const pixels& width, const pixels& height) override;
+		void paintBorder(node*) override;
 		size measureString(const std::string& text) override;
 		int dpiRescale(int size) override;
 		long double dpiRescale(long double size) override;
