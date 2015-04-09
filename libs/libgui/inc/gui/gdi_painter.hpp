@@ -33,8 +33,8 @@ namespace gui { namespace gdi {
 	class painter
 		: public gui::base::painter {
 	public:
-		painter(HDC dc, ratio zoom, ratio device, const RECT& clip, const pixels& fontSize, const std::string& fontFamily);
-		painter(HDC dc, ratio zoom, ratio device, const pixels& fontSize, const std::string& fontFamily);
+		painter(HDC dc, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily);
+		painter(HDC dc, ratio zoom, const pixels& fontSize, const std::string& fontFamily);
 		~painter();
 
 		// gui::painter

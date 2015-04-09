@@ -30,7 +30,7 @@ namespace gui { namespace base {
 	class painter
 		: public gui::painter {
 	public:
-		painter(ratio zoom, ratio device, const pixels& fontSize, const std::string& fontFamily);
+		painter(ratio zoom, const pixels& fontSize, const std::string& fontFamily);
 		~painter();
 
 		// gui::painter
@@ -58,7 +58,6 @@ namespace gui { namespace base {
 
 	private:
 		ratio m_zoom;
-		ratio m_device;
 		point m_origin;
 		// Font:
 		pixels m_fontSize;

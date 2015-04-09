@@ -41,8 +41,8 @@
 
 namespace gui { namespace gdi {
 
-	painter::painter(HDC dc, ratio zoom, ratio device, const RECT& clip, const pixels& fontSize, const std::string& fontFamily)
-		: base::painter(zoom, device, fontSize, fontFamily)
+	painter::painter(HDC dc, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily)
+		: base::painter(zoom, fontSize, fontFamily)
 		, m_dc{ dc }
 		, m_modified{ nullptr }
 		, m_original{ nullptr }
@@ -51,8 +51,8 @@ namespace gui { namespace gdi {
 		selectFont(fontSize, fontFamily, FW_NORMAL, false, false);
 	}
 
-	painter::painter(HDC dc, ratio zoom, ratio device, const pixels& fontSize, const std::string& fontFamily)
-		: painter(dc, zoom, device, { 0, 0, 0, 0 }, fontSize, fontFamily)
+	painter::painter(HDC dc, ratio zoom, const pixels& fontSize, const std::string& fontFamily)
+		: painter(dc, zoom, { 0, 0, 0, 0 }, fontSize, fontFamily)
 	{
 	}
 

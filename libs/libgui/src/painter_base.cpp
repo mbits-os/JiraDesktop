@@ -32,9 +32,8 @@
 
 namespace gui { namespace base {
 
-	painter::painter(ratio zoom, ratio device, const pixels& fontSize, const std::string& fontFamily)
-		: m_zoom{ 0, 0 }
-		, m_device{ device.num, device.denom }
+	painter::painter(ratio zoom, const pixels& fontSize, const std::string& fontFamily)
+		: m_zoom{ zoom.num, zoom.denom }
 		, m_origin{ 0, 0 }
 		, m_fontSize{ fontSize }
 		, m_fontFamily{ fontFamily }
@@ -42,8 +41,6 @@ namespace gui { namespace base {
 		, m_italic{ false }
 		, m_underline{ false }
 	{
-		m_device = zoom;
-		m_zoom = zoom * m_device;
 	}
 
 	painter::~painter()
@@ -184,7 +181,7 @@ Border border_ ## side{*styles, \
 		switch (inherited) {
 		case weight::bolder:
 		case weight::lighter:
-			ASSERT(FALSE);
+			ASSERT(false);
 			break;
 		case weight::w100:
 		case weight::w200:
@@ -212,7 +209,7 @@ Border border_ ## side{*styles, \
 		switch (inherited) {
 		case weight::bolder:
 		case weight::lighter:
-			ASSERT(FALSE);
+			ASSERT(false);
 			break;
 		case weight::w100:
 		case weight::w200:
