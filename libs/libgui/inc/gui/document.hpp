@@ -29,14 +29,10 @@
 namespace gui {
 	struct document {
 		virtual ~document() {}
-		virtual std::shared_ptr<node> createTable() = 0;
-		virtual std::shared_ptr<node> createTableHead() = 0;
-		virtual std::shared_ptr<node> createTableRow() = 0;
-		virtual std::shared_ptr<node> createEmpty() = 0;
-		virtual std::shared_ptr<node> createSpan() = 0;
 		virtual std::shared_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
 		virtual std::shared_ptr<node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) = 0;
 		virtual std::shared_ptr<node> createLink(const std::string& href) = 0;
 		virtual std::shared_ptr<node> createText(const std::string& text) = 0;
+		virtual std::shared_ptr<node> createElement(const elem name) = 0;
 	};
 };

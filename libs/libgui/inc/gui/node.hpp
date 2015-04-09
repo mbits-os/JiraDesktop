@@ -63,6 +63,7 @@ namespace gui {
 		virtual void setTooltip(const std::string& text) = 0;
 		virtual bool hasTooltip() const = 0;
 		virtual const std::string& getTooltip() const = 0;
+		virtual void innerText(const std::string& text) = 0;
 
 		virtual std::shared_ptr<styles::rule_storage> calculatedStyle() const = 0;
 		virtual std::shared_ptr<styles::rule_storage> normalCalculatedStyles() const = 0;
