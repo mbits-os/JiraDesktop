@@ -198,11 +198,16 @@ public:
 
 class CJiraReportElement : public CJiraBlockNode {
 	std::weak_ptr<jira::report> m_dataset;
-	std::function<void(const gui::point&, const gui::size&)> m_invalidator;
 public:
-	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(const gui::point&, const gui::size&)>& invalidator);
+	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset);
 	void addChildren(const jira::server& server);
 
 	void addChild(const std::shared_ptr<node>& child) override final;
+};
+
+class CJiraDocumentElement : public CJiraBlockNode {
+	std::function<void(const gui::point&, const gui::size&)> m_invalidator;
+public:
+	explicit CJiraDocumentElement(const std::function<void(const gui::point&, const gui::size&)>& invalidator);
 	void invalidate(const gui::point& pt, const gui::size& size) override;
 };

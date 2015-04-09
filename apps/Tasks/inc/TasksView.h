@@ -50,19 +50,20 @@ public:
 		// TODO : relation to UI element
 		std::shared_ptr<gui::node> m_plaque;
 
-		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener, HWND hWnd, const std::shared_ptr<ZoomInfo>& info);
+		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener);
 		~ServerInfo();
 		ServerInfo(const ServerInfo&) = delete;
 		ServerInfo& operator=(const ServerInfo&) = delete;
 		ServerInfo(ServerInfo&&) = default;
 		ServerInfo& operator=(ServerInfo&&) = default;
 
-		void buildPlaque(HWND hWnd, const std::shared_ptr<ZoomInfo>& info);
+		void buildPlaque();
 	};
 
 private:
 	std::shared_ptr<CAppModelListener> m_listener;
 	std::vector<ServerInfo> m_servers;
+	std::shared_ptr<gui::node> m_body;
 	std::shared_ptr<gui::node> m_cheatsheet;
 	std::vector<ServerInfo>::iterator find(uint32_t sessionId);
 

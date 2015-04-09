@@ -878,10 +878,9 @@ void CJiraTableRowNode::repositionChildren(gui::painter* /*painter*/)
 	m_position.size.width = x + gui::pixels{ CELL_MARGIN } + offsetRight();
 }
 
-CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset, const std::function<void(const gui::point&, const gui::size&)>& invalidator)
+CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset)
 	: CJiraBlockNode(gui::elem::block)
 	, m_dataset(dataset)
-	, m_invalidator(invalidator)
 {
 }
 
@@ -945,7 +944,13 @@ void CJiraReportElement::addChild(const std::shared_ptr<gui::node>& /*child*/)
 	// noop
 }
 
-void CJiraReportElement::invalidate(const gui::point& pt, const gui::size& size)
+CJiraDocumentElement::CJiraDocumentElement(const std::function<void(const gui::point&, const gui::size&)>& invalidator)
+	: CJiraBlockNode(gui::elem::body)
+	, m_invalidator(invalidator)
+{
+}
+
+void CJiraDocumentElement::invalidate(const gui::point& pt, const gui::size& size)
 {
 	auto p = pt + m_position.pt;
 	if (m_invalidator)

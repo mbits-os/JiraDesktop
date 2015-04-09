@@ -107,14 +107,13 @@ std::function<void(const gui::point&, const gui::size&)>
 
 CTasksView::ServerInfo::ServerInfo(
 	const std::shared_ptr<jira::server>& server,
-	const std::shared_ptr<jira::server_listener>& listener,
-	HWND hWnd, const std::shared_ptr<ZoomInfo>& info)
+	const std::shared_ptr<jira::server_listener>& listener)
 	: m_server(server)
 	, m_listener(listener)
 	, m_sessionId(server->sessionId())
 {
 	m_server->registerListener(m_listener);
-	buildPlaque(hWnd, info);
+	buildPlaque();
 }
 
 CTasksView::ServerInfo::~ServerInfo()
@@ -123,11 +122,10 @@ CTasksView::ServerInfo::~ServerInfo()
 		m_server->unregisterListener(m_listener);
 }
 
-void CTasksView::ServerInfo::buildPlaque(HWND hWnd, const std::shared_ptr<ZoomInfo>& info)
+void CTasksView::ServerInfo::buildPlaque()
 {
-	m_plaque = std::make_unique<CJiraReportElement>(m_dataset, make_invalidator(hWnd, info));
+	m_plaque = std::make_unique<CJiraReportElement>(m_dataset);
 	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*m_server);
-	m_plaque->applyStyles(stylesheet());
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
@@ -140,7 +138,7 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<Ser
 	// TODO: create UI element
 	// TDOD: attach refresh listener to the server
 	auto listener = std::make_shared<ServerListener>(m_hWnd, server->sessionId());
-	return m_servers.emplace(it, server, listener, m_hWnd, std::cref(m_zoom));
+	return m_servers.emplace(it, server, listener);
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<ServerInfo>::const_iterator it)
@@ -210,8 +208,9 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 		}
 	}
 	m_cheatsheet = glyphs;
-	m_cheatsheet->applyStyles(stylesheet());
 #endif
+	updateLayout();
+
 	return 0;
 }
 
@@ -220,10 +219,6 @@ LRESULT CTasksView::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	m_model->unregisterListener(m_listener);
 	return 0;
 }
-
-enum {
-	BODY_MARGIN = 7
-};
 
 namespace {
 
@@ -264,7 +259,7 @@ namespace {
 		// Application styleshet
 		out
 			.add(gui::elem::header,                        color(0x883333))
-			.add(gui::elem::table,                         border(1_px, gui::line_style::solid, 0x444444))
+			.add(gui::elem::table,                         border(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add(gui::elem::table_row,                     border_top(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf8f8f8))
 			.add(gui::elem::link,                          padding(2_px) << border(1_px, gui::line_style::none, 0xc0c0c0))
@@ -288,30 +283,6 @@ namespace {
 		static std::shared_ptr<styles::stylesheet> sheet = stylesheetCreate();
 		return sheet;
 	}
-
-	void paintNode(gui::painter& painter, const std::shared_ptr<gui::node>& node)
-	{
-		auto orig = painter.getOrigin();
-
-		node->paint(&painter);
-
-		auto size = node->getSize();
-		orig.y += size.height;
-
-		painter.setOrigin(orig);
-	}
-
-	gui::pixels measureNode(gui::painter& painter, const std::shared_ptr<gui::node>& node, gui::pixels& width, gui::pixels height)
-	{
-		node->measure(&painter);
-		auto size = node->getSize();
-		node->setPosition(BODY_MARGIN, gui::pixels{ BODY_MARGIN } +height);
-		height += size.height;
-		if (width < size.width)
-			width = size.width;
-
-		return height;
-	}
 };
 
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -330,19 +301,23 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	m_zoom->mul = m_zoom->device * m_zoom->zoom;
 #endif
 
-	for (auto& item : m_servers) {
-		if (item.m_plaque)
-			paintNode(paint, item.m_plaque);
-	}
-
-	if (m_cheatsheet)
-		paintNode(paint, m_cheatsheet);
+	m_body->paint(&paint);
 
 	return 0;
 }
 
 void CTasksView::updateLayout()
 {
+	m_body = std::make_shared<CJiraDocumentElement>(make_invalidator(m_hWnd, m_zoom));
+	for (auto& server : m_servers) {
+		if (server.m_plaque)
+			m_body->addChild(server.m_plaque);
+	}
+
+	if (m_cheatsheet)
+		m_body->addChild(m_cheatsheet);
+	m_body->applyStyles(stylesheet());
+
 	CWindowDC dc{m_hWnd};
 
 
@@ -364,19 +339,8 @@ void CTasksView::updateLayout()
 		m_active->setActive(false);
 	m_active = nullptr;
 
-	gui::pixels height = 0;
-	gui::pixels width = 0;
-	for (auto& server : m_servers) {
-		if (server.m_plaque) {
-			height = measureNode(paint, server.m_plaque, width, height);
-		}
-	}
-
-	if (m_cheatsheet) {
-		height = measureNode(paint, m_cheatsheet, width, height);
-	}
-
-	setDocumentSize({ width.value() + 2 * BODY_MARGIN, height.value() + 2 * BODY_MARGIN });
+	m_body->measure(&paint);
+	setDocumentSize(m_body->getSize());
 
 	m_hovered = nodeFromPoint();
 	if (m_hovered)
@@ -1020,7 +984,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	it->buildPlaque(m_hWnd, m_zoom);
+	it->buildPlaque();
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();
