@@ -37,37 +37,25 @@
 #define ASSERT(x) assert(x)
 
 namespace gui { namespace cairo {
-	painter::painter(cairo_surface_t* surface, ratio zoom, ratio device, const pixels& fontSize, const std::string& fontFamily)
-		: m_zoom{ 0, 0 }
-		, m_device{ device.num, device.denom }
-		, m_origin{ 0, 0 }
-		, m_fontSize{ fontSize }
-		, m_fontFamily{ fontFamily }
+
+	template <size_t Index> static float channel(colorref clr)
+	{
+		auto ch = (clr >> (8 * Index)) & 0xFF;
+		return (float)(ch / 255.0);
+	}
+
+	painter::painter(cairo_surface_t* surface, ratio zoom, const pixels& fontSize, const std::string& fontFamily)
+		: base::painter{ zoom, fontSize, fontFamily }
 		, m_surface{ surface }
 		, m_cr{ cairo_create(surface) }
+		, m_color(0)
 	{
-		m_zoom = zoom * m_device;
+		selectFont(fontSize, fontFamily, 400, false, false);
 	}
 
 	painter::~painter()
 	{
 		cairo_destroy(m_cr);
-	}
-
-	void painter::moveOrigin(const pixels& x, const pixels& y)
-	{
-		m_origin.x += x;
-		m_origin.y += y;
-	}
-
-	point painter::getOrigin() const
-	{
-		return m_origin;
-	}
-
-	void painter::setOrigin(const point& orig)
-	{
-		m_origin = orig;
 	}
 
 	void painter::paintImage(const image_ref* /*img*/, const pixels& /*width*/, const pixels& /*height*/)
@@ -79,25 +67,19 @@ namespace gui { namespace cairo {
 		if (text.empty())
 			return;
 
+		cairo_set_source_rgb(m_cr, channel<0>(m_color), channel<1>(m_color), channel<2>(m_color));
+
 		cairo_text_extents_t te;
 		cairo_text_extents(m_cr, text.c_str(), &te);
-		cairo_move_to(m_cr, m_zoom.scaleF(m_origin.x) + te.x_bearing, m_zoom.scaleF(m_origin.y) + te.y_bearing);
+		cairo_move_to(m_cr, zoom().scaleF(origin().x) - te.x_bearing, zoom().scaleF(origin().y) - te.y_bearing);
 		cairo_show_text(m_cr, text.c_str());
-	}
-
-	void painter::paintBackground(colorref, const pixels&, const pixels&)
-	{
-	}
-
-	void painter::paintBorder(node*)
-	{
 	}
 
 	size painter::measureString(const std::string& text)
 	{
 		cairo_text_extents_t te;
 		cairo_text_extents(m_cr, text.c_str(), &te);
-		return{ m_zoom.invert(te.width), m_zoom.invert(te.height) };
+		return{ zoom().invert(te.width), zoom().invert(te.height) };
 	}
 
 	template<typename T>
@@ -106,28 +88,64 @@ namespace gui { namespace cairo {
 		return r.num * value / r.denom;
 	}
 
-	int painter::dpiRescale(int size)
+	struct RectF {
+		point pt;
+		size sz;
+	};
+
+	static void FillSolidRect(cairo_t* cr, const RectF& rect, const ratio& zoom, colorref clr)
 	{
-		return xp2dev(m_zoom, size);
+		cairo_set_source_rgb(cr, channel<0>(clr), channel<1>(clr), channel<2>(clr));
+		cairo_rectangle(cr, zoom.scaleD(rect.pt.x), zoom.scaleD(rect.pt.y), zoom.scaleD(rect.sz.width), zoom.scaleD(rect.sz.height));
+		cairo_fill(cr);
 	}
 
-	long double painter::dpiRescale(long double size)
+	void painter::fillRectangle(colorref color, const point& pt, const size& size)
 	{
-		return xp2dev(m_zoom, size);
+		FillSolidRect(m_cr, { origin() + pt, size }, zoom(), color);
 	}
 
-	bool painter::visible(node* /*node*/) const
+	void painter::drawBorder(line_style /*style*/, colorref color, const gui::point& pt, const gui::size& size)
 	{
-		return true;
+		FillSolidRect(m_cr, { origin() + pt, size }, zoom(), color);
 	}
 
-	gui::style_handle painter::applyStyle(node* /*node*/)
+	static int gui2raw(weight w)
 	{
-		return nullptr;
+		ASSERT(w != weight::bolder);
+		ASSERT(w != weight::lighter);
+		switch (w) {
+		case weight::normal: return 400;
+		case weight::bold: return 700;
+		default:
+			break;
+		}
+
+		return (int)w;
 	}
 
-	void painter::restoreStyle(gui::style_handle /*saved*/)
+	void painter::setFont(const pixels& fontSize, const std::string& fontFamily, gui::weight weight, bool italic, bool underline)
 	{
+		selectFont(fontSize, fontFamily, gui2raw(weight), italic, underline);
+	}
+
+	void painter::setColor(colorref color)
+	{
+		m_color = color;
+	}
+
+	colorref painter::getColor() const
+	{
+		return m_color;
+	}
+
+	void painter::selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool /*underline*/)
+	{
+		cairo_select_font_face(m_cr, fontFamily.c_str(),
+			italic ? CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL,
+			weight > 650 ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
+
+		cairo_set_font_size(m_cr, zoom().scaleD(fontSize));
 	}
 }};
 

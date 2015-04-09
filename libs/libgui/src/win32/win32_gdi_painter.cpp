@@ -97,6 +97,15 @@ namespace gui { namespace gdi {
 #endif
 	}
 
+	size painter::measureString(const std::string& text)
+	{
+		auto line = utf::widen(text);
+		SIZE s = {};
+		if (::GetTextExtentPoint32(m_dc, line.c_str(), line.length(), &s))
+			return{ zoom().invert(s.cx), zoom().invert(s.cy) };
+		return{};
+	}
+
 	struct RectF {
 		point pt;
 		size sz;
@@ -109,15 +118,6 @@ namespace gui { namespace gdi {
 		COLORREF clrOld = ::SetBkColor(dc, clr);
 		::ExtTextOut(dc, 0, 0, ETO_OPAQUE, &r, NULL, 0, NULL);
 		::SetBkColor(dc, clrOld);
-	}
-
-	size painter::measureString(const std::string& text)
-	{
-		auto line = utf::widen(text);
-		SIZE s = {};
-		if (::GetTextExtentPoint32(m_dc, line.c_str(), line.length(), &s))
-			return{ zoom().invert(s.cx), zoom().invert(s.cy) };
-		return{};
 	}
 
 	void painter::fillRectangle(colorref color, const point& pt, const size& size)

@@ -34,35 +34,26 @@ namespace gui { namespace cairo {
 	class painter
 		: public gui::base::painter {
 	public:
-		painter(cairo_surface_t* surface, ratio zoom, ratio device, const pixels& fontSize, const std::string& fontFamily);
+		painter(cairo_surface_t* surface, ratio zoom, const pixels& fontSize, const std::string& fontFamily);
 		~painter();
 
 		// gui::painter
-		void moveOrigin(const pixels& x, const pixels& y) override;
-		point getOrigin() const override;
-		void setOrigin(const point& orig) override;
 		void paintImage(const image_ref* img, const pixels& width, const pixels& height) override;
 		void paintString(const std::string& text) override;
-		void paintBackground(colorref, const pixels& width, const pixels& height) override;
-		void paintBorder(node*) override;
 		size measureString(const std::string& text) override;
-		int dpiRescale(int size) override;
-		long double dpiRescale(long double size) override;
-
-		bool visible(node*) const override;
-		gui::style_handle applyStyle(node*) override;
-		void restoreStyle(gui::style_handle) override;
-
-		ratio gdiRatio() const { return m_device; }
+		void fillRectangle(colorref color, const point& pt, const size& size) override;
+		void drawBorder(line_style style, colorref color, const gui::point& pt, const gui::size& size) override;
+		void setFont(const pixels& fontSize, const std::string& fontFamily, gui::weight weight, bool italic, bool underline) override;
+		void setColor(colorref color) override;
+		colorref getColor() const override;
 
 	private:
-		ratio m_zoom;
-		ratio m_device;
-		point m_origin;
-		pixels m_fontSize;
-		std::string m_fontFamily;
+		void selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool underline);
+
+	private:
 		cairo_surface_t* m_surface;
 		cairo_t* m_cr;
+		colorref m_color;
 	};
 }};
 
