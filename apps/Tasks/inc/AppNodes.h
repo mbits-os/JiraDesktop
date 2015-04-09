@@ -45,6 +45,8 @@ public:
 	bool hasTooltip() const override;
 	const std::string& getTooltip() const override;
 
+	void innerText(const std::string& text) override;
+
 	std::shared_ptr<styles::rule_storage> calculatedStyle() const override;
 	std::shared_ptr<styles::rule_storage> normalCalculatedStyles() const override;
 	std::shared_ptr<styles::stylesheet> styles() const override;
@@ -152,15 +154,11 @@ public:
 
 class CJiraDocument : public jira::document, public std::enable_shared_from_this<CJiraDocument> {
 	void setCurrent(const std::shared_ptr<jira::server>&) override;
-	std::shared_ptr<gui::node> createTable() override;
-	std::shared_ptr<gui::node> createTableHead() override;
-	std::shared_ptr<gui::node> createTableRow() override;
-	std::shared_ptr<gui::node> createEmpty() override;
-	std::shared_ptr<gui::node> createSpan() override;
 	std::shared_ptr<gui::node> createIcon(const std::string& uri, const std::string& text, const std::string& description) override;
 	std::shared_ptr<gui::node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) override;
 	std::shared_ptr<gui::node> createLink(const std::string& href) override;
 	std::shared_ptr<gui::node> createText(const std::string& text) override;
+	std::shared_ptr<gui::node> createElement(const gui::elem name) override;
 
 	std::mutex m_guard;
 	std::map<std::string, std::shared_ptr<gui::image_ref>> m_cache;

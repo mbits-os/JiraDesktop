@@ -88,6 +88,9 @@ const std::vector<std::shared_ptr<gui::node>>& CJiraNode::children() const
 
 void CJiraNode::paint(gui::painter* painter)
 {
+	if (!painter->visible(this))
+		return;
+
 	StyleSaver saver{ painter, this };
 
 	auto style = calculatedStyle();
@@ -299,6 +302,12 @@ const std::string& CJiraNode::getTooltip() const
 
 	static std::string dummy;
 	return dummy;
+}
+
+void CJiraNode::innerText(const std::string& text)
+{
+	m_children.clear();
+	addChild(std::make_shared<CJiraTextNode>(text));
 }
 
 std::shared_ptr<styles::rule_storage> CJiraNode::calculatedStyle() const
@@ -708,31 +717,6 @@ void CJiraDocument::setCurrent(const std::shared_ptr<jira::server>& server)
 	m_server = server;
 }
 
-std::shared_ptr<gui::node> CJiraDocument::createTable()
-{
-	return std::make_shared<CJiraTableNode>();
-}
-
-std::shared_ptr<gui::node> CJiraDocument::createTableHead()
-{
-	return std::make_shared<CJiraTableRowNode>(gui::elem::table_head);
-}
-
-std::shared_ptr<gui::node> CJiraDocument::createTableRow()
-{
-	return std::make_shared<CJiraTableRowNode>(gui::elem::table_row);
-}
-
-std::shared_ptr<gui::node> CJiraDocument::createEmpty()
-{
-	return std::make_shared<CJiraSpanNode>(gui::elem::span);
-}
-
-std::shared_ptr<gui::node> CJiraDocument::createSpan()
-{
-	return std::make_shared<CJiraSpanNode>(gui::elem::span);
-}
-
 std::shared_ptr<gui::node> CJiraDocument::createIcon(const std::string& uri, const std::string& text, const std::string& description)
 {
 	auto image = createImage(uri);
@@ -785,6 +769,22 @@ std::shared_ptr<gui::image_ref> CJiraDocument::createImage(const std::string& ur
 	auto image = m_creator(m_server, uri);
 	m_cache.insert(it, std::make_pair(uri, image));
 	return image;
+}
+
+std::shared_ptr<gui::node> CJiraDocument::createElement(const gui::elem name)
+{
+	switch (name) {
+	case gui::elem::block: return std::make_shared<CJiraBlockNode>(name);
+	case gui::elem::header: return std::make_shared<CJiraSpanNode>(name);
+	case gui::elem::span: return std::make_shared<CJiraSpanNode>(name);
+	case gui::elem::table: return std::make_shared<CJiraTableNode>();
+	case gui::elem::table_head: return std::make_shared<CJiraTableRowNode>(name);
+	case gui::elem::table_row: return std::make_shared<CJiraTableRowNode>(name);
+	case gui::elem::th: return std::make_shared<CJiraSpanNode>(name);
+	case gui::elem::td: return std::make_shared<CJiraSpanNode>(name);
+	};
+
+	return{};
 }
 
 CJiraTableNode::CJiraTableNode()
@@ -887,15 +887,14 @@ CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& data
 void CJiraReportElement::addChildren(const jira::server& server)
 {
 	{
-		auto text = server.login() + "@" + server.displayName();
-		auto title = std::make_shared<CJiraTextNode>(text);
 		auto block = std::make_shared<CJiraSpanNode>(gui::elem::header);
-		block->addChild(title);
+		block->innerText(server.login() + "@" + server.displayName());
 		CJiraNode::addChild(block);
 	}
 
 	for (auto& error : server.errors()) {
-		auto note = std::make_shared<CJiraTextNode>(error);
+		auto note = std::make_shared<CJiraSpanNode>(gui::elem::span);
+		note->innerText(error);
 		note->addClass("error");
 		CJiraNode::addChild(std::move(note));
 	}
@@ -908,14 +907,13 @@ void CJiraReportElement::addChildren(const jira::server& server)
 			auto header = std::make_shared<CJiraTableRowNode>(gui::elem::table_head);
 			for (auto& col : dataset->schema.cols()) {
 				auto name = col->title();
-				auto node = std::make_shared<CJiraTextNode>(name);
+				auto th = std::make_shared<CJiraSpanNode>(gui::elem::th);
+				th->innerText(name);
 
 				auto tooltip = col->titleFull();
 				if (name != tooltip)
-					node->setTooltip(tooltip);
+					th->setTooltip(tooltip);
 
-				auto th = std::make_shared<CJiraSpanNode>(gui::elem::th);
-				th->addChild(node);
 				header->addChild(th);
 			}
 			table->addChild(header);
@@ -932,11 +930,13 @@ void CJiraReportElement::addChildren(const jira::server& server)
 			<< '-' << (dataset->startAt + dataset->data.size())
 			<< " of " << dataset->total << ")";
 
-		auto note = std::make_shared<CJiraTextNode>(o.str());
+		auto note = std::make_shared<CJiraSpanNode>(gui::elem::span);
+		note->innerText(o.str());
 		note->addClass("summary");
 		CJiraNode::addChild(std::move(note));
 	} else {
-		auto note = std::make_shared<CJiraTextNode>("Empty");
+		auto note = std::make_shared<CJiraSpanNode>(gui::elem::span);
+		note->innerText("Empty");
 		note->addClass("empty");
 		CJiraNode::addChild(std::move(note));
 	}
