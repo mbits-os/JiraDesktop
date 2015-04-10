@@ -66,7 +66,7 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,130,81,50,14
-    CTEXT           "Tasks Application v1.0\n\n(c) Copyright 2015",IDC_STATIC,25,57,78,32
+    CTEXT           "Tasks Application v1.0.2a\n\n(c) Copyright 2015",IDC_STATIC,25,57,78,32
     ICON            IDR_MAINFRAME,IDC_STATIC,55,26,18,20
     GROUPBOX        "",IDC_STATIC,7,7,115,88
 END
@@ -126,8 +126,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION PROGRAM_VERSION_RC,0
- PRODUCTVERSION PROGRAM_VERSION_RC,0
+ FILEVERSION PROGRAM_VERSION_RC,PROGRAM_VERSION_BUILD
+ PRODUCTVERSION PROGRAM_VERSION_RC,PROGRAM_VERSION_BUILD
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -144,12 +144,12 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "Tasks and issues"
             VALUE "CompanyName", PROGRAM_COPYRIGHT_HOLDER
-            VALUE "FileVersion", PROGRAM_VERSION_STRING
+            VALUE "FileVersion", PROGRAM_VERSION_FULL
             VALUE "InternalName", PROGRAM_NAME
             VALUE "LegalCopyright", "\xA9 2015 " PROGRAM_COPYRIGHT_HOLDER
             VALUE "OriginalFilename", PROGRAM_NAME ".exe"
             VALUE "ProductName", PROGRAM_NAME
-            VALUE "ProductVersion", PROGRAM_VERSION_STRING
+            VALUE "ProductVersion", PROGRAM_VERSION_FULL
         END
     END
     BLOCK "VarFileInfo"
