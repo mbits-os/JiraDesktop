@@ -9,4 +9,4 @@ VERSION = ver.strip()
 
 call(["git","add","../apps/Tasks/src/version.h"])
 call(["git","commit","-m","Build for version %s" % VERSION])
-call(["git","tag","tag-build-v%s" % VERSION])
+call(["git","tag","v%s" % VERSION])
