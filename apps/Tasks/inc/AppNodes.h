@@ -182,7 +182,7 @@ public:
 		const gui::pixels& offX, const gui::pixels& offY) override;
 };
 
-class CJiraTableRowNode : public CJiraNode {
+class CJiraTableRowNode : public CJiraSpanNode {
 protected:
 	std::shared_ptr<std::vector<gui::pixels>> m_columns;
 public:
@@ -192,7 +192,17 @@ public:
 	gui::size measureContents(gui::painter* painter,
 		const gui::pixels& offX, const gui::pixels& offY) override;
 
-	void repositionChildren(gui::painter* painter);
+	virtual void repositionChildren();
+};
+
+class CJiraTableCaptionRowNode : public CJiraTableRowNode {
+public:
+	CJiraTableCaptionRowNode();
+
+	gui::size measureContents(gui::painter* painter,
+		const gui::pixels& offX, const gui::pixels& offY) override;
+
+	void repositionChildren() override;
 };
 
 class CJiraReportElement : public CJiraBlockNode {

@@ -832,9 +832,14 @@ CJiraTableNode::CJiraTableNode()
 void CJiraTableNode::addChild(const std::shared_ptr<gui::node>& child)
 {
 	auto elem = child->getNodeName();
-	if (elem == gui::elem::table_row || elem == gui::elem::table_head) {
+	switch (elem) {
+	case gui::elem::table_caption:
+	case gui::elem::table_row:
+	case gui::elem::table_head:
 		CJiraNode::addChild(child);
 		std::static_pointer_cast<CJiraTableRowNode>(child)->setColumns(m_columns);
+	default:
+		break;
 	}
 }
 
@@ -843,7 +848,9 @@ gui::size CJiraTableNode::measureContents(gui::painter* painter,
 {
 	size_t columns = 0;
 	for (auto& node : m_children) {
-		auto values = node->children().size();
+		auto name = node->getNodeName();
+		auto values = 
+			name == gui::elem::table_caption ? 1 : node->children().size();
 		if (columns < values)
 			columns = values;
 	}
@@ -853,14 +860,14 @@ gui::size CJiraTableNode::measureContents(gui::painter* painter,
 	auto content = CJiraBlockNode::measureContents(painter, offX, offY);
 
 	for (auto& node : m_children)
-		static_cast<CJiraTableRowNode*>(node.get())->repositionChildren(painter);
+		static_cast<CJiraTableRowNode*>(node.get())->repositionChildren();
 
 	content.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
 	return content;
 }
 
 CJiraTableRowNode::CJiraTableRowNode(gui::elem name)
-	: CJiraNode(name)
+	: CJiraSpanNode(name)
 {
 }
 
@@ -899,7 +906,7 @@ gui::size CJiraTableRowNode::measureContents(gui::painter* painter,
 	return sz;
 }
 
-void CJiraTableRowNode::repositionChildren(gui::painter* /*painter*/)
+void CJiraTableRowNode::repositionChildren()
 {
 	auto it = m_columns->begin();
 
@@ -916,6 +923,35 @@ void CJiraTableRowNode::repositionChildren(gui::painter* /*painter*/)
 	}
 
 	m_position.size.width = x + offsetRight();
+}
+
+CJiraTableCaptionRowNode::CJiraTableCaptionRowNode()
+	: CJiraTableRowNode(gui::elem::table_caption)
+{
+}
+
+gui::size CJiraTableCaptionRowNode::measureContents(gui::painter* painter,
+	const gui::pixels& offX, const gui::pixels& offY)
+{
+	// Grandfather call, skip columns setting
+	return CJiraSpanNode::measureContents(painter, offX, offY);
+}
+
+void CJiraTableCaptionRowNode::repositionChildren()
+{
+	// make sure there is enough space after the last child...
+	if (m_columns->empty())
+		return;
+
+	auto it = m_columns->begin();
+	gui::pixels x = 0;
+	for (auto& w : *m_columns)
+		x += w;
+
+	if (x < m_position.size.width)
+		m_columns->back() += m_position.size.width - x;
+	else
+		m_position.size.width = x;
 }
 
 CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& dataset)
@@ -943,6 +979,14 @@ void CJiraReportElement::addChildren(const jira::server& server)
 	if (dataset) {
 		auto table = std::make_shared<CJiraTableNode>();
 
+		{
+			auto caption = std::make_shared<CJiraTableCaptionRowNode>();
+			auto jql = server.view().jql();
+			if (jql.empty())
+				jql = jira::search_def::standard.jql();
+			caption->innerText(jql);
+			table->addChild(caption);
+		}
 		{
 			auto header = std::make_shared<CJiraTableRowNode>(gui::elem::table_head);
 			for (auto& col : dataset->schema.cols()) {
