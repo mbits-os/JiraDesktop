@@ -2,7 +2,7 @@
 
 import os, shutil, glob, zipfile, _winreg
 from os import path
-from subprocess import call
+from subprocess import call, check_output
 
 MSVCRT = False
 
@@ -12,6 +12,13 @@ ROOT = ".."
 PLATFORM = "Win32"
 CONFIG = "Release"
 VERSION = "1.0.2a"
+
+try:
+	ver = check_output([ "python", "version.py", "../apps/Tasks/src/version.h",
+		"PROGRAM_VERSION_MAJOR,PROGRAM_VERSION_MINOR,PROGRAM_VERSION_PATCH,PROGRAM_VERSION_BUILD,PROGRAM_VERSION_STABILITY"])
+	VERSION = ver.strip()
+except:
+	pass
 
 ZIPNAME = "tasks-%s-%s.zip" % (VERSION, PLATFORM.lower())
 MSINAME = "tasks-%s-%s.msi" % (VERSION, PLATFORM.lower())
