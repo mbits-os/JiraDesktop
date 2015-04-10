@@ -42,6 +42,7 @@ namespace gui {
 		table,
 		table_head,
 		table_row,
+		table_caption,
 		th,
 		td
 	};
@@ -88,6 +89,7 @@ namespace gui {
 		block,
 		table,
 		table_row,
+		table_caption,
 		table_header,
 		table_footer,
 		table_cell,
