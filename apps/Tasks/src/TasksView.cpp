@@ -249,6 +249,8 @@ namespace {
 
 			// TABLE
 			.add(gui::elem::table,                         display(gui::display::table))
+			.add(gui::elem::table_caption,                 display(gui::display::table_caption) <<
+			                                               padding(.2_em))
 			.add(gui::elem::table_head,                    display(gui::display::table_header))
 			.add(gui::elem::table_row,                     display(gui::display::table_row))
 			.add(gui::elem::td,                            display(gui::display::table_cell) <<
@@ -268,6 +270,12 @@ namespace {
 			.add(gui::elem::table,                         border(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add(gui::elem::table_row,                     border_top(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf5f5f5))
+			.add(gui::elem::table_caption,                 background(0xaf733b) << color(0xFFFFFF) <<
+			                                               font_weight(gui::weight::bold) <<
+			                                               font_size(10_px) << padding(.6_em) <<
+			                                               font_family("Courier New"))
+			.add(gui::elem::td,                            padding(.2_em, .6_em))
+			.add(gui::elem::th,                            padding(.2_em, .6_em))
 			.add(gui::elem::link,                          padding(2_px) << border(1_px, gui::line_style::none, 0xc0c0c0))
 			.add({ gui::elem::link, pseudo::active },      border(1_px, gui::line_style::dot, 0xc0c0c0))
 
@@ -638,6 +646,7 @@ static std::string to_string(gui::display val)
 	case gui::display::block: return "block";
 	case gui::display::table: return "table";
 	case gui::display::table_row: return "table-row";
+	case gui::display::table_caption: return "table-caption";
 	case gui::display::table_header: return "table-header-row";
 	case gui::display::table_footer: return "table-footer-row";
 	case gui::display::table_cell: return "table-cell";
