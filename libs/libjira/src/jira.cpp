@@ -46,7 +46,7 @@ namespace jira
 		m_row->addChild(std::move(field));
 	}
 
-	std::shared_ptr<gui::node> type::visit(const std::shared_ptr<document>& doc, const record& issue, const json::value& value) const
+	std::shared_ptr<gui::node> type::visit(const std::shared_ptr<gui::document>& doc, const record& issue, const json::value& value) const
 	{
 		if (!value.is<json::map>())
 			return nullptr;
@@ -54,7 +54,7 @@ namespace jira
 		return visit(doc, issue, value.as<json::map>());
 	}
 
-	record model::visit(const std::shared_ptr<document>& doc, const json::value& object, const std::string& key, const std::string& id) const
+	record model::visit(const std::shared_ptr<gui::document>& doc, const json::value& object, const std::string& key, const std::string& id) const
 	{
 		record out;
 		out.uri(m_uri);

@@ -288,7 +288,7 @@ namespace jira
 		}, ONPROGRESS{}, true);
 	}
 
-	void server::refresh(const std::shared_ptr<document>& doc)
+	void server::refresh(const std::shared_ptr<gui::document>& doc)
 	{
 		if (m_isLoadingView && !m_refreshDoc)
 			return;
@@ -364,7 +364,7 @@ namespace jira
 		}, progress, async);
 	}
 
-	void server::search(const std::shared_ptr<document>& doc, const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress, bool async)
+	void server::search(const std::shared_ptr<gui::document>& doc, const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress, bool async)
 	{
 		if (url().empty()) {
 			m_errors.push_back("Trying to open an empty URL.");
@@ -396,9 +396,6 @@ namespace jira
 			}
 
 			json::map info{ data };
-
-			// TODO: this is prone to concurrent runs
-			doc->setCurrent(shared_from_this());
 
 			report dataset;
 			dataset.startAt = info["startAt"].as_int();

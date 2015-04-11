@@ -36,9 +36,6 @@
 namespace jira
 {
 	class server;
-	struct document : gui::document {
-		virtual void setCurrent(const std::shared_ptr<server>&) = 0;
-	};
 
 	class record {
 		std::shared_ptr<gui::node> m_row;
@@ -74,8 +71,8 @@ namespace jira
 		virtual const std::string& id() const { return m_id; }
 		virtual const std::string& title() const { return titleFull(); }
 		virtual const std::string& titleFull() const { return m_title; }
-		virtual std::shared_ptr<gui::node> visit(const std::shared_ptr<document>& doc, const record& issue, const json::map& object) const = 0;
-		virtual std::shared_ptr<gui::node> visit(const std::shared_ptr<document>& doc, const record& issue, const json::value& value) const;
+		virtual std::shared_ptr<gui::node> visit(const std::shared_ptr<gui::document>& doc, const record& issue, const json::map& object) const = 0;
+		virtual std::shared_ptr<gui::node> visit(const std::shared_ptr<gui::document>& doc, const record& issue, const json::value& value) const;
 	private:
 		std::string m_id;
 		std::string m_title;
@@ -89,7 +86,7 @@ namespace jira
 		model(std::vector<std::unique_ptr<type>>&& cols, const std::string& uri) : m_cols(std::move(cols)), m_uri(uri) {}
 	public:
 		model() = default;
-		record visit(const std::shared_ptr<document>& doc, const json::value& object, const std::string& key, const std::string& id) const;
+		record visit(const std::shared_ptr<gui::document>& doc, const json::value& object, const std::string& key, const std::string& id) const;
 
 		const std::vector<std::unique_ptr<type>>& cols() const { return m_cols; }
 	};
