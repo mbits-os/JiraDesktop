@@ -61,6 +61,7 @@
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_gdi_painter.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_hotkey.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_menu.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_nodes.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_settings.cpp" />
   </ItemGroup>
   <ItemGroup>
