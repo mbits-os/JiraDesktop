@@ -18,6 +18,12 @@
     <Filter Include="src\win32">
       <UniqueIdentifier>{17e0257f-3b83-4b45-91f4-f488237968e5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="inc\gui\nodes">
+      <UniqueIdentifier>{e69b7af4-2799-49e2-be98-660c1ca04787}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\nodes">
+      <UniqueIdentifier>{f547f723-2a67-4533-b04b-ac5a2b9f978e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\libs\libgui\pch\pch.cpp">
@@ -56,10 +62,40 @@
     <ClCompile Include="..\..\libs\libgui\src\painter_base.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libs\libgui\src\nodes.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\image_nodes.cpp">
+      <Filter>src\nodes</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libs\libgui\src\win32\win32_nodes.cpp">
+    <ClCompile Include="..\..\libs\libgui\src\nodes\node_base.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\span_node.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\block_node.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\link_node.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\text_node.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\document_impl.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\doc_element.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\table_node.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\row_node.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\nodes\caption_row_node.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_node_base.cpp">
       <Filter>src\win32</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,9 +119,6 @@
       <Filter>inc\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter.hpp">
-      <Filter>inc\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libs\libgui\inc\gui\node.hpp">
       <Filter>inc\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libs\libgui\inc\gui\listeners.hpp">
@@ -120,6 +153,39 @@
     </ClInclude>
     <ClInclude Include="..\..\libs\libgui\inc\gui\nodes.hpp">
       <Filter>inc\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\node_base.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\image_nodes.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\block_node.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\link_node.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\span_node.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\text_node.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\document_impl.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\caption_row_node.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\row_node.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\table_node.hpp">
+      <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\doc_element.hpp">
+      <Filter>inc\gui\nodes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

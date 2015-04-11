@@ -4,7 +4,7 @@
 #undef max
 #endif
 
-#include <gui/nodes.hpp>
+#include <gui/nodes/node_base.hpp>
 #include <net/utf8.hpp>
 #include "windows.h"
 #include "shellapi.h"

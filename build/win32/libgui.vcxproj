@@ -53,7 +53,17 @@
     <ClCompile Include="..\..\libs\libgui\src\cairo_painter.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\font_awesome.cc" />
     <ClCompile Include="..\..\libs\libgui\src\hotkey.cpp" />
-    <ClCompile Include="..\..\libs\libgui\src\nodes.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\block_node.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\caption_row_node.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\document_impl.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\doc_element.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\image_nodes.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\link_node.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\node_base.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\row_node.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\span_node.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\table_node.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes\text_node.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\painter_base.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\settings.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\styles.cpp" />
@@ -61,7 +71,7 @@
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_gdi_painter.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_hotkey.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_menu.cpp" />
-    <ClCompile Include="..\..\libs\libgui\src\win32\win32_nodes.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\win32\win32_node_base.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\win32\win32_settings.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -74,8 +84,18 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\image.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\listeners.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\menu.hpp" />
-    <ClInclude Include="..\..\libs\libgui\inc\gui\node.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\nodes.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\block_node.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\caption_row_node.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\document_impl.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\doc_element.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\image_nodes.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\link_node.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\node_base.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\row_node.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\span_node.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\table_node.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\text_node.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter_base.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\settings.hpp" />

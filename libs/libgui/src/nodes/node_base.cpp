@@ -1,23 +1,36 @@
+/*
+ * Copyright (C) 2015 midnightBITS
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "pch.h"
 
-#ifdef max
-#undef max
-#endif
-
-#include <gui/nodes.hpp>
-#include <gui/painter.hpp>
-#include <gui/node.hpp>
-#include <limits>
-#include <sstream>
-
-#include <net/utf8.hpp>
+#include <gui/nodes/node_base.hpp>
+#include <gui/nodes/text_node.hpp>
 
 #include <assert.h>
 #define ASSERT(x) assert(x)
 
 namespace gui {
-	using namespace styles::literals;
-
 	node_base::node_base(elem name)
 		: m_nodeName(name)
 	{
@@ -362,7 +375,7 @@ namespace gui {
 	void node_base::innerText(const std::string& text)
 	{
 		m_children.clear();
-		addChild(std::make_shared<CJiraTextNode>(text));
+		addChild(std::make_shared<text_node>(text));
 	}
 
 	std::shared_ptr<styles::rule_storage> node_base::calculatedStyle() const
@@ -544,449 +557,5 @@ namespace gui {
 		return
 			calculated(ref, styles::prop_border_bottom_width) +
 			calculated(ref, styles::prop_padding_bottom);
-	}
-
-	void image_cb::onImageChange(image_ref*)
-	{
-		auto par = parent.lock();
-		if (par)
-			par->invalidate();
-	}
-
-	icon_node::icon_node(const std::string& uri, const std::shared_ptr<image_ref>& image, const std::string& tooltip)
-		: node_base(elem::image)
-		, m_image(image)
-		, m_cb(std::make_shared<image_cb>())
-	{
-		m_data[Attr::Href] = uri;
-		node_base::setTooltip(tooltip);
-		m_position.size.width = m_position.size.height = 16_px;
-	}
-
-	icon_node::~icon_node()
-	{
-		m_image->unregisterListener(m_cb);
-		m_cb->parent.reset();
-	}
-
-	void icon_node::attach()
-	{
-		m_cb->parent = shared_from_this();
-		m_image->registerListener(m_cb);
-	}
-
-	void icon_node::addChild(const std::shared_ptr<node>& /*child*/)
-	{
-		// noop
-	}
-
-	void icon_node::paintContents(painter* painter,
-		const pixels& offX, const pixels& offY)
-	{
-		push_origin push{ painter };
-		painter->moveOrigin({ offX, offY });
-		painter->paintImage(m_image.get(), 16_px, 16_px);
-	}
-
-	size icon_node::measureContents(painter*,
-		const pixels&, const pixels&)
-	{
-		return{ 16_px, 16_px };
-	}
-
-	user_node::user_node(const std::weak_ptr<document_base>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip)
-		: node_base(elem::icon)
-		, m_document(document)
-		, m_cb(std::make_shared<image_cb>())
-		, m_urls(std::move(avatar))
-		, m_selectedSize(0)
-	{
-		node_base::setTooltip(tooltip);
-		m_position.size.width = m_position.size.height = 16_px;
-	}
-
-	user_node::~user_node()
-	{
-		m_image->unregisterListener(m_cb);
-		m_cb->parent.reset();
-	}
-
-	void user_node::addChild(const std::shared_ptr<node>& /*child*/)
-	{
-		// noop
-	}
-
-	void user_node::paintContents(painter* painter,
-		const pixels& offX, const pixels& offY)
-	{
-		push_origin push{ painter };
-		painter->moveOrigin({ offX, offY });
-		painter->paintImage(m_image.get(), 16_px, 16_px);
-	}
-
-	size user_node::measureContents(painter* painter,
-		const pixels&, const pixels&)
-	{
-		auto size = 16_px;
-		m_position.size = { size, size };
-		auto scaled = (size_t)(painter->trueZoom().scaleL(size.value()));
-		auto selected = 0;
-
-		std::string image;
-		auto it = m_urls.find(scaled);
-		if (it != m_urls.end()) {
-			image = it->second;
-			selected = it->first;
-		}
-		else {
-			size_t delta = std::numeric_limits<size_t>::max();
-			for (auto& pair : m_urls) {
-				if (pair.first < scaled)
-					continue;
-
-				size_t d = pair.first - scaled;
-				if (d < delta) {
-					delta = d;
-					image = pair.second;
-					selected = pair.first;
-				}
-			}
-			for (auto& pair : m_urls) {
-				if (pair.first > scaled)
-					continue;
-
-				size_t d = scaled - pair.first;
-				if (d < delta) {
-					delta = d;
-					image = pair.second;
-					selected = pair.first;
-				}
-			}
-		}
-
-		size = m_position.size.width;
-
-		if (selected == m_selectedSize)
-			return{ size, size };
-
-		m_selectedSize = selected;
-
-		if (m_image)
-			m_image->unregisterListener(m_cb);
-		m_image.reset();
-
-		m_cb->parent = shared_from_this();
-		auto doc = m_document.lock();
-		if (doc)
-			m_image = doc->createImage(image);
-
-		if (m_image)
-			m_image->registerListener(m_cb);
-
-		return{ size, size };
-	}
-
-	block_node::block_node(elem name)
-		: node_base(name)
-	{
-	}
-
-	size block_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
-	{
-		size sz;
-		auto x = offX;
-		auto y = offY;
-		for (auto& node : m_children) {
-			node->measure(painter);
-			auto ret = node->getSize();
-			if (sz.width < ret.width)
-				sz.width = ret.width;
-
-			node->setPosition(x, y);
-
-			sz.height += ret.height;
-			y += ret.height;
-		}
-
-		return sz;
-	}
-
-	span_node::span_node(elem name)
-		: node_base(name)
-	{
-	}
-
-	size span_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
-	{
-		size sz;
-		auto x = offX;
-		auto y = offY;
-		for (auto& node : m_children) {
-			node->measure(painter);
-			auto ret = node->getSize();
-			if (sz.height < ret.height)
-				sz.height = ret.height;
-
-			node->setPosition(x, y);
-
-			sz.width += ret.width;
-			x += ret.width;
-		}
-
-		return sz;
-	}
-
-	CJiraLinkNode::CJiraLinkNode(const std::string& href)
-		: span_node(elem::link)
-	{
-		m_data[Attr::Href] = href;
-	}
-
-	CJiraTextNode::CJiraTextNode(const std::string& text)
-		: node_base(elem::text)
-	{
-		m_data[Attr::Text] = text;
-	}
-
-	void CJiraTextNode::paintContents(painter* painter,
-		const pixels& offX, const pixels& offY)
-	{
-		push_origin push{ painter };
-		painter->moveOrigin({ offX, offY });
-		painter->paintString(m_data[Attr::Text]);
-	}
-
-	size CJiraTextNode::measureContents(painter* painter,
-		const pixels&, const pixels&)
-	{
-		return painter->measureString(m_data[Attr::Text]);
-	}
-
-	std::shared_ptr<document> document::make_doc(const std::shared_ptr<image_creator>& creator)
-	{
-		return std::make_shared<document_base>(creator);
-	}
-
-	document_base::document_base(const std::shared_ptr<image_creator>& creator)
-		: m_creator(creator)
-	{
-	}
-
-	std::shared_ptr<node> document_base::createIcon(const std::string& uri, const std::string& text, const std::string& description)
-	{
-		auto image = createImage(uri);
-		auto tooltip = text;
-		if (text.empty() || description.empty())
-			tooltip += description;
-		else
-			tooltip += "\n" + description;
-
-		auto icon = std::make_shared<icon_node>(uri, image, tooltip);
-		icon->attach();
-		return icon;
-	}
-
-	std::shared_ptr<node> document_base::createUser(bool /*active*/, const std::string& display, const std::string& email, const std::string& /*login*/, std::map<uint32_t, std::string>&& avatar)
-	{
-		if (avatar.empty()) {
-			auto node = createText(display);
-			if (!email.empty())
-				node->setTooltip(email);
-			return std::move(node);
-		}
-
-		auto tooltip = display;
-		if (display.empty() || email.empty())
-			tooltip += email;
-		else
-			tooltip += "\n" + email;
-
-		return std::make_shared<user_node>(shared_from_this(), std::move(avatar), tooltip);
-	}
-
-	std::shared_ptr<node> document_base::createLink(const std::string& href)
-	{
-		return std::make_shared<CJiraLinkNode>(href);
-	}
-
-	std::shared_ptr<node> document_base::createText(const std::string& text)
-	{
-		return std::make_shared<CJiraTextNode>(text);
-	}
-
-	std::shared_ptr<image_ref> document_base::createImage(const std::string& uri)
-	{
-		std::lock_guard<std::mutex> lock(m_guard);
-		auto it = m_cache.lower_bound(uri);
-		if (it != m_cache.end() && it->first == uri)
-			return it->second;
-
-		ASSERT(!!m_creator);
-		auto image = m_creator->create(uri);
-		m_cache.insert(it, std::make_pair(uri, image));
-		return image;
-	}
-
-	std::shared_ptr<node> document_base::createElement(const elem name)
-	{
-		switch (name) {
-		case elem::block: return std::make_shared<block_node>(name);
-		case elem::header: return std::make_shared<span_node>(name);
-		case elem::span: return std::make_shared<span_node>(name);
-		case elem::table: return std::make_shared<table_node>();
-		case elem::table_caption: return std::make_shared<caption_row_node>();
-		case elem::table_head: return std::make_shared<row_node>(name);
-		case elem::table_row: return std::make_shared<row_node>(name);
-		case elem::th: return std::make_shared<span_node>(name);
-		case elem::td: return std::make_shared<span_node>(name);
-		};
-
-		return{};
-	}
-
-	table_node::table_node()
-		: block_node(elem::table)
-		, m_columns(std::make_shared<std::vector<pixels>>())
-	{
-	}
-
-	void table_node::addChild(const std::shared_ptr<node>& child)
-	{
-		auto elem = child->getNodeName();
-		switch (elem) {
-		case elem::table_caption:
-		case elem::table_row:
-		case elem::table_head:
-			node_base::addChild(child);
-			std::static_pointer_cast<row_node>(child)->setColumns(m_columns);
-		default:
-			break;
-		}
-	}
-
-	size table_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
-	{
-		size_t columns = 0;
-		for (auto& node : m_children) {
-			auto name = node->getNodeName();
-			auto values =
-				name == elem::table_caption ? 1 : node->children().size();
-			if (columns < values)
-				columns = values;
-		}
-
-		m_columns->assign(columns, 0);
-
-		auto content = block_node::measureContents(painter, offX, offY);
-
-		for (auto& node : m_children)
-			static_cast<row_node*>(node.get())->repositionChildren();
-
-		content.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
-		return content;
-	}
-
-	row_node::row_node(elem name)
-		: span_node(name)
-	{
-	}
-
-	void row_node::setColumns(const std::shared_ptr<std::vector<pixels>>& columns)
-	{
-		m_columns = columns;
-	}
-
-	size row_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
-	{
-		if (!m_columns)
-			return{ 0, 0 };
-
-		auto it = m_columns->begin();
-
-		size sz;
-		auto x = offX;
-		auto y = offY;
-		for (auto& node : m_children) {
-			node->measure(painter);
-			auto ret = node->getSize();
-			if (sz.height < ret.height)
-				sz.height = ret.height;
-
-			node->setPosition(x, y);
-
-			sz.width += ret.width;
-			x += ret.width;
-
-			if (*it < ret.width)
-				*it = ret.width;
-			++it;
-		}
-
-		return sz;
-	}
-
-	void row_node::repositionChildren()
-	{
-		auto it = m_columns->begin();
-
-		size sz;
-		auto x = offsetLeft();
-		auto y = offsetTop();
-		auto h = m_position.size.height;
-		h -= offsetTop() + offsetBottom();
-		for (auto& node : m_children) {
-			auto w = *it++;
-			node->setPosition(x, y);
-			node->setSize(w, h);
-			x += w;
-		}
-
-		m_position.size.width = x + offsetRight();
-	}
-
-	caption_row_node::caption_row_node()
-		: row_node(elem::table_caption)
-	{
-	}
-
-	size caption_row_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
-	{
-		// Grandfather call, skip columns setting
-		return span_node::measureContents(painter, offX, offY);
-	}
-
-	void caption_row_node::repositionChildren()
-	{
-		// make sure there is enough space after the last child...
-		if (m_columns->empty())
-			return;
-
-		auto it = m_columns->begin();
-		pixels x = 0;
-		for (auto& w : *m_columns)
-			x += w;
-
-		if (x < m_position.size.width)
-			m_columns->back() += m_position.size.width - x;
-		else
-			m_position.size.width = x;
-	}
-
-	doc_element::doc_element(const std::function<void(const point&, const size&)>& invalidator)
-		: block_node(elem::body)
-		, m_invalidator(invalidator)
-	{
-	}
-
-	void doc_element::invalidate(const point& pt, const size& size)
-	{
-		auto p = pt + m_position.pt;
-		if (m_invalidator)
-			m_invalidator(pt, size);
 	}
 }
