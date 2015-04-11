@@ -4,7 +4,6 @@
 #include <thread>
 #include <net/xhr.hpp>
 #include <net/utf8.hpp>
-#include <gui/nodes.hpp>
 #include <sstream>
 #include <algorithm>
 
@@ -14,16 +13,16 @@ CJiraReportElement::CJiraReportElement(const std::shared_ptr<jira::report>& data
 {
 }
 
-void CJiraReportElement::addChildren(const jira::server& server)
+void CJiraReportElement::addChildren(const jira::server& server, gui::document* doc)
 {
 	{
-		auto block = std::make_shared<gui::span_node>(gui::elem::header);
+		auto block = doc->createElement(gui::elem::header);
 		block->innerText(server.login() + "@" + server.displayName());
 		node_base::addChild(block);
 	}
 
 	for (auto& error : server.errors()) {
-		auto note = std::make_shared<gui::span_node>(gui::elem::span);
+		auto note = doc->createElement(gui::elem::span);
 		note->innerText(error);
 		note->addClass("error");
 		node_base::addChild(std::move(note));
@@ -31,10 +30,10 @@ void CJiraReportElement::addChildren(const jira::server& server)
 
 	auto dataset = m_dataset.lock();
 	if (dataset) {
-		auto table = std::make_shared<gui::table_node>();
+		auto table = doc->createElement(gui::elem::table);
 
 		{
-			auto caption = std::make_shared<gui::caption_row_node>();
+			auto caption = doc->createElement(gui::elem::table_caption);
 			auto jql = server.view().jql();
 			if (jql.empty())
 				jql = jira::search_def::standard.jql();
@@ -42,10 +41,10 @@ void CJiraReportElement::addChildren(const jira::server& server)
 			table->addChild(caption);
 		}
 		{
-			auto header = std::make_shared<gui::row_node>(gui::elem::table_head);
+			auto header = doc->createElement(gui::elem::table_head);
 			for (auto& col : dataset->schema.cols()) {
 				auto name = col->title();
-				auto th = std::make_shared<gui::span_node>(gui::elem::th);
+				auto th = doc->createElement(gui::elem::th);
 				th->innerText(name);
 
 				auto tooltip = col->titleFull();
@@ -68,13 +67,13 @@ void CJiraReportElement::addChildren(const jira::server& server)
 			<< '-' << (dataset->startAt + dataset->data.size())
 			<< " of " << dataset->total << ")";
 
-		auto note = std::make_shared<gui::span_node>(gui::elem::span);
+		auto note = doc->createElement(gui::elem::span);
 		note->innerText(o.str());
 		note->addClass("summary");
 		node_base::addChild(std::move(note));
 	}
 	else {
-		auto note = std::make_shared<gui::span_node>(gui::elem::span);
+		auto note = doc->createElement(gui::elem::span);
 		note->innerText("Empty");
 		note->addClass("empty");
 		node_base::addChild(std::move(note));
@@ -105,7 +104,6 @@ public:
 };
 
 CAppModel::CAppModel()
-	//: m_document(std::make_shared<gui::document_base>(image_creator))
 {
 }
 
@@ -132,7 +130,7 @@ public:
 
 std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr)
 {
-	return std::make_shared<gui::document_base>(std::make_shared<ImageCreator>(srvr));
+	return gui::document::make_doc(std::make_shared<ImageCreator>(srvr));
 }
 
 void CAppModel::startup()

@@ -112,8 +112,10 @@ std::function<void(const gui::point&, const gui::size&)>
 
 CTasksView::ServerInfo::ServerInfo(
 	const std::shared_ptr<jira::server>& server,
+	const std::shared_ptr<gui::document>& doc,
 	const std::shared_ptr<jira::server_listener>& listener)
 	: m_server(server)
+	, m_document(doc)
 	, m_listener(listener)
 	, m_sessionId(server->sessionId())
 {
@@ -130,7 +132,7 @@ CTasksView::ServerInfo::~ServerInfo()
 void CTasksView::ServerInfo::buildPlaque()
 {
 	m_plaque = std::make_unique<CJiraReportElement>(m_dataset);
-	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*m_server);
+	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*m_server, m_document.get());
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
@@ -138,12 +140,12 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionI
 	return std::find_if(std::begin(m_servers), std::end(m_servers), [sessionId](const ServerInfo& info) { return info.m_sessionId == sessionId; });
 }
 
-std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<ServerInfo>::const_iterator it, const std::shared_ptr<jira::server>& server)
+std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<ServerInfo>::const_iterator it, const ::ServerInfo& info)
 {
 	// TODO: create UI element
 	// TDOD: attach refresh listener to the server
-	auto listener = std::make_shared<ServerListener>(m_hWnd, server->sessionId());
-	return m_servers.emplace(it, server, listener);
+	auto listener = std::make_shared<ServerListener>(m_hWnd, info.m_server->sessionId());
+	return m_servers.emplace(it, info.m_server, info.m_document, listener);
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<ServerInfo>::const_iterator it)
@@ -932,7 +934,7 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 					// it += (rit.base() - servers.begin())
 					 std::advance(it, std::distance(std::begin(servers), sit));
 
-					 insert(it, sit->m_server);
+					 insert(it, *sit);
 				}
 			});
 		} else
@@ -969,7 +971,7 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 				if (it != end && (srv_it->m_server)->sessionId() == it->m_sessionId)
 					continue;
 
-				it = insert(it, srv_it->m_server); // fill in blanks...
+				it = insert(it, *srv_it); // fill in blanks...
 				end = std::end(m_servers);
 			}
 		});

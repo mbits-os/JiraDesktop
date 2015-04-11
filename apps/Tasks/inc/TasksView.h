@@ -43,6 +43,7 @@ class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 public:
 	struct ServerInfo {
 		std::shared_ptr<jira::server> m_server;
+		std::shared_ptr<gui::document> m_document;
 		std::shared_ptr<jira::server_listener> m_listener;
 		std::shared_ptr<jira::report> m_dataset;
 		uint32_t m_sessionId;
@@ -53,7 +54,9 @@ public:
 		// TODO : relation to UI element
 		std::shared_ptr<gui::node> m_plaque;
 
-		ServerInfo(const std::shared_ptr<jira::server>& server, const std::shared_ptr<jira::server_listener>& listener);
+		ServerInfo(const std::shared_ptr<jira::server>& server,
+			const std::shared_ptr<gui::document>& doc,
+			const std::shared_ptr<jira::server_listener>& listener);
 		~ServerInfo();
 		ServerInfo(const ServerInfo&) = delete;
 		ServerInfo& operator=(const ServerInfo&) = delete;
@@ -70,7 +73,7 @@ private:
 	std::shared_ptr<gui::node> m_cheatsheet;
 	std::vector<ServerInfo>::iterator find(uint32_t sessionId);
 
-	std::vector<ServerInfo>::iterator insert(std::vector<ServerInfo>::const_iterator it, const std::shared_ptr<jira::server>& server);
+	std::vector<ServerInfo>::iterator insert(std::vector<ServerInfo>::const_iterator it, const ::ServerInfo& info);
 	std::vector<ServerInfo>::iterator erase(std::vector<ServerInfo>::const_iterator it);
 
 	CFontHandle m_font;

@@ -17,7 +17,7 @@ class CJiraReportElement : public gui::block_node {
 	std::weak_ptr<jira::report> m_dataset;
 public:
 	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset);
-	void addChildren(const jira::server& server);
+	void addChildren(const jira::server& server, gui::document* doc);
 
 	void addChild(const std::shared_ptr<gui::node>& child) override final;
 };
