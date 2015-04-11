@@ -66,7 +66,7 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,130,81,50,14
-    CTEXT           "Tasks Application v1.0.2a\n\n(c) Copyright 2015",IDC_STATIC,25,57,78,32
+    CTEXT           "Tasks <VERSION>\n\n\xA9 2015 <HOLDER>",IDC_STATIC_VERSION,25,57,78,32
     ICON            IDR_MAINFRAME,IDC_STATIC,55,26,18,20
     GROUPBOX        "",IDC_STATIC,7,7,115,88
 END
