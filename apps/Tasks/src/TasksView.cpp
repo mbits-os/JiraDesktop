@@ -275,7 +275,7 @@ namespace {
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf5f5f5))
 			.add(gui::elem::table_caption,                 background(0xaf733b) << color(0xFFFFFF) <<
 			                                               font_weight(gui::weight::bold) <<
-			                                               font_size(12_px) << padding(.6_em) <<
+			                                               font_size(.75_em) << padding(.6_em) <<
 			                                               font_family("Courier New"))
 			.add(gui::elem::td,                            padding(.2_em, .6_em))
 			.add(gui::elem::th,                            padding(.2_em, .6_em))

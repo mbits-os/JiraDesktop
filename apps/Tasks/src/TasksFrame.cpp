@@ -108,7 +108,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	m_view.Create(m_container, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 	m_container.SetClient(m_view, false);
 
-#if 0
+#if 1
 	m_font = AtlCreateControlFont();
 #else
 	int fontSize = 14;
