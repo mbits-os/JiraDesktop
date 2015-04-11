@@ -764,6 +764,11 @@ namespace gui {
 		return painter->measureString(m_data[Attr::Text]);
 	}
 
+	std::shared_ptr<document> document::make_doc(const std::shared_ptr<image_creator>& creator)
+	{
+		return std::make_shared<document_base>(creator);
+	}
+
 	document_base::document_base(const std::shared_ptr<image_creator>& creator)
 		: m_creator(creator)
 	{
@@ -831,6 +836,7 @@ namespace gui {
 		case elem::header: return std::make_shared<span_node>(name);
 		case elem::span: return std::make_shared<span_node>(name);
 		case elem::table: return std::make_shared<table_node>();
+		case elem::table_caption: return std::make_shared<caption_row_node>();
 		case elem::table_head: return std::make_shared<row_node>(name);
 		case elem::table_row: return std::make_shared<row_node>(name);
 		case elem::th: return std::make_shared<span_node>(name);

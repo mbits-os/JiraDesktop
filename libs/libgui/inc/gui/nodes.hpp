@@ -157,11 +157,6 @@ namespace gui {
 			const pixels& offX, const pixels& offY) override;
 	};
 
-	struct image_creator {
-		virtual ~image_creator() {}
-		virtual std::shared_ptr<image_ref> create(const std::string&) = 0;
-	};
-
 	class document_base : public document, public std::enable_shared_from_this<document_base> {
 		std::shared_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) override;
 		std::shared_ptr<node> createUser(bool active, const std::string& display, const std::string& email, const std::string& login, std::map<uint32_t, std::string>&& avatar) override;
