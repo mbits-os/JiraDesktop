@@ -53,6 +53,7 @@
     <ClCompile Include="..\..\libs\libgui\src\cairo_painter.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\font_awesome.cc" />
     <ClCompile Include="..\..\libs\libgui\src\hotkey.cpp" />
+    <ClCompile Include="..\..\libs\libgui\src\nodes.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\painter_base.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\settings.cpp" />
     <ClCompile Include="..\..\libs\libgui\src\styles.cpp" />
@@ -73,6 +74,7 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\listeners.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\menu.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\node.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter_base.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\settings.hpp" />

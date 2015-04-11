@@ -39,9 +39,6 @@
     <ClCompile Include="..\..\apps\Tasks\src\ConnectionDlg.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\apps\Tasks\src\AppNodes.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\apps\Tasks\src\TasksActions.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -79,9 +76,6 @@
     </ClInclude>
     <ClInclude Include="..\..\apps\Tasks\src\version.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\apps\Tasks\inc\AppNodes.h">
-      <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\apps\Tasks\inc\TasksActions.h">
       <Filter>inc</Filter>
