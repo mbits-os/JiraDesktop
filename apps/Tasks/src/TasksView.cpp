@@ -17,7 +17,7 @@
 #include <gui/gdi_painter.hpp>
 #endif
 
-#include <gui/nodes.hpp>
+#include <gui/nodes/doc_element.hpp>
 
 #if FA_CHEATSHEET
 #include "gui/font_awesome.hh"

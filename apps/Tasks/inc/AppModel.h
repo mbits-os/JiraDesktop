@@ -6,7 +6,7 @@
 #include <gui/image.hpp>
 #include <gui/action.hpp>
 #include <gui/painter.hpp>
-#include <gui/nodes.hpp>
+#include <gui/nodes/block_node.hpp>
 
 struct CAppModelListener {
 	virtual ~CAppModelListener() {}
