@@ -246,8 +246,9 @@ namespace {
 			.add(gui::elem::block,                         display(gui::display::block))
 			.add(gui::elem::header,                        display(gui::display::block) <<
 			                                               font_size(1.8_em) <<
-			                                               margin(.3_em, 0_px, .2_em) <<
-			                                               padding(.2_em, .2_px, .2_em))
+			                                               padding(.5_em, .2_px, .4_em))
+			                                               // margin(.3_em, 0_px, .2_em) <<
+			                                               // padding(.2_em, .2_px, .2_em))
 
 			// TABLE
 			.add(gui::elem::table,                         display(gui::display::table))
@@ -274,7 +275,7 @@ namespace {
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf5f5f5))
 			.add(gui::elem::table_caption,                 background(0xaf733b) << color(0xFFFFFF) <<
 			                                               font_weight(gui::weight::bold) <<
-			                                               font_size(10_px) << padding(.6_em) <<
+			                                               font_size(12_px) << padding(.6_em) <<
 			                                               font_family("Courier New"))
 			.add(gui::elem::td,                            padding(.2_em, .6_em))
 			.add(gui::elem::th,                            padding(.2_em, .6_em))
