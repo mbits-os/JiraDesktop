@@ -6,48 +6,39 @@
 #include <gui/image.hpp>
 #include <gui/action.hpp>
 #include <gui/painter.hpp>
+#include <gui/nodes.hpp>
 
 struct CAppModelListener {
 	virtual ~CAppModelListener() {}
 	virtual void onListChanged(uint32_t addedOrRemoved) = 0;
 };
 
-struct StyleSave;
-
-class StyleSaver {
-	gui::painter* painter;
-	gui::style_handle save;
+class CJiraReportElement : public gui::block_node {
+	std::weak_ptr<jira::report> m_dataset;
 public:
-	explicit StyleSaver(gui::painter* painter, gui::node* node) : painter(painter), save(nullptr)
-	{
-		if (!node)
-			return;
+	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset);
+	void addChildren(const jira::server& server);
 
-		save = painter->applyStyle(node);
-	}
+	void addChild(const std::shared_ptr<gui::node>& child) override final;
+};
 
-	~StyleSaver()
-	{
-		painter->restoreStyle(save);
-	}
+struct ServerInfo {
+	std::shared_ptr<jira::server> m_server;
+	std::shared_ptr<gui::document> m_document;
 };
 
 class CAppModel : public listeners<CAppModelListener, CAppModel> {
-	std::vector<std::shared_ptr<jira::server>> m_servers;
-	std::shared_ptr<jira::document> m_document;
+	std::vector<ServerInfo> m_servers;
 
 	void onListChanged(uint32_t addedOrRemoved);
 	std::mutex m_guard;
-
-	static std::shared_ptr<gui::image_ref> image_creator(const std::shared_ptr<jira::server>& srv, const std::string&);
 public:
 	CAppModel();
 
 	void startup();
 
 	void lock();
-	const std::vector<std::shared_ptr<jira::server>>& servers() const;
-	const std::shared_ptr<jira::document>& document() const;
+	const std::vector<ServerInfo>& servers() const;
 	void unlock();
 
 	void add(const std::shared_ptr<jira::server>& server);

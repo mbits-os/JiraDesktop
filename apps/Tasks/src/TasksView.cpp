@@ -17,7 +17,7 @@
 #include <gui/gdi_painter.hpp>
 #endif
 
-#include "AppNodes.h"
+#include <gui/nodes.hpp>
 
 #if FA_CHEATSHEET
 #include "gui/font_awesome.hh"
@@ -330,7 +330,7 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 void CTasksView::updateLayout()
 {
-	m_body = std::make_shared<CJiraDocumentElement>(make_invalidator(m_hWnd, m_zoom));
+	m_body = std::make_shared<gui::doc_element>(make_invalidator(m_hWnd, m_zoom));
 	for (auto& server : m_servers) {
 		if (server.m_plaque)
 			m_body->addChild(server.m_plaque);
@@ -925,14 +925,14 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			synchronize(*m_model, [&] {
 				auto& servers = m_model->servers();
 				// find the location of the ID; hint: it might be at the end
-				auto sit = std::find_if(std::begin(servers), std::end(servers), [&](const std::shared_ptr<jira::server>& server) { return server->sessionId() == wParam; });
+				auto sit = std::find_if(std::begin(servers), std::end(servers), [&](const ::ServerInfo& info) { return info.m_server->sessionId() == wParam; });
 				if (sit != std::end(servers)) {
 					auto it = std::begin(m_servers);
 
 					// it += (rit.base() - servers.begin())
 					 std::advance(it, std::distance(std::begin(servers), sit));
 
-					 insert(it, *sit);
+					 insert(it, sit->m_server);
 				}
 			});
 		} else
@@ -947,7 +947,7 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 			// for each ServerInfo: if not in model - remove
 			while (it != end) {
-				auto query = std::find_if(std::begin(servers), std::end(servers), [&](const std::shared_ptr<jira::server>& srv) { return srv->sessionId() == it->m_sessionId; });
+				auto query = std::find_if(std::begin(servers), std::end(servers), [&](const ::ServerInfo& info) { return info.m_server->sessionId() == it->m_sessionId; });
 				if (query == std::end(servers))
 				{
 					it = erase(it);
@@ -966,10 +966,10 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			auto srv_end = std::end(servers);
 
 			for (; srv_it != srv_end; ++srv_it, ++it) {
-				if (it != end && (*srv_it)->sessionId() == it->m_sessionId)
+				if (it != end && (srv_it->m_server)->sessionId() == it->m_sessionId)
 					continue;
 
-				it = insert(it, *srv_it); // fill in blanks...
+				it = insert(it, srv_it->m_server); // fill in blanks...
 				end = std::end(m_servers);
 			}
 		});

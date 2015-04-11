@@ -256,14 +256,15 @@ void CTasksFrame::newConnection()
 
 void CTasksFrame::refreshAll()
 {
-	auto local = m_model->servers();
-	auto document = m_model->document();
-	for (auto server : local) {
-		std::thread{ [server, document] {
-			server->loadFields();
-			server->refresh(document);
-		} }.detach();
-	}
+	synchronize(*m_model, [&] {
+		auto local = m_model->servers();
+		for (auto info : local) {
+			std::thread{ [info] {
+				info.m_server->loadFields();
+				info.m_server->refresh(info.m_document);
+			} }.detach();
+		}
+	});
 }
 
 void CTasksFrame::exitApplication()
