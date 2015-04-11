@@ -7,16 +7,31 @@ from subprocess import call, check_output
 MSVCRT = False
 
 WiX = "c:\\Program Files (x86)\\WiX Toolset v3.9\\bin"
+VERSION_H = "../apps/Tasks/src/version.h"
 
 ROOT = ".."
 PLATFORM = "Win32"
 CONFIG = "Release"
 VERSION = "1.0.2a"
 
+VERSION_MAJOR = None
+VERSION_MINOR = None
+VERSION_PATCH = None
+VERSION_BUILD = None
+COMPANY = None
+PACKAGE = None
+
 try:
-	ver = check_output([ "python", "version.py", "../apps/Tasks/src/version.h",
+	ver = check_output([ "python", "version.py", VERSION_H,
 		"PROGRAM_VERSION_MAJOR,PROGRAM_VERSION_MINOR,PROGRAM_VERSION_PATCH,PROGRAM_VERSION_BUILD,PROGRAM_VERSION_STABILITY"])
 	VERSION = ver.strip()
+
+	VERSION_MAJOR = check_output([ "python", "version.py", VERSION_H, "PROGRAM_VERSION_MAJOR"]).strip()
+	VERSION_MINOR = check_output([ "python", "version.py", VERSION_H, "PROGRAM_VERSION_MINOR"]).strip()
+	VERSION_PATCH = check_output([ "python", "version.py", VERSION_H, "PROGRAM_VERSION_PATCH"]).strip()
+	VERSION_BUILD = check_output([ "python", "version.py", VERSION_H, "PROGRAM_VERSION_BUILD"]).strip()
+	COMPANY = check_output([ "python", "version.py", VERSION_H, "PROGRAM_COPYRIGHT_HOLDER"]).strip()
+	PACKAGE = check_output([ "python", "version.py", VERSION_H, "PROGRAM_NAME"]).strip()
 except:
 	pass
 
@@ -114,9 +129,20 @@ with zipfile.ZipFile(ZIPNAME, 'w') as zip:
 				dest = path.join(dir, dest)
 			zip.write(f, dest)
 
-msvcrtDef=[]
-if MSVCRT: msvcrtDef = ['-dMSVCRT']
+additional=[]
+if MSVCRT: additional += ['-dMSVCRT']
 
-call(["candle", "-nologo", WXS] + msvcrtDef)
+if VERSION_MAJOR is not None: additional += ['-dVERSION_MAJOR=%s'%VERSION_MAJOR]
+if VERSION_MINOR is not None: additional += ['-dVERSION_MINOR=%s'%VERSION_MINOR]
+if VERSION_PATCH is not None: additional += ['-dVERSION_PATCH=%s'%VERSION_PATCH]
+if VERSION_BUILD is not None: additional += ['-dVERSION_BUILD=%s'%VERSION_BUILD]
+if COMPANY is not None:
+	if " " in COMPANY: additional += ['-dCOMPANY="%s"'%COMPANY]
+	else: additional += ['-dCOMPANY=%s'%COMPANY]
+if PACKAGE is not None:
+	if " " in PACKAGE: additional += ['-dPACKAGE="%s"'%PACKAGE]
+	else: additional += ['-dPACKAGE=%s'%PACKAGE]
+
+call(["candle", "-nologo", WXS] + additional)
 call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-ext", "WixUIExtension", WIXOBJ, "-out", MSINAME])
 call(["signtool", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s Installer" % VERSION, MSINAME])
