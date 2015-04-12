@@ -73,9 +73,11 @@ namespace gui { namespace gdi {
 			SetViewportOrgEx(tmp , -m_clip.left, -m_clip.top, nullptr);
 			m_originalDC = dc;
 			m_dc = tmp;
-#endif // GDI_NONINT_RECT
 
+			fillSolidRect(m_clip, GetSysColor(COLOR_WINDOW));
+#else
 			FillRect(m_dc, &m_clip, background);
+#endif // GDI_NONINT_RECT
 			SetBkMode(m_dc, TRANSPARENT);
 		}
 
@@ -149,7 +151,7 @@ namespace gui { namespace gdi {
 		return{};
 	}
 
-	static inline uint8_t doubleHex(uint8_t hex) { return hex | (hex << 4); }
+	static inline uint8_t doubleHex(uint8_t hex) { return hex /*| (hex << 4)*/; }
 
 	void painter::fillSolidRect(const point& pt, const size& sz, const ratio& zoom, COLORREF clr)
 	{
@@ -166,6 +168,12 @@ namespace gui { namespace gdi {
 			auto f_bottom = std::floor(bottom);
 
 			if (c_left > f_right || c_top > f_bottom) {
+				if (c_top > f_bottom) {
+					auto width = c_left > f_right ? 1 : int(f_right - c_left);
+					blendEdge((int)c_left, (int)c_top - 1, doubleHex((uint8_t)(255 * (bottom - top))), width, true, clr);
+				} else {
+					blendEdge((int)c_left - 1, (int)c_top, doubleHex((uint8_t)(255 * (right - left))), (int)(f_bottom - c_top), false, clr);
+				}
 			} else {
 				// FIRST, the solid part
 				RECT r{ (int)c_left, (int)c_top, (int)f_right, (int)f_bottom };
@@ -176,15 +184,17 @@ namespace gui { namespace gdi {
 				auto dright = right - f_right;
 				auto dbottom = bottom - f_bottom;
 
-				blendEdge((int)c_left, (int)c_top - 1, doubleHex((uint8_t)(16 * dtop)), (int)(f_right - c_left), true, clr);
-				blendEdge((int)c_left, (int)f_bottom, doubleHex((uint8_t)(16 * dbottom)), (int)(f_right - c_left), true, clr);
-				blendEdge((int)c_left - 1, (int)c_top, doubleHex((uint8_t)(16 * dleft)), (int)(f_bottom - c_top), false, clr);
-				blendEdge((int)f_right, (int)c_top, doubleHex((uint8_t)(16 * dright)), (int)(f_bottom - c_top), false, clr);
+#if 1
+				blendEdge((int)c_left, (int)c_top - 1, doubleHex((uint8_t)(255 * dtop)), (int)(f_right - c_left), true, clr);
+				blendEdge((int)c_left, (int)f_bottom, doubleHex((uint8_t)(255 * dbottom)), (int)(f_right - c_left), true, clr);
+				blendEdge((int)c_left - 1, (int)c_top, doubleHex((uint8_t)(255 * dleft)), (int)(f_bottom - c_top), false, clr);
+				blendEdge((int)f_right, (int)c_top, doubleHex((uint8_t)(255 * dright)), (int)(f_bottom - c_top), false, clr);
 
-				wchar_t buffer[1024];
-				swprintf_s(buffer, L"LEFTOVERS dl: %X, dt: %X, dr: %X, db: %X\n",
-					(uint8_t)(16 * dleft), (uint8_t)(16 * dtop), (uint8_t)(16 * dright), (uint8_t)(16 * dbottom));
-				OutputDebugString(buffer);
+				blendEdge((int)c_left - 1, (int)c_top - 1, doubleHex((uint8_t)(255 * dtop * dleft)), 1, true, clr);
+				blendEdge((int)f_right, (int)c_top - 1, doubleHex((uint8_t)(255 * dtop * dright)), 1, true, clr);
+				blendEdge((int)c_left - 1, (int)f_bottom, doubleHex((uint8_t)(255 * dbottom * dleft)), 1, true, clr);
+				blendEdge((int)f_right, (int)f_bottom, doubleHex((uint8_t)(255 * dbottom * dright)), 1, true, clr);
+#endif
 			}
 
 			return;
@@ -225,30 +235,21 @@ namespace gui { namespace gdi {
 			return;
 
 		auto stride = (((m_clip.right - m_clip.left) * 3 + 3) >> 2) << 2;
-		auto line = m_pixels + lt_y * stride + lt_x * 3;
+		auto data = m_pixels + lt_y * stride + lt_x * 3;
 
-		stride -= (br_x - lt_x) * 3;
-
-		uint8_t staple[30];
-		staple[0] = staple[3] = staple[7] = staple[10] = staple[13] = GetRValue(clr);
-		staple[1] = staple[4] = staple[8] = staple[11] = staple[14] = GetGValue(clr);
-		staple[2] = staple[5] = staple[9] = staple[12] = staple[15] = GetBValue(clr);
-
-		staple[16] = staple[19] = staple[22] = staple[25] = staple[28] = GetRValue(clr);
-		staple[17] = staple[20] = staple[23] = staple[26] = staple[29] = GetGValue(clr);
-		staple[18] = staple[21] = staple[24] = staple[27] = staple[30] = GetBValue(clr);
-
-		auto full_staples = ((br_x - lt_x) * 3) / sizeof(staple);
-		auto last_staple = ((br_x - lt_x) * 3) - full_staples * sizeof(staple);
-		stride += last_staple;
+		auto r = GetRValue(clr);
+		auto g = GetGValue(clr);
+		auto b = GetBValue(clr);
 
 		for (int y = lt_y; y < br_y; ++y) {
-			for (size_t i = 0; i < full_staples; ++i) {
-				memcpy(line, staple, sizeof(staple));
-				line += sizeof(staple);
+			auto line = data;
+			data += stride;
+
+			for (long x = lt_x; x < br_x; ++x) {
+				*line++ = b;
+				*line++ = g;
+				*line++ = r;
 			}
-			memcpy(line, staple, last_staple);
-			line += stride;
 		}
 	}
 
