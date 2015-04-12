@@ -41,27 +41,47 @@
 
 namespace gui { namespace gdi {
 
-	painter::painter(HDC dc, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily)
+	painter::painter(HDC dc, HBRUSH background, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily)
 		: base::painter(zoom, fontSize, fontFamily)
 		, m_dc{ dc }
-		, m_modified{ nullptr }
-		, m_original{ nullptr }
+		, m_originalDC{ nullptr }
+		, m_pixels{ nullptr }
 		, m_clip{ clip.left, clip.top, clip.right, clip.bottom }
 	{
+		if (m_clip.left < m_clip.right && m_clip.top < m_clip.bottom) { // non-zero clip...
+			auto tmp = CreateCompatibleDC(dc);
+			auto bmp = CreateCompatibleBitmap(dc, m_clip.right - m_clip.left, m_clip.bottom - m_clip.top);
+			m_canvas.select(tmp, bmp);
+			SetViewportOrgEx(tmp , -m_clip.left, -m_clip.top, nullptr);
+			m_originalDC = dc;
+			m_dc = tmp;
+
+			FillRect(m_dc, &m_clip, background);
+			SetBkMode(m_dc, TRANSPARENT);
+		}
+
 		selectFont(fontSize, fontFamily, FW_NORMAL, false, false);
 	}
 
-	painter::painter(HDC dc, ratio zoom, const pixels& fontSize, const std::string& fontFamily)
-		: painter(dc, zoom, { 0, 0, 0, 0 }, fontSize, fontFamily)
+	painter::painter(HDC dc, HBRUSH background, ratio zoom, const pixels& fontSize, const std::string& fontFamily)
+		: painter(dc, background, zoom, { 0, 0, 0, 0 }, fontSize, fontFamily)
 	{
 	}
 
 	painter::~painter()
 	{
-		if (m_original)
-			::SelectObject(m_dc, m_original);
-		if (m_modified)
-			DeleteObject(m_modified);
+		if (m_originalDC) {
+			//::Rectangle(m_originalDC, m_clip.left, m_clip.top, m_clip.right, m_clip.bottom);
+			::BitBlt(m_originalDC, m_clip.left, m_clip.top, m_clip.right - m_clip.left, m_clip.bottom - m_clip.top, m_dc, m_clip.left, m_clip.top, SRCCOPY);
+		}
+
+		m_font.restore(m_dc);
+		m_canvas.restore(m_dc);
+
+		if (m_originalDC) {
+			::DeleteDC(m_dc);
+			m_dc = m_originalDC;
+		}
 	}
 
 	void painter::paintImage(const image_ref* img, const pixels& width, const pixels& height)
@@ -161,15 +181,8 @@ namespace gui { namespace gdi {
 
 	void painter::selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool underline)
 	{
-		if (m_modified)
-			DeleteObject(m_modified);
-
-		m_modified = ::CreateFont(-zoom().scaleI(fontSize), 0, 0, 0, weight, italic, underline,
+		m_font.select(m_dc, ::CreateFont(-zoom().scaleI(fontSize), 0, 0, 0, weight, italic, underline,
 			FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-			CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, utf::widen(fontFamily).c_str());
-
-		auto tmp = (HFONT)SelectObject(m_dc, m_modified);
-		if (!m_original)
-			m_original = tmp;
+			CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, utf::widen(fontFamily).c_str()));
 	}
 }};

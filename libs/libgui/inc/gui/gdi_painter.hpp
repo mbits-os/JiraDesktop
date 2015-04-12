@@ -33,8 +33,8 @@ namespace gui { namespace gdi {
 	class painter
 		: public gui::base::painter {
 	public:
-		painter(HDC dc, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily);
-		painter(HDC dc, ratio zoom, const pixels& fontSize, const std::string& fontFamily);
+		painter(HDC dc, HBRUSH background, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily);
+		painter(HDC dc, HBRUSH background, ratio zoom, const pixels& fontSize, const std::string& fontFamily);
 		~painter();
 
 		// gui::painter
@@ -52,9 +52,49 @@ namespace gui { namespace gdi {
 		void selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool underline);
 
 	private:
+		template <typename H>
+		struct selectable {
+			H prev;
+			H modified;
+			selectable()
+				: prev{ nullptr }
+				, modified{ nullptr }
+			{
+			}
+
+			~selectable()
+			{
+				if (modified)
+					DeleteObject(modified);
+			}
+
+			H select(HDC dc, H value)
+			{
+				if (modified)
+					DeleteObject(modified);
+
+				modified = value;
+
+				auto tmp = (H)SelectObject(dc, value);
+				if (!prev)
+					prev = tmp;
+
+				return tmp;
+			}
+
+			void restore(HDC dc)
+			{
+				if (prev)
+					SelectObject(dc, prev);
+				prev = nullptr;
+			}
+		};
+
 		HDC m_dc;
-		HFONT m_original;
-		HFONT m_modified;
+		HDC m_originalDC;
+		selectable<HFONT> m_font;
+		selectable<HBITMAP> m_canvas;
+		uint8_t* m_pixels;
 		RECT m_clip;
 	};
 }};
