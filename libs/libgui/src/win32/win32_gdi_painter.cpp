@@ -44,17 +44,21 @@ namespace gui { namespace gdi {
 	painter::painter(HDC dc, HBRUSH background, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily)
 		: base::painter(zoom, fontSize, fontFamily)
 		, m_dc{ dc }
+#ifdef GDI_NONINT_RECT
 		, m_originalDC{ nullptr }
 		, m_pixels{ nullptr }
+#endif // GDI_NONINT_RECT
 		, m_clip{ clip.left, clip.top, clip.right, clip.bottom }
 	{
 		if (m_clip.left < m_clip.right && m_clip.top < m_clip.bottom) { // non-zero clip...
+#ifdef GDI_NONINT_RECT
 			auto tmp = CreateCompatibleDC(dc);
 			auto bmp = CreateCompatibleBitmap(dc, m_clip.right - m_clip.left, m_clip.bottom - m_clip.top);
 			m_canvas.select(tmp, bmp);
 			SetViewportOrgEx(tmp , -m_clip.left, -m_clip.top, nullptr);
 			m_originalDC = dc;
 			m_dc = tmp;
+#endif // GDI_NONINT_RECT
 
 			FillRect(m_dc, &m_clip, background);
 			SetBkMode(m_dc, TRANSPARENT);
@@ -70,18 +74,22 @@ namespace gui { namespace gdi {
 
 	painter::~painter()
 	{
+#ifdef GDI_NONINT_RECT
 		if (m_originalDC) {
-			//::Rectangle(m_originalDC, m_clip.left, m_clip.top, m_clip.right, m_clip.bottom);
 			::BitBlt(m_originalDC, m_clip.left, m_clip.top, m_clip.right - m_clip.left, m_clip.bottom - m_clip.top, m_dc, m_clip.left, m_clip.top, SRCCOPY);
 		}
+#endif // GDI_NONINT_RECT
 
 		m_font.restore(m_dc);
+
+#ifdef GDI_NONINT_RECT
 		m_canvas.restore(m_dc);
 
 		if (m_originalDC) {
 			::DeleteDC(m_dc);
 			m_dc = m_originalDC;
 		}
+#endif // GDI_NONINT_RECT
 	}
 
 	void painter::paintImage(const image_ref* img, const pixels& width, const pixels& height)

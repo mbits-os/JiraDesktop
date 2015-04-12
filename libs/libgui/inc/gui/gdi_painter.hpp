@@ -29,6 +29,8 @@
 #include <gui/painter_base.hpp>
 #include <windows.h>
 
+#define GDI_NONINT_RECT
+
 namespace gui { namespace gdi {
 	class painter
 		: public gui::base::painter {
@@ -91,10 +93,12 @@ namespace gui { namespace gdi {
 		};
 
 		HDC m_dc;
-		HDC m_originalDC;
 		selectable<HFONT> m_font;
+#ifdef GDI_NONINT_RECT
+		HDC m_originalDC;
 		selectable<HBITMAP> m_canvas;
 		uint8_t* m_pixels;
+#endif // GDI_NONINT_RECT
 		RECT m_clip;
 	};
 }};
