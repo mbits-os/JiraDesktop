@@ -6,9 +6,7 @@ out = tempfile.NamedTemporaryFile(prefix='tasks-tmp-', suffix='-win32.log', dir=
 
 def present(args):
 	global out
-	out.write("$_ ")
-	out.write(" ".join(args))
-	out.write("\n")
+	out.write("$ %s\n" % " ".join(args))
 	out.flush()
 
 def call(*args):
@@ -165,6 +163,7 @@ else:
 if policy == POLICY_TAG_AND_PUSH:
 	prog.append(Step("Pushing to 'origin'", call, "git", "push", "--tags", "origin", "master"))
 
+prog.append(Step("Getting dependencies", call, "python", "copy_res.py"))
 prog.append(Step("Building 'Release:Win32'", build_sln))
 prog.append(Step("Packing", call, "python", "pack.py"))
 prog.append(Step("Done", nothing))
