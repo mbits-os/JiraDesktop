@@ -6,11 +6,12 @@ class buffer:
 	def __init__(self):   self.content = ""
 	def write(self, str): self.content += str
 	def flush(self):      pass
+	def close(self):      pass
 		
 out = buffer()
 
 def present(args):
-	global out, LOGFILE
+	global out
 	out.write("$_ ")
 	out.write(" ".join(args))
 	out.write("\n")
@@ -59,6 +60,8 @@ def Branch():
 		return var
 	except subprocess.CalledProcessError, e: return ""
 
+STABILITY = Stability()
+
 POLICY_TAG_AND_PUSH = 0
 POLICY_TAG = 1
 POLICY_REUSE = 2
@@ -70,12 +73,14 @@ class PushAction(argparse.Action):
 
 parser = argparse.ArgumentParser(description='Prepare automated build of JiraDesktop.', usage='%(prog)s [options]')
 group = parser.add_mutually_exclusive_group()
-group.add_argument("--no-push", dest="push", action="store_const", const=POLICY_TAG, default=POLICY_TAG_AND_PUSH,
+group.add_argument("-n, --no-push", dest="push", action="store_const", const=POLICY_TAG, default=POLICY_TAG_AND_PUSH,
 					help="Bumps build number on current master and builds the solution")
-group.add_argument("--push", dest="push", action="store_const", const=POLICY_TAG_AND_PUSH, default=POLICY_TAG_AND_PUSH,
+group.add_argument("-p, --push", dest="push", action="store_const", const=POLICY_TAG_AND_PUSH, default=POLICY_TAG_AND_PUSH,
 					help="Like --push, but pushes the version tag to the origin")
-group.add_argument("--use", dest="push", metavar="TAG", nargs="?", action=PushAction, default=POLICY_TAG_AND_PUSH,
+group.add_argument("-u, --use", dest="push", metavar="TAG", nargs="?", action=PushAction, default=POLICY_TAG_AND_PUSH,
 					help="Builds solution from pre-existing tag. If not TAG is given, one is calculated from 'version.h'")
+parser.add_argument("--dry-run", action="store_true", default=False,
+					help="If present, will only print out the steps that would be otherwise taken")
 
 args = parser.parse_args()
 
@@ -86,26 +91,19 @@ if policy == POLICY_REUSE:
 	tag = args.tag
 
 if policy == POLICY_TAG:
-	print >>out, "[WARNING]\n>> no push, when possible call 'git push --tags origin master' <<" % arg
+	print >>out, "[WARNING]\n>> no push, when possible call 'git push --tags origin master' <<"
+	
+class Step:
+	def __init__(self, title, callable, *args):
+		self.title = title
+		self.callable = callable
+		self.args = args
+	def __call__(self, pos, max):
+		print "Step %s/%s %s" % (pos, max, self.title)
+		print >>out, "\n[%s]" % self.title
+		self.callable(*self.args)
 
-print "Step 1/5 Updating the tree"
-print >>out, "\n[Updating the tree]"
-
-call_simple("git", "fetch", "--tags", "-v")
-
-if policy == POLICY_REUSE:
-	VERSION = Version()
-	if tag is not None: TAG = tag
-	else: TAG = "v" + VERSION
-
-	print "Step 2/5 Using '%s'" % TAG
-	print >>out, "\n[Using '%s']" % TAG
-
-	call_simple("git", "checkout", TAG)
-else:
-	print "Step 2/5 Tagging 'master'"
-	print >>out, "\n[Tagging 'master']"
-
+def tag_master():
 	if Branch() == "master":
 		call_simple("git", "pull", "--rebase")
 	else:
@@ -116,17 +114,15 @@ else:
 	TAG = "v" + VERSION
 	print >>out, "Tagged as '%s'" % TAG
 
-STABILITY = Stability()
-LOGFILE = "tasks-%s%s-win32.log" % (VERSION, STABILITY)
-f = open(LOGFILE, "w")
-f.write(out.content)
-out = f
-out.flush()
+def switch_log():
+	global out, VERSION, STABILITY
+	LOGFILE = "tasks-%s%s-win32.log" % (VERSION, STABILITY)
+	f = open(LOGFILE, "w")
+	f.write(out.content)
+	out = f
+	out.flush()
 
-if policy == POLICY_TAG_AND_PUSH:
-	call("git", "push", "--tags", "origin", "master")
-
-class chdir:
+class pushd:
 	def __init__(self, dir):
 		self.stack = os.getcwd()
 		self.dir = dir
@@ -138,25 +134,56 @@ class chdir:
 		try: os.chdir(self.stack)
 		except: pass
 		return False
+	
+def build_sln():
+	switch_log() # by now, we know the version to use
+	with pushd(".."):
+		call_("rm", "-rf", "int")
+		call_("rm", "-rf", "bin")
+		with pushd("build/win32"):
+			msbuild = MSBuildPath()
+			if msbuild:
+				os.environ["PATH"] += os.pathsep + msbuild
+			path = "..\\..\\installer\\tasks-%s%s-win32-msbuild.log" % (VERSION, STABILITY)
+			call_direct("msbuild", "/nologo",
+				"/flp:LogFile=" + path,
+				"/noconlog", "/m", "/p:Configuration=Release",
+				"JiraDesktop.sln")
 
-with chdir(".."):
-	call_("rm", "-rf", "int")
-	call_("rm", "-rf", "bin")
-	with chdir("build/win32"):
-		msbuild = MSBuildPath()
-		if msbuild:
-			os.environ["PATH"] += os.pathsep + msbuild
-		print "Step 3/5 Building 'Release:Win32'"
-		print >>out, "\n[Building 'Release:Win32']"
-		path = "..\\..\\installer\\tasks-%s%s-win32-msbuild.log" % (VERSION, STABILITY)
-		call_direct("msbuild", "/nologo",
-			"/flp:LogFile=" + path,
-			"/noconlog", "/m", "/p:Configuration=Release",
-			"JiraDesktop.sln")
+def nothing(): pass
 
-print "Step 4/5 Packing"
-print >>out, "\n[Packing]"
-call("python", "pack.py")
-print "Step 5/5 Done"
-print >>out, "\n[Done]"
-f.close()
+prog = []
+prog.append(Step("Updating the tree", call_simple, "git", "fetch", "--tags", "-v"))
+
+if policy == POLICY_REUSE:
+	VERSION = Version()
+	if tag is not None: TAG = tag
+	else: TAG = "v" + VERSION
+
+	prog.append(Step("Using '%s'" % TAG, call_simple, "git", "checkout", TAG))
+else:
+	prog.append(Step("Tagging 'master'", tag_master))
+
+if policy == POLICY_TAG_AND_PUSH:
+	prog.append(Step("Pushing to 'origin'", call, "git", "push", "--tags", "origin", "master"))
+
+prog.append(Step("Building 'Release:Win32'", build_sln))
+prog.append(Step("Packing", call, "python", "pack.py"))
+prog.append(Step("Done", nothing))
+
+max = len(prog)
+i = 1
+
+if args.dry_run:
+	for step in prog:
+		if len(step.args):
+			print "%s/%s" % (i, max), step.title, "(%s)" % " ".join([str(arg) for arg in step.args])
+		else:
+			print "%s/%s" % (i, max), step.title
+		i += 1
+else:
+	for step in prog:
+		step(i, max)
+		i += 1
+
+out.close()
