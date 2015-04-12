@@ -49,6 +49,7 @@ namespace gui { namespace gdi {
 			bool italic, bool underline) override;
 		void setColor(colorref color) override;
 		colorref getColor() const override;
+		HDC dc() { return m_dc; }
 
 	private:
 		void selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool underline);

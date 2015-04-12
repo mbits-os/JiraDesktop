@@ -16,8 +16,8 @@
 #else
 #include <gui/gdi_painter.hpp>
 #endif
-
 #include <gui/nodes/doc_element.hpp>
+#include <cmath>
 
 #if FA_CHEATSHEET
 #include "gui/font_awesome.hh"
@@ -96,10 +96,10 @@ std::function<void(const gui::point&, const gui::size&)>
 	return [hWnd, info_](const gui::point& pt, const gui::size& sz) {
 		gui::ratio zoom = info_->mul;
 		RECT r{
-			zoom.scaleL(pt.x) - 2,
-			zoom.scaleL(pt.y) - 2,
-			zoom.scaleL(pt.x + sz.width) + 2 ,
-			zoom.scaleL(pt.y + sz.height) + 2
+			(LONG)std::floor(zoom.scaleD(pt.x)),
+			(LONG)std::floor(zoom.scaleD(pt.y)),
+			(LONG)std::ceil(zoom.scaleD(pt.x + sz.width)),
+			(LONG)std::ceil(zoom.scaleD(pt.y + sz.height))
 		};
 #ifdef DEBUG_UPDATES
 		info_->updates.push_back(r);
@@ -322,7 +322,7 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 	for (auto& r : updates) {
 		COLORREF clr = 0x66cc66;
-		dc.Draw3dRect(&r, clr, clr);
+		CDCHandle{ paint.dc() }.Draw3dRect(&r, clr, clr);
 	}
 #endif
 
@@ -450,6 +450,7 @@ void CTasksView::updateTooltip(bool /*force*/)
 	}
 }
 
+#ifdef DEBUG_STYLES
 static std::string to_string(gui::elem name)
 {
 	using namespace gui;
@@ -703,13 +704,14 @@ static void debug_rules(const styles::rule_storage* rules) {
 	for (auto& pair : values)
 		OutputDebugStringA(("   " + pair.first + ": " + pair.second + ";\n").c_str());
 };
+#endif // DEBUG_STYLES
 
 void CTasksView::updateCursorAndTooltip(bool force)
 {
 	updateCursor(force);
 	updateTooltip(force);
 
-#if 0
+#ifdef DEBUG_STYLES
 	if (m_hovered) {
 		OutputDebugString(L"======================================================\n");
 		auto node = m_hovered;
@@ -763,7 +765,7 @@ void CTasksView::updateCursorAndTooltip(bool force)
 		}
 		OutputDebugString(L"======================================================\n");
 	}
-#endif
+#endif // DEBUG_STYLES
 }
 
 std::shared_ptr<gui::node> CTasksView::nodeFromPoint()
