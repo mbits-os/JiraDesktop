@@ -1,6 +1,6 @@
 #!/usr/python
 
-import os, sys, subprocess, _winreg
+import os, sys, subprocess, _winreg, argparse
 
 class buffer:
 	def __init__(self):   self.content = ""
@@ -59,29 +59,44 @@ def Branch():
 		return var
 	except subprocess.CalledProcessError, e: return ""
 
-use_tag = False
-no_push = True
-if len(sys.argv) > 1:
-	for arg in sys.argv[1:]:
-		if arg == "--push": no_push = False
-		if arg == "--no-push": no_push = True
-		if arg == "--use-tag": use_tag = True
-		if arg == "--tag": use_tag = False
+POLICY_TAG_AND_PUSH = 0
+POLICY_TAG = 1
+POLICY_REUSE = 2
 
-if no_push:
-	arg = " --tags"
-	if use_tag:
-		arg = ""
-	print >>out, "[WARNING]\n>> no push, when possible call 'git push%s origin master' <<" % arg
+class PushAction(argparse.Action):
+	def __call__(self, parser, namespace, values, option_string=None):
+		setattr(namespace, self.dest, POLICY_REUSE)
+		setattr(namespace, "tag", values)
+
+parser = argparse.ArgumentParser(description='Prepare automated build of JiraDesktop.', usage='%(prog)s [options]')
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--no-push", dest="push", action="store_const", const=POLICY_TAG, default=POLICY_TAG_AND_PUSH,
+					help="Bumps build number on current master and builds the solution")
+group.add_argument("--push", dest="push", action="store_const", const=POLICY_TAG_AND_PUSH, default=POLICY_TAG_AND_PUSH,
+					help="Like --push, but pushes the version tag to the origin")
+group.add_argument("--use", dest="push", metavar="TAG", nargs="?", action=PushAction, default=POLICY_TAG_AND_PUSH,
+					help="Builds solution from pre-existing tag. If not TAG is given, one is calculated from 'version.h'")
+
+args = parser.parse_args()
+
+policy = args.push
+tag = None
+
+if policy == POLICY_REUSE:
+	tag = args.tag
+
+if policy == POLICY_TAG:
+	print >>out, "[WARNING]\n>> no push, when possible call 'git push --tags origin master' <<" % arg
 
 print "Step 1/5 Updating the tree"
 print >>out, "\n[Updating the tree]"
 
 call_simple("git", "fetch", "--tags", "-v")
 
-if use_tag:
+if policy == POLICY_REUSE:
 	VERSION = Version()
-	TAG = "v" + VERSION
+	if tag is not None: TAG = tag
+	else: TAG = "v" + VERSION
 
 	print "Step 2/5 Using '%s'" % TAG
 	print >>out, "\n[Using '%s']" % TAG
@@ -108,7 +123,7 @@ f.write(out.content)
 out = f
 out.flush()
 
-if not no_push:
+if policy == POLICY_TAG_AND_PUSH:
 	call("git", "push", "--tags", "origin", "master")
 
 class chdir:
