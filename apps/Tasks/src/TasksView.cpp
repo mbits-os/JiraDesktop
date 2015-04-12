@@ -305,15 +305,13 @@ namespace {
 LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	CPaintDC dc(m_hWnd);
-	dc.FillRect(&dc.m_ps.rcPaint, m_background);
 
 	m_zoom->device = gui::ratio{ dc.GetDeviceCaps(LOGPIXELSX), 96 }.gcd();
 	m_zoom->mul = m_zoom->device * m_zoom->zoom;
 #ifdef CAIRO_PAINTER
 	gui::cairo::painter paint{ cairo_win32_surface_create(dc), m_zoom->mul, m_fontSize, m_fontFamily };
 #else
-	dc.SetBkMode(TRANSPARENT);
-	gui::gdi::painter paint{ (HDC)dc, m_zoom->mul, dc.m_ps.rcPaint, m_fontSize, m_fontFamily };
+	gui::gdi::painter paint{ (HDC)dc, (HBRUSH)m_background, m_zoom->mul, dc.m_ps.rcPaint, m_fontSize, m_fontFamily };
 #endif
 
 	m_body->paint(&paint);
@@ -351,7 +349,7 @@ void CTasksView::updateLayout()
 #ifdef CAIRO_PAINTER
 	gui::cairo::painter paint{ cairo_win32_surface_create(dc), m_zoom->mul, m_fontSize, m_fontFamily };
 #else
-	gui::gdi::painter paint{ (HDC)dc, m_zoom->mul, m_fontSize, m_fontFamily };
+	gui::gdi::painter paint{ (HDC)dc, nullptr, m_zoom->mul, m_fontSize, m_fontFamily };
 #endif
 
 	if (m_hovered)
