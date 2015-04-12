@@ -1,14 +1,8 @@
 #!/usr/python
 
-import os, sys, subprocess, _winreg, argparse
+import os, sys, subprocess, _winreg, argparse, tempfile
 
-class buffer:
-	def __init__(self):   self.content = ""
-	def write(self, str): self.content += str
-	def flush(self):      pass
-	def close(self):      pass
-		
-out = buffer()
+out = tempfile.NamedTemporaryFile(prefix='tasks-tmp-', suffix='-win32.log', dir='.', delete=False)
 
 def present(args):
 	global out
@@ -105,10 +99,10 @@ class Step:
 
 def tag_master():
 	if Branch() == "master":
-		call_simple("git", "pull", "--rebase")
+		call("git", "pull", "--rebase")
 	else:
-		call_simple("git", "checkout", "master")
-	call_simple("python", "build_tag.py")
+		call("git", "checkout", "master")
+	call("python", "build_tag.py")
 
 	VERSION = Version()
 	TAG = "v" + VERSION
@@ -117,10 +111,14 @@ def tag_master():
 def switch_log():
 	global out, VERSION, STABILITY
 	LOGFILE = "tasks-%s%s-win32.log" % (VERSION, STABILITY)
-	f = open(LOGFILE, "w")
-	f.write(out.content)
-	out = f
+	previous = out.name
 	out.flush()
+	out.close()
+	if os.path.exists(LOGFILE):
+		os.remove(LOGFILE)
+	os.rename(previous, LOGFILE)
+	out = open(LOGFILE, "a+b")
+	out.seek(os.SEEK_END)
 
 class pushd:
 	def __init__(self, dir):
@@ -153,14 +151,14 @@ def build_sln():
 def nothing(): pass
 
 prog = []
-prog.append(Step("Updating the tree", call_simple, "git", "fetch", "--tags", "-v"))
+prog.append(Step("Updating the tree", call, "git", "fetch", "--tags", "-v"))
 
 if policy == POLICY_REUSE:
 	VERSION = Version()
 	if tag is not None: TAG = tag
 	else: TAG = "v" + VERSION
 
-	prog.append(Step("Using '%s'" % TAG, call_simple, "git", "checkout", TAG))
+	prog.append(Step("Using '%s'" % TAG, call, "git", "checkout", TAG))
 else:
 	prog.append(Step("Tagging 'master'", tag_master))
 
