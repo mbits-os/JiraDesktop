@@ -53,6 +53,7 @@ namespace gui { namespace gdi {
 	{
 		if (m_clip.left < m_clip.right && m_clip.top < m_clip.bottom) { // non-zero clip...
 #ifdef GDI_NONINT_RECT
+			background;
 			auto tmp = CreateCompatibleDC(dc);
 			BITMAPINFOHEADER bih = {};
 			bih.biSize = sizeof(bih);
@@ -64,10 +65,8 @@ namespace gui { namespace gdi {
 
 			VOID* data = nullptr;
 			auto bmp = CreateDIBSection(dc, reinterpret_cast<PBITMAPINFO>(&bih), DIB_RGB_COLORS, &data, nullptr, 0);
-			if (bmp && data) {
-				//stride = ((width * (bpp / 8) + 3) >> 2) << 2;
+			if (bmp && data)
 				m_pixels = reinterpret_cast<uint8_t*>(data);
-			}
 
 			m_canvas.select(tmp, bmp);
 			SetViewportOrgEx(tmp , -m_clip.left, -m_clip.top, nullptr);
@@ -184,7 +183,6 @@ namespace gui { namespace gdi {
 				auto dright = right - f_right;
 				auto dbottom = bottom - f_bottom;
 
-#if 1
 				blendEdge((int)c_left, (int)c_top - 1, doubleHex((uint8_t)(255 * dtop)), (int)(f_right - c_left), true, clr);
 				blendEdge((int)c_left, (int)f_bottom, doubleHex((uint8_t)(255 * dbottom)), (int)(f_right - c_left), true, clr);
 				blendEdge((int)c_left - 1, (int)c_top, doubleHex((uint8_t)(255 * dleft)), (int)(f_bottom - c_top), false, clr);
@@ -194,7 +192,6 @@ namespace gui { namespace gdi {
 				blendEdge((int)f_right, (int)c_top - 1, doubleHex((uint8_t)(255 * dtop * dright)), 1, true, clr);
 				blendEdge((int)c_left - 1, (int)f_bottom, doubleHex((uint8_t)(255 * dbottom * dleft)), 1, true, clr);
 				blendEdge((int)f_right, (int)f_bottom, doubleHex((uint8_t)(255 * dbottom * dright)), 1, true, clr);
-#endif
 			}
 
 			return;
@@ -258,11 +255,15 @@ namespace gui { namespace gdi {
 		if (x < m_clip.left) {
 			if (horiz)
 				width -= m_clip.left - x;
+			else
+				return;
 			x = m_clip.left;
 		}
 		if (y < m_clip.top) {
 			if (!horiz)
 				width -= m_clip.top - y;
+			else
+				return;
 			y = m_clip.top;
 		}
 
