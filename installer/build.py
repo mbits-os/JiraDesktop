@@ -25,7 +25,12 @@ def call(*args):
 def call_simple(*args):
 	present(args)
 	try: out.write(subprocess.check_output(args, stderr=subprocess.STDOUT))
-	except subprocess.CalledProcessError, e: exit(e.returncode)
+	except subprocess.CalledProcessError, e:
+		if e.output is not None:
+			out.write(e.output)
+		print out.content
+		print e
+		exit(e.returncode)
 
 def call_direct(*args):
 	present(args)
@@ -48,6 +53,12 @@ def Stability():
 	ver = subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h", "PROGRAM_VERSION_STABILITY"])
 	return ver.strip()
 
+def Branch():
+	try:
+		var = subprocess.check_output([ "git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
+		return var
+	except subprocess.CalledProcessError, e: return ""
+
 use_tag = False
 no_push = True
 if len(sys.argv) > 1:
@@ -66,7 +77,7 @@ if no_push:
 print "Step 1/5 Updating the tree"
 print >>out, "\n[Updating the tree]"
 
-call_simple("git", "pull", "--tags", "origin", "master:master")
+call_simple("git", "fetch", "--tags", "-v")
 
 if use_tag:
 	VERSION = Version()
@@ -80,7 +91,10 @@ else:
 	print "Step 2/5 Tagging 'master'"
 	print >>out, "\n[Tagging 'master']"
 
-	call_simple("git", "checkout", "master")
+	if Branch() == "master":
+		call_simple("git", "pull", "--rebase")
+	else:
+		call_simple("git", "checkout", "master")
 	call_simple("python", "build_tag.py")
 
 	VERSION = Version()
