@@ -52,6 +52,11 @@ namespace gui { namespace gdi {
 
 	private:
 		void selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool underline);
+		void fillSolidRect(const point& pt, const size& sz, const ratio& zoom, COLORREF clr);
+#ifdef GDI_NONINT_RECT
+		void fillSolidRect(const RECT& rect, COLORREF clr);
+		void blendEdge(int x, int y, uint8_t alpha, int width, bool horiz, COLORREF clr);
+#endif // GDI_NONINT_RECT
 
 	private:
 		template <typename H>
