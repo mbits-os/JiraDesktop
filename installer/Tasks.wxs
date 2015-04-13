@@ -162,6 +162,8 @@
 		<UIRef Id="WixUI_FeatureTree" />
 		<UIRef Id="WixUI_ErrorProgressText" />
 
+		<WixVariable Id="WixUILicenseRtf" Value="mit-license.rtf" />
+
 		<InstallExecuteSequence>
 			<Custom Action='NoDowngrade' After='FindRelatedProducts'>NEWERFOUND</Custom>
 		</InstallExecuteSequence>
