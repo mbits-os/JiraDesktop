@@ -217,6 +217,7 @@ namespace gui { namespace gdi {
 		if (lt_x >= br_x || lt_y >= br_y)
 			return;
 
+#if 1
 		auto stride = (((m_clip.right - m_clip.left) * 3 + 3) >> 2) << 2;
 		auto data = m_pixels + lt_y * stride + lt_x * 3;
 
@@ -234,6 +235,109 @@ namespace gui { namespace gdi {
 				*line++ = r;
 			}
 		}
+#else
+		/**
+		 * SCAN LINE
+		 *
+		 * |     A     | B |             C           |    D    |
+		 * |             =======================================
+		 * |      Bx     |                  Bw                 |
+		 * |           |O|L|                W'                 |
+		 *
+		 * -------------------------------------------------------
+		 *  Bx = x * 3
+		 *  Bw = w * 3
+		 *  A  = Bx div 4 * 4
+		 *  B  = ceil(Bx / 4) * 4
+		 *  O  = Bx mod 4
+		 *  L  = 4 - O
+		 *  W' = Bw - L
+		 *  C  = W' div [chunk] * [chunk]
+		 *  D  = W' - C ( = W' mod [chunk])
+		 * -------------------------------------------------------
+		 *
+		 * LINE FILL
+		 *
+		 *        v START
+		 * 1112|2233|3444|5556|6677|7888
+		 *           ^ MASK
+		 * |  L1 |L2|      L3      |SAFE
+		 *
+		 * -------------------------------------------------------
+		 *  L3 = 12 (3 ints or 4 pixels)
+		 *  L2 = 4 - L1 mod 4
+		 *  L1 = f(Bx mod 4) ->
+		 *        0: 0 (0th int, 0th byte) -
+		 *        1: 9 (2nd int, 1st byte) ((3-1) int, (1) byte)
+		 *        2: 6 (1st int, 2nd byte) ((3-2) int, (2) byte)
+		 *        3: 3 (0th int, 3rd byte) ((3-3) int, (3) byte)
+		 *        (3 - x) * 4 + x = 12 - 4x + x = 12 - 3x
+		 *  L1 = 12 - 3 * (Bx mod 4)
+		 * -------------------------------------------------------
+		 */
+
+		const auto stride = (((m_clip.right - m_clip.left) * 3 + 3) >> 2) << 2;
+		auto data = m_pixels + lt_y * stride;
+
+		const auto Bx = lt_x * 3;
+		const auto Bw = (br_x - lt_x) * 3;
+		const auto A = (Bx >> 2) << 2;
+		const auto B = ((Bx + 3) >> 2) << 2;
+
+		const auto offset = Bx % 4;
+		const auto left = 4 - offset;
+
+		const auto chunk = 16 * 3;
+		const auto uints = chunk / sizeof(uint32_t);
+		const auto Wprime = Bw - left;
+		const auto C = Wprime / chunk; // number of chunk-sized blobs
+		const auto D = Wprime % chunk;
+
+		const auto L1 = 12 - 3 * (offset);
+		const auto L2 = 4 - L1 % 4;
+
+		auto r = GetRValue(clr);
+		auto g = GetGValue(clr);
+		auto b = GetBValue(clr);
+
+		uint32_t stamp[2 * uints];
+		auto start = ((uint8_t*)stamp);
+		auto mask = start;
+		size_t rest = 0;
+
+		auto ptr = start;
+		size_t count = sizeof(stamp) / 3;
+
+		while (count--) {
+			*ptr++ = b;
+			*ptr++ = g;
+			*ptr++ = r;
+		}
+
+		data += A;
+
+		if (offset) {
+			start += L1;
+			mask = start + L2;
+		}
+
+		for (int y = lt_y; y < br_y; ++y) {
+			auto line = data;
+			data += stride;
+
+			if (offset) {
+				//memcpy(line, start, L2);
+				line += L2;
+			}
+
+			for (long i = 0; i < C; ++i) {
+				memcpy(line, mask, chunk);
+				line += chunk;
+			}
+
+			memcpy(line, mask, D);
+		}
+#endif
 	}
 
 	void painter::blendEdge(int x, int y, uint8_t alpha, int width, bool horiz, COLORREF clr)
