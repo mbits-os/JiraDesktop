@@ -88,7 +88,29 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	}
 
 	wndMain.rebuildAccel();
-	wndMain.ShowWindow(nCmdShow);
+	if (!wndMain.updatePosition()) {
+		WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
+		placement.showCmd = nCmdShow;
+
+		RECT workArea;
+		if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
+			workArea.right -= workArea.left;
+			workArea.bottom -= workArea.top;
+			workArea.left = workArea.top = 0;
+
+			auto padding = GetSystemMetrics(SM_CYCAPTION);
+			workArea.left += padding;
+			workArea.top += padding;
+			workArea.right -= padding;
+			workArea.bottom -= padding;
+
+			workArea.left = (workArea.right + workArea.left) / 2;
+			workArea.top  = (workArea.bottom + workArea.top) / 2;
+			placement.rcNormalPosition = workArea;
+			wndMain.SetWindowPlacement(&placement);
+		} else
+			wndMain.ShowWindow(nCmdShow);
+	}
 
 	int nRet = theLoop.Run();
 

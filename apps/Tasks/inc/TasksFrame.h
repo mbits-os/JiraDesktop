@@ -81,6 +81,7 @@ public:
 	virtual BOOL OnIdle();
 
 	void rebuildAccel();
+	bool updatePosition();
 
 	BEGIN_UPDATE_UI_MAP(CTasksFrame)
 	END_UPDATE_UI_MAP()

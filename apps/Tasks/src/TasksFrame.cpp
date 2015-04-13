@@ -79,6 +79,24 @@ void CTasksFrame::rebuildAccel()
 	m_hAccel = m_menubarManager.createAccel();
 }
 
+bool CTasksFrame::updatePosition()
+{
+	CAppSettings settings;
+	if (settings.getType("Placement") == settings::Binary) {
+		auto bytes = settings.getBinary("Placement");
+		//WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
+		if (bytes.size() == sizeof(WINDOWPLACEMENT)) {
+			auto pos = (const WINDOWPLACEMENT*)bytes.data();
+			if (pos->length == sizeof(WINDOWPLACEMENT)) {
+				SetWindowPlacement(pos);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	// Check if Common Controls 6.0 are used. If yes, use 32-bit (alpha) images
@@ -163,6 +181,12 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 LRESULT CTasksFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
 {
+	WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
+	if (GetWindowPlacement(&placement)) {
+		CAppSettings settings;
+		settings.setBinary("Placement", placement);
+	}
+
 	// unregister message filtering and idle updates
 	CMessageLoop* pLoop = _Module.GetMessageLoop();
 	ATLASSERT(pLoop != NULL);
