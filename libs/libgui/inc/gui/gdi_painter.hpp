@@ -29,8 +29,6 @@
 #include <gui/painter_base.hpp>
 #include <windows.h>
 
-#define GDI_NONINT_RECT
-
 namespace gui { namespace gdi {
 	class painter
 		: public gui::base::painter {
@@ -54,10 +52,8 @@ namespace gui { namespace gdi {
 	private:
 		void selectFont(const pixels& fontSize, const std::string& fontFamily, int weight, bool italic, bool underline);
 		void fillSolidRect(const point& pt, const size& sz, const ratio& zoom, COLORREF clr);
-#ifdef GDI_NONINT_RECT
 		void fillSolidRect(const RECT& rect, COLORREF clr);
 		void blendEdge(int x, int y, uint8_t alpha, int width, bool horiz, COLORREF clr);
-#endif // GDI_NONINT_RECT
 
 	private:
 		template <typename H>
@@ -100,11 +96,9 @@ namespace gui { namespace gdi {
 
 		HDC m_dc;
 		selectable<HFONT> m_font;
-#ifdef GDI_NONINT_RECT
 		HDC m_originalDC;
 		selectable<HBITMAP> m_canvas;
 		uint8_t* m_pixels;
-#endif // GDI_NONINT_RECT
 		RECT m_clip;
 	};
 }};

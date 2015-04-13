@@ -45,14 +45,11 @@ namespace gui { namespace gdi {
 	painter::painter(HDC dc, HBRUSH background, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily)
 		: base::painter(zoom, fontSize, fontFamily)
 		, m_dc{ dc }
-#ifdef GDI_NONINT_RECT
 		, m_originalDC{ nullptr }
 		, m_pixels{ nullptr }
-#endif // GDI_NONINT_RECT
 		, m_clip{ clip.left, clip.top, clip.right, clip.bottom }
 	{
 		if (m_clip.left < m_clip.right && m_clip.top < m_clip.bottom) { // non-zero clip...
-#ifdef GDI_NONINT_RECT
 			background;
 			auto tmp = CreateCompatibleDC(dc);
 			BITMAPINFOHEADER bih = {};
@@ -74,9 +71,6 @@ namespace gui { namespace gdi {
 			m_dc = tmp;
 
 			fillSolidRect(m_clip, GetSysColor(COLOR_WINDOW));
-#else
-			FillRect(m_dc, &m_clip, background);
-#endif // GDI_NONINT_RECT
 			SetBkMode(m_dc, TRANSPARENT);
 		}
 
@@ -90,22 +84,17 @@ namespace gui { namespace gdi {
 
 	painter::~painter()
 	{
-#ifdef GDI_NONINT_RECT
 		if (m_originalDC) {
 			::BitBlt(m_originalDC, m_clip.left, m_clip.top, m_clip.right - m_clip.left, m_clip.bottom - m_clip.top, m_dc, m_clip.left, m_clip.top, SRCCOPY);
 		}
-#endif // GDI_NONINT_RECT
 
 		m_font.restore(m_dc);
-
-#ifdef GDI_NONINT_RECT
 		m_canvas.restore(m_dc);
 
 		if (m_originalDC) {
 			::DeleteDC(m_dc);
 			m_dc = m_originalDC;
 		}
-#endif // GDI_NONINT_RECT
 	}
 
 	void painter::paintImage(const image_ref* img, const pixels& width, const pixels& height)
@@ -154,7 +143,6 @@ namespace gui { namespace gdi {
 
 	void painter::fillSolidRect(const point& pt, const size& sz, const ratio& zoom, COLORREF clr)
 	{
-#ifdef GDI_NONINT_RECT
 		if (m_originalDC) {
 			auto left = zoom.scaleD(pt.x);
 			auto top = zoom.scaleD(pt.y);
@@ -196,7 +184,6 @@ namespace gui { namespace gdi {
 
 			return;
 		}
-#endif // GDI_NONINT_RECT
 
 		RECT r{ zoom.scaleL(pt.x), zoom.scaleL(pt.y),
 			zoom.scaleL(pt.x + sz.width), zoom.scaleL(pt.y + sz.height) };
@@ -205,7 +192,6 @@ namespace gui { namespace gdi {
 		::SetBkColor(m_dc, clrOld);
 	}
 
-#ifdef GDI_NONINT_RECT
 	void painter::fillSolidRect(const RECT& rect, COLORREF clr)
 	{
 		auto lt_x = rect.left;
@@ -303,7 +289,6 @@ namespace gui { namespace gdi {
 			}
 		}
 	}
-#endif // GDI_NONINT_RECT
 
 	void painter::fillRectangle(colorref color, const point& pt, const size& size)
 	{
