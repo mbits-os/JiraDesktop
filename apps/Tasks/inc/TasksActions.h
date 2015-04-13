@@ -59,11 +59,11 @@ struct CTasksActions : CTasksActionsBase {
 
 		auto pThis = static_cast<T*>(this);
 
-		toolbar_default = gui::make_action(ico_none,   "Show/hide Tasks",    {},                        {},               [pThis] { pThis->showHide(); });
-		tasks_new     = gui::make_action(ico_new_file, "New &Connection...", { modifier::ctrl, vk::N }, "New Connection", [pThis] { pThis->newConnection(); });
-		tasks_refresh = gui::make_action(ico_refresh,  "&Refresh All",       { vk::F5 },                "Refresh All",    [pThis] { pThis->refreshAll(); });
-		tasks_setup   = gui::make_action(ico_setup,    "&Settings...",       { },                       "Settings");
-		tasks_exit    = gui::make_action(ico_none,     "E&xit",              { modifier::alt, vk::F4 }, "Exit",           [pThis] { pThis->exitApplication(); });
+		toolbar_default = gui::make_action(ico_none,   "Show/hide Tasks",    {},                         {},               [pThis] { pThis->showHide(); });
+		tasks_new     = gui::make_action(ico_new_file, "New &Connection...", { modifier::ctrl, vk::N },  "New Connection", [pThis] { pThis->newConnection(); });
+		tasks_refresh = gui::make_action(ico_refresh,  "&Refresh All",       { vk::F5 },                 "Refresh All",    [pThis] { pThis->refreshAll(); });
+		tasks_setup   = gui::make_action(ico_setup,    "&Settings...",       { },                        "Settings");
+		tasks_exit    = gui::make_action(ico_none,     "E&xit",              { modifier::ctrl, vk::F4 }, "Exit",           [pThis] { pThis->exitApplication(); });
 
 		conn_edit     = gui::make_action(ico_edit,     "&Edit...");
 		conn_refresh  = gui::make_action(ico_none,     "&Refresh");
@@ -71,8 +71,8 @@ struct CTasksActions : CTasksActionsBase {
 		conn_goto     = gui::make_action(ico_link,     "&Go To Issue");
 		conn_logwork  = gui::make_action(ico_none,     "Log &Work...");
 
-		help_licences = gui::make_action(ico_licences, "Show &Licences",    {},                         "Licences",       [pThis] { pThis->showLicence(); });
-		help_about    = gui::make_action(ico_about,    "&About Tasks...",   {},                         "About Tasks",    [pThis] { pThis->about(); });
+		help_licences = gui::make_action(ico_licences, "Show &Licences",    {},                          "Licences",       [pThis] { pThis->showLicence(); });
+		help_about    = gui::make_action(ico_about,    "&About Tasks...",   {},                          "About Tasks",    [pThis] { pThis->about(); });
 
 		pThis->SetMenu(createMenuBar({
 			menu::submenu(gui::make_action({}, "&Tasks"),{

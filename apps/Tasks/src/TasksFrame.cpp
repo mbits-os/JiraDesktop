@@ -173,14 +173,51 @@ LRESULT CTasksFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	return 1;
 }
 
+static UINT_PTR uEvent = 0x0110FFEF;
+
 LRESULT CTasksFrame::OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
 {
+	SetTimer(uEvent, GetDoubleClickTime());
 	return 0;
 }
+
+LRESULT CTasksFrame::OnTaskIconDefault(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
+{
+	KillTimer(uEvent);
+	toolbar_default->call();
+	return 0;
+}
+
 
 LRESULT CTasksFrame::OnCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
 	bHandled = onCommand(LOWORD(wParam)) ? TRUE : FALSE;
+	return 0;
+}
+
+LRESULT CTasksFrame::OnSysCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	if (wParam == SC_MINIMIZE)
+		ShowWindow(SW_HIDE);
+	else
+		bHandled = FALSE;
+	return 0;
+}
+
+LRESULT CTasksFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	if (wParam == uEvent) {
+		KillTimer(uEvent);
+		m_taskIcon.OnTaskbarContextMenu(WM_RBUTTONDOWN, bHandled);
+	} else
+		bHandled = FALSE;
+
+	return 0;
+}
+
+LRESULT CTasksFrame::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+	ShowWindow(SW_HIDE);
 	return 0;
 }
 
@@ -245,6 +282,14 @@ LRESULT CTasksFrame::OnToolTipTextW(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/
 	return 0;
 }
 
+void CTasksFrame::showHide()
+{
+	if (IsWindowVisible())
+		ShowWindow(SW_HIDE);
+	else
+		ShowWindow(SW_SHOW);
+}
+
 void CTasksFrame::newConnection()
 {
 	CConnectionDlg dlg;
@@ -269,7 +314,7 @@ void CTasksFrame::refreshAll()
 
 void CTasksFrame::exitApplication()
 {
-	PostMessage(WM_CLOSE);
+	DestroyWindow();
 }
 
 void CTasksFrame::showLicence()
