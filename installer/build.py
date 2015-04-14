@@ -39,7 +39,7 @@ def MSBuildPath():
 
 def Version():
 	ver = subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h",
-		"PROGRAM_VERSION_MAJOR,PROGRAM_VERSION_MINOR,PROGRAM_VERSION_PATCH,PROGRAM_VERSION_BUILD"])
+		"!SEMANTIC"]).strip()
 	return ver.strip()
 
 def Stability():

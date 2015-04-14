@@ -22,16 +22,16 @@ COMPANY = None
 PACKAGE = None
 
 try:
-	ver = check_output([ "python", "version.py", VERSION_H,
-		"PROGRAM_VERSION_MAJOR,PROGRAM_VERSION_MINOR,PROGRAM_VERSION_PATCH,PROGRAM_VERSION_BUILD,PROGRAM_VERSION_STABILITY"])
-	VERSION = ver.strip()
+	VERSION = check_output([ "python", "version.py", VERSION_H, "!SEMANTIC"]).strip()
 
-	VERSION_MAJOR = check_output([ "python", "version.py", VERSION_H, "PROGRAM_VERSION_MAJOR"]).strip()
-	VERSION_MINOR = check_output([ "python", "version.py", VERSION_H, "PROGRAM_VERSION_MINOR"]).strip()
-	VERSION_PATCH = check_output([ "python", "version.py", VERSION_H, "PROGRAM_VERSION_PATCH"]).strip()
-	VERSION_BUILD = check_output([ "python", "version.py", VERSION_H, "PROGRAM_VERSION_BUILD"]).strip()
-	COMPANY = check_output([ "python", "version.py", VERSION_H, "PROGRAM_COPYRIGHT_HOLDER"]).strip()
-	PACKAGE = check_output([ "python", "version.py", VERSION_H, "PROGRAM_NAME"]).strip()
+	VERSION_MAJOR = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_VERSION_MAJOR}"]).strip()
+	VERSION_MINOR = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_VERSION_MINOR}"]).strip()
+	VERSION_PATCH = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_VERSION_PATCH}"]).strip()
+	VERSION_BUILD = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_VERSION_BUILD}"]).strip()
+	COMPANY = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_COPYRIGHT_HOLDER}"]).strip()
+	PACKAGE = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_NAME}"]).strip()
+
+	SIGNVER = "%s.%s.%s" % (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 except:
 	pass
 
@@ -111,7 +111,7 @@ copyFilesFlat(ROOT, RES, resFiles)
 # sign
 if sdk is not None:
 	for f in artifactFiles:
-		call([ "signtool.exe", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s" % VERSION, path.join(ARTIFACTS, f) ])
+		call([ "signtool.exe", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s" % SIGNVER, path.join(ARTIFACTS, f) ])
 
 print ZIPNAME
 
@@ -145,4 +145,4 @@ if PACKAGE is not None:
 
 call(["candle", "-nologo", WXS] + additional)
 call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-ext", "WixUIExtension", WIXOBJ, "-out", MSINAME])
-call(["signtool", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s Installer" % VERSION, MSINAME])
+call(["signtool", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s Installer" % SIGNVER, MSINAME])

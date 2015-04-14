@@ -10,8 +10,15 @@ if len(sys.argv) < 3:
 	print "version.py <file> <fields> (<field-to-bump>)"
 	exit(1)
 
+macros = {
+	"!SEMANTIC" : "{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}.{PROGRAM_VERSION_PATCH}{PROGRAM_VERSION_STABILITY}+{PROGRAM_VERSION_BUILD}",
+	"!NIGHTLY" : "v{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}.{PROGRAM_VERSION_PATCH}/{PROGRAM_VERSION_BUILD}"
+}
+
 fname = sys.argv[1]
-fields = sys.argv[2].split(',')
+fields = sys.argv[2]
+if fields in macros:
+	fields = macros[fields]
 
 if len(sys.argv) > 3:
 	bump = sys.argv[3]
@@ -24,7 +31,7 @@ save = False
 vars = {}
 for i in range(len(lines)):
 	m = re.match("^\#\s*define\s+([^ ]+)\s+(.*)$", lines[i])
-	if m and m.group(1) in fields:
+	if m:
 		fld = m.group(1)
 		val = m.group(2)
 		rest = val
@@ -48,13 +55,4 @@ if save:
 	with open(fname, "w") as f:
 		f.write("".join(lines))
 
-first = True
-for key in fields:
-	if key in vars:
-		val = vars[key]
-		if isinstance(val, int):
-			if first: first = False
-			else: sys.stdout.write(".")
-			sys.stdout.write("%s" % val)
-		else: sys.stdout.write(val)
-print
+sys.stdout.write(fields.format(**vars))
