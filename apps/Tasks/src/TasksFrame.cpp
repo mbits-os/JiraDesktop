@@ -197,6 +197,7 @@ LRESULT CTasksFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	return 1;
 }
 
+#ifdef LCLIK_TASK_MENU
 static UINT_PTR uEvent = 0x0110FFEF;
 
 LRESULT CTasksFrame::OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
@@ -204,10 +205,13 @@ LRESULT CTasksFrame::OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
 	SetTimer(uEvent, GetDoubleClickTime());
 	return 0;
 }
+#endif
 
 LRESULT CTasksFrame::OnTaskIconDefault(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
 {
+#ifdef LCLIK_TASK_MENU
 	KillTimer(uEvent);
+#endif
 	toolbar_default->call();
 	return 0;
 }
@@ -228,6 +232,7 @@ LRESULT CTasksFrame::OnSysCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	return 0;
 }
 
+#ifdef LCLIK_TASK_MENU
 LRESULT CTasksFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
 	if (wParam == uEvent) {
@@ -238,6 +243,7 @@ LRESULT CTasksFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BO
 
 	return 0;
 }
+#endif
 
 LRESULT CTasksFrame::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
