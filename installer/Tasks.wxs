@@ -25,7 +25,8 @@
 <?endif?>
 
 <?define SHORT_VERSION="$(var.VERSION_MAJOR).$(var.VERSION_MINOR)" ?>
-<?define VERSION="$(var.VERSION_MAJOR).$(var.VERSION_MINOR).$(var.VERSION_PATCH).$(var.VERSION_BUILD)" ?>
+<?define VERSION="$(var.VERSION_MAJOR).$(var.VERSION_MINOR).$(var.VERSION_PATCH)" ?>
+<?define LONG_VERSION="$(var.VERSION_MAJOR).$(var.VERSION_MINOR).$(var.VERSION_PATCH).$(var.VERSION_BUILD)" ?>
 
 <?if $(var.VERSION_MAJOR) = "1" ?>
 <?define PRODUCT="$(var.PACKAGE)"?>
@@ -39,12 +40,12 @@
 			 UpgradeCode="{2E10A6B5-33CF-422C-810C-8B18DFC03C6E}"
 			 Language="1033"
 			 Codepage="1252"
-			 Version="$(var.VERSION)"
+			 Version="$(var.LONG_VERSION)"
 			 Manufacturer="$(var.COMPANY)" >
 
 		<Package Id="*"
 				 Keywords="Installer"
-				 Description="$(var.COMPANY)' $(var.PACKAGE) $(var.VERSION) Installer"
+				 Description="$(var.COMPANY)' $(var.PACKAGE) $(var.VERSION) Installer, Build $(var.VERSION_BUILD)"
 				 Manufacturer="$(var.COMPANY)"
 				 InstallerVersion="100"
 				 Languages="1033"
@@ -54,7 +55,7 @@
 
 		<Upgrade Id="{2E10A6B5-33CF-422C-810C-8B18DFC03C6E}">
 			<UpgradeVersion OnlyDetect='yes' Property='NEWERFOUND'
-			  Minimum='$(var.VERSION)' IncludeMinimum='no' />
+			  Minimum='$(var.LONG_VERSION)' IncludeMinimum='no' />
 		</Upgrade>
 		<CustomAction Id='NoDowngrade' Error='A later version of [ProductName] is already installed.' />
 
