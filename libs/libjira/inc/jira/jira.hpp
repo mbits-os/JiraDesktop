@@ -52,6 +52,7 @@ namespace jira
 		record() = default;
 
 		std::string issue_uri() const;
+		std::string issue_uri(const std::string& key) const;
 		void uri(const std::string& val) { m_uri = val; }
 		void issue_key(const std::string& key) { m_key = key; }
 		void issue_id(const std::string& id) { m_id = id; }

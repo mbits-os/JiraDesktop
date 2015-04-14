@@ -163,7 +163,34 @@ namespace jira
 
 			auto link = doc->createLink(issue.issue_uri());
 			link->innerText(label);
-			return std::move(link);
+
+			it = object.find("parent");
+			if (it != object.end() && it->second.is<json::MAP>()) {
+				json::map parent{ it->second };
+				it = parent.find("key");
+				if (it != parent.end() && it->second.is<json::STRING>()) {
+					auto key = it->second.as<json::STRING>();
+					auto parent_link = doc->createLink(issue.issue_uri(key));
+					parent_link->innerText(key);
+					parent_link->addClass("parent-link");
+					it = parent.find("fields");
+					if (it != parent.end() && it->second.is<json::MAP>()) {
+						json::map parent_fields{ it->second };
+						it = parent_fields.find("summary");
+						if (it != parent_fields.end() && it->second.is<json::STRING>())
+							parent_link->setTooltip(it->second.as_string());
+					}
+
+					auto span = doc->createElement(gui::elem::span);
+					span->addChild(parent_link);
+					span->addChild(doc->createText(" / "));
+					span->addChild(link);
+
+					return span;
+				}
+			}
+
+			return link;
 		}
 
 		user::user(const std::string& id, const std::string& title) : type(id, title)

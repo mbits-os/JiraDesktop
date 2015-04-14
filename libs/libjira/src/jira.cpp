@@ -33,7 +33,12 @@ namespace jira
 {
 	std::string record::issue_uri() const
 	{
-		return Uri::canonical("browse/" + m_key, m_uri).string();
+		return issue_uri(m_key);
+	}
+
+	std::string record::issue_uri(const std::string& key) const
+	{
+		return Uri::canonical("browse/" + key, m_uri).string();
 	}
 
 	void record::setRow(const std::shared_ptr<gui::node>& row)

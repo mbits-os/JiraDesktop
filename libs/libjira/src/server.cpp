@@ -374,11 +374,22 @@ namespace jira
 
 		auto& jql = def.jql().empty() ? search_def::standard.jql() : def.jql();
 		auto& columns = def.columns().empty() ? search_def::standard.columns() : def.columns();
+		auto joined = def.columns().empty() ? search_def::standard.columnsDescr() : def.columnsDescr();
+
+		// special case: "summary" requires "parent" to be present.
+		bool has_summary = false;
+		for (auto& col : columns) {
+			if (col == "summary") {
+				has_summary = true;
+				break;
+			}
+		}
+
+		if (has_summary)
+			joined += ",parent";
 
 		Uri uri{ "rest/api/2/search" };
-		uri.query(Uri::QueryBuilder{}.add("jql", jql).add("fields",
-			m_view.columns().empty() ? search_def::standard.columnsDescr() : m_view.columnsDescr()
-			).string());
+		uri.query(Uri::QueryBuilder{}.add("jql", jql).add("fields", joined).string());
 
 		auto base = url();
 		loadJSON(uri.string(), [this, doc, response, columns, base](XHR* xhr, const json::value& data) {
