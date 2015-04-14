@@ -91,6 +91,7 @@ class Step:
 		self.callable(*self.args)
 
 def tag_master():
+	global out, VERSION, TAG
 	if Branch() == "master":
 		call("git", "pull", "--rebase")
 	else:
