@@ -45,8 +45,9 @@ namespace gui {
 	}
 
 	size text_node::measureContents(painter* painter,
-		const pixels&, const pixels&)
+		const pixels&, const pixels& offY)
 	{
+		m_baseline = painter->fontBaseline() + offY;
 		return painter->measureString(m_data[Attr::Text]);
 	}
 }

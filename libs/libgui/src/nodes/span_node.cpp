@@ -41,18 +41,29 @@ namespace gui {
 		size sz;
 		auto x = offX;
 		auto y = offY;
+		m_baseline = 0;
+
 		for (auto& node : m_children) {
 			node->measure(painter);
-			auto ret = node->getSize();
-			if (sz.height < ret.height)
-				sz.height = ret.height;
+			auto baseline = node->getBaseline();
+			if (baseline > m_baseline)
+				m_baseline = baseline;
+		}
 
-			node->setPosition(x, y);
+		for (auto& node : m_children) {
+			auto baseOffset = m_baseline - node->getBaseline();
+			auto ret = node->getSize();
+			auto height = ret.height + baseOffset;
+			if (sz.height < height)
+				sz.height = height;
+
+			node->setPosition(x, y + baseOffset);
 
 			sz.width += ret.width;
 			x += ret.width;
 		}
 
+		m_baseline += offY;
 		return sz;
 	}
 }

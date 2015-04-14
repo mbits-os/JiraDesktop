@@ -53,6 +53,10 @@ namespace gui {
 			y += ret.height;
 		}
 
+		m_baseline = offY;
+		if (!m_children.empty())
+			m_baseline += m_children.front()->getBaseline();
+
 		return sz;
 	}
 }

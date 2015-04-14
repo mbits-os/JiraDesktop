@@ -78,8 +78,9 @@ namespace gui {
 	}
 
 	size icon_node::measureContents(painter*,
-		const pixels&, const pixels&)
+		const pixels&, const pixels& offY)
 	{
+		m_baseline = 16_px + offY;
 		return{ 16_px, 16_px };
 	}
 
@@ -114,9 +115,11 @@ namespace gui {
 	}
 
 	size user_node::measureContents(painter* painter,
-		const pixels&, const pixels&)
+		const pixels&, const pixels& offY)
 	{
 		auto size = 16_px;
+		m_baseline = size + offY;
+
 		m_position.size = { size, size };
 		auto scaled = (size_t)(painter->trueZoom().scaleL(size.value()));
 		auto selected = 0;
