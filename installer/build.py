@@ -38,21 +38,16 @@ def MSBuildPath():
 		return _winreg.QueryValueEx(key, "MSBuildToolsPath")[0]
 
 def Version():
-	ver = subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h",
-		"!SEMANTIC"]).strip()
-	return ver.strip()
+	return subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h", "!SEMANTIC"]).strip()
 
-def Stability():
-	ver = subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h", "PROGRAM_VERSION_STABILITY"])
-	return ver.strip()
+def Tag():
+	return subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h", "!NIGHTLY"]).strip()
 
 def Branch():
 	try:
 		var = subprocess.check_output([ "git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
 		return var
 	except subprocess.CalledProcessError, e: return ""
-
-STABILITY = Stability()
 
 POLICY_TAG_AND_PUSH = 0
 POLICY_TAG = 1
@@ -68,7 +63,7 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument("-n, --no-push", dest="push", action="store_const", const=POLICY_TAG, default=POLICY_TAG_AND_PUSH,
 					help="Bumps build number on current master and builds the solution")
 group.add_argument("-p, --push", dest="push", action="store_const", const=POLICY_TAG_AND_PUSH, default=POLICY_TAG_AND_PUSH,
-					help="Like --push, but pushes the version tag to the origin")
+					help="Like --no-push, but pushes the version tag to the origin")
 group.add_argument("-u, --use", dest="push", metavar="TAG", nargs="?", action=PushAction, default=POLICY_TAG_AND_PUSH,
 					help="Builds solution from pre-existing tag. If not TAG is given, one is calculated from 'version.h'")
 parser.add_argument("--dry-run", action="store_true", default=False,
@@ -103,12 +98,12 @@ def tag_master():
 	call("python", "build_tag.py")
 
 	VERSION = Version()
-	TAG = "v" + VERSION
+	TAG = Tag()
 	print >>out, "Tagged as '%s'" % TAG
 
 def switch_log():
-	global out, VERSION, STABILITY
-	LOGFILE = "tasks-%s%s-win32.log" % (VERSION, STABILITY)
+	global out, VERSION
+	LOGFILE = "tasks-%s-win32.log" % VERSION
 	previous = out.name
 	out.flush()
 	out.close()
@@ -140,7 +135,7 @@ def build_sln():
 			msbuild = MSBuildPath()
 			if msbuild:
 				os.environ["PATH"] += os.pathsep + msbuild
-			path = "..\\..\\installer\\tasks-%s%s-win32-msbuild.log" % (VERSION, STABILITY)
+			path = "..\\..\\installer\\tasks-%s-win32-msbuild.log" % VERSION
 			call_direct("msbuild", "/nologo",
 				"/flp:LogFile=" + path,
 				"/noconlog", "/m", "/p:Configuration=Release",
@@ -154,7 +149,7 @@ prog.append(Step("Updating the tree", call, "git", "fetch", "--tags", "-v"))
 if policy == POLICY_REUSE:
 	VERSION = Version()
 	if tag is not None: TAG = tag
-	else: TAG = "v" + VERSION
+	else: TAG = Tag()
 
 	prog.append(Step("Using '%s'" % TAG, call, "git", "checkout", TAG))
 else:
