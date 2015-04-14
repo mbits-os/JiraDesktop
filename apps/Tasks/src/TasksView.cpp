@@ -290,7 +290,8 @@ namespace {
 			.add(class_name{ "unexpected" },               color(0x2600E6))
 			.add(class_name{ "label" },                    background(0xF5F5F5) <<
 			                                               border(1_px, gui::line_style::solid, 0xCCCCCC) <<
-			                                               padding(1_px, 5_px));
+			                                               padding(1_px, 5_px))
+			.add(class_name{ "parent-link" },              color(0x666666));
 
 		return std::make_shared<styles::stylesheet>(std::move(out));
 	};
