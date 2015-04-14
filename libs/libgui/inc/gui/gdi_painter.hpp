@@ -41,6 +41,7 @@ namespace gui { namespace gdi {
 		void paintImage(const image_ref* img, const pixels& width, const pixels& height) override;
 		void paintString(const std::string& text) override;
 		size measureString(const std::string& text) override;
+		pixels fontBaseline() override;
 		void fillRectangle(colorref color, const point& pt, const size& size) override;
 		void drawBorder(line_style style, colorref color, const gui::point& pt, const gui::size& size) override;
 		void setFont(const pixels& fontSize, const std::string& fontFamily, gui::weight weight,

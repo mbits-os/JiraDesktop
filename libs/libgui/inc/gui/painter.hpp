@@ -149,6 +149,7 @@ namespace gui {
 		virtual void paintBackground(colorref, const pixels& width, const pixels& height) = 0;
 		virtual void paintBorder(node*) = 0;
 		virtual size measureString(const std::string& text) = 0;
+		virtual pixels fontBaseline() = 0;
 
 		virtual bool visible(node*) const = 0;
 		virtual style_handle applyStyle(node*) = 0;

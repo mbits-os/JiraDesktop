@@ -120,14 +120,6 @@ namespace gui { namespace gdi {
 
 		auto widen = utf::widen(text);
 		::TextOut(m_dc, zoom().scaleL(origin().x), zoom().scaleL(origin().y), widen.c_str(), widen.length());
-
-#if 0
-		SIZE s = {};
-		TEXTMETRIC tm = {};
-		dc.GetTextExtent(widen.c_str(), widen.length(), &s);
-		dc.GetTextMetrics(&tm);
-		dc.FillSolidRect(x, y + tm.tmAscent, s.cx - 1, 1, 0x3333FF);
-#endif
 	}
 
 	size painter::measureString(const std::string& text)
@@ -136,6 +128,14 @@ namespace gui { namespace gdi {
 		SIZE s = {};
 		if (::GetTextExtentPoint32(m_dc, line.c_str(), line.length(), &s))
 			return{ zoom().invert(s.cx), zoom().invert(s.cy) };
+		return{};
+	}
+
+	pixels painter::fontBaseline()
+	{
+		TEXTMETRIC tm;
+		if (::GetTextMetrics(m_dc, &tm))
+			return zoom().invert(tm.tmAscent);
 		return{};
 	}
 
