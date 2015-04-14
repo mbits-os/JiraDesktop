@@ -224,6 +224,11 @@ namespace gui {
 		return m_position.size;
 	}
 
+	pixels node_base::getBaseline()
+	{
+		return m_baseline;
+	}
+
 	std::shared_ptr<node> node_base::getParent() const
 	{
 		return m_parent.lock();

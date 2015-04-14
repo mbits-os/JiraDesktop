@@ -30,6 +30,7 @@ namespace gui {
 		point getPosition() override;
 		point getAbsolutePos() override;
 		size getSize() override;
+		pixels getBaseline() override;
 
 		std::shared_ptr<node> getParent() const override;
 		void setParent(const std::shared_ptr<node>&) override;
@@ -75,6 +76,7 @@ namespace gui {
 			point pt;
 			size size;
 		} m_position;
+		pixels m_baseline;
 
 		std::atomic<int> m_hoverCount{ 0 };
 		std::atomic<int> m_activeCount{ 0 };
