@@ -29,9 +29,9 @@ const wchar_t* fancyStability() {
 
 LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	std::wstring ver{ WPROGRAM_NAME L" v" WPROGRAM_VERSION_STRING L"." WPROGRAM_VERSION_BUILD };
+	std::wstring ver{ WPROGRAM_NAME L" v" WPROGRAM_VERSION_STRING };
 	ver.append(fancyStability());
-	ver.append(L"\n\n\xA9 2015 " WPROGRAM_COPYRIGHT_HOLDER);
+	ver.append(L", Build " WPROGRAM_VERSION_BUILD L"\n\n\xA9 2015 " WPROGRAM_COPYRIGHT_HOLDER);
 
 	SetDlgItemText(IDC_STATIC_VERSION, ver.c_str());
 	CenterWindow(GetParent());
