@@ -48,10 +48,10 @@ if policy == POLICY_TAG and not args.dry_run:
 def tag_master(out):
 	global VERSION, TAG
 	if Branch() == "master":
-		call("git", "pull", "--rebase")
+		call(out, "git", "pull", "--rebase")
 	else:
-		call("git", "checkout", "master")
-	call("python", "build_tag.py")
+		call(out, "git", "checkout", "master")
+	call(out, "python", "build_tag.py")
 
 	TAG = Tag()
 	print >>out, "Tagged as '%s'" % TAG
