@@ -35,4 +35,4 @@ with pushd(".."):
 		if len(sys.argv) > 1:
 			log = sys.argv[1]
 		path = os.path.join(os.path.relpath(cwd), log)
-		exit(call("msbuild", "/nologo", "/flp:LogFile=" + path, "/noconlog", "/m", "/p:Configuration=Release", "JiraDesktop.sln"))
+		exit(call("msbuild", "/nologo", "/flp:LogFile=" + path, "/clp:Verbosity=minimal", "/m", "/p:Configuration=Release", "JiraDesktop.sln"))
