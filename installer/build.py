@@ -1,53 +1,13 @@
 #!/usr/python
 
-import os, sys, subprocess, _winreg, argparse, tempfile
+from libbuild import *
+import os, sys, _winreg, argparse, tempfile
 
 out = tempfile.NamedTemporaryFile(prefix='tasks-tmp-', suffix='-win32.log', dir='.', delete=False)
-
-def present(args):
-	global out
-	out.write("$ %s\n" % " ".join(args))
-	out.flush()
-
-def call(*args):
-	present(args)
-	ret = subprocess.call(args, stdout=out, stderr=out)
-	if ret: exit(ret)
-	out.flush()
-
-def call_simple(*args):
-	present(args)
-	try: out.write(subprocess.check_output(args, stderr=subprocess.STDOUT))
-	except subprocess.CalledProcessError, e:
-		if e.output is not None:
-			out.write(e.output)
-		print out.content
-		print e
-		exit(e.returncode)
-
-def call_direct(*args):
-	present(args)
-	ret = subprocess.call(args)
-	if ret: exit(ret)
-
-def call_(*args):
-	return subprocess.call(args)
 
 def MSBuildPath():
 	with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\14.0") as key:
 		return _winreg.QueryValueEx(key, "MSBuildToolsPath")[0]
-
-def Version():
-	return subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h", "!SEMANTIC"]).strip()
-
-def Tag():
-	return subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h", "!NIGHTLY"]).strip()
-
-def Branch():
-	try:
-		var = subprocess.check_output([ "git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
-		return var
-	except subprocess.CalledProcessError, e: return ""
 
 POLICY_TAG_AND_PUSH = 0
 POLICY_TAG = 1
@@ -77,21 +37,11 @@ tag = None
 if policy == POLICY_REUSE:
 	tag = args.tag
 
-if policy == POLICY_TAG:
+if policy == POLICY_TAG and not args.dry_run:
 	print >>out, "[WARNING]\n>> no push, when possible call 'git push --tags origin master' <<"
-	
-class Step:
-	def __init__(self, title, callable, *args):
-		self.title = title
-		self.callable = callable
-		self.args = args
-	def __call__(self, pos, max):
-		print "Step %s/%s %s" % (pos, max, self.title)
-		print >>out, "\n[%s]" % self.title
-		self.callable(*self.args)
 
-def tag_master():
-	global out, VERSION, TAG
+def tag_master(out):
+	global VERSION, TAG
 	if Branch() == "master":
 		call("git", "pull", "--rebase")
 	else:
@@ -102,7 +52,7 @@ def tag_master():
 	TAG = Tag()
 	print >>out, "Tagged as '%s'" % TAG
 
-def switch_log():
+def switch_log(unused):
 	global out, VERSION
 	LOGFILE = "tasks-%s-win32.log" % VERSION
 	previous = out.name
@@ -114,69 +64,34 @@ def switch_log():
 	out = open(LOGFILE, "a+b")
 	out.seek(os.SEEK_END)
 
-class pushd:
-	def __init__(self, dir):
-		self.stack = os.getcwd()
-		self.dir = dir
-	def __enter__(self):
-		try: os.chdir(self.dir)
-		except: pass
-		return self
-	def __exit__(self, eType, eValue, eTrace):
-		try: os.chdir(self.stack)
-		except: pass
-		return False
-	
-def build_sln():
-	switch_log() # by now, we know the version to use
-	with pushd(".."):
-		call_("rm", "-rf", "int")
-		call_("rm", "-rf", "bin")
-		with pushd("build/win32"):
-			msbuild = MSBuildPath()
-			if msbuild:
-				os.environ["PATH"] += os.pathsep + msbuild
-			path = "..\\..\\installer\\tasks-%s-win32-msbuild.log" % VERSION
-			call_direct("msbuild", "/nologo",
-				"/flp:LogFile=" + path,
-				"/noconlog", "/m", "/p:Configuration=Release",
-				"JiraDesktop.sln")
+def build_sln(out):
+	global VERSION
+	call(out, "python", "msbuild.py", "tasks-%s-win32-msbuild.log" % VERSION)
 
-def nothing(): pass
+def nothing(out): pass
 
-prog = []
-prog.append(Step("Updating the tree", call, "git", "fetch", "--tags", "-v"))
+prog = Steps()
+prog.step("Updating the tree", call, "git", "fetch", "--tags", "-v")
 
 if policy == POLICY_REUSE:
 	VERSION = Version()
 	if tag is not None: TAG = tag
 	else: TAG = Tag()
 
-	prog.append(Step("Using '%s'" % TAG, call, "git", "checkout", TAG))
+	prog.step("Using '%s'" % TAG, call, "git", "checkout", TAG)
 else:
-	prog.append(Step("Tagging 'master'", tag_master))
+	prog.step("Tagging 'master'", tag_master)
 
 if policy == POLICY_TAG_AND_PUSH:
-	prog.append(Step("Pushing to 'origin'", call, "git", "push", "--tags", "origin", "master"))
+	prog.step("Pushing to 'origin'", call, "git", "push", "--tags", "origin", "master")
 
-prog.append(Step("Getting dependencies", call, "python", "copy_res.py"))
-prog.append(Step("Building 'Release:Win32'", build_sln))
-prog.append(Step("Packing", call, "python", "pack.py"))
-prog.append(Step("Done", nothing))
+# by now, we know the version to use
+prog.hidden(switch_log) \
+	.step("Getting dependencies", call, "python", "copy_res.py") \
+	.step("Building 'Release:Win32'", build_sln) \
+	.step("Packing", call, "python", "pack.py") \
+	.step("Done", nothing)
 
-max = len(prog)
-i = 1
-
-if args.dry_run:
-	for step in prog:
-		if len(step.args):
-			print "%s/%s" % (i, max), step.title, "(%s)" % " ".join([str(arg) for arg in step.args])
-		else:
-			print "%s/%s" % (i, max), step.title
-		i += 1
-else:
-	for step in prog:
-		step(i, max)
-		i += 1
+prog.run(out, args.dry_run)
 
 out.close()

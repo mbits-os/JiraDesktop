@@ -8,3 +8,4 @@ res
 *.zip
 *.wixobj
 *.wixpdb
+*.pyc
