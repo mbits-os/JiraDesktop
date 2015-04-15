@@ -30,9 +30,11 @@ namespace gui {
 	class text_node : public node_base {
 	public:
 		text_node(const std::string& text);
+		text_node(const text_node&);
 		void paintContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
 		size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
+		std::shared_ptr<node> cloneSelf() const override;
 	};
 }

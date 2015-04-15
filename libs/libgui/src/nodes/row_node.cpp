@@ -35,6 +35,8 @@ namespace gui {
 	{
 	}
 
+	row_node::row_node(const row_node&) = default;
+
 	void row_node::setColumns(const std::shared_ptr<std::vector<pixels>>& columns)
 	{
 		m_columns = columns;
@@ -87,5 +89,10 @@ namespace gui {
 		}
 
 		m_position.size.width = x + offsetRight();
+	}
+
+	std::shared_ptr<node> row_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<row_node>(*this));
 	}
 }

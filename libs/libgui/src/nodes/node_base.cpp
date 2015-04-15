@@ -36,6 +36,14 @@ namespace gui {
 	{
 	}
 
+	node_base::node_base(const node_base& oth)
+		: m_nodeName{ oth.m_nodeName }
+		, m_data{ oth.m_data }
+		, m_classes{ oth.m_classes }
+		, m_parent{}
+	{
+	}
+
 	elem node_base::getNodeName() const
 	{
 		return m_nodeName;
@@ -86,12 +94,99 @@ namespace gui {
 
 	void node_base::addChild(const std::shared_ptr<node>& child)
 	{
+		appendChild(child);
+	}
+
+	std::shared_ptr<node> node_base::insertBefore(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& refChild)
+	{
+		if (!refChild)
+			return appendChild(newChild);
+
+		if (imChildOf(newChild))
+			return nullptr; // instead of HIERARCHY_REQUEST_ERR
+
+		auto locked = newChild->getParent();
+		if (locked)
+			locked->removeChild(newChild);
+
+		auto it = std::find(std::begin(m_children), std::end(m_children), refChild);
+		if (it == std::end(m_children))
+			return nullptr; // instead of NOT_FOUND_ERR
+
+		newChild->setParent(shared_from_this());
+		m_children.insert(it, newChild);
+
+		return newChild;
+	}
+
+	std::shared_ptr<node> node_base::replaceChild(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& oldChild)
+	{
+		if (!newChild)
+			return removeChild(oldChild);
+
+		if (imChildOf(newChild))
+			return nullptr; // instead of HIERARCHY_REQUEST_ERR
+
+		auto locked = newChild->getParent();
+		if (locked)
+			locked->removeChild(newChild);
+
+		auto it = std::find(std::begin(m_children), std::end(m_children), oldChild);
+		if (it == std::end(m_children))
+			return nullptr; // instead of NOT_FOUND_ERR
+
+		newChild->setParent(shared_from_this());
+		*it = newChild;
+
+		return oldChild;
+	}
+
+	std::shared_ptr<node> node_base::removeChild(const std::shared_ptr<node>& oldChild)
+	{
+		auto it = std::find(std::begin(m_children), std::end(m_children), oldChild);
+		if (it == std::end(m_children))
+			return nullptr; // instead of NOT_FOUND_ERR
+
+		m_children.erase(it);
+		return oldChild;
+	}
+
+	std::shared_ptr<node> node_base::appendChild(const std::shared_ptr<node>& newChild)
+	{
 		auto it = m_data.find(Attr::Text);
 		if (it != m_data.end())
-			return;
+			return nullptr; // instead of HIERARCHY_REQUEST_ERR
 
-		child->setParent(shared_from_this());
-		m_children.push_back(std::move(child));
+		if (imChildOf(newChild))
+			return nullptr; // instead of HIERARCHY_REQUEST_ERR
+
+		auto locked = newChild->getParent();
+		if (locked)
+			locked->removeChild(newChild);
+
+		newChild->setParent(shared_from_this());
+		m_children.push_back(newChild);
+
+		return newChild;
+	}
+
+	bool node_base::hasChildNodes() const
+	{
+		return !m_children.empty();
+	}
+
+	std::shared_ptr<node> node_base::cloneNode(bool deep) const
+	{
+		auto clone = cloneSelf();
+		if (!clone || !deep)
+			return clone;
+
+		for (auto& child : m_children) {
+			auto ch = child->cloneNode(true);
+			if (ch)
+				clone->appendChild(ch);
+		}
+		return clone;
 	}
 
 	const std::vector<std::shared_ptr<node>>& node_base::children() const
@@ -562,5 +657,16 @@ namespace gui {
 		return
 			calculated(ref, styles::prop_border_bottom_width) +
 			calculated(ref, styles::prop_padding_bottom);
+	}
+
+	bool node_base::imChildOf(const std::shared_ptr<node>& tested) const
+	{
+		auto parent = m_parent.lock();
+		while (parent) {
+			if (parent == tested)
+				return true;
+		}
+
+		return false;
 	}
 }

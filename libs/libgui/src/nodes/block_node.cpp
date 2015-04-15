@@ -35,6 +35,8 @@ namespace gui {
 	{
 	}
 
+	block_node::block_node(const block_node&) = default;
+
 	size block_node::measureContents(painter* painter,
 		const pixels& offX, const pixels& offY)
 	{
@@ -58,5 +60,10 @@ namespace gui {
 			m_baseline += m_children.front()->getBaseline();
 
 		return sz;
+	}
+
+	std::shared_ptr<node> block_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<block_node>(*this));
 	}
 }

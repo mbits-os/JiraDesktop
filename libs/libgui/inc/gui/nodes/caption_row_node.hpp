@@ -30,10 +30,12 @@ namespace gui {
 	class caption_row_node : public row_node {
 	public:
 		caption_row_node();
+		caption_row_node(const caption_row_node&);
 
 		size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
 
 		void repositionChildren() override;
+		std::shared_ptr<node> cloneSelf() const override;
 	};
 }

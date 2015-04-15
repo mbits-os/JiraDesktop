@@ -44,6 +44,7 @@ namespace gui {
 		std::shared_ptr<image_cb> m_cb;
 	public:
 		icon_node(const std::string& uri, const std::shared_ptr<image_ref>& image, const std::string& tooltip);
+		icon_node(const icon_node& nod);
 		~icon_node();
 		void attach();
 		void addChild(const std::shared_ptr<node>& child) override;
@@ -51,6 +52,8 @@ namespace gui {
 			const pixels& offX, const pixels& offY) override;
 		size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
+
+		std::shared_ptr<node> cloneSelf() const override;
 	};
 
 	class user_node : public node_base {
@@ -61,11 +64,14 @@ namespace gui {
 		int m_selectedSize;
 	public:
 		user_node(const std::weak_ptr<document_impl>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip);
+		user_node(const user_node&);
 		~user_node();
 		void addChild(const std::shared_ptr<node>& child) override;
 		void paintContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
 		size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
+
+		std::shared_ptr<node> cloneSelf() const override;
 	};
 }

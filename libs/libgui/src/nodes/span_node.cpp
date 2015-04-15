@@ -35,6 +35,8 @@ namespace gui {
 	{
 	}
 
+	span_node::span_node(const span_node&) = default;
+
 	size span_node::measureContents(painter* painter,
 		const pixels& offX, const pixels& offY)
 	{
@@ -65,5 +67,10 @@ namespace gui {
 
 		m_baseline += offY;
 		return sz;
+	}
+
+	std::shared_ptr<node> span_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<span_node>(*this));
 	}
 }

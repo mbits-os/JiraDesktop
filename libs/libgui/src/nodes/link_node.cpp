@@ -35,4 +35,11 @@ namespace gui {
 	{
 		m_data[Attr::Href] = href;
 	}
+
+	link_node::link_node(const link_node&) = default;
+
+	std::shared_ptr<node> link_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<link_node>(*this));
+	}
 }

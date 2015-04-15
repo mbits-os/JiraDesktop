@@ -13,6 +13,7 @@ namespace gui {
 	class node_base : public node, public std::enable_shared_from_this<node> {
 	public:
 		node_base(elem name);
+		node_base(const node_base&);
 		elem getNodeName() const override;
 		void addClass(const std::string& name) override;
 		void removeClass(const std::string& name) override;
@@ -21,6 +22,12 @@ namespace gui {
 		std::string text() const override;
 		void setTooltip(const std::string& text) override;
 		void addChild(const std::shared_ptr<node>& child) override;
+		std::shared_ptr<node> insertBefore(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& refChild) override;
+		std::shared_ptr<node> replaceChild(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& oldChild) override;
+		std::shared_ptr<node> removeChild(const std::shared_ptr<node>& oldChild) override;
+		std::shared_ptr<node> appendChild(const std::shared_ptr<node>& newChild) override;
+		bool hasChildNodes() const override;
+		std::shared_ptr<node> cloneNode(bool deep) const override;
 		const std::vector<std::shared_ptr<node>>& children() const override;
 
 		void paint(painter* painter) override final;
@@ -65,6 +72,7 @@ namespace gui {
 			const pixels& offX, const pixels& offY);
 		virtual size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) = 0;
+		virtual std::shared_ptr<node> cloneSelf() const = 0;
 
 	protected:
 		elem m_nodeName;
@@ -86,5 +94,12 @@ namespace gui {
 		std::shared_ptr<styles::rule_storage> m_calculatedActive;
 		std::shared_ptr<styles::rule_storage> m_calculatedHoverActive;
 		std::shared_ptr<styles::stylesheet> m_allApplying;
+
+		inline static std::shared_ptr<node> cloneDetach(const std::shared_ptr<node>& node) {
+			node->setParent({});
+			return node;
+		}
+	private:
+		bool imChildOf(const std::shared_ptr<node>&) const;
 	};
 }

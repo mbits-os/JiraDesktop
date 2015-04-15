@@ -36,10 +36,17 @@ namespace gui {
 	{
 	}
 
+	doc_element::doc_element(const doc_element&) = default;
+
 	void doc_element::invalidate(const point& pt, const size& size)
 	{
 		auto p = pt + m_position.pt;
 		if (m_invalidator)
 			m_invalidator(pt, size);
+	}
+
+	std::shared_ptr<node> doc_element::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<doc_element>(*this));
 	}
 }

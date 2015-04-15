@@ -37,6 +37,8 @@ namespace gui {
 	{
 	}
 
+	table_node::table_node(const table_node&) = default;
+
 	void table_node::addChild(const std::shared_ptr<node>& child)
 	{
 		auto elem = child->getNodeName();
@@ -72,5 +74,10 @@ namespace gui {
 
 		content.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
 		return content;
+	}
+
+	std::shared_ptr<node> table_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<table_node>(*this));
 	}
 }

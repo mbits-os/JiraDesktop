@@ -36,6 +36,8 @@ namespace gui {
 		m_data[Attr::Text] = text;
 	}
 
+	text_node::text_node(const text_node&) = default;
+
 	void text_node::paintContents(painter* painter,
 		const pixels& offX, const pixels& offY)
 	{
@@ -49,5 +51,10 @@ namespace gui {
 	{
 		m_baseline = painter->fontBaseline() + offY;
 		return painter->measureString(m_data[Attr::Text]);
+	}
+
+	std::shared_ptr<node> text_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<text_node>(*this));
 	}
 }

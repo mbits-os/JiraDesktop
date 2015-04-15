@@ -151,9 +151,6 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\painter_base.hpp">
       <Filter>inc\gui</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes.hpp">
-      <Filter>inc\gui</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\node_base.hpp">
       <Filter>inc\gui\nodes</Filter>
     </ClInclude>
@@ -186,6 +183,9 @@
     </ClInclude>
     <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\doc_element.hpp">
       <Filter>inc\gui\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libs\libgui\inc\gui\node.hpp">
+      <Filter>inc\gui</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

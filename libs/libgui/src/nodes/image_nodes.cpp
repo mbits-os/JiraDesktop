@@ -52,6 +52,8 @@ namespace gui {
 		m_position.size.width = m_position.size.height = 16_px;
 	}
 
+	icon_node::icon_node(const icon_node& nod) = default;
+
 	icon_node::~icon_node()
 	{
 		m_image->unregisterListener(m_cb);
@@ -84,6 +86,11 @@ namespace gui {
 		return{ 16_px, 16_px };
 	}
 
+	std::shared_ptr<node> icon_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<icon_node>(*this));
+	}
+
 	user_node::user_node(const std::weak_ptr<document_impl>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip)
 		: node_base(elem::icon)
 		, m_document(document)
@@ -94,6 +101,8 @@ namespace gui {
 		node_base::setTooltip(tooltip);
 		m_position.size.width = m_position.size.height = 16_px;
 	}
+
+	user_node::user_node(const user_node&) = default;
 
 	user_node::~user_node()
 	{
@@ -176,5 +185,10 @@ namespace gui {
 			m_image->registerListener(m_cb);
 
 		return{ size, size };
+	}
+
+	std::shared_ptr<node> user_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<user_node>(*this));
 	}
 }

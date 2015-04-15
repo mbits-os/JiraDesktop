@@ -35,6 +35,8 @@ namespace gui {
 	{
 	}
 
+	caption_row_node::caption_row_node(const caption_row_node&) = default;
+
 	size caption_row_node::measureContents(painter* painter,
 		const pixels& offX, const pixels& offY)
 	{
@@ -57,5 +59,10 @@ namespace gui {
 			m_columns->back() += m_position.size.width - x;
 		else
 			m_position.size.width = x;
+	}
+
+	std::shared_ptr<node> caption_row_node::cloneSelf() const
+	{
+		return cloneDetach(std::make_shared<caption_row_node>(*this));
 	}
 }

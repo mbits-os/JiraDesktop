@@ -32,6 +32,8 @@ namespace gui {
 		std::function<void(const point&, const size&)> m_invalidator;
 	public:
 		explicit doc_element(const std::function<void(const point&, const size&)>& invalidator);
+		doc_element(const doc_element&);
 		void invalidate(const point& pt, const size& size) override;
+		std::shared_ptr<node> cloneSelf() const override;
 	};
 }

@@ -84,7 +84,7 @@
     <ClInclude Include="..\..\libs\libgui\inc\gui\image.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\listeners.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\menu.hpp" />
-    <ClInclude Include="..\..\libs\libgui\inc\gui\nodes.hpp" />
+    <ClInclude Include="..\..\libs\libgui\inc\gui\node.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\block_node.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\caption_row_node.hpp" />
     <ClInclude Include="..\..\libs\libgui\inc\gui\nodes\document_impl.hpp" />

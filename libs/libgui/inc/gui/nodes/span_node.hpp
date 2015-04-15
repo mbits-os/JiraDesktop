@@ -30,7 +30,9 @@ namespace gui {
 	class span_node : public node_base {
 	public:
 		span_node(elem name);
+		span_node(const span_node&);
 		size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
+		std::shared_ptr<node> cloneSelf() const override;
 	};
 }
