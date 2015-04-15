@@ -182,9 +182,9 @@ namespace jira
 					}
 
 					auto span = doc->createElement(gui::elem::span);
-					span->addChild(parent_link);
-					span->addChild(doc->createText(" / "));
-					span->addChild(link);
+					span->appendChild(parent_link);
+					span->appendChild(doc->createText(" / "));
+					span->appendChild(link);
 
 					return span;
 				}
@@ -301,11 +301,11 @@ namespace jira
 			auto items = it->second.as<json::vector>();
 			for (auto&& item : items) {
 				if (first) first = false;
-				else out->addChild(doc->createText(m_sep));
+				else out->appendChild(doc->createText(m_sep));
 
 				auto val = m_item->visit(doc, issue, item);
 				if (val)
-					out->addChild(std::move(val));
+					out->appendChild(std::move(val));
 			}
 
 			if (first) { // no items added to the span, return empty...

@@ -48,7 +48,7 @@ namespace jira
 
 	void record::addVal(const std::shared_ptr<gui::node>& field)
 	{
-		m_row->addChild(std::move(field));
+		m_row->appendChild(std::move(field));
 	}
 
 	std::shared_ptr<gui::node> type::visit(const std::shared_ptr<gui::document>& doc, const record& issue, const json::value& value) const
@@ -72,7 +72,7 @@ namespace jira
 			if (val) {
 				auto td = doc->createElement(gui::elem::td);
 				if (td) {
-					td->addChild(val);
+					td->appendChild(val);
 					out.addVal(td);
 				}
 			}
