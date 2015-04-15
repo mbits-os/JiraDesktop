@@ -22,14 +22,14 @@ COMPANY = None
 PACKAGE = None
 
 try:
-	VERSION = check_output([ "python", "version.py", VERSION_H, "!SEMANTIC"]).strip()
+	VERSION = check_output([ "python", "version.py", "--in", VERSION_H, "!SEMANTIC"]).strip()
 
-	VERSION_MAJOR = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_VERSION_MAJOR}"]).strip()
-	VERSION_MINOR = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_VERSION_MINOR}"]).strip()
-	VERSION_PATCH = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_VERSION_PATCH}"]).strip()
-	VERSION_BUILD = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_VERSION_BUILD}"]).strip()
-	COMPANY = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_COPYRIGHT_HOLDER}"]).strip()
-	PACKAGE = check_output([ "python", "version.py", VERSION_H, "{PROGRAM_NAME}"]).strip()
+	VERSION_MAJOR = check_output([ "python", "version.py", "--in", VERSION_H, "{PROGRAM_VERSION_MAJOR}"]).strip()
+	VERSION_MINOR = check_output([ "python", "version.py", "--in", VERSION_H, "{PROGRAM_VERSION_MINOR}"]).strip()
+	VERSION_PATCH = check_output([ "python", "version.py", "--in", VERSION_H, "{PROGRAM_VERSION_PATCH}"]).strip()
+	VERSION_BUILD = check_output([ "python", "version.py", "--in", VERSION_H, "{PROGRAM_VERSION_BUILD}"]).strip()
+	COMPANY = check_output([ "python", "version.py", "--in", VERSION_H, "{PROGRAM_COPYRIGHT_HOLDER}"]).strip()
+	PACKAGE = check_output([ "python", "version.py", "--in", VERSION_H, "{PROGRAM_NAME}"]).strip()
 
 	SIGNVER = "%s.%s.%s" % (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 except:

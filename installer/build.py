@@ -1,13 +1,7 @@
 #!/usr/python
 
 from libbuild import *
-import os, sys, _winreg, argparse, tempfile
-
-out = tempfile.NamedTemporaryFile(prefix='tasks-tmp-', suffix='-win32.log', dir='.', delete=False)
-
-def MSBuildPath():
-	with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\14.0") as key:
-		return _winreg.QueryValueEx(key, "MSBuildToolsPath")[0]
+import os, sys, _winreg, argparse
 
 POLICY_TAG_AND_PUSH = 0
 POLICY_TAG = 1
@@ -33,9 +27,20 @@ args = parser.parse_args()
 
 policy = args.push
 tag = None
-
 if policy == POLICY_REUSE:
 	tag = args.tag
+
+if policy == POLICY_REUSE:
+	if tag:
+		VERSION = TaggedVersion(tag)
+	else:
+		VERSION = Version()
+else:
+	VERSION = Version(Next)
+LOGFILE = "tasks-%s-win32.log" % VERSION
+
+if not args.dry_run:
+	out = open(LOGFILE, "w+b")
 
 if policy == POLICY_TAG and not args.dry_run:
 	print >>out, "[WARNING]\n>> no push, when possible call 'git push --tags origin master' <<"
@@ -48,21 +53,8 @@ def tag_master(out):
 		call("git", "checkout", "master")
 	call("python", "build_tag.py")
 
-	VERSION = Version()
 	TAG = Tag()
 	print >>out, "Tagged as '%s'" % TAG
-
-def switch_log(unused):
-	global out, VERSION
-	LOGFILE = "tasks-%s-win32.log" % VERSION
-	previous = out.name
-	out.flush()
-	out.close()
-	if os.path.exists(LOGFILE):
-		os.remove(LOGFILE)
-	os.rename(previous, LOGFILE)
-	out = open(LOGFILE, "a+b")
-	out.seek(os.SEEK_END)
 
 def build_sln(out):
 	global VERSION
@@ -85,9 +77,7 @@ else:
 if policy == POLICY_TAG_AND_PUSH:
 	prog.step("Pushing to 'origin'", call, "git", "push", "--tags", "origin", "master")
 
-# by now, we know the version to use
-prog.hidden(switch_log) \
-	.step("Getting dependencies", call, "python", "copy_res.py") \
+prog.step("Getting dependencies", call, "python", "copy_res.py") \
 	.step("Building 'Release:Win32'", build_sln) \
 	.step("Packing", call, "python", "pack.py") \
 	.step("Done", nothing)

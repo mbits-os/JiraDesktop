@@ -1,8 +1,10 @@
 #!/usr/python
 
-import subprocess
+import subprocess, tempfile, os
 
-__all__ = ["call", "call_simple", "call_direct", "call_", "Version", "Tag", "Branch", "Steps"]
+__all__ = ["Next", "call", "call_simple", "call_direct", "call_", "Version", "TaggedVersion", "Tag", "Branch", "Steps"]
+
+Next = True
 
 def __present(out, args):
 	out.write("$ %s\n" % " ".join(args))
@@ -32,11 +34,24 @@ def call_direct(out, *args):
 def call_(out, *args):
 	return subprocess.call(args)
 
-def Version():
-	return subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h", "!SEMANTIC"]).strip()
+def Version(next = None):
+	args = [ "python", "version.py", "--in", "../apps/Tasks/src/version.h", "!SEMANTIC"]
+	if next is not None: args += ["--next", "PROGRAM_VERSION_BUILD"]
+	return subprocess.check_output(args).strip()
+
+def TaggedVersion(tag):
+	tmp = tempfile.NamedTemporaryFile(prefix='version.h.', dir='.', delete=False)
+	ret = subprocess.call([ "git", "show", tag + ":apps/Tasks/src/version.h" ], stdout=tmp)
+	if ret:
+		exit(ret)
+	fname = tmp.name
+	tmp.close()
+	ret = subprocess.check_output([ "python", "version.py", "--in", fname, "!SEMANTIC"]).strip()
+	os.remove(fname)
+	return ret
 
 def Tag():
-	return subprocess.check_output([ "python", "version.py", "../apps/Tasks/src/version.h", "!NIGHTLY"]).strip()
+	return subprocess.check_output([ "python", "version.py", "--in", "../apps/Tasks/src/version.h", "!NIGHTLY"]).strip()
 
 def Branch():
 	try:
