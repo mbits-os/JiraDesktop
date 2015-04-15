@@ -18,8 +18,6 @@ class CJiraReportElement : public gui::block_node {
 public:
 	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset);
 	void addChildren(const jira::server& server, gui::document* doc);
-
-	void addChild(const std::shared_ptr<gui::node>& child) override final;
 };
 
 struct ServerInfo {

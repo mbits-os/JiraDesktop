@@ -18,14 +18,14 @@ void CJiraReportElement::addChildren(const jira::server& server, gui::document* 
 	{
 		auto block = doc->createElement(gui::elem::header);
 		block->innerText(server.login() + "@" + server.displayName());
-		node_base::addChild(block);
+		appendChild(block);
 	}
 
 	for (auto& error : server.errors()) {
 		auto note = doc->createElement(gui::elem::span);
 		note->innerText(error);
 		note->addClass("error");
-		node_base::addChild(std::move(note));
+		appendChild(std::move(note));
 	}
 
 	auto dataset = m_dataset.lock();
@@ -38,7 +38,7 @@ void CJiraReportElement::addChildren(const jira::server& server, gui::document* 
 			if (jql.empty())
 				jql = jira::search_def::standard.jql();
 			caption->innerText(jql);
-			table->addChild(caption);
+			table->appendChild(caption);
 		}
 		{
 			auto header = doc->createElement(gui::elem::table_head);
@@ -51,15 +51,15 @@ void CJiraReportElement::addChildren(const jira::server& server, gui::document* 
 				if (name != tooltip)
 					th->setTooltip(tooltip);
 
-				header->addChild(th);
+				header->appendChild(th);
 			}
-			table->addChild(header);
+			table->appendChild(header);
 		}
 
 		for (auto& record : dataset->data)
-			table->addChild(record.getRow());
+			table->appendChild(record.getRow());
 
-		node_base::addChild(table);
+		appendChild(table);
 
 		std::ostringstream o;
 		auto low = dataset->data.empty() ? 0 : 1;
@@ -70,19 +70,14 @@ void CJiraReportElement::addChildren(const jira::server& server, gui::document* 
 		auto note = doc->createElement(gui::elem::span);
 		note->innerText(o.str());
 		note->addClass("summary");
-		node_base::addChild(std::move(note));
+		appendChild(std::move(note));
 	}
 	else {
 		auto note = doc->createElement(gui::elem::span);
 		note->innerText("Empty");
 		note->addClass("empty");
-		node_base::addChild(std::move(note));
+		appendChild(std::move(note));
 	}
-}
-
-void CJiraReportElement::addChild(const std::shared_ptr<node>& /*child*/)
-{
-	// noop
 }
 
 class CJiraImageRef : public gui::image_ref, public std::enable_shared_from_this<CJiraImageRef> {

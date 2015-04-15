@@ -335,11 +335,11 @@ void CTasksView::updateLayout()
 	m_body = std::make_shared<gui::doc_element>(make_invalidator(m_hWnd, m_zoom));
 	for (auto& server : m_servers) {
 		if (server.m_plaque)
-			m_body->addChild(server.m_plaque);
+			m_body->appendChild(server.m_plaque);
 	}
 
 	if (m_cheatsheet)
-		m_body->addChild(m_cheatsheet);
+		m_body->appendChild(m_cheatsheet);
 	m_body->applyStyles(stylesheet());
 
 	CWindowDC dc{m_hWnd};
