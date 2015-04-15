@@ -92,11 +92,6 @@ namespace gui {
 		m_data[Attr::Tooltip] = text;
 	}
 
-	void node_base::addChild(const std::shared_ptr<node>& child)
-	{
-		appendChild(child);
-	}
-
 	std::shared_ptr<node> node_base::insertBefore(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& refChild)
 	{
 		if (!refChild)
@@ -475,7 +470,7 @@ namespace gui {
 	void node_base::innerText(const std::string& text)
 	{
 		m_children.clear();
-		addChild(std::make_shared<text_node>(text));
+		appendChild(std::make_shared<text_node>(text));
 	}
 
 	std::shared_ptr<styles::rule_storage> node_base::calculatedStyle() const

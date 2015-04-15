@@ -31,7 +31,6 @@
 
 namespace gui {
 	struct node {
-		virtual void addChild(const std::shared_ptr<node>& child) = 0;
 		virtual std::shared_ptr<node> insertBefore(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& refChild) = 0;
 		virtual std::shared_ptr<node> replaceChild(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& oldChild) = 0;
 		virtual std::shared_ptr<node> removeChild (const std::shared_ptr<node>& oldChild) = 0;

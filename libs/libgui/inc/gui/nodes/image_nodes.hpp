@@ -47,7 +47,6 @@ namespace gui {
 		icon_node(const icon_node& nod);
 		~icon_node();
 		void attach();
-		void addChild(const std::shared_ptr<node>& child) override;
 		void paintContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
 		size measureContents(painter* painter,
@@ -66,7 +65,6 @@ namespace gui {
 		user_node(const std::weak_ptr<document_impl>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip);
 		user_node(const user_node&);
 		~user_node();
-		void addChild(const std::shared_ptr<node>& child) override;
 		void paintContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
 		size measureContents(painter* painter,

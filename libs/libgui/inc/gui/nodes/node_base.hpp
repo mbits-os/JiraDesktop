@@ -21,7 +21,6 @@ namespace gui {
 		const std::vector<std::string>& getClassNames() const override;
 		std::string text() const override;
 		void setTooltip(const std::string& text) override;
-		void addChild(const std::shared_ptr<node>& child) override;
 		std::shared_ptr<node> insertBefore(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& refChild) override;
 		std::shared_ptr<node> replaceChild(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& oldChild) override;
 		std::shared_ptr<node> removeChild(const std::shared_ptr<node>& oldChild) override;

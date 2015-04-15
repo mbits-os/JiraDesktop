@@ -66,11 +66,6 @@ namespace gui {
 		m_image->registerListener(m_cb);
 	}
 
-	void icon_node::addChild(const std::shared_ptr<node>& /*child*/)
-	{
-		// noop
-	}
-
 	void icon_node::paintContents(painter* painter,
 		const pixels& offX, const pixels& offY)
 	{
@@ -108,11 +103,6 @@ namespace gui {
 	{
 		m_image->unregisterListener(m_cb);
 		m_cb->parent.reset();
-	}
-
-	void user_node::addChild(const std::shared_ptr<node>& /*child*/)
-	{
-		// noop
 	}
 
 	void user_node::paintContents(painter* painter,

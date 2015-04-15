@@ -33,7 +33,6 @@ namespace gui {
 		table_node();
 		table_node(const table_node&);
 
-		void addChild(const std::shared_ptr<node>& child) override final;
 		size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
 		std::shared_ptr<node> cloneSelf() const override;

@@ -39,6 +39,7 @@ namespace gui {
 
 	table_node::table_node(const table_node&) = default;
 
+#if 0
 	void table_node::addChild(const std::shared_ptr<node>& child)
 	{
 		auto elem = child->getNodeName();
@@ -52,6 +53,7 @@ namespace gui {
 			break;
 		}
 	}
+#endif
 
 	size table_node::measureContents(painter* painter,
 		const pixels& offX, const pixels& offY)
