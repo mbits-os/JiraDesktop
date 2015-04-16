@@ -81,6 +81,11 @@ namespace gui {
 		return{ 16_px, 16_px };
 	}
 
+	bool icon_node::isSupported(const std::shared_ptr<node>&)
+	{
+		return false;
+	}
+
 	std::shared_ptr<node> icon_node::cloneSelf() const
 	{
 		return cloneDetach(std::make_shared<icon_node>(*this));
@@ -175,6 +180,11 @@ namespace gui {
 			m_image->registerListener(m_cb);
 
 		return{ size, size };
+	}
+
+	bool user_node::isSupported(const std::shared_ptr<node>&)
+	{
+		return false;
 	}
 
 	std::shared_ptr<node> user_node::cloneSelf() const

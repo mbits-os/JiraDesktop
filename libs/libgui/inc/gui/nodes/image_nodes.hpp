@@ -52,6 +52,7 @@ namespace gui {
 		size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
 
+		bool isSupported(const std::shared_ptr<node>&) override;
 		std::shared_ptr<node> cloneSelf() const override;
 	};
 
@@ -70,6 +71,7 @@ namespace gui {
 		size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) override;
 
+		bool isSupported(const std::shared_ptr<node>&) override;
 		std::shared_ptr<node> cloneSelf() const override;
 	};
 }

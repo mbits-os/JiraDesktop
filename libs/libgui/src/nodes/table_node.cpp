@@ -39,22 +39,6 @@ namespace gui {
 
 	table_node::table_node(const table_node&) = default;
 
-#if 0
-	void table_node::addChild(const std::shared_ptr<node>& child)
-	{
-		auto elem = child->getNodeName();
-		switch (elem) {
-		case elem::table_caption:
-		case elem::table_row:
-		case elem::table_head:
-			node_base::addChild(child);
-			std::static_pointer_cast<row_node>(child)->setColumns(m_columns);
-		default:
-			break;
-		}
-	}
-#endif
-
 	size table_node::measureContents(painter* painter,
 		const pixels& offX, const pixels& offY)
 	{
@@ -76,6 +60,30 @@ namespace gui {
 
 		content.width = m_children.empty() ? 0 : m_children[0]->getSize().width;
 		return content;
+	}
+
+	bool table_node::isSupported(const std::shared_ptr<node>& node)
+	{
+		auto elem = node->getNodeName();
+		switch (elem) {
+		case elem::table_caption:
+		case elem::table_row:
+		case elem::table_head:
+			return true;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	void table_node::onAdded(const std::shared_ptr<node>& node)
+	{
+		std::static_pointer_cast<row_node>(node)->setColumns(m_columns);
+	}
+
+	void table_node::onRemoved(const std::shared_ptr<node>& node)
+	{
+		std::static_pointer_cast<row_node>(node)->setColumns({});
 	}
 
 	std::shared_ptr<node> table_node::cloneSelf() const

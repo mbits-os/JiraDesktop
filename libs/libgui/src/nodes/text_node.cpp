@@ -53,6 +53,11 @@ namespace gui {
 		return painter->measureString(m_data[Attr::Text]);
 	}
 
+	bool text_node::isSupported(const std::shared_ptr<node>&)
+	{
+		return false;
+	}
+
 	std::shared_ptr<node> text_node::cloneSelf() const
 	{
 		return cloneDetach(std::make_shared<text_node>(*this));
