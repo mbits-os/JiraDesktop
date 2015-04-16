@@ -39,7 +39,9 @@ else:
 	VERSION = Version(Next)
 LOGFILE = "tasks-%s-win32.log" % VERSION
 
-if not args.dry_run:
+if args.dry_run:
+	out = sys.stdout
+else:
 	out = open(LOGFILE, "w+b")
 
 if policy == POLICY_TAG and not args.dry_run:
@@ -47,10 +49,9 @@ if policy == POLICY_TAG and not args.dry_run:
 
 def tag_master(out):
 	global VERSION, TAG
-	if Branch() == "master":
-		call(out, "git", "pull", "--rebase")
-	else:
+	if Branch() != "master":
 		call(out, "git", "checkout", "master")
+	call(out, "git", "pull", "--rebase")
 	call(out, "python", "build_tag.py")
 
 	TAG = Tag()
@@ -84,4 +85,5 @@ prog.step("Getting dependencies", call, "python", "copy_res.py") \
 
 prog.run(out, args.dry_run)
 
-out.close()
+if not args.dry_run:
+	out.close()
