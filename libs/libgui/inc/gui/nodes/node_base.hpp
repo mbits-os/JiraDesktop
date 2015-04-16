@@ -71,6 +71,9 @@ namespace gui {
 			const pixels& offX, const pixels& offY);
 		virtual size measureContents(painter* painter,
 			const pixels& offX, const pixels& offY) = 0;
+		virtual bool isSupported(const std::shared_ptr<node>&);
+		virtual void onAdded(const std::shared_ptr<node>&);
+		virtual void onRemoved(const std::shared_ptr<node>&);
 		virtual std::shared_ptr<node> cloneSelf() const = 0;
 
 	protected:

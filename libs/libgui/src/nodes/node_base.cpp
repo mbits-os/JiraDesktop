@@ -97,6 +97,12 @@ namespace gui {
 		if (!refChild)
 			return appendChild(newChild);
 
+		if (!newChild)
+			return nullptr;
+
+		if (!isSupported(newChild))
+			return nullptr; // instead of HIERARCHY_REQUEST_ERR
+
 		if (imChildOf(newChild))
 			return nullptr; // instead of HIERARCHY_REQUEST_ERR
 
@@ -110,6 +116,8 @@ namespace gui {
 
 		newChild->setParent(shared_from_this());
 		m_children.insert(it, newChild);
+
+		onAdded(newChild);
 
 		return newChild;
 	}
@@ -130,8 +138,13 @@ namespace gui {
 		if (it == std::end(m_children))
 			return nullptr; // instead of NOT_FOUND_ERR
 
+		oldChild->setParent({});
+		onRemoved(oldChild);
+
 		newChild->setParent(shared_from_this());
 		*it = newChild;
+
+		onAdded(newChild);
 
 		return oldChild;
 	}
@@ -142,14 +155,17 @@ namespace gui {
 		if (it == std::end(m_children))
 			return nullptr; // instead of NOT_FOUND_ERR
 
+		oldChild->setParent({});
 		m_children.erase(it);
+
+		onRemoved(oldChild);
+
 		return oldChild;
 	}
 
 	std::shared_ptr<node> node_base::appendChild(const std::shared_ptr<node>& newChild)
 	{
-		auto it = m_data.find(Attr::Text);
-		if (it != m_data.end())
+		if (!newChild || !isSupported(newChild))
 			return nullptr; // instead of HIERARCHY_REQUEST_ERR
 
 		if (imChildOf(newChild))
@@ -161,6 +177,8 @@ namespace gui {
 
 		newChild->setParent(shared_from_this());
 		m_children.push_back(newChild);
+
+		onAdded(newChild);
 
 		return newChild;
 	}
@@ -652,6 +670,20 @@ namespace gui {
 		return
 			calculated(ref, styles::prop_border_bottom_width) +
 			calculated(ref, styles::prop_padding_bottom);
+	}
+
+	bool node_base::isSupported(const std::shared_ptr<node>&)
+	{
+		auto it = m_data.find(Attr::Text);
+		return it == m_data.end();
+	}
+
+	void node_base::onAdded(const std::shared_ptr<node>&)
+	{
+	}
+
+	void node_base::onRemoved(const std::shared_ptr<node>&)
+	{
 	}
 
 	bool node_base::imChildOf(const std::shared_ptr<node>& tested) const
