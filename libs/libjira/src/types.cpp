@@ -183,7 +183,7 @@ namespace jira
 
 					auto span = doc->createElement(gui::elem::span);
 					span->appendChild(parent_link);
-					span->appendChild(doc->createText(" / "));
+					span->appendChild(doc->createText("/"));
 					span->appendChild(link);
 
 					return span;
