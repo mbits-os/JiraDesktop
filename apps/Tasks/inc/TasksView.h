@@ -70,7 +70,6 @@ private:
 	std::shared_ptr<CAppModelListener> m_listener;
 	std::vector<ServerInfo> m_servers;
 	std::shared_ptr<gui::node> m_body;
-	std::shared_ptr<gui::node> m_cheatsheet;
 	std::vector<ServerInfo>::iterator find(uint32_t sessionId);
 
 	std::vector<ServerInfo>::iterator insert(std::vector<ServerInfo>::const_iterator it, const ::ServerInfo& info);

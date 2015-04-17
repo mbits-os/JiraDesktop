@@ -201,7 +201,7 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 		header->appendChild(th);
 
 		th = std::make_shared<gui::span_node>(gui::elem::th);
-		th->innerText("G");
+		th->innerText("Name");
 		header->appendChild(th);
 	}
 
