@@ -5,6 +5,7 @@
 
 namespace gui {
 	enum class Attr {
+		Id,
 		Text,
 		Href,
 		Tooltip
@@ -14,6 +15,8 @@ namespace gui {
 	public:
 		node_base(elem name);
 		node_base(const node_base&);
+		const std::string& getId() const override;
+		void setId(const std::string& id) override;
 		elem getNodeName() const override;
 		void addClass(const std::string& name) override;
 		void removeClass(const std::string& name) override;

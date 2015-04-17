@@ -44,6 +44,21 @@ namespace gui {
 	{
 	}
 
+	const std::string& node_base::getId() const
+	{
+		auto id = m_data.find(Attr::Id);
+		if (id != m_data.end())
+			return id->second;
+
+		static std::string dummy;
+		return dummy;
+	}
+
+	void node_base::setId(const std::string& id)
+	{
+		m_data[Attr::Id] = id;
+	}
+
 	elem node_base::getNodeName() const
 	{
 		return m_nodeName;

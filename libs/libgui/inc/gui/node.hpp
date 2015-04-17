@@ -39,6 +39,9 @@ namespace gui {
 		virtual std::shared_ptr<node> cloneNode(bool deep) const = 0;
 		virtual const std::vector<std::shared_ptr<node>>& children() const = 0;
 
+		virtual const std::string& getId() const = 0;
+		virtual void setId(const std::string& id) = 0;
+
 		virtual elem getNodeName() const = 0;
 		virtual void addClass(const std::string& name) = 0;
 		virtual void removeClass(const std::string& name) = 0;
