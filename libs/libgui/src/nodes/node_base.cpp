@@ -707,6 +707,8 @@ namespace gui {
 		while (parent) {
 			if (parent == tested)
 				return true;
+
+			parent = parent->getParent();
 		}
 
 		return false;
