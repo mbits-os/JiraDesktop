@@ -21,6 +21,9 @@
 
 #if FA_CHEATSHEET
 #include "gui/font_awesome.hh"
+#include <gui/nodes/row_node.hpp>
+#include <gui/nodes/table_node.hpp>
+#include <gui/nodes/text_node.hpp>
 #endif
 
 namespace {
@@ -131,8 +134,14 @@ CTasksView::ServerInfo::~ServerInfo()
 
 void CTasksView::ServerInfo::buildPlaque()
 {
+	if (m_plaque) {
+		auto parent = m_plaque->getParent();
+		if (parent)
+			parent->removeChild(m_plaque);
+	}
 	m_plaque = std::make_unique<CJiraReportElement>(m_dataset);
 	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*m_server, m_document.get());
+	m_plaque->setId("server-" + std::to_string(m_server->sessionId()));
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
@@ -168,6 +177,8 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	m_zoom->zoom = zooms[m_currentZoom];
 	m_zoom->mul = m_zoom->device * m_zoom->zoom;
 
+	m_body = std::make_shared<gui::doc_element>(make_invalidator(m_hWnd, m_zoom));
+
 	RECT empty{ 0, 0, 0, 0 };
 	m_tooltip.Create(TOOLTIPS_CLASS, m_hWnd, empty, nullptr, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, WS_EX_TOPMOST);
 	m_tooltip.SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -181,18 +192,23 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 #if FA_CHEATSHEET
 	size_t pos = 0;
 	constexpr size_t width = 10;
-	auto glyphs = std::make_shared<CJiraTableNode>();
-	auto header = std::make_shared<CJiraTableRowNode>(gui::elem::table_head);
-	glyphs->addChild(header);
+	auto glyphs = std::make_shared<gui::table_node>();
+	auto header = std::make_shared<gui::row_node>(gui::elem::table_head);
+	glyphs->appendChild(header);
 	for (size_t i = 0; i < width; ++i) {
-		header->addChild(std::make_shared<CJiraTextNode>("G"));
-		header->addChild(std::make_shared<CJiraTextNode>("Name"));
+		auto th = std::make_shared<gui::span_node>(gui::elem::th);
+		th->innerText("G");
+		header->appendChild(th);
+
+		th = std::make_shared<gui::span_node>(gui::elem::th);
+		th->innerText("G");
+		header->appendChild(th);
 	}
 
 	auto rowCount = ((size_t)fa::glyph::__last_glyph + width - 1) / width;
 	for (size_t r = 0; r < rowCount; ++r) {
-		auto row = std::make_shared<CJiraTableRowNode>(gui::elem::table_row);
-		glyphs->addChild(row);
+		auto row = std::make_shared<gui::row_node>(gui::elem::table_row);
+		glyphs->appendChild(row);
 		for (size_t i = 0; i < width; ++i) {
 #ifdef FA_CHEATSHEET_ROW_FIRST
 			auto id = r * width + i;
@@ -205,15 +221,20 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 			wchar_t s[2] = {};
 			s[0] = fa::glyph_char((fa::glyph)id);
 			s[1] = 0;
-			auto g = std::make_shared<CJiraTextNode>(utf::narrowed(s));
+			auto td = std::make_shared<gui::span_node>(gui::elem::td);
+			auto g = std::make_shared<gui::text_node>(utf::narrowed(s));
 			g->addClass("symbol");
-			row->addChild(g);
-			auto n = std::make_shared<CJiraTextNode>(fa::glyph_name((fa::glyph)id));
+			td->appendChild(g);
+			row->appendChild(td);
+
+			td = std::make_shared<gui::span_node>(gui::elem::td);
+			auto n = std::make_shared<gui::text_node>(fa::glyph_name((fa::glyph)id));
 			n->addClass("summary");
-			row->addChild(n);
+			td->appendChild(n);
+			row->appendChild(td);
 		}
 	}
-	m_cheatsheet = glyphs;
+	m_body->appendChild(glyphs);
 #endif
 	updateLayout();
 
@@ -330,16 +351,34 @@ LRESULT CTasksView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 	return 0;
 }
 
+std::shared_ptr<gui::node> nextSibling(const std::shared_ptr<gui::node>& parent, const std::shared_ptr<gui::node>& prev)
+{
+	auto& children = parent->children();
+	if (!prev)
+		return children.empty() ? nullptr : children[0];
+
+	auto it = std::find(std::begin(children), std::end(children), prev);
+	if (it != std::end(children))
+		++it;
+	if (it == std::end(children))
+		return{};
+
+	return *it;
+}
+
 void CTasksView::updateLayout()
 {
-	m_body = std::make_shared<gui::doc_element>(make_invalidator(m_hWnd, m_zoom));
+	ATLASSERT(m_body);
+
+	std::shared_ptr<gui::node> prev;
 	for (auto& server : m_servers) {
-		if (server.m_plaque)
-			m_body->appendChild(server.m_plaque);
+		ATLASSERT(server.m_plaque);
+		auto next = nextSibling(m_body, prev);
+		if (next != server.m_plaque)
+			m_body->insertBefore(server.m_plaque, next);
+		prev = server.m_plaque;
 	}
 
-	if (m_cheatsheet)
-		m_body->appendChild(m_cheatsheet);
 	m_body->applyStyles(stylesheet());
 
 	CWindowDC dc{m_hWnd};
@@ -771,19 +810,7 @@ void CTasksView::updateCursorAndTooltip(bool force)
 
 std::shared_ptr<gui::node> CTasksView::nodeFromPoint()
 {
-	for (auto& server : m_servers) {
-		if (!server.m_plaque)
-			continue;
-
-		auto tmp = server.m_plaque->nodeFromPoint(m_mouse.x, m_mouse.y);
-		if (tmp)
-			return tmp;
-	}
-
-	if (m_cheatsheet)
-		return m_cheatsheet->nodeFromPoint(m_mouse.x, m_mouse.y);
-
-	return{};
+	return m_body->nodeFromPoint(m_mouse.x, m_mouse.y);
 }
 
 void CTasksView::setDocumentSize(const gui::size& newSize)
