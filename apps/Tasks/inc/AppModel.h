@@ -23,8 +23,14 @@ class CAppModel : public listeners<CAppModelListener, CAppModel> {
 
 	void onListChanged(uint32_t addedOrRemoved);
 	std::mutex m_guard;
+	HWND m_hwndTimer = nullptr;
 public:
 	CAppModel();
+
+	void setTimerHandle(HWND hwndTimer)
+	{
+		m_hwndTimer = hwndTimer;
+	}
 
 	void startup();
 
@@ -35,4 +41,6 @@ public:
 	void add(const std::shared_ptr<jira::server>& server);
 	void remove(const std::shared_ptr<jira::server>& server);
 	void update(const std::shared_ptr<jira::server>& server);
+
+	void startTimer(uint32_t sessionId);
 };

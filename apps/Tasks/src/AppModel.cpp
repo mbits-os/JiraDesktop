@@ -164,6 +164,21 @@ void CAppModel::update(const std::shared_ptr<jira::server>& server)
 	}
 }
 
+void CAppModel::startTimer(uint32_t sessionId)
+{
+	for (auto& server : m_servers) {
+		if (server.m_server->sessionId() != sessionId)
+			continue;
+
+		auto timeout = server.m_server->view().timeout();
+		if (timeout == std::chrono::milliseconds::max())
+			timeout = jira::search_def::standard.timeout();
+
+		if (timeout.count() > 0 && timeout.count() < std::numeric_limits<UINT>::max())
+			SetTimer(m_hwndTimer, sessionId, (UINT)timeout.count(), nullptr);
+	}
+}
+
 CJiraImageRef::CJiraImageRef()
 {
 }
