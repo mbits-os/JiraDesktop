@@ -34,7 +34,12 @@
 #include <windows.h>
 #endif
 
+#ifdef max
+#undef max
+#endif
+
 using namespace std::literals;
+using namespace std::chrono_literals;
 
 template <typename F>
 struct on_exit_t {
@@ -48,7 +53,8 @@ struct on_exit_t {
 namespace jira
 {
 	search_def const search_def::standard{ "assignee=currentUser() and resolution is empty"s,
-		{ "status"s, "assignee"s, "key"s, "priority"s, "summary"s, "resolution"s }
+		{ "status"s, "assignee"s, "key"s, "priority"s, "summary"s, "resolution"s },
+		15min
 	};
 
 	namespace {
@@ -95,17 +101,19 @@ namespace jira
 		}
 	}
 
-	search_def::search_def(const std::string& jql, const std::string& columnsDescr)
+	search_def::search_def(const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout)
 		: m_jql(jql)
 		, m_columns(split(columnsDescr, ","))
+		, m_timeout((size_t)timeout.count())
 	{
 		if (m_columns.size() == 1 && m_columns[0].empty())
 			m_columns.clear();
 	}
 
-	search_def::search_def(const std::string& jql, const std::vector<std::string>& columns)
+	search_def::search_def(const std::string& jql, const std::vector<std::string>& columns, std::chrono::milliseconds timeout)
 		: m_jql(jql)
 		, m_columns(columns)
+		, m_timeout((size_t)timeout.count())
 	{
 	}
 

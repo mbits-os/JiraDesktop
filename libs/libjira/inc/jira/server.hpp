@@ -32,6 +32,12 @@
 #include <vector>
 #include <functional>
 #include <atomic>
+#include <chrono>
+#include <limits>
+
+#ifdef max
+#undef max
+#endif
 
 namespace json
 {
@@ -57,13 +63,15 @@ namespace jira
 	class search_def {
 		std::string m_jql;
 		std::vector<std::string> m_columns;
+		std::chrono::milliseconds m_timeout{ std::chrono::milliseconds::max() };
 	public:
 		search_def() = default;
-		search_def(const std::string& jql, const std::string& columnsDescr);
-		search_def(const std::string& jql, const std::vector<std::string>& columns);
+		search_def(const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout);
+		search_def(const std::string& jql, const std::vector<std::string>& columns, std::chrono::milliseconds timeout);
 		const std::string& jql() const { return m_jql; }
 		const std::vector<std::string>& columns() const { return m_columns; }
 		std::string columnsDescr() const;
+		std::chrono::milliseconds timeout() const { return m_timeout; }
 
 		static const search_def standard;
 	};
