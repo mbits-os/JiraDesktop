@@ -106,7 +106,8 @@ namespace gui {
 
 	user_node::~user_node()
 	{
-		m_image->unregisterListener(m_cb);
+		if (m_image)
+			m_image->unregisterListener(m_cb);
 		m_cb->parent.reset();
 	}
 
