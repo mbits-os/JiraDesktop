@@ -1387,6 +1387,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 		m_notifier(title, msg);
 	}
 
+	m_model->startTimer(it->m_sessionId);
 	return 0;
 }
 
