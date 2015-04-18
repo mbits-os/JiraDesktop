@@ -124,9 +124,20 @@ public:
    BOOL AddTaskBarIcon()
    {
       ATLASSERT(::IsWindow(m_nid.hWnd));
-      m_nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP; 
-      BOOL res = ::Shell_NotifyIcon(NIM_ADD, &m_nid); 
+      m_nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+      BOOL res = ::Shell_NotifyIcon(NIM_ADD, &m_nid);
       return res;
+   }
+   BOOL ShowBalloon(LPCWSTR title, LPCWSTR msg)
+   {
+	   ATLASSERT(::IsWindow(m_nid.hWnd));
+	   m_nid.uFlags = NIF_INFO;
+	   wcsncpy(m_nid.szInfoTitle, title, sizeof(m_nid.szInfoTitle) / sizeof(m_nid.szInfoTitle[0]));
+	   wcsncpy(m_nid.szInfo, msg, sizeof(m_nid.szInfo) / sizeof(m_nid.szInfo[0]));
+	   m_nid.dwInfoFlags = NIIF_INFO | NIIF_RESPECT_QUIET_TIME;
+	   m_nid.uTimeout = 30000;
+	   BOOL res = ::Shell_NotifyIcon(NIM_MODIFY, &m_nid);
+	   return res;
    }
    BOOL ChangeIcon(HICON hIcon)
    {
