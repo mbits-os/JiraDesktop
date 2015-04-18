@@ -8,7 +8,7 @@
 
 #define PROGRAM_VERSION_MAJOR 0
 #define PROGRAM_VERSION_MINOR 3
-#define PROGRAM_VERSION_PATCH 1 // removal of addChild (pre 1.0)
+#define PROGRAM_VERSION_PATCH 2
 #define PROGRAM_VERSION_BUILD 31
 #define PROGRAM_VERSION_STABILITY "-alpha" // "-beta", "-rc", and ""
 
