@@ -123,6 +123,11 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 			std::max(height, (size_t)client.bottom),
 			SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 	});
+
+	m_view.setNotifier([&](const std::wstring& title, const std::wstring& message) {
+		m_taskIcon.ShowBalloon(title.c_str(), message.c_str());
+	});
+
 	m_view.Create(m_container, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 	m_container.SetClient(m_view, false);
 
