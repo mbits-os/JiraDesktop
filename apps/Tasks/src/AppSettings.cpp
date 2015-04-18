@@ -11,8 +11,10 @@ namespace servers {
 		auto url = section.getString(prefix + "url");
 		auto jql = section.getString(prefix + "query");
 		auto fields = section.getString(prefix + "fields");
+		auto timeout = section.getType(prefix + "timeout") == settings::UInt32 ?
+			std::chrono::seconds{ section.getUInt32(prefix + "timeout") } : std::chrono::milliseconds::max();
 
-		return std::make_shared<jira::server>(name, login, password, url, jira::search_def{jql, fields}, jira::server::stored);
+		return std::make_shared<jira::server>(name, login, password, url, jira::search_def{ jql, fields, timeout }, jira::server::stored);
 	}
 
 	static void store(const jira::server* server, settings::Section& section, const std::string& prefix)
@@ -36,6 +38,11 @@ namespace servers {
 			section.setString(prefix + "fields", view.columnsDescr());
 		else
 			section.unset(prefix + "field");
+
+		if (view.timeout().count() < std::numeric_limits<uint32_t>::max())
+			section.setUInt32(prefix + "timeout", (uint32_t)view.timeout().count());
+		else
+			section.unset(prefix + "timeout");
 	}
 
 	static std::vector<std::shared_ptr<jira::server>> load(const settings::Section& section)
