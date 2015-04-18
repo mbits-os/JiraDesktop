@@ -46,6 +46,7 @@ public:
 		std::shared_ptr<gui::document> m_document;
 		std::shared_ptr<jira::server_listener> m_listener;
 		std::shared_ptr<jira::report> m_dataset;
+		std::shared_ptr<jira::report> m_previous;
 		uint32_t m_sessionId;
 
 		ProgressInfo m_progress;
@@ -64,6 +65,9 @@ public:
 		ServerInfo& operator=(ServerInfo&&) = default;
 
 		void buildPlaque();
+		void updatePlaque();
+		void updateDataset();
+		void updateErrors();
 	};
 
 private:

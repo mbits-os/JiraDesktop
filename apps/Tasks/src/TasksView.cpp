@@ -139,9 +139,334 @@ void CTasksView::ServerInfo::buildPlaque()
 		if (parent)
 			parent->removeChild(m_plaque);
 	}
-	m_plaque = std::make_unique<CJiraReportElement>(m_dataset);
-	std::static_pointer_cast<CJiraReportElement>(m_plaque)->addChildren(*m_server, m_document.get());
+
+	m_plaque = m_document->createElement(gui::elem::block);
 	m_plaque->setId("server-" + std::to_string(m_server->sessionId()));
+
+	{
+		auto block = m_document->createElement(gui::elem::header);
+		block->innerText(m_server->login() + "@" + m_server->displayName());
+		m_plaque->appendChild(block);
+	}
+
+	{
+		auto note = m_document->createElement(gui::elem::span);
+		note->innerText("Empty");
+		note->addClass("empty");
+		m_plaque->appendChild(std::move(note));
+	}
+
+	updatePlaque();
+}
+
+void CTasksView::ServerInfo::updatePlaque()
+{
+	ATLASSERT(m_plaque);
+
+	if (m_dataset)
+		updateDataset();
+
+	updateErrors();
+
+	//buildPlaque();
+}
+
+static std::shared_ptr<gui::node> buildSchema(const jira::model& schema, gui::document* doc)
+{
+	auto header = doc->createElement(gui::elem::table_head);
+	for (auto& col : schema.cols()) {
+		auto name = col->title();
+		auto th = doc->createElement(gui::elem::th);
+		th->innerText(name);
+
+		auto tooltip = col->titleFull();
+		if (name != tooltip)
+			th->setTooltip(tooltip);
+
+		header->appendChild(th);
+	}
+
+	return header;
+}
+
+static bool equals(const std::shared_ptr<gui::node>& lhs, const std::shared_ptr<gui::node>& rhs)
+{
+	if (!lhs) // if lhs is null, return true if rhs is null
+		return !rhs;
+
+	if (!lhs)
+		return false;
+
+	if (lhs->getNodeName() != rhs->getNodeName())
+		return false;
+
+	if (lhs->getNodeName() == gui::elem::text) {
+		if (lhs->text() != rhs->text())
+			return false;
+	}
+
+	if (lhs->hasTooltip() != rhs->hasTooltip())
+		return false;
+
+	if (lhs->hasTooltip()) {
+		if (lhs->getTooltip() != rhs->getTooltip())
+			return false;
+	}
+
+	if (lhs->getClassNames() != lhs->getClassNames())
+		return false;
+
+	auto& lhs_ch = lhs->children();
+	auto& rhs_ch = rhs->children();
+
+	if (lhs_ch.size() != rhs_ch.size())
+		return false;
+
+	auto it = std::begin(rhs_ch);
+	for (auto& lch : lhs_ch) {
+		auto& rch = *it++;
+
+		if (!equals(lch, rch))
+			return false;
+	}
+
+	return true;
+}
+
+static std::shared_ptr<gui::node> createNote(const std::shared_ptr<jira::report>& dataset, gui::document* doc)
+{
+	std::ostringstream o;
+	auto low = dataset->data.empty() ? 0 : 1;
+	o << "(Issues " << (dataset->startAt + low)
+		<< '-' << (dataset->startAt + dataset->data.size())
+		<< " of " << dataset->total << ")";
+
+	auto note = doc->createElement(gui::elem::span);
+	note->innerText(o.str());
+	note->addClass("summary");
+
+	return note;
+}
+
+static void mergeTable(const std::shared_ptr<jira::report>& previous, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<gui::node>& plaque, gui::document* doc)
+{
+	std::shared_ptr<gui::node> table, note;
+
+	auto it = std::begin(plaque->children());
+	auto end = std::end(plaque->children());
+
+	for (; it != end; ++it) {
+		if ((*it)->getNodeName() == gui::elem::table)
+			break;
+	}
+
+	if (it != end) {
+		table = *it;
+		++it;
+		if (it != end)
+			note = *it;
+	}
+
+	ATLASSERT(table);
+
+	std::vector<std::string> removed, modified, added;
+
+	bool same_schema = previous->schema.equals(dataset->schema);
+
+	for (auto& row : previous->data) {
+		auto& id = row.issue_id();
+
+		bool remove = true;
+		for (auto& test : dataset->data) {
+			if (id == test.issue_id()) {
+				remove = false;
+				break;
+			}
+		}
+
+		if (remove) { // removed ------------------------------------------
+			auto node = row.getRow();
+			if (node) {
+				auto parent = node->getParent();
+				if (parent)
+					parent->removeChild(node);
+			}
+
+			removed.push_back(row.issue_key());
+		}
+	}
+
+	auto& rows = table->children();
+	size_t header = 0;
+	if (rows.front()->getNodeName() == gui::elem::table_caption) {
+		// TODO: update caption, if needed
+		++header;
+	}
+
+	if (!same_schema || !previous->schema.sameHeaders(dataset->schema)) {
+		auto row = buildSchema(dataset->schema, doc);
+		table->replaceChild(row, rows[header]);
+	}
+
+	auto row_pos = header;
+	for (auto& row : dataset->data) {
+		auto& id = row.issue_id();
+
+		++row_pos;
+
+		bool add = true;
+		size_t orig_pos = 0;
+		for (auto& test : previous->data) {
+			if (id == test.issue_id()) {
+				add = false;
+				break;
+			}
+			++orig_pos;
+		}
+
+		if (add) { // added --------------------------------------------
+			auto node = row.getRow();
+
+			if (row_pos < rows.size())
+				table->insertBefore(node, rows[row_pos]);
+			else
+				table->appendChild(node);
+
+			added.push_back(row.issue_key());
+		}
+		else {
+			bool modify = !same_schema;
+
+			if (same_schema) {
+				auto node = row.getRow();
+				auto src = previous->data[orig_pos].getRow();
+				modify = !equals(node, src);
+			}
+
+			if (modify) { // modified -----------------------------------------
+				table->replaceChild(row.getRow(), previous->data[orig_pos].getRow());
+				modified.push_back(row.issue_key());
+			}
+			else // the same -----------------------------------------
+				row.setRow(previous->data[orig_pos].getRow());
+		}
+	}
+
+	if (note)
+		plaque->replaceChild(createNote(dataset, doc), note);
+	else
+		plaque->appendChild(createNote(dataset, doc));
+
+	std::vector<std::string>* tabs[] = { &removed, &modified, &added };
+	const char* names[] = { "Removed", "Changed", "Added" };
+
+	auto name_it = names;
+
+	for (auto tab : tabs) {
+		auto& issues = *tab;
+		auto& name = *name_it++;
+
+		std::ostringstream o;
+		o << name << " issues(" << issues.size() << ")";
+		if (!issues.empty()) {
+			o << ":";
+			for (auto& issue : issues)
+				o << " " << issue;
+		}
+		o << "\n";
+
+		OutputDebugString(utf::widen(o.str()).c_str());
+	}
+}
+
+static void createTable(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<gui::node>& plaque, gui::document* doc)
+{
+	auto table = doc->createElement(gui::elem::table);
+
+	{
+		auto caption = doc->createElement(gui::elem::table_caption);
+		auto jql = std::string{};// server.view().jql();
+		if (jql.empty())
+			jql = jira::search_def::standard.jql();
+		caption->innerText(jql);
+		table->appendChild(caption);
+	}
+	{
+		auto header = doc->createElement(gui::elem::table_head);
+		for (auto& col : dataset->schema.cols()) {
+			auto name = col->title();
+			auto th = doc->createElement(gui::elem::th);
+			th->innerText(name);
+
+			auto tooltip = col->titleFull();
+			if (name != tooltip)
+				th->setTooltip(tooltip);
+
+			header->appendChild(th);
+		}
+		table->appendChild(header);
+	}
+
+	for (auto& record : dataset->data)
+		table->appendChild(record.getRow());
+
+	std::shared_ptr<gui::node> empty;
+
+	for (auto& child : plaque->children()) {
+		if (child->getNodeName() == gui::elem::span &&
+			child->hasClass("empty")) {
+			empty = child;
+			break;
+		}
+	}
+
+	auto note = createNote(dataset, doc);
+	if (empty)
+		plaque->replaceChild(note, empty);
+	else
+		plaque->appendChild(note);
+	plaque->insertBefore(table, note);
+}
+
+void CTasksView::ServerInfo::updateDataset()
+{
+	ATLASSERT(m_dataset);
+	if (m_previous == m_dataset)
+		return;
+
+	if (m_previous) {
+		mergeTable(m_previous, m_dataset, m_plaque, m_document.get());
+	} else {
+		createTable(m_dataset, m_plaque, m_document.get());
+	}
+
+	m_previous = m_dataset;
+}
+
+void CTasksView::ServerInfo::updateErrors()
+{
+	auto& children = m_plaque->children();
+	while (true) {
+		size_t pos = 0;
+		for (auto& child : children) {
+			if (children[pos]->hasClass("error"))
+				break;
+			++pos;
+		}
+
+		if (pos >= children.size())
+			break;
+
+		m_plaque->removeChild(children[pos]);
+	}
+
+	auto pos = children.size() > 1 ? children[1] : nullptr;
+	for (auto& error : m_server->errors()) {
+		auto note = m_document->createElement(gui::elem::span);
+		note->innerText(error);
+		note->addClass("error");
+		m_plaque->insertBefore(note, pos);
+	}
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
@@ -1036,7 +1361,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	it->buildPlaque();
+	it->updatePlaque();
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();

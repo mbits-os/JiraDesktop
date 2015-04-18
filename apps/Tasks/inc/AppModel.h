@@ -13,13 +13,6 @@ struct CAppModelListener {
 	virtual void onListChanged(uint32_t addedOrRemoved) = 0;
 };
 
-class CJiraReportElement : public gui::block_node {
-	std::weak_ptr<jira::report> m_dataset;
-public:
-	explicit CJiraReportElement(const std::shared_ptr<jira::report>& dataset);
-	void addChildren(const jira::server& server, gui::document* doc);
-};
-
 struct ServerInfo {
 	std::shared_ptr<jira::server> m_server;
 	std::shared_ptr<gui::document> m_document;
