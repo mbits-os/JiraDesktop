@@ -90,6 +90,9 @@ namespace jira
 		record visit(const std::shared_ptr<gui::document>& doc, const json::value& object, const std::string& key, const std::string& id) const;
 
 		const std::vector<std::unique_ptr<type>>& cols() const { return m_cols; }
+
+		bool equals(const model& rhs) const;
+		bool sameHeaders(const model& rhs) const;
 	};
 
 	class db {

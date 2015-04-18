@@ -81,6 +81,32 @@ namespace jira
 		return out;
 	}
 
+	bool model::equals(const model& rhs) const
+	{
+		if (m_cols.size() != rhs.m_cols.size())
+			return false;
+
+		auto it = std::begin(rhs.m_cols);
+		for (auto& col : m_cols) {
+			auto& rhs_col = *it++;
+			if (col->id() != rhs_col->id())
+				return false;
+		}
+		return true;
+	}
+
+	bool model::sameHeaders(const model& rhs) const
+	{
+		auto it = std::begin(rhs.m_cols);
+		for (auto& col : m_cols) {
+			auto& rhs_col = *it++;
+			if (col->title() != rhs_col->title() ||
+				col->titleFull() != rhs_col->titleFull())
+				return false;
+		}
+		return true;
+	}
+
 	db::db(const std::string& uri)
 		: m_uri(uri)
 	{
