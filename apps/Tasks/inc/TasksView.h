@@ -65,14 +65,14 @@ public:
 		ServerInfo& operator=(ServerInfo&&) = default;
 
 		void buildPlaque();
-		void updatePlaque();
+		void updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
 
 	private:
-		void updateDataset();
+		void updateDataset(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
 		void updateErrors();
 		std::shared_ptr<gui::node> buildSchema();
 		std::shared_ptr<gui::node> createNote();
-		void mergeTable();
+		void mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
 		void createTable();
 	};
 
@@ -98,6 +98,7 @@ private:
 	bool m_tracking = false;
 	gui::pointer m_cursor = gui::pointer::arrow;
 	std::function<void(size_t, size_t)> m_scroller;
+	std::function<void(const std::wstring&, const std::wstring&)> m_notifier;
 	gui::size m_docSize;
 	gui::pixels m_fontSize;
 	std::string m_fontFamily;
@@ -169,5 +170,10 @@ public:
 	template <typename T>
 	void setScroller(T&& scroller) {
 		m_scroller = scroller;
+	}
+
+	template <typename T>
+	void setNotifier(T&& notifier) {
+		m_notifier = notifier;
 	}
 };

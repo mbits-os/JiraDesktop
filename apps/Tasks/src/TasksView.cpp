@@ -156,15 +156,16 @@ void CTasksView::ServerInfo::buildPlaque()
 		m_plaque->appendChild(std::move(note));
 	}
 
-	updatePlaque();
+	std::vector<std::string> dummy;
+	updatePlaque(dummy, dummy, dummy);
 }
 
-void CTasksView::ServerInfo::updatePlaque()
+void CTasksView::ServerInfo::updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
 {
 	ATLASSERT(m_plaque);
 
 	if (m_dataset)
-		updateDataset();
+		updateDataset(removed, modified, added);
 
 	updateErrors();
 
@@ -248,7 +249,7 @@ std::shared_ptr<gui::node> CTasksView::ServerInfo::createNote()
 	return note;
 }
 
-void CTasksView::ServerInfo::mergeTable()
+void CTasksView::ServerInfo::mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
 {
 	std::shared_ptr<gui::node> table, note;
 
@@ -268,8 +269,6 @@ void CTasksView::ServerInfo::mergeTable()
 	}
 
 	ATLASSERT(table);
-
-	std::vector<std::string> removed, modified, added;
 
 	bool same_schema = m_previous->schema.equals(m_dataset->schema);
 
@@ -356,27 +355,6 @@ void CTasksView::ServerInfo::mergeTable()
 		m_plaque->replaceChild(createNote(), note);
 	else
 		m_plaque->appendChild(createNote());
-
-	std::vector<std::string>* tabs[] = { &removed, &modified, &added };
-	const char* names[] = { "Removed", "Changed", "Added" };
-
-	auto name_it = names;
-
-	for (auto tab : tabs) {
-		auto& issues = *tab;
-		auto& name = *name_it++;
-
-		std::ostringstream o;
-		o << name << " issues(" << issues.size() << ")";
-		if (!issues.empty()) {
-			o << ":";
-			for (auto& issue : issues)
-				o << " " << issue;
-		}
-		o << "\n";
-
-		OutputDebugString(utf::widen(o.str()).c_str());
-	}
 }
 
 void CTasksView::ServerInfo::createTable()
@@ -428,14 +406,14 @@ void CTasksView::ServerInfo::createTable()
 	m_plaque->insertBefore(table, note);
 }
 
-void CTasksView::ServerInfo::updateDataset()
+void CTasksView::ServerInfo::updateDataset(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
 {
 	ATLASSERT(m_dataset);
 	if (m_previous == m_dataset)
 		return;
 
 	if (m_previous)
-		mergeTable();
+		mergeTable(removed, modified, added);
 	else
 		createTable();
 
@@ -1358,12 +1336,56 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	it->m_loading = false;
 	it->m_gotProgress = false;
 
+	std::vector<std::string> tabs[3];
+
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
-	it->updatePlaque();
+	it->updatePlaque(tabs[0], tabs[1], tabs[2]);
 	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();
+
+	std::ostringstream o;
+	bool modified = false;
+	for (auto& tab : tabs)
+		modified |= !tab.empty();
+
+	if (modified) {
+		const char* names[] = { "Removed", "Changed", "Added" };
+		auto name_it = names;
+
+		bool first = true;
+		for (auto issues : tabs) {
+			auto name = *name_it++;
+
+			if (issues.empty())
+				continue;
+
+			if (first) first = false;
+			else o << "\n";
+
+			o << name << " " << issues.size() << " issue(s): ";
+
+			switch (issues.size()) {
+			case 1:
+				o << issues[0];
+				break;
+			case 2:
+				o << issues[0] << " and " << issues[1];
+				break;
+			default:
+				o << issues[0] << ", " << issues[1] << " and " << (issues.size() - 2) << " other(s)";
+				break;
+			}
+		}
+	}
+
+	auto msg = utf::widen(o.str());
+
+	if (!msg.empty() && m_notifier) {
+		auto title = utf::widen("Changes in " + server.login() + "@" + server.displayName());
+		m_notifier(title, msg);
+	}
 
 	return 0;
 }
