@@ -110,6 +110,8 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 	createItems();
 
+	m_model->setTimerHandle(m_hWnd);
+
 	m_view.m_model = m_model;
 
 	m_hWndClient = m_container.Create(m_hWnd, rcDefault, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
@@ -237,18 +239,36 @@ LRESULT CTasksFrame::OnSysCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	return 0;
 }
 
-#ifdef LCLIK_TASK_MENU
 LRESULT CTasksFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
-	if (wParam == uEvent) {
+	bHandled = FALSE;
+
+	synchronize(*m_model, [&] {
+		auto local = m_model->servers();
+		for (auto info : local) {
+			if (info.m_server->sessionId() == wParam) {
+				KillTimer(wParam);
+				bHandled = TRUE;
+
+				std::thread{ [info] {
+					info.m_server->loadFields();
+					info.m_server->refresh(info.m_document);
+				} }.detach();
+				break;
+			}
+		}
+	});
+
+#ifdef LCLIK_TASK_MENU
+	if (!bHandled && wParam == uEvent) {
+		bHandled = FALSE;
 		KillTimer(uEvent);
 		m_taskIcon.OnTaskbarContextMenu(WM_RBUTTONDOWN, bHandled);
-	} else
-		bHandled = FALSE;
+	}
+#endif
 
 	return 0;
 }
-#endif
 
 LRESULT CTasksFrame::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
