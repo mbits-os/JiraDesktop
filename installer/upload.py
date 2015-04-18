@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, json, subprocess, argparse
+import os, sys, json, subprocess, argparse, tempfile
 from StringIO import StringIO
 
 parser = argparse.ArgumentParser(description='Uploads the build to repo')
@@ -85,19 +85,24 @@ links = [
 
 dirs = ["%s/builds/%s" % (dest, build), "%s/releases/%s" % (dest, version)]
 
-version_json = '"%s"' % json.dumps(packages, sort_keys=True).replace('"', '\\"')
-
 commands = []
 commands.append(["mkdir", "-p"] + dirs)
 for link in links:
 	commands.append(["cd", "%s/%s;" % (dest, link[0]), "rm", "-f", "%s;" % link[1], "ln", "-s", link[2], link[1]])
-commands.append(["echo", version_json, ">%s/builds/%s/version.json" % (dest, build)])
-scp = ["scp"] + files + ["%s:%s/builds/%s/" % (server, dest, build)]
-
 for cmd in commands:
 	print "$", " ".join(cmd)
 	remote(*cmd)
 
+scp = ["scp"] + files + ["%s:%s/builds/%s/" % (server, dest, build)]
 print "$", " ".join(scp)
 call(*scp)
 
+cat = ["cat", ">%s/builds/%s/version.json" % (dest, build)]
+with tempfile.TemporaryFile() as tmp:
+	print "$", " ".join(cat)
+
+	json.dump(packages, tmp, sort_keys=True)
+	tmp.seek(0)
+
+	ret = subprocess.call(["ssh", server] + cat, stdin=tmp)
+	if ret: exit(ret)
