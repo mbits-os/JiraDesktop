@@ -171,12 +171,12 @@ void CTasksView::ServerInfo::updatePlaque()
 	//buildPlaque();
 }
 
-static std::shared_ptr<gui::node> buildSchema(const jira::model& schema, gui::document* doc)
+std::shared_ptr<gui::node> CTasksView::ServerInfo::buildSchema()
 {
-	auto header = doc->createElement(gui::elem::table_head);
-	for (auto& col : schema.cols()) {
+	auto header = m_document->createElement(gui::elem::table_head);
+	for (auto& col : m_dataset->schema.cols()) {
 		auto name = col->title();
-		auto th = doc->createElement(gui::elem::th);
+		auto th = m_document->createElement(gui::elem::th);
 		th->innerText(name);
 
 		auto tooltip = col->titleFull();
@@ -233,27 +233,27 @@ static bool equals(const std::shared_ptr<gui::node>& lhs, const std::shared_ptr<
 	return true;
 }
 
-static std::shared_ptr<gui::node> createNote(const std::shared_ptr<jira::report>& dataset, gui::document* doc)
+std::shared_ptr<gui::node> CTasksView::ServerInfo::createNote()
 {
 	std::ostringstream o;
-	auto low = dataset->data.empty() ? 0 : 1;
-	o << "(Issues " << (dataset->startAt + low)
-		<< '-' << (dataset->startAt + dataset->data.size())
-		<< " of " << dataset->total << ")";
+	auto low = m_dataset->data.empty() ? 0 : 1;
+	o << "(Issues " << (m_dataset->startAt + low)
+		<< '-' << (m_dataset->startAt + m_dataset->data.size())
+		<< " of " << m_dataset->total << ")";
 
-	auto note = doc->createElement(gui::elem::span);
+	auto note = m_document->createElement(gui::elem::span);
 	note->innerText(o.str());
 	note->addClass("summary");
 
 	return note;
 }
 
-static void mergeTable(const std::shared_ptr<jira::report>& previous, const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<gui::node>& plaque, gui::document* doc)
+void CTasksView::ServerInfo::mergeTable()
 {
 	std::shared_ptr<gui::node> table, note;
 
-	auto it = std::begin(plaque->children());
-	auto end = std::end(plaque->children());
+	auto it = std::begin(m_plaque->children());
+	auto end = std::end(m_plaque->children());
 
 	for (; it != end; ++it) {
 		if ((*it)->getNodeName() == gui::elem::table)
@@ -271,13 +271,13 @@ static void mergeTable(const std::shared_ptr<jira::report>& previous, const std:
 
 	std::vector<std::string> removed, modified, added;
 
-	bool same_schema = previous->schema.equals(dataset->schema);
+	bool same_schema = m_previous->schema.equals(m_dataset->schema);
 
-	for (auto& row : previous->data) {
+	for (auto& row : m_previous->data) {
 		auto& id = row.issue_id();
 
 		bool remove = true;
-		for (auto& test : dataset->data) {
+		for (auto& test : m_dataset->data) {
 			if (id == test.issue_id()) {
 				remove = false;
 				break;
@@ -303,20 +303,20 @@ static void mergeTable(const std::shared_ptr<jira::report>& previous, const std:
 		++header;
 	}
 
-	if (!same_schema || !previous->schema.sameHeaders(dataset->schema)) {
-		auto row = buildSchema(dataset->schema, doc);
+	if (!same_schema || !m_previous->schema.sameHeaders(m_dataset->schema)) {
+		auto row = buildSchema();
 		table->replaceChild(row, rows[header]);
 	}
 
 	auto row_pos = header;
-	for (auto& row : dataset->data) {
+	for (auto& row : m_dataset->data) {
 		auto& id = row.issue_id();
 
 		++row_pos;
 
 		bool add = true;
 		size_t orig_pos = 0;
-		for (auto& test : previous->data) {
+		for (auto& test : m_previous->data) {
 			if (id == test.issue_id()) {
 				add = false;
 				break;
@@ -339,23 +339,23 @@ static void mergeTable(const std::shared_ptr<jira::report>& previous, const std:
 
 			if (same_schema) {
 				auto node = row.getRow();
-				auto src = previous->data[orig_pos].getRow();
+				auto src = m_previous->data[orig_pos].getRow();
 				modify = !equals(node, src);
 			}
 
 			if (modify) { // modified -----------------------------------------
-				table->replaceChild(row.getRow(), previous->data[orig_pos].getRow());
+				table->replaceChild(row.getRow(), m_previous->data[orig_pos].getRow());
 				modified.push_back(row.issue_key());
 			}
 			else // the same -----------------------------------------
-				row.setRow(previous->data[orig_pos].getRow());
+				row.setRow(m_previous->data[orig_pos].getRow());
 		}
 	}
 
 	if (note)
-		plaque->replaceChild(createNote(dataset, doc), note);
+		m_plaque->replaceChild(createNote(), note);
 	else
-		plaque->appendChild(createNote(dataset, doc));
+		m_plaque->appendChild(createNote());
 
 	std::vector<std::string>* tabs[] = { &removed, &modified, &added };
 	const char* names[] = { "Removed", "Changed", "Added" };
@@ -379,12 +379,12 @@ static void mergeTable(const std::shared_ptr<jira::report>& previous, const std:
 	}
 }
 
-static void createTable(const std::shared_ptr<jira::report>& dataset, const std::shared_ptr<gui::node>& plaque, gui::document* doc)
+void CTasksView::ServerInfo::createTable()
 {
-	auto table = doc->createElement(gui::elem::table);
+	auto table = m_document->createElement(gui::elem::table);
 
 	{
-		auto caption = doc->createElement(gui::elem::table_caption);
+		auto caption = m_document->createElement(gui::elem::table_caption);
 		auto jql = std::string{};// server.view().jql();
 		if (jql.empty())
 			jql = jira::search_def::standard.jql();
@@ -392,10 +392,10 @@ static void createTable(const std::shared_ptr<jira::report>& dataset, const std:
 		table->appendChild(caption);
 	}
 	{
-		auto header = doc->createElement(gui::elem::table_head);
-		for (auto& col : dataset->schema.cols()) {
+		auto header = m_document->createElement(gui::elem::table_head);
+		for (auto& col : m_dataset->schema.cols()) {
 			auto name = col->title();
-			auto th = doc->createElement(gui::elem::th);
+			auto th = m_document->createElement(gui::elem::th);
 			th->innerText(name);
 
 			auto tooltip = col->titleFull();
@@ -407,12 +407,12 @@ static void createTable(const std::shared_ptr<jira::report>& dataset, const std:
 		table->appendChild(header);
 	}
 
-	for (auto& record : dataset->data)
+	for (auto& record : m_dataset->data)
 		table->appendChild(record.getRow());
 
 	std::shared_ptr<gui::node> empty;
 
-	for (auto& child : plaque->children()) {
+	for (auto& child : m_plaque->children()) {
 		if (child->getNodeName() == gui::elem::span &&
 			child->hasClass("empty")) {
 			empty = child;
@@ -420,12 +420,12 @@ static void createTable(const std::shared_ptr<jira::report>& dataset, const std:
 		}
 	}
 
-	auto note = createNote(dataset, doc);
+	auto note = createNote();
 	if (empty)
-		plaque->replaceChild(note, empty);
+		m_plaque->replaceChild(note, empty);
 	else
-		plaque->appendChild(note);
-	plaque->insertBefore(table, note);
+		m_plaque->appendChild(note);
+	m_plaque->insertBefore(table, note);
 }
 
 void CTasksView::ServerInfo::updateDataset()
@@ -434,11 +434,10 @@ void CTasksView::ServerInfo::updateDataset()
 	if (m_previous == m_dataset)
 		return;
 
-	if (m_previous) {
-		mergeTable(m_previous, m_dataset, m_plaque, m_document.get());
-	} else {
-		createTable(m_dataset, m_plaque, m_document.get());
-	}
+	if (m_previous)
+		mergeTable();
+	else
+		createTable();
 
 	m_previous = m_dataset;
 }

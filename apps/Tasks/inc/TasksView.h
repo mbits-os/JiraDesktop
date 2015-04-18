@@ -66,8 +66,14 @@ public:
 
 		void buildPlaque();
 		void updatePlaque();
+
+	private:
 		void updateDataset();
 		void updateErrors();
+		std::shared_ptr<gui::node> buildSchema();
+		std::shared_ptr<gui::node> createNote();
+		void mergeTable();
+		void createTable();
 	};
 
 private:
