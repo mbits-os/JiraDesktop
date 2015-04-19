@@ -37,6 +37,10 @@ def ShortVersion():
 	return check_output("python", "version.py", "--in", "../apps/Tasks/src/version.h",
 		"{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}.{PROGRAM_VERSION_PATCH}{PROGRAM_VERSION_STABILITY}")
 
+def JiraVersion():
+	return check_output("python", "version.py", "--in", "../apps/Tasks/src/version.h",
+		"{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}")
+
 
 packages = [{
 	"package": "tasks",
@@ -51,6 +55,11 @@ packages = [{
 
 files = []
 relnotes = []
+
+if os.path.exists("notes.ans"):
+	cmd = ["notes.py", "@notes.ans", "-v" + JiraVersion(), "-otasks-%s-notes.txt" % Version()]
+	print "$", " ".join(cmd)
+	call("python", *cmd)
 
 for package in packages:
 	relnote = "{package}-{version}-notes.txt".format(**package)
