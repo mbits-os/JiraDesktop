@@ -6,6 +6,8 @@ res
 
 *.msi
 *.zip
+*.txt
 *.wixobj
 *.wixpdb
 *.pyc
+notes.ans
