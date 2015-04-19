@@ -50,7 +50,12 @@ packages = [{
 }]
 
 files = []
+relnotes = []
+
 for package in packages:
+	relnote = "{package}-{version}-notes.txt".format(**package)
+	if os.path.exists(relnote):
+		relnotes.append(relnote)
 	for platform in package["platforms"]:
 		if platform == "no-arch":
 			base = "{package}-{version}".format(**package)
@@ -106,3 +111,22 @@ with tempfile.TemporaryFile() as tmp:
 
 	ret = subprocess.call(["ssh", server] + cat, stdin=tmp)
 	if ret: exit(ret)
+
+if len(relnotes):
+	cat = ["cat", ">%s/builds/%s/release-notes.txt" % (dest, build)]
+	print "$", " ".join(cat)
+	if len(relnotes) == 1:
+		with open(relnotes[0]) as notef:
+			ret = subprocess.call(["ssh", server] + cat, stdin=notef)
+			if ret: exit(ret)
+	else:
+		with tempfile.TemporaryFile() as tmp:
+			for fname in relnotes:
+				print >>tmp, "###", fname
+				with open(fname) as notef:
+					tmp.writelines(notef.readlines())
+
+			tmp.seek(0)
+
+			ret = subprocess.call(["ssh", server] + cat, stdin=tmp)
+			if ret: exit(ret)

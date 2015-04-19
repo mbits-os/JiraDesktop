@@ -13,7 +13,7 @@ parser.add_argument('-a', dest='auth', help='uses this  ')
 args   = parser.parse_args()
 
 def write_section(out, header, section):
-	print >>out, '###', header
+	print >>out, '####', header
 	if len(section): print >>out
 	for item in section:
 		print >>out, '* [%s] %s' % item
