@@ -1,0 +1,141 @@
+@import 'css/font-awesome.min.css';
+
+.contents {
+	font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+	font-size: 14px;
+	line-height: 1.6;
+	word-wrap: break-word;
+	padding: 40px 0;
+	margin: 0 auto;
+	width: 800px;
+}
+
+.left {
+	float: left
+}
+
+.right {
+	float: right
+}
+
+.files {
+	font-size: 14px;
+}
+
+.icon {
+	display: inline-block;
+	font: normal normal normal 14px/1 FontAwesome;
+	font-size: inherit;
+	text-rendering: auto;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	transform: translate(0, 0);
+	margin-top: 3px;
+	margin-right: 5px;
+}
+
+.icon-file:before {
+	content: "\f016";
+}
+
+.icon-zip:before {
+	content: "\f1c6";
+}
+
+.icon-bin:before {
+	content: "\f019";
+}
+
+.icon-txt:before {
+	content: "\f0f6";
+}
+
+.icon-dir-up:before {
+	content: "\f0a8";
+}
+
+.icon-notes:before {
+	content: "\f188";
+}
+
+.icon-dir:before {
+	content: "\f07b";
+}
+
+.icon-dir-o:before {
+	content: "\f114";
+}
+
+.files li {
+	display: block;
+	padding-top: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #eee;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.light, a .light {
+	color: #999
+}
+
+.subdirs {
+	padding: 0px
+}
+
+li.entry {
+	display: block;
+	margin-bottom: 40px;
+}
+
+li.entry:last-child {
+	margin-bottom: 0px;
+}
+
+.entry > a {
+	font-size: 1.5em;
+	color: #333;
+}
+
+.entry .latest {
+	font-family: monospace;
+	font-size: 1em;
+	vertical-align: 30%;
+	color: #33f;
+}
+
+.hints > li {
+	display: block
+}
+
+.short-hints, .short-hints > li {
+	display: inline-block
+}
+
+.hints, .short-hints {
+	margin: 0px;
+	padding: 0px;
+}
+
+.short-hints > li {
+	padding: 0px 5px
+}
+
+.short-hints > li > a,
+.parent-dir > a {
+	color: #999;
+}
+
+.short-hints > li > a:hover,
+.short-hints > li > a:hover > .icon,
+.parent-dir > a:hover,
+.parent-dir > a:hover > .icon {
+	color: #4183c4;
+	text-decoration: none
+}
