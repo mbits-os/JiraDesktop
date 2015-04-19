@@ -97,13 +97,21 @@ links = [
 	("releases", "latest", "%s/%s" % (version, build))
 ]
 
-dirs = ["%s/builds/%s" % (dest, build), "%s/releases/%s" % (dest, version)]
+dirs = ["%s/builds/%s" % (dest, build), "%s/releases/%s" % (dest, version), "%s/ui" % dest]
 cmd = ["mkdir", "-p"] + dirs
 
 print "$", " ".join(cmd)
 remote(*cmd)
 
 scp = ["scp"] + files + ["%s:%s/builds/%s/" % (server, dest, build)]
+print ">", " ".join(scp)
+call(*scp)
+
+scp = ["scp", "www/ui/index.html", "www/ui/pages.css", "%s:%s/ui/" % (server, dest)]
+print ">", " ".join(scp)
+call(*scp)
+
+scp = ["scp", "www/index.py", "%s:~/" % server]
 print ">", " ".join(scp)
 call(*scp)
 
@@ -139,6 +147,7 @@ if len(relnotes):
 commands = []
 for link in links:
 	commands.append(["cd", "%s/%s;" % (dest, link[0]), "rm", "-f", "%s;" % link[1], "ln", "-s", link[2], link[1]])
+commands.append(["python", "~/index.py", "-d", dest, "-t", "update", "-#", build])
 for cmd in commands:
 	print "$", " ".join(cmd)
 	remote(*cmd)
