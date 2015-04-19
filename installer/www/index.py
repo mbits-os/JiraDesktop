@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, argparse, json, markdown
+import os, sys, argparse, json, markdown, urllib
 
 parser = argparse.ArgumentParser(description='Creates index.html for the upload')
 parser.add_argument('-d', dest='dir', required=True, help='taregt directory')
@@ -102,7 +102,7 @@ def page_footer(out):
 	print >>out, '</div>'
 
 def page_entry(out, link, name, latest, hints = []):
-	out.write('<li class="entry"><a href="%s/">' % link)
+	out.write('<li class="entry"><a href="%s/">' % urllib.quote(link))
 	if latest:
 		out.write('<strong>')
 	out.write(name)
@@ -130,14 +130,14 @@ def page_files(link, refs):
 	fnames = sorted(refs.keys())
 	files = []
 	for fname in fnames:
-		files.append('<a href="%s/%s"><span class="left light icon icon-%s"></span>%s</a>' % (link, fname, iconClass(fname), refs[fname]))
+		files.append('<a href="%s/%s"><span class="left light icon icon-%s"></span>%s</a>' % (urllib.quote(link), urllib.quote(fname), iconClass(fname), refs[fname]))
 	return files
 
 def page_packages(out, dir, link, pkgs, latest):
 	keys = sorted(pkgs.keys())
 	hints = []
 	if os.path.exists(os.path.join(dir, link, 'release-notes.txt')):
-		hints.append(['see', ['<a href="%s/#notes"><strong>release notes</strong></a>' % link]])
+		hints.append(['see', ['<a href="%s/#notes"><strong>release notes</strong></a>' % urllib.quote(link)]])
 	for key in keys:
 		pkg = pkgs[key]
 		bins = pkg['binaries']
@@ -165,7 +165,7 @@ def page_version(out, dir, link, latest):
 		if sub == "latest": continue
 		icon = 'dir-o'
 		if sub == build_latest: icon = 'dir'
-		build = '<a href="%s/%s"><span class="icon icon-%s"></span>' % (link, sub, icon)
+		build = '<a href="%s/%s"><span class="icon icon-%s"></span>' % (urllib.quote(link), urllib.quote(sub), icon)
 		if sub == build_latest: build += '<strong>'
 		build += sub
 		if sub == build_latest: build += '</strong>'
@@ -253,7 +253,7 @@ def index_single(out, dir):
 			print >>out, '<ul class="files">'
 
 		for fname in files:
-			print >>out, '<li><a href="%s"><small class="right light">%s</small><span class="left light icon icon-%s"></span>%s</a></li>' % (fname, sizeOf(os.path.join(dir, fname)), iconClass(fname), fname)
+			print >>out, '<li><a href="%s"><small class="right light">%s</small><span class="left light icon icon-%s"></span>%s</a></li>' % (urllib.quote(fname), sizeOf(os.path.join(dir, fname)), iconClass(fname), fname)
 
 		if len(files):
 			print >>out, '</ul>'
