@@ -58,7 +58,7 @@ relnotes = []
 
 if os.path.exists("notes.ans"):
 	cmd = ["notes.py", "@notes.ans", "-v" + JiraVersion(), "-otasks-%s-notes.txt" % Version()]
-	print "$", " ".join(cmd)
+	print ">", " ".join(cmd)
 	call("python", *cmd)
 
 for package in packages:
@@ -98,17 +98,13 @@ links = [
 ]
 
 dirs = ["%s/builds/%s" % (dest, build), "%s/releases/%s" % (dest, version)]
+cmd = ["mkdir", "-p"] + dirs
 
-commands = []
-commands.append(["mkdir", "-p"] + dirs)
-for link in links:
-	commands.append(["cd", "%s/%s;" % (dest, link[0]), "rm", "-f", "%s;" % link[1], "ln", "-s", link[2], link[1]])
-for cmd in commands:
-	print "$", " ".join(cmd)
-	remote(*cmd)
+print "$", " ".join(cmd)
+remote(*cmd)
 
 scp = ["scp"] + files + ["%s:%s/builds/%s/" % (server, dest, build)]
-print "$", " ".join(scp)
+print ">", " ".join(scp)
 call(*scp)
 
 cat = ["cat", ">%s/builds/%s/version.json" % (dest, build)]
@@ -139,3 +135,10 @@ if len(relnotes):
 
 			ret = subprocess.call(["ssh", server] + cat, stdin=tmp)
 			if ret: exit(ret)
+
+commands = []
+for link in links:
+	commands.append(["cd", "%s/%s;" % (dest, link[0]), "rm", "-f", "%s;" % link[1], "ln", "-s", link[2], link[1]])
+for cmd in commands:
+	print "$", " ".join(cmd)
+	remote(*cmd)
