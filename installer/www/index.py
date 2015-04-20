@@ -256,7 +256,7 @@ def page_files(link, refs):
 	fnames = sorted(refs.keys())
 	files = []
 	for fname in fnames:
-		files.append('<a href="%s/%s"><span class="left light icon icon-%s"></span>%s</a>' % (urllib.quote(link), urllib.quote(fname), iconClass(fname), refs[fname]))
+		files.append('<a href="%s/%s" rel="nofollow"><span class="left light icon icon-%s"></span>%s</a>' % (urllib.quote(link), urllib.quote(fname), iconClass(fname), refs[fname]))
 	return files
 
 def page_packages(out, dir, link, build, latest):
@@ -357,7 +357,7 @@ def page_dls(dir, files):
 	files = sorted(files)
 	out = []
 	for fname in files:
-		out.append('<a href="%s"><small class="right light">%s</small><span class="left light icon icon-%s"></span>%s</a>' % (urllib.quote(fname), sizeOf(os.path.join(dir, fname)), iconClass(fname), fname))
+		out.append('<a href="%s" rel="nofollow"><small class="right light">%s</small><span class="left light icon icon-%s"></span>%s</a>' % (urllib.quote(fname), sizeOf(os.path.join(dir, fname)), iconClass(fname), fname))
 	return out
 
 def index_single(out, dir):
