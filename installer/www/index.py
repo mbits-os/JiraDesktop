@@ -47,7 +47,7 @@ def iconClass(fname):
 			return klass
 	return "file"
 
-def packages(dir):
+def __packages__(dir):
 	with open(os.path.join(dir, 'version.json')) as f:
 		doc = json.load(f)
 		packages = {}
@@ -181,7 +181,7 @@ def version2(dir):
 def version(dir):
 	if os.path.exists(os.path.join(dir, 'version2.json')):
 		return version2(dir)
-	pkgs = packages(dir)
+	pkgs = __packages__(dir)
 	build = { "files" : pkgs, "vcs" : NullVcs() }
 
 	versions = {}
@@ -298,11 +298,10 @@ def page_version(out, dir, link, latest):
 	subs.sort(reverse=True)
 
 	if latest:
-		build_latest = packages(dir)
-		latest = "?"
+		build_latest = version(dir)['files']
 		name = "latest"
 	else:
-		build_latest = packages(os.path.join(dir, "latest"))
+		build_latest = version(os.path.join(dir, "latest"))['files']
 		name = link
 	tmp = [build_latest[key]['version'] for key in build_latest]
 	build_latest = None
@@ -331,7 +330,7 @@ def page_root_link(out, link, name, description):
 def page_build(out, title, dir):
 	page_header(out, title)
 
-	latest = packages(os.path.join(dir, "latest"))
+	latest = version(os.path.join(dir, "latest"))['files']
 	tmp = [latest[key]['version'] for key in latest]
 	latest = None
 	if len(tmp):
@@ -406,7 +405,7 @@ def index_version(out, dir):
 def index_versions(out, dir):
 	page_header(out, 'Versions')
 
-	latest = packages(os.path.join(dir, "latest"))
+	latest = version(os.path.join(dir, "latest"))['files']
 	tmp = [latest[key]['version'] for key in latest]
 	latest = None
 	if len(tmp):
@@ -474,7 +473,7 @@ if args.type == 'update':
 	call(os.path.join(args.dir, 'builds'), index_builds)
 	call(os.path.join(args.dir, 'builds', args.id), index_single)
 	call(os.path.join(args.dir, 'releases'), index_versions)
-	pkgs = packages(os.path.join(args.dir, 'builds', args.id))
+	pkgs = version(os.path.join(args.dir, 'builds', args.id))['files']
 	versions = [pkgs[pkg]['version'] for pkg in pkgs]
 	if len(versions):
 		version = versions[0].split('+', 1)[0]
