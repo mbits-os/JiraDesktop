@@ -254,7 +254,9 @@ def page_version(out, dir, link, latest):
 	tmp = [build_latest[key]['version'] for key in build_latest]
 	build_latest = None
 	if len(tmp):
-		build_latest = tmp[0].split('+', 1)[1]
+		tmp = tmp[0].split('+', 1)
+		if len(tmp) > 1:
+			build_latest = tmp[1]
 
 	builds = []
 
@@ -359,7 +361,7 @@ def index_versions(out, dir):
 	tmp = [latest[key]['version'] for key in latest]
 	latest = None
 	if len(tmp):
-		latest = tmp[0].split('+', 1)[0]
+		latest = tmp[0].split('+', 1)[0].split('-', 1)[0]
 
 	subs = os.listdir(dir)
 	subs.sort(reverse=True)
@@ -426,7 +428,7 @@ if args.type == 'update':
 	pkgs = version(os.path.join(args.dir, 'builds', args.id))['files']
 	versions = [pkgs[pkg]['version'] for pkg in pkgs]
 	if len(versions):
-		ver = versions[0].split('+', 1)[0]
+		ver = versions[0].split('+', 1)[0].split('-', 1)[0]
 		call(os.path.join(args.dir, 'releases', ver), index_version)
 	exit(0)
 

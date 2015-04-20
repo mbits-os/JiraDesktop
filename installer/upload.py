@@ -35,7 +35,7 @@ def Build():
 
 def ShortVersion():
 	return check_output("python", "version.py", "--in", "../apps/Tasks/src/version.h",
-		"{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}.{PROGRAM_VERSION_PATCH}{PROGRAM_VERSION_STABILITY}")
+		"{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}.{PROGRAM_VERSION_PATCH}")
 
 packages = [{
 	"package": "tasks",
