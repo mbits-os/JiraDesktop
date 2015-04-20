@@ -37,11 +37,6 @@ def ShortVersion():
 	return check_output("python", "version.py", "--in", "../apps/Tasks/src/version.h",
 		"{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}.{PROGRAM_VERSION_PATCH}{PROGRAM_VERSION_STABILITY}")
 
-def JiraVersion():
-	return check_output("python", "version.py", "--in", "../apps/Tasks/src/version.h",
-		"{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}")
-
-
 packages = [{
 	"package": "tasks",
 	"platforms": {
@@ -54,17 +49,19 @@ packages = [{
 }]
 
 files = []
-relnotes = []
-
-if os.path.exists("notes.ans"):
-	cmd = ["notes.py", "@notes.ans", "-v" + JiraVersion(), "-otasks-%s-notes.txt" % Version()]
-	print ">", " ".join(cmd)
-	call("python", *cmd)
+rename = {}
 
 for package in packages:
 	relnote = "{package}-{version}-notes.txt".format(**package)
 	if os.path.exists(relnote):
-		relnotes.append(relnote)
+		if 'release-notes.txt' not in rename: rename['release-notes.txt'] = []
+		rename['release-notes.txt'].append(relnote)
+
+	version = "{package}-{version}-version.json".format(**package)
+	if os.path.exists(version):
+		if 'version2.json' not in rename: rename['version2.json'] = []
+		rename['version2.json'].append(version)
+
 	for platform in package["platforms"]:
 		if platform == "no-arch":
 			base = "{package}-{version}".format(**package)
@@ -107,6 +104,12 @@ scp = ["scp"] + files + ["%s:%s/builds/%s/" % (server, dest, build)]
 print ">", " ".join(scp)
 call(*scp)
 
+for dst in rename:
+	if not len(rename[dst]): continue
+	scp = ["scp", rename[dst][0], "%s:%s/builds/%s/%s" % (server, dest, build, dst)]
+	print ">", " ".join(scp)
+	call(*scp)
+
 scp = ["scp", "www/ui/index.html", "www/ui/pages.css", "%s:%s/ui/" % (server, dest)]
 print ">", " ".join(scp)
 call(*scp)
@@ -114,35 +117,6 @@ call(*scp)
 scp = ["scp", "www/index.py", "%s:~/" % server]
 print ">", " ".join(scp)
 call(*scp)
-
-cat = ["cat", ">%s/builds/%s/version.json" % (dest, build)]
-with tempfile.TemporaryFile() as tmp:
-	print "$", " ".join(cat)
-
-	json.dump(packages, tmp, sort_keys=True)
-	tmp.seek(0)
-
-	ret = subprocess.call(["ssh", server] + cat, stdin=tmp)
-	if ret: exit(ret)
-
-if len(relnotes):
-	cat = ["cat", ">%s/builds/%s/release-notes.txt" % (dest, build)]
-	print "$", " ".join(cat)
-	if len(relnotes) == 1:
-		with open(relnotes[0]) as notef:
-			ret = subprocess.call(["ssh", server] + cat, stdin=notef)
-			if ret: exit(ret)
-	else:
-		with tempfile.TemporaryFile() as tmp:
-			for fname in relnotes:
-				print >>tmp, "###", fname
-				with open(fname) as notef:
-					tmp.writelines(notef.readlines())
-
-			tmp.seek(0)
-
-			ret = subprocess.call(["ssh", server] + cat, stdin=tmp)
-			if ret: exit(ret)
 
 commands = []
 for link in links:

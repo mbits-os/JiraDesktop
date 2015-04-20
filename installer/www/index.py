@@ -476,8 +476,8 @@ if args.type == 'update':
 	pkgs = version(os.path.join(args.dir, 'builds', args.id))['files']
 	versions = [pkgs[pkg]['version'] for pkg in pkgs]
 	if len(versions):
-		version = versions[0].split('+', 1)[0]
-		call(os.path.join(args.dir, 'releases', version), index_version)
+		ver = versions[0].split('+', 1)[0]
+		call(os.path.join(args.dir, 'releases', ver), index_version)
 	exit(0)
 
 func = 'index_' + args.type
