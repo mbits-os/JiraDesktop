@@ -59,8 +59,8 @@ for package in packages:
 
 	version = "{package}-{version}-version.json".format(**package)
 	if os.path.exists(version):
-		if 'version2.json' not in rename: rename['version2.json'] = []
-		rename['version2.json'].append(version)
+		if 'version.json' not in rename: rename['version.json'] = []
+		rename['version.json'].append(version)
 
 	for platform in package["platforms"]:
 		if platform == "no-arch":

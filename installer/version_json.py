@@ -40,13 +40,14 @@ else:
 if github and github.endswith(".git"):
 	github = github[0:len(github)-4]
 
+ver = version(short)
 build = {
 	"name" : tag,
 	"tag" : tag,
 	"commit" : commit,
 	"files": [{
 		"package": "tasks",
-		"version": version(short),
+		"version": ver,
 		"platforms": {
 			"win32": { "archive": ["zip", "msi"], "logs": ["", "msbuild"] }
 		}
@@ -54,6 +55,12 @@ build = {
 }
 
 if github: build["github"] = github
+
+ver = ver.split('+', 1)[0].split('-', 1)
+if len(ver) > 1:
+	ver = ver[1]
+	stability = ' '.join(ver.split('.', 1))
+	if len(stability): build["stability"] = stability
 
 if args.fname:
 	with open(args.fname, "w+b") as out:

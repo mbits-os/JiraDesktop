@@ -47,49 +47,6 @@ def iconClass(fname):
 			return klass
 	return "file"
 
-def __packages__(dir):
-	with open(os.path.join(dir, 'version.json')) as f:
-		doc = json.load(f)
-		packages = {}
-		for pkg in doc:
-			bin = {}
-			logs = {}
-			for platform in pkg["platforms"]:
-				if platform == "no-arch":
-					base = "{package}-{version}".format(**pkg)
-				else:
-					base = "{package}-{version}-{0}".format(platform, **pkg)
-
-				platform = pkg["platforms"][platform]
-				if "archive" in platform:
-					archkey = "archive"
-				elif "arch" in platform:
-					archkey = "arch"
-				else:
-					archkey = None
-
-				if archkey:
-					for arch in platform[archkey]:
-						fname = "%s.%s" % (base, arch)
-						if os.path.exists(os.path.join(dir, fname)):
-							bin[fname] = os.path.splitext(fname)[1][1:]
-				for log in platform["logs"]:
-					if log == "":
-						fname = "%s.log" % base
-						name = "log"
-					else:
-						fname = "%s-%s.log" % (base, log)
-						name = "%s.log" % log
-					if os.path.exists(os.path.join(dir, fname)):
-						logs[fname] = name
-			out = {
-				'version' : pkg['version'],
-				'binaries': bin,
-				'logs': logs
-			}
-			packages[pkg['package']] = out
-		return packages
-
 class NullVcs:
 	def commitLink(self, commit, text) : return text
 	def tagLink(self, tag, text) : return text
@@ -123,7 +80,7 @@ class GithubVcs:
 			out.append('<a href="%s/archive/%s.%s" rel="nofollow"><span class="left light icon icon-github"></span>Source code (%s)</a>' % (self.uri, urllib.quote(tag), urllib.quote(ext), ext))
 		return out
 
-def version2_json(dir, json):
+def version_json(dir, json):
 	build = {}
 	build["vcs"] = NullVcs()
 	build["name"] = json["name"]
@@ -173,28 +130,10 @@ def version2_json(dir, json):
 	build["files"] = packages
 	return build
 
-def version2(dir):
-	with open(os.path.join(dir, 'version2.json')) as f:
-		doc = json.load(f)
-		return version2_json(dir, doc)
-
 def version(dir):
-	if os.path.exists(os.path.join(dir, 'version2.json')):
-		return version2(dir)
-	pkgs = __packages__(dir)
-	build = { "files" : pkgs, "vcs" : NullVcs() }
-
-	versions = {}
-	for package in pkgs:
-		versions[pkgs[package]['version']] = 1
-		# print name, version
-	versions = versions.keys()
-	versions.sort()
-	if len(versions) == 1:
-		build["name"] = versions[0]
-		# TODO: guess tag and name
-	else:
-		build["name"] = ", ".join(versions)
+	with open(os.path.join(dir, 'version.json')) as f:
+		doc = json.load(f)
+		return version_json(dir, doc)
 
 def page_commit(build):
 	if "commit" not in build: return ""
