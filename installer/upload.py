@@ -3,7 +3,7 @@
 import os, sys, json, subprocess, argparse, tempfile
 from StringIO import StringIO
 
-parser = argparse.ArgumentParser(description='Uploads the build to repo')
+parser = argparse.ArgumentParser(description='Uploads the build to repo', fromfile_prefix_chars='@')
 parser.add_argument("-d", dest="dir", default="~/www", help="root directory")
 parser.add_argument("-s", dest="server", required=True, help="machine name")
 
