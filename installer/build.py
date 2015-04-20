@@ -61,6 +61,12 @@ def build_sln(out):
 	global VERSION
 	call(out, "python", "msbuild.py", "tasks-%s-win32-msbuild.log" % VERSION)
 
+def version_json(out):
+	call(out, "python", "version_json.py", "-t" + Tag(), "-otasks-%s-version.json" % Version())
+
+def relnotes(out):
+	call(out, "python", "notes.py", "@notes.ans", "-v" + JiraVersion(), "-otasks-%s-notes.txt" % Version())
+
 def nothing(out): pass
 
 prog = Steps()
@@ -81,7 +87,15 @@ if policy == POLICY_TAG_AND_PUSH:
 prog.step("Getting dependencies", call, "python", "copy_res.py") \
 	.step("Building 'Release:Win32'", build_sln) \
 	.step("Packing", call, "python", "pack.py") \
-	.step("Done", nothing)
+	.step("Metadata: JSON", version_json)
+
+if os.path.exists("notes.ans"):
+	prog.step("Metadata: release notes", relnotes)
+
+if os.path.exists("upload.ans"):
+	prog.step("Upload", call, "python", "upload.py", "@upload.ans")
+
+prog.step("Done", nothing)
 
 prog.run(out, args.dry_run)
 

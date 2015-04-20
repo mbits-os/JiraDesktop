@@ -2,7 +2,7 @@
 
 import subprocess, tempfile, os
 
-__all__ = ["Next", "call", "call_simple", "call_direct", "call_", "Version", "TaggedVersion", "Tag", "Branch", "Steps"]
+__all__ = ["Next", "call", "call_simple", "call_direct", "call_", "Version", "JiraVersion", "TaggedVersion", "Tag", "Branch", "Steps"]
 
 Next = True
 
@@ -38,6 +38,10 @@ def Version(next = None):
 	args = [ "python", "version.py", "--in", "../apps/Tasks/src/version.h", "!SEMANTIC"]
 	if next is not None: args += ["--next", "PROGRAM_VERSION_BUILD"]
 	return subprocess.check_output(args).strip()
+
+def JiraVersion():
+	return subprocess.check_output([ "python", "version.py", "--in", "../apps/Tasks/src/version.h",
+		"{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}"]).strip()
 
 def TaggedVersion(tag):
 	tmp = tempfile.NamedTemporaryFile(prefix='version.h.', dir='.', delete=False)
