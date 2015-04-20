@@ -202,62 +202,45 @@ def page_build(out, title, dir):
 	print >>out, '</ul>'
 	page_footer(out)
 
+def page_dls(dir, files):
+	files = sorted(files)
+	out = []
+	for fname in files:
+		out.append('<a href="%s"><small class="right light">%s</small><span class="left light icon icon-%s"></span>%s</a>' % (urllib.quote(fname), sizeOf(os.path.join(dir, fname)), iconClass(fname), fname))
+	return out
+
 def index_single(out, dir):
-	with open(os.path.join(dir, 'version.json')) as f:
-		doc = json.load(f)
-		versions = {}
-		for package in doc:
-			version = package['version']
-			name = package['package']
-			versions[version] = 1
-			# print name, version
-		versions = versions.keys()
-		versions.sort()
-		page_header(out, ', '.join(versions))
-		try:
-			with open(os.path.join(dir, 'release-notes.txt')) as r:
-				print >>out, '<h2><span id="notes">Release notes</span></h2>'
-				print >>out, markdown.markdown("".join(r.readlines()))
-		except: pass
-		
-		files = []
-		
-		for package in doc:
-			for platform in package["platforms"]:
-				if platform == "no-arch":
-					base = "{package}-{version}".format(**package)
-				else:
-					base = "{package}-{version}-{0}".format(platform, **package)
-				platform = package["platforms"][platform]
-				if "archive" in platform:
-					archkey = "archive"
-				elif "arch" in platform:
-					archkey = "arch"
-				else:
-					archkey = None
-				if archkey:
-					for arch in platform[archkey]:
-						fname = "%s.%s" % (base, arch)
-						if os.path.exists(os.path.join(dir, fname)):
-							files.append(fname)
-				for log in platform["logs"]:
-					if log == "":
-						fname = "%s.log" % base
-					else:
-						fname = "%s-%s.log" % (base, log)
-					if os.path.exists(os.path.join(dir, fname)):
-						files.append(fname)
+	pkgs = packages(dir)
+	versions = {}
+	for package in pkgs:
+		versions[pkgs[package]['version']] = 1
+		# print name, version
+	versions = versions.keys()
+	versions.sort()
+	page_header(out, ', '.join(versions))
 
-		if len(files):
-			print >>out, '<h2><span id="downloads">Downloads</span></h2>'
-			print >>out, '<ul class="files">'
+	try:
+		with open(os.path.join(dir, 'release-notes.txt')) as r:
+			print >>out, '<h2><span id="notes">Release notes</span></h2>'
+			print >>out, markdown.markdown("".join(r.readlines()))
+	except: pass
 
-		for fname in files:
-			print >>out, '<li><a href="%s"><small class="right light">%s</small><span class="left light icon icon-%s"></span>%s</a></li>' % (urllib.quote(fname), sizeOf(os.path.join(dir, fname)), iconClass(fname), fname)
+	bins = []
+	logs = []
+	for name in pkgs:
+		pkg = pkgs[name]
+		bins += pkg['binaries'].keys()
+		logs += pkg['logs'].keys()
+	links = page_dls(dir, bins) + page_dls(dir, logs)
+	if len(links):
+		print >>out, '<h2><span id="downloads">Downloads</span></h2>'
+		print >>out, '<ul class="files">'
+	for link in links:
+		print >>out, '<li>%s</li>' % link
+	if len(links):
+		print >>out, '</ul>'
 
-		if len(files):
-			print >>out, '</ul>'
-		page_footer(out)
+	page_footer(out)
 
 def index_builds(out, dir):
 	page_build(out, 'Builds', dir)
