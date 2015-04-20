@@ -14,7 +14,7 @@ def sizeOf(path):
 		size = os.stat(path).st_size
 		ratio = 1
 		suffix = "B"
-		
+
 		if size >= 1024:
 			ratio *= 1024
 			suffix = "KiB"
@@ -24,7 +24,7 @@ def sizeOf(path):
 				if size >= 1024 * 1204 * 1024:
 					ratio *= 1024
 					suffix = "GiB"
-		
+
 		if ratio == 1:
 			return "%s B" % size
 		else:
@@ -90,27 +90,153 @@ def packages(dir):
 			packages[pkg['package']] = out
 		return packages
 
-def page_header(out, title, updir = True):
+class NullVcs:
+	def commitLink(self, commit, text) : return text
+	def tagLink(self, tag, text) : return text
+	def additionalShortLinks(self, build) : return []
+	def additionalLinks(self, build) : return []
+
+class GithubVcs:
+	def __init__(self, project):
+		self.uri = "https://github.com/" + urllib.quote(project)
+
+	def commitLink(self, commit, text):
+		return '<a href="%s/commit/%s" rel="nofollow">%s</a>' % (self.uri, urllib.quote(commit), text)
+
+	def tagLink(self, tag, text):
+		return '<a href="%s/tree/%s" rel="nofollow">%s</a>' % (self.uri, urllib.quote(tag), text)
+
+	def additionalShortLinks(self, build):
+		if "tag" not in build:
+			return []
+		tag = build["tag"]
+		out = []
+		out.append('<a href="%s/releases/tag/%s" rel="nofollow"><span class="icon icon-github"></span>see on github</a>' % (self.uri, urllib.quote(tag, '')))
+		return out
+
+	def additionalLinks(self, build):
+		if "tag" not in build:
+			return []
+		tag = build["tag"]
+		out = []
+		for ext in ["zip", "tar.gz"]:
+			out.append('<a href="%s/archive/%s.%s" rel="nofollow"><span class="left light icon icon-github"></span>Source code (%s)</a>' % (self.uri, urllib.quote(tag), urllib.quote(ext), ext))
+		return out
+
+def version2_json(dir, json):
+	build = {}
+	build["vcs"] = NullVcs()
+	build["name"] = json["name"]
+	if "tag" in json: build["tag"] = json["tag"]
+	if "commit" in json: build["commit"] = json["commit"]
+	if "github" in json: build["vcs"] = GithubVcs(json["github"])
+	# TODO: elif "bitbucket" in json: ...
+
+	packages = {}
+	for pkg in json["files"]:
+		bin = {}
+		logs = {}
+		for platform in pkg["platforms"]:
+			if platform == "no-arch":
+				base = "{package}-{version}".format(**pkg)
+			else:
+				base = "{package}-{version}-{0}".format(platform, **pkg)
+
+			platform = pkg["platforms"][platform]
+			if "archive" in platform:
+				archkey = "archive"
+			elif "arch" in platform:
+				archkey = "arch"
+			else:
+				archkey = None
+
+			if archkey:
+				for arch in platform[archkey]:
+					fname = "%s.%s" % (base, arch)
+					if os.path.exists(os.path.join(dir, fname)):
+						bin[fname] = os.path.splitext(fname)[1][1:]
+			for log in platform["logs"]:
+				if log == "":
+					fname = "%s.log" % base
+					name = "log"
+				else:
+					fname = "%s-%s.log" % (base, log)
+					name = "%s.log" % log
+				if os.path.exists(os.path.join(dir, fname)):
+					logs[fname] = name
+		out = {
+			'version' : pkg['version'],
+			'binaries': bin,
+			'logs': logs
+		}
+		packages[pkg['package']] = out
+	build["files"] = packages
+	return build
+
+def version2(dir):
+	with open(os.path.join(dir, 'version2.json')) as f:
+		doc = json.load(f)
+		return version2_json(dir, doc)
+
+def version(dir):
+	if os.path.exists(os.path.join(dir, 'version2.json')):
+		return version2(dir)
+	pkgs = packages(dir)
+	build = { "files" : pkgs, "vcs" : NullVcs() }
+
+	versions = {}
+	for package in pkgs:
+		versions[pkgs[package]['version']] = 1
+		# print name, version
+	versions = versions.keys()
+	versions.sort()
+	if len(versions) == 1:
+		build["name"] = versions[0]
+		# TODO: guess tag and name
+	else:
+		build["name"] = ", ".join(versions)
+
+def page_commit(build):
+	if "commit" not in build: return ""
+	commit = build["commit"].split(',')
+	name = commit[0]
+	commit = "".join(commit)
+	text = '<span class="icon icon-commit"></span>%s' % name
+	return build["vcs"].commitLink(commit, text)
+
+def page_tag(build):
+	if "tag" not in build: return ""
+	text = '<span class="icon icon-tag"></span>%s' % build["tag"]
+	return build["vcs"].tagLink(build["tag"], text)
+
+def page_header(out, title, updir = True, links = []):
+	print >>out, '<html>'
+	print >>out, '<head>'
 	print >>out, '<title>%s</title>' % title
 	print >>out, '<link rel="stylesheet" type="text/css" href="/ui/pages.css" />'
+	print >>out, '</head>'
+	print >>out, '<body>'
 	print >>out, '<div class="contents">'
 	print >>out, '<h1>%s</h1>' % title
+	if len(links):
+		print >>out, '<ul class="page-links">'
+		for link in links:
+			print >>out, '<li>%s</li>' % link
+		print >>out, '</ul>'
 	if updir:
 		print >>out, '<p class="parent-dir"><a href="../"><span class="icon icon-dir-up"></span>Parent Directory</a></p>'
 
 def page_footer(out):
 	print >>out, '</div>'
+	print >>out, '</body>'
+	print >>out, '</html>'
 
 def page_entry(out, link, name, latest, hints = []):
 	out.write('<li class="entry"><a href="%s/">' % urllib.quote(link))
-	if latest:
-		out.write('<strong>')
 	out.write(name)
-	if latest:
-		out.write('</strong>')
 	out.write('</a>')
 	if latest:
-		out.write(' <span class="latest">[latest]</span>')
+		out.write(' <span class="latest">%s</span>' % latest)
 	if len(hints):
 		print >>out, '<ul class="hints">'
 		for hint in hints:
@@ -133,25 +259,51 @@ def page_files(link, refs):
 		files.append('<a href="%s/%s"><span class="left light icon icon-%s"></span>%s</a>' % (urllib.quote(link), urllib.quote(fname), iconClass(fname), refs[fname]))
 	return files
 
-def page_packages(out, dir, link, pkgs, latest):
+def page_packages(out, dir, link, build, latest):
+	name = build["name"]
+	if latest:
+		latest = name
+		name = "latest"
+	pkgs = build["files"]
 	keys = sorted(pkgs.keys())
 	hints = []
+
+	commit = page_commit(build)
+	tag = page_tag(build)
+
+	links = []
+	if commit: links.append(commit)
+	if tag: links.append(tag)
+
+	links += build['vcs'].additionalShortLinks(build)
+
+	if len(links):
+		hints.append(['code:', links])
+
 	if os.path.exists(os.path.join(dir, link, 'release-notes.txt')):
-		hints.append(['see', ['<a href="%s/#notes"><strong>release notes</strong></a>' % urllib.quote(link)]])
+		hints.append(['see', ['<a href="%s/#notes"><i>release notes</i></a>' % urllib.quote(link)]])
 	for key in keys:
 		pkg = pkgs[key]
 		bins = pkg['binaries']
 		logs = pkg['logs']
 		links = page_files(link, bins) + page_files(link, logs)
-		hints.append([key + ':', links])
+		hints.append([key + ' files:', links])
+	if len(keys) == 1:
+		hints[len(hints) - 1][0] = 'files:'
 
-	page_entry(out, link, ', '.join([pkgs[pkg]['version'] for pkg in pkgs]), latest, hints)
+	page_entry(out, link, name, latest, hints)
 
 def page_version(out, dir, link, latest):
 	subs = os.listdir(dir)
 	subs.sort(reverse=True)
 
-	build_latest = packages(os.path.join(dir, "latest"))
+	if latest:
+		build_latest = packages(dir)
+		latest = "?"
+		name = "latest"
+	else:
+		build_latest = packages(os.path.join(dir, "latest"))
+		name = link
 	tmp = [build_latest[key]['version'] for key in build_latest]
 	build_latest = None
 	if len(tmp):
@@ -171,7 +323,7 @@ def page_version(out, dir, link, latest):
 		if sub == build_latest: build += '</strong>'
 		builds.append(build)
 
-	page_entry(out, link, link, latest, [["builds:", builds]])
+	page_entry(out, link, name, latest, [["builds:", builds]])
 
 def page_root_link(out, link, name, description):
 	page_entry(out, link, name, False, [[description]]);
@@ -186,17 +338,17 @@ def page_build(out, title, dir):
 		tmp = tmp[0].split('+', 1)
 		if len(tmp) > 1:
 			latest = tmp[1]
-	
+
 	subs = os.listdir(dir)
 	subs.sort(reverse=True)
-	
+
 	print >>out, '<ul class="subdirs">'
 
 	for sub in subs:
 		test = os.path.join(dir, sub)
 		if not os.path.isdir(test) : continue
-		if sub == "latest": continue
-		page_packages(out, dir, sub, packages(test), latest == sub)
+		#if sub == "latest": continue
+		page_packages(out, dir, sub, version(test), sub == "latest")
 
 	# print latest
 	print >>out, '</ul>'
@@ -210,14 +362,17 @@ def page_dls(dir, files):
 	return out
 
 def index_single(out, dir):
-	pkgs = packages(dir)
-	versions = {}
-	for package in pkgs:
-		versions[pkgs[package]['version']] = 1
-		# print name, version
-	versions = versions.keys()
-	versions.sort()
-	page_header(out, ', '.join(versions))
+	build = version(dir)
+	commit = page_commit(build)
+	tag = page_tag(build)
+
+	page_links = []
+	if commit: page_links.append(commit)
+	if tag: page_links.append(tag)
+
+	page_links += build['vcs'].additionalShortLinks(build)
+
+	page_header(out, build["name"], True, page_links)
 
 	try:
 		with open(os.path.join(dir, 'release-notes.txt')) as r:
@@ -227,11 +382,11 @@ def index_single(out, dir):
 
 	bins = []
 	logs = []
-	for name in pkgs:
-		pkg = pkgs[name]
+	for name in build["files"]:
+		pkg = build["files"][name]
 		bins += pkg['binaries'].keys()
 		logs += pkg['logs'].keys()
-	links = page_dls(dir, bins) + page_dls(dir, logs)
+	links = page_dls(dir, bins) + page_dls(dir, logs) + build["vcs"].additionalLinks(build)
 	if len(links):
 		print >>out, '<h2><span id="downloads">Downloads</span></h2>'
 		print >>out, '<ul class="files">'
@@ -243,43 +398,45 @@ def index_single(out, dir):
 	page_footer(out)
 
 def index_builds(out, dir):
-	page_build(out, 'Builds', dir)
+	page_build(out, 'All nightlies', dir)
 
 def index_version(out, dir):
-	page_build(out, 'Releases for %s' % os.path.split(dir)[1], dir)
+	page_build(out, 'Nightlies for %s' % os.path.split(dir)[1], dir)
 
 def index_versions(out, dir):
-	page_header(out, 'Releases')
+	page_header(out, 'Versions')
 
 	latest = packages(os.path.join(dir, "latest"))
 	tmp = [latest[key]['version'] for key in latest]
 	latest = None
 	if len(tmp):
 		latest = tmp[0].split('+', 1)[0]
-	
+
 	subs = os.listdir(dir)
 	subs.sort(reverse=True)
-	
+
 	print >>out, '<ul class="subdirs">'
 
 	for sub in subs:
 		test = os.path.join(dir, sub)
 		if not os.path.isdir(test) : continue
-		if sub == "latest": continue
-		page_version(out, test, sub, latest == sub)
+		if sub == "latest":
+			page_packages(out, test, sub, version(test), sub == "latest")
+		else:
+			page_version(out, test, sub, False)
 
 	# print latest
 	print >>out, '</ul>'
 	page_footer(out)
-	
+
 def index_root(out, dir):
 	page_header(out, 'Downloads', False)
 	print >>out, '<ul class="subdirs">'
 
 	subs = [
-		('builds', 'Builds', 'list of all builds for every version'),
-		('releases', 'Releases', 'list of all versions'),
-		('latest', 'Latest', 'latest build available')
+		('latest', 'Latest', 'latest build available'),
+		('builds', 'Nightlies', 'list of all builds for every version'),
+		('releases', 'Versions', 'list of all versions')
 	]
 	for sub in subs:
 		page_root_link(out, *sub)

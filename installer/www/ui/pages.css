@@ -5,9 +5,15 @@
 	font-size: 14px;
 	line-height: 1.6;
 	word-wrap: break-word;
-	padding: 40px 0;
-	margin: 0 auto;
-	width: 800px;
+	padding: 20px 20px;
+}
+
+@media (min-width: 660px){
+	.contents {
+		padding: 20px 0;
+		margin: 0 auto;
+		width: 600px;
+	}
 }
 
 .left {
@@ -19,7 +25,8 @@
 }
 
 .files {
-	font-size: 14px;
+	font-size: 13px;
+	padding: 0px;
 }
 
 .icon {
@@ -66,6 +73,18 @@
 	content: "\f114";
 }
 
+.icon-tag:before {
+	content: "\f02b";
+}
+
+.icon-commit:before {
+	content: "\f08d";
+}
+
+.icon-github:before {
+	content: "\f09b";
+}
+
 .files li {
 	display: block;
 	padding-top: 8px;
@@ -74,6 +93,7 @@
 }
 
 a {
+	color: #4183c4;
 	text-decoration: none;
 }
 
@@ -104,18 +124,43 @@ li.entry:last-child {
 }
 
 .entry .latest {
-	font-family: monospace;
 	font-size: 1em;
-	vertical-align: 30%;
-	color: #33f;
+	color: #999;
+}
+
+.entry .latest:before {
+	content: "(\2192\a0 ";
+}
+
+.entry .latest:after {
+	content: ")";
 }
 
 .hints > li {
 	display: block
 }
 
-.short-hints, .short-hints > li {
+.short-hints, .short-hints > li, .page-links > li {
 	display: inline-block
+}
+
+.page-links {
+	padding: 0px;
+	margin: -2em 0px 1em 0px;
+}
+
+.page-links > li {
+	margin-right: 1em
+}
+
+.page-links > li > a {
+	color: #999;
+}
+
+.page-links > li > a:hover,
+.page-links > li > a:hover > .icon {
+	color: #f93;
+	text-decoration: none
 }
 
 .hints, .short-hints {
