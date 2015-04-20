@@ -162,6 +162,10 @@ li.entry:last-child {
 	color: #f93;
 	text-decoration: none
 }
+.page-hints a:hover,
+.page-hints a:hover > .icon {
+	color: #f93 !important;
+}
 
 .hints, .short-hints {
 	margin: 0px;
@@ -183,4 +187,13 @@ li.entry:last-child {
 .parent-dir > a:hover > .icon {
 	color: #4183c4;
 	text-decoration: none
+}
+
+.stability {
+	display: inline-block;
+	padding: 0px 5px;
+	margin: 5px 0px 0px;
+	border-radius: 4px;
+	color: #fff;
+	background: #f93;
 }

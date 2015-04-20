@@ -86,6 +86,7 @@ def version_json(dir, json):
 	build["name"] = json["name"]
 	if "tag" in json: build["tag"] = json["tag"]
 	if "commit" in json: build["commit"] = json["commit"]
+	if "stability" in json: build["stability"] = json["stability"]
 	if "github" in json: build["vcs"] = GithubVcs(json["github"])
 	# TODO: elif "bitbucket" in json: ...
 
@@ -179,7 +180,13 @@ def page_entry(out, link, name, latest, hints = []):
 	if len(hints):
 		print >>out, '<ul class="hints">'
 		for hint in hints:
-			out.write('<li>')
+			if len(hint) > 2:
+				out.write('<li')
+				attrs = hint[2]
+				for attr in attrs:
+					out.write(' %s="%s"' % (attr, attrs[attr]))
+				out.write('>')
+			else: out.write('<li>')
 			if hint[0]:
 				out.write('<span class="title light">%s</span>' % hint[0])
 			if len(hint) > 1 and len(hint[1]):
@@ -211,13 +218,15 @@ def page_packages(out, dir, link, build, latest):
 	tag = page_tag(build)
 
 	links = []
+	if 'stability' in build:
+		links.append('<span class="stability">%s</span>' % build['stability'])
 	if commit: links.append(commit)
 	if tag: links.append(tag)
 
 	links += build['vcs'].additionalShortLinks(build)
 
 	if len(links):
-		hints.append(['code:', links])
+		hints.append(['code:', links, {'class':'page-hints'}])
 
 	if os.path.exists(os.path.join(dir, link, 'release-notes.txt')):
 		hints.append(['see', ['<a href="%s/#notes"><i>release notes</i></a>' % urllib.quote(link)]])
@@ -305,6 +314,8 @@ def index_single(out, dir):
 	tag = page_tag(build)
 
 	page_links = []
+	if 'stability' in build:
+		page_links.append('<span class="stability">%s</span>' % build['stability'])
 	if commit: page_links.append(commit)
 	if tag: page_links.append(tag)
 
