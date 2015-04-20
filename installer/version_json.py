@@ -1,6 +1,12 @@
 #!/usr/bin/python
 
-import os, sys, urlparse, subprocess, json
+import os, sys, argparse, urlparse, subprocess, json
+
+parser = argparse.ArgumentParser(description='version.json generator')
+parser.add_argument('-t', dest='tag', required=True, help='chooses tag to generate version.json for')
+parser.add_argument('-o', dest='fname', help='selects the output file; defaults to stdout')
+
+args = parser.parse_args()
 
 def check_output(*args):
 	try: return subprocess.check_output(args).strip()
@@ -8,7 +14,7 @@ def check_output(*args):
 		print e
 		exit(e.returncode)
 		
-tag = sys.argv[1]
+tag = args.tag
 
 long = check_output("git", "rev-parse", "--verify", "refs/tags/" + tag)
 short = check_output("git", "rev-parse", "--short", "--verify", "refs/tags/" + tag)
@@ -34,10 +40,6 @@ else:
 if github and github.endswith(".git"):
 	github = github[0:len(github)-4]
 
-print tag
-print commit
-print github
-
 build = {
 	"name" : tag,
 	"tag" : tag,
@@ -53,4 +55,8 @@ build = {
 
 if github: build["github"] = github
 
-json.dump(build, sys.stdout, indent=4)
+if args.fname:
+	with open(args.fname, "w+b") as out:
+		json.dump(build, out, separators=(',',':'))
+else:
+	json.dump(build, sys.stdout, separators=(',',':'))

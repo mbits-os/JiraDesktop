@@ -7,7 +7,9 @@ res
 *.msi
 *.zip
 *.txt
+*.json
 *.wixobj
 *.wixpdb
 *.pyc
 notes.ans
+upload.ans
