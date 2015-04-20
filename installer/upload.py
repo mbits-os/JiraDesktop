@@ -37,19 +37,12 @@ def ShortVersion():
 	return check_output("python", "version.py", "--in", "../apps/Tasks/src/version.h",
 		"{PROGRAM_VERSION_MAJOR}.{PROGRAM_VERSION_MINOR}.{PROGRAM_VERSION_PATCH}")
 
-packages = [{
-	"package": "tasks",
-	"platforms": {
-		"win32": {
-			"archive": ["zip", "msi"],
-			"logs": ["", "msbuild"]
-		}
-	},
-	"version": Version(),
-}]
-
 files = []
 rename = {}
+
+package = None
+with open('tasks-%s-version.json' % Version()) as f:
+	packages = json.load(f)['files']
 
 for package in packages:
 	relnote = "{package}-{version}-notes.txt".format(**package)
