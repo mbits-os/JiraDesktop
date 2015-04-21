@@ -1147,7 +1147,7 @@ void CTasksView::setDocumentSize(const gui::size& newSize)
 void CTasksView::updateDocumentSize()
 {
 	if (m_scroller)
-		m_scroller(m_zoom->mul.scaleL(m_docSize.width), m_zoom->mul.scaleL(m_docSize.height));
+		m_scroller->setContentSize(m_zoom->mul.scaleL(m_docSize.width), m_zoom->mul.scaleL(m_docSize.height));
 }
 
 void CTasksView::mouseFromMessage(LPARAM lParam)
@@ -1457,6 +1457,7 @@ bool CTasksView::nextItem()
 	if (tmp)
 		tmp->setActive(false);
 
+	scrollIntoView(m_active);
 	Invalidate();
 
 	return !!m_active;
@@ -1475,6 +1476,7 @@ bool CTasksView::prevItem()
 	if (tmp)
 		tmp->setActive(false);
 
+	scrollIntoView(m_active);
 	Invalidate();
 
 	return !!m_active;
@@ -1484,4 +1486,15 @@ void CTasksView::selectItem()
 {
 	if (m_active)
 		m_active->activate();
+}
+
+void CTasksView::scrollIntoView(const std::shared_ptr<gui::node>& node)
+{
+	if (!node || !m_scroller)
+		return;
+
+	auto tl = node->getAbsolutePos();
+	auto br = tl + node->getSize();
+
+	m_scroller->scrollIntoView(m_zoom->mul.scaleL(tl.x), m_zoom->mul.scaleL(tl.y), m_zoom->mul.scaleL(br.x), m_zoom->mul.scaleL(br.y));
 }

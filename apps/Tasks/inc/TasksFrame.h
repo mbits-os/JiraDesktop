@@ -64,6 +64,7 @@ class CTasksFrame
 	, public CMessageFilter
 	, public CIdleHandler
 	, public CTasksActions<CTasksFrame>
+	, public Scroller
 {
 	using CFameSuper = CFrameWindowImpl<CTasksFrame, CWindow, CTasksFrameWinTraits>;
 public:
@@ -129,4 +130,7 @@ public:
 	void exitApplication();
 	void showLicence();
 	void about();
+
+	void setContentSize(size_t width, size_t height) override;
+	void scrollIntoView(long left, long top, long right, long bottom) override;
 };

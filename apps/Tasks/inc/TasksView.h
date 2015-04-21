@@ -35,6 +35,11 @@ struct ZoomInfo {
 
 // #define CAIRO_PAINTER
 
+struct Scroller {
+	virtual void setContentSize(size_t width, size_t height) = 0;
+	virtual void scrollIntoView(long left, long top, long right, long bottom) = 0;
+};
+
 using CTasksViewWinTraits = CWinTraits<WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_COMPOSITED>;
 class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 {
@@ -97,7 +102,7 @@ private:
 	std::shared_ptr<gui::node> m_active;
 	bool m_tracking = false;
 	gui::pointer m_cursor = gui::pointer::arrow;
-	std::function<void(size_t, size_t)> m_scroller;
+	Scroller* m_scroller = nullptr;
 	std::function<void(const std::wstring&, const std::wstring&)> m_notifier;
 	gui::size m_docSize;
 	gui::pixels m_fontSize;
@@ -116,6 +121,8 @@ private:
 	void zoomIn();
 	void zoomOut();
 	void setZoom(size_t newLevel);
+
+	void scrollIntoView(const std::shared_ptr<gui::node>& node);
 public:
 	std::shared_ptr<CAppModel> m_model;
 
@@ -167,8 +174,7 @@ public:
 	LRESULT OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnZoom(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
-	template <typename T>
-	void setScroller(T&& scroller) {
+	void setScroller(Scroller* scroller) {
 		m_scroller = scroller;
 	}
 

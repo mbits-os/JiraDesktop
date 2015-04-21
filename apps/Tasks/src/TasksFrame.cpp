@@ -116,15 +116,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 	m_hWndClient = m_container.Create(m_hWnd, rcDefault, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 
-	m_view.setScroller([&](size_t width, size_t height) {
-		m_container.SetScrollSize(width, height, TRUE, false);
-		RECT client;
-		m_container.GetClientRect(&client);
-		m_view.SetWindowPos(nullptr, 0, 0,
-			std::max(width, (size_t)client.right),
-			std::max(height, (size_t)client.bottom),
-			SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
-	});
+	m_view.setScroller(this);
 
 	m_view.setNotifier([&](const std::wstring& title, const std::wstring& message) {
 		m_taskIcon.ShowBalloon(title.c_str(), message.c_str());
@@ -380,4 +372,21 @@ void CTasksFrame::about()
 {
 	CAboutDlg dlg;
 	dlg.DoModal();
+}
+
+void CTasksFrame::setContentSize(size_t width, size_t height)
+{
+	m_container.SetScrollSize(width, height, TRUE, false);
+	RECT client;
+	m_container.GetClientRect(&client);
+	m_view.SetWindowPos(nullptr, 0, 0,
+		std::max(width, (size_t)client.right),
+		std::max(height, (size_t)client.bottom),
+		SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+}
+
+void CTasksFrame::scrollIntoView(long left, long top, long right, long bottom)
+{
+	RECT r {left, top, right, bottom};
+	m_container.ScrollToView(r);
 }
