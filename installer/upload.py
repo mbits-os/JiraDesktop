@@ -83,8 +83,7 @@ build = Build()
 links = [
 	("builds", "latest", build),
 	("releases/%s" % version, build, "../../builds/%s" % build),
-	("releases/%s" % version, "latest", build),
-	("releases", "latest", "%s/%s" % (version, build))
+	("releases/%s" % version, "latest", build)
 ]
 
 dirs = ["%s/builds/%s" % (dest, build), "%s/releases/%s" % (dest, version), "%s/ui" % dest]

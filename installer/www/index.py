@@ -182,7 +182,7 @@ def page_header(out, title, updir = True, links = []):
 			print >>out, '<li>%s</li>' % link
 		print >>out, '</ul>'
 	if updir:
-		print >>out, '<p class="parent-dir"><a href="../"><span class="icon icon-dir-up"></span>Parent Directory</a></p>'
+		print >>out, '<p class="parent-dir"><a href="../"><span class="icon icon-dir-up"></span>parent directory</a></p>'
 
 def page_footer(out):
 	print >>out, '</div>'
@@ -368,19 +368,22 @@ def index_single(out, dir):
 	page_footer(out)
 
 def index_builds(out, dir):
-	page_build(out, 'All nightlies', dir)
+	page_build(out, 'all nightlies', dir)
 
 def index_version(out, dir):
-	page_build(out, 'Nightlies for %s' % os.path.split(dir)[1], dir)
+	page_build(out, 'nightlies for %s' % os.path.split(dir)[1], dir)
 
 def index_versions(out, dir):
-	page_header(out, 'Versions')
+	page_header(out, 'versions')
 
-	latest = version(os.path.join(dir, "latest"))['files']
-	tmp = [latest[key]['version'] for key in latest]
 	latest = None
-	if len(tmp):
-		latest = tmp[0].split('+', 1)[0].split('-', 1)[0]
+	latest_path = os.path.join(dir, "latest")
+	if os.path.isdir(latest_path):
+		latest = version(latest_path)['files']
+		tmp = [latest[key]['version'] for key in latest]
+		latest = None
+		if len(tmp):
+			latest = tmp[0].split('+', 1)[0].split('-', 1)[0]
 
 	subs = os.listdir(dir)
 	subs.sort(reverse=True)
@@ -391,7 +394,7 @@ def index_versions(out, dir):
 		test = os.path.join(dir, sub)
 		if not os.path.isdir(test) : continue
 		if sub == "latest":
-			page_packages(out, test, sub, version(test), sub == "latest")
+			page_packages(out, test, sub, version(test), True)
 		else:
 			page_version(out, test, sub, False)
 
@@ -409,12 +412,16 @@ def index_root(out, dir):
 	print >>out, '<ul class="subdirs">'
 
 	subs = [
-		('latest', 'Latest', 'latest build available'),
-		('builds', 'Nightlies', 'list of all builds for every version'),
-		('releases', 'Versions', 'list of all versions')
+		('latest', 'latest', 'latest build available'),
+		('builds', 'all nightlies', 'list of all builds for every version'),
+		('releases', 'versions', 'breakup of builds per package versions')
 	]
 	for sub in subs:
-		page_root_link(out, *sub)
+		if sub[0] == 'latest':
+			item_dir = os.path.join(dir, 'latest')
+			page_packages(out, item_dir, sub[0], version(item_dir), True)
+		else:
+			page_root_link(out, *sub)
 
 	print >>out, '</ul>'
 	page_footer(out)
@@ -446,6 +453,7 @@ if args.type == 'all':
 if args.type == 'update':
 	if not args.id:
 		parser.error('argument -# is required')
+	call(args.dir, index_root)
 	call(os.path.join(args.dir, 'builds'), index_builds)
 	call(os.path.join(args.dir, 'builds', args.id), index_single)
 	call(os.path.join(args.dir, 'releases'), index_versions)
