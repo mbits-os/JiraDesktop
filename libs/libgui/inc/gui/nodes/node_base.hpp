@@ -71,7 +71,9 @@ namespace gui {
 
 		bool isTabStop() const override;
 		std::shared_ptr<node> getNextItem(bool freshLookup) const override;
+		std::shared_ptr<node> getPrevItem(bool freshLookup) const override;
 		std::shared_ptr<node> nextTabStop(const std::shared_ptr<node>& start) const;
+		std::shared_ptr<node> prevTabStop(const std::shared_ptr<node>& start) const;
 
 		void openLink(const std::string& url);
 		virtual void paintContents(painter* painter,

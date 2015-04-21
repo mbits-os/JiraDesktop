@@ -82,5 +82,6 @@ namespace gui {
 
 		virtual bool isTabStop() const = 0;
 		virtual std::shared_ptr<node> getNextItem(bool freshLookup) const = 0;
+		virtual std::shared_ptr<node> getPrevItem(bool freshLookup) const = 0;
 	};
 };

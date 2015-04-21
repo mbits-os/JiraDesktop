@@ -708,6 +708,22 @@ namespace gui {
 		return{};
 	}
 
+	std::shared_ptr<node> node_base::getPrevItem(bool freshLookup) const
+	{
+		auto here = const_cast<node_base*>(this)->shared_from_this();
+		auto start = freshLookup ? nullptr : here;
+
+		while (here) {
+			auto ptr = static_cast<node_base*>(here.get())->prevTabStop(start);
+			if (ptr) return ptr;
+
+			start = here;
+			here = here->getParent();
+		}
+
+		return{};
+	}
+
 	std::shared_ptr<node> node_base::nextTabStop(const std::shared_ptr<node>& start) const
 	{
 		if (!start && isTabStop())
@@ -731,6 +747,36 @@ namespace gui {
 			if (ret)
 				return ret;
 		}
+
+		return{};
+	}
+
+	std::shared_ptr<node> node_base::prevTabStop(const std::shared_ptr<node>& start) const
+	{
+		if (start.get() == this)
+			return{}; // this node was visited as lats one in this subtree, moving up
+
+		auto begin = std::rbegin(m_children);
+		auto end = std::rend(m_children);
+		auto restart = !!start;
+
+		auto it = restart ? std::find(begin, end, start) : begin;
+
+		if (restart) {
+			if (it == end)
+				return{};
+
+			++it;
+		}
+
+		for (; it != end; ++it) {
+			auto ret = static_cast<node_base*>(it->get())->prevTabStop({});
+			if (ret)
+				return ret;
+		}
+
+		if (isTabStop())
+			return const_cast<node_base*>(this)->shared_from_this();
 
 		return{};
 	}
