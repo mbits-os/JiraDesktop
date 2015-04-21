@@ -176,4 +176,8 @@ public:
 	void setNotifier(T&& notifier) {
 		m_notifier = notifier;
 	}
+
+	bool nextItem();
+	bool prevItem();
+	void selectItem();
 };

@@ -1420,3 +1420,45 @@ LRESULT CTasksView::OnZoom(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*
 
 	return 0;
 }
+
+bool CTasksView::nextItem()
+{
+	auto tmp = m_active;
+	if (m_active)
+		m_active = m_active->getNextItem(false);
+	else
+		m_active = m_body->getNextItem(true);
+
+	if (m_active)
+		m_active->setActive(true);
+	if (tmp)
+		tmp->setActive(true);
+
+	Invalidate();
+
+	return !!m_active;
+}
+
+bool CTasksView::prevItem()
+{
+	auto tmp = m_active;
+	if (m_active)
+		m_active = m_active->getPrevItem(false);
+	else
+		m_active = m_body->getPrevItem(true);
+
+	if (m_active)
+		m_active->setActive(true);
+	if (tmp)
+		tmp->setActive(true);
+
+	Invalidate();
+
+	return !!m_active;
+}
+
+void CTasksView::selectItem()
+{
+	if (m_active)
+		m_active->activate();
+}
