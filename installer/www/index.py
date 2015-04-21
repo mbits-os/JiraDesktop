@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, argparse, json, markdown, urllib
+import os, sys, argparse, json, markdown, urllib, re
 
 parser = argparse.ArgumentParser(description='Creates index.html for the upload')
 parser.add_argument('-d', dest='dir', required=True, help='taregt directory')
@@ -82,44 +82,62 @@ class GithubVcs:
 
 def version_json(dir, json):
 	build = {}
-	build["vcs"] = NullVcs()
-	build["name"] = json["name"]
-	if "tag" in json: build["tag"] = json["tag"]
-	if "commit" in json: build["commit"] = json["commit"]
-	if "stability" in json: build["stability"] = json["stability"]
-	if "github" in json: build["vcs"] = GithubVcs(json["github"])
-	# TODO: elif "bitbucket" in json: ...
+	build['vcs'] = NullVcs()
+	build['name'] = json['name']
+	if 'tag' in json: build['tag'] = json['tag']
+	if 'commit' in json: build['commit'] = json['commit']
+	if 'stability' in json: build['stability'] = json['stability']
+	if 'github' in json: build['vcs'] = GithubVcs(json['github'])
+	# TODO: elif 'bitbucket' in json: ...
+
+	if 'tag' in build and build['name'] == build['tag']:
+		m = re.match('v([0-9]+)\.([0-9]+)\.([0-9]+)/([0-9]+)', build['name'])
+		if m:
+			name = '%s.%s.%s' % (m.group(1), m.group(2), m.group(3))
+			if 'stability' in build:
+				stability = build['stability']
+				if len(stability):
+					name += '-%s' % '.'.join(stability.split(' '))
+			name += '+%s' % m.group(4)
+			build['name'] = name
+
+	if 'stability' in build:
+		stability = build['stability'].lower()
+		if stability == 'rc' or stability[:3] == 'rc ':
+			build['banner'] = 'candidate'
+		else:
+			build['banner'] = 'pre-release'
 
 	packages = {}
-	for pkg in json["files"]:
+	for pkg in json['files']:
 		bin = {}
 		logs = {}
-		for platform in pkg["platforms"]:
-			if platform == "no-arch":
-				base = "{package}-{version}".format(**pkg)
+		for platform in pkg['platforms']:
+			if platform == 'no-arch':
+				base = '{package}-{version}'.format(**pkg)
 			else:
-				base = "{package}-{version}-{0}".format(platform, **pkg)
+				base = '{package}-{version}-{0}'.format(platform, **pkg)
 
-			platform = pkg["platforms"][platform]
-			if "archive" in platform:
-				archkey = "archive"
-			elif "arch" in platform:
-				archkey = "arch"
+			platform = pkg['platforms'][platform]
+			if 'archive' in platform:
+				archkey = 'archive'
+			elif 'arch' in platform:
+				archkey = 'arch'
 			else:
 				archkey = None
 
 			if archkey:
 				for arch in platform[archkey]:
-					fname = "%s.%s" % (base, arch)
+					fname = '%s.%s' % (base, arch)
 					if os.path.exists(os.path.join(dir, fname)):
 						bin[fname] = os.path.splitext(fname)[1][1:]
-			for log in platform["logs"]:
-				if log == "":
-					fname = "%s.log" % base
-					name = "log"
+			for log in platform['logs']:
+				if log == '':
+					fname = '%s.log' % base
+					name = 'log'
 				else:
-					fname = "%s-%s.log" % (base, log)
-					name = "%s.log" % log
+					fname = '%s-%s.log' % (base, log)
+					name = '%s.log' % log
 				if os.path.exists(os.path.join(dir, fname)):
 					logs[fname] = name
 		out = {
@@ -128,7 +146,7 @@ def version_json(dir, json):
 			'logs': logs
 		}
 		packages[pkg['package']] = out
-	build["files"] = packages
+	build['files'] = packages
 	return build
 
 def version(dir):
@@ -218,8 +236,9 @@ def page_packages(out, dir, link, build, latest):
 	tag = page_tag(build)
 
 	links = []
-	if 'stability' in build:
-		links.append('<span class="stability">%s</span>' % build['stability'])
+	if 'banner' in build:
+		banner = build['banner']
+		links.append('<span class="%s">%s</span>' % (banner, banner))
 	if commit: links.append(commit)
 	if tag: links.append(tag)
 
@@ -316,13 +335,13 @@ def index_single(out, dir):
 	tag = page_tag(build)
 
 	page_links = []
-	if 'stability' in build:
-		page_links.append('<span class="stability">%s</span>' % build['stability'])
+	if 'banner' in build:
+		banner = build['banner']
+		page_links.append('<span class="%s">%s</span>' % (banner, banner))
 	if commit: page_links.append(commit)
 	if tag: page_links.append(tag)
 
 	page_links += build['vcs'].additionalShortLinks(build)
-
 	page_header(out, build["name"], True, page_links)
 
 	try:
@@ -381,7 +400,12 @@ def index_versions(out, dir):
 	page_footer(out)
 
 def index_root(out, dir):
-	page_header(out, 'Downloads', False)
+	title = 'Downloads'
+	try:
+		with open(os.path.join(dir, "name.json")) as f:
+			title = json.load(f) + " builds"
+	except: pass
+	page_header(out, title, False)
 	print >>out, '<ul class="subdirs">'
 
 	subs = [
