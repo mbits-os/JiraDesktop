@@ -171,6 +171,7 @@ def page_header(out, title, updir = True, links = []):
 	print >>out, '<html>'
 	print >>out, '<head>'
 	print >>out, '<title>%s</title>' % title
+	print >>out, '<meta name="viewport" content="width=device-width, initial-scale=1">'
 	print >>out, '<link rel="stylesheet" type="text/css" href="/ui/pages.css" />'
 	print >>out, '</head>'
 	print >>out, '<body>'
@@ -245,7 +246,7 @@ def page_packages(out, dir, link, build, latest):
 	links += build['vcs'].additionalShortLinks(build)
 
 	if len(links):
-		hints.append(['code:', links, {'class':'page-hints'}])
+		hints.append([None, links, {'class':'page-hints'}])
 
 	if os.path.exists(os.path.join(dir, link, 'release-notes.txt')):
 		hints.append(['see', ['<a href="%s/#notes"><i>release notes</i></a>' % urllib.quote(link)]])

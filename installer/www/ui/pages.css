@@ -172,8 +172,12 @@ li.entry:last-child {
 	padding: 0px;
 }
 
+.hints > li > span:first-child {
+	padding-right: 5px
+}
+
 .short-hints > li {
-	padding: 0px 5px
+	padding: 0px 10px 0px 0px
 }
 
 .short-hints > li > a,
