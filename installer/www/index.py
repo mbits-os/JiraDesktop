@@ -3,7 +3,7 @@
 import os, sys, argparse, json, markdown, urllib, re
 
 parser = argparse.ArgumentParser(description='Creates index.html for the upload')
-parser.add_argument('-d', dest='dir', required=True, help='taregt directory')
+parser.add_argument('-d', dest='dir', required=True, help='target directory')
 parser.add_argument('-t', dest='type', required=True, help='type of index (root, builds, versions, version, single, update, all)')
 parser.add_argument('-#', dest='id', help='number of the build. required for the type "update"')
 

@@ -3,7 +3,7 @@
 import os, argparse, json
 
 parser = argparse.ArgumentParser(description='Creates index.html for the upload')
-parser.add_argument('-d', dest='dir', required=True, help='taregt directory')
+parser.add_argument('-d', dest='dir', required=True, help='target directory')
 parser.add_argument('-f', dest='field', required=True, help='name of the field to test')
 parser.add_argument('-v', dest='value', required=True, help='value to set, if missing')
 

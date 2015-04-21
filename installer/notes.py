@@ -8,7 +8,7 @@ parser.add_argument('-p', dest='project', required=True, help='project key or id
 parser.add_argument('-v', dest='version', required=True, help='version name or key')
 parser.add_argument('-k', dest='types', help='comma separated list of issue types for the Known Issues section')
 parser.add_argument('-o', dest='output', help='file to write the notes to (defaults to stdout)')
-parser.add_argument('-a', dest='auth', help='uses this  ')
+parser.add_argument('-a', dest='auth', help='uses this value as basic authentication')
 
 args   = parser.parse_args()
 
