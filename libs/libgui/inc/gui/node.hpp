@@ -79,5 +79,8 @@ namespace gui {
 		virtual std::shared_ptr<styles::rule_storage> normalCalculatedStyles() const = 0;
 		virtual std::shared_ptr<styles::stylesheet> styles() const = 0;
 		virtual void applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet) = 0;
+
+		virtual bool isTabStop() const = 0;
+		virtual std::shared_ptr<node> getNextItem(bool freshLookup) const = 0;
 	};
 };

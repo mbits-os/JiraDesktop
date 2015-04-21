@@ -687,6 +687,54 @@ namespace gui {
 			calculated(ref, styles::prop_padding_bottom);
 	}
 
+	bool node_base::isTabStop() const
+	{
+		return false;
+	}
+
+	std::shared_ptr<node> node_base::getNextItem(bool freshLookup) const
+	{
+		auto here = const_cast<node_base*>(this)->shared_from_this();
+		auto start = freshLookup ? nullptr : here;
+
+		while (here) {
+			auto ptr = static_cast<node_base*>(here.get())->nextTabStop(start);
+			if (ptr) return ptr;
+
+			start = here;
+			here = here->getParent();
+		}
+
+		return{};
+	}
+
+	std::shared_ptr<node> node_base::nextTabStop(const std::shared_ptr<node>& start) const
+	{
+		if (!start && isTabStop())
+			return const_cast<node_base*>(this)->shared_from_this(); // const...
+
+		auto begin = std::begin(m_children);
+		auto end = std::end(m_children);
+		auto restart = start && start.get() != this;
+
+		auto it = restart ? std::find(begin, end, start) : begin;
+
+		if (restart) {
+			if (it == end)
+				return{};
+
+			++it;
+		}
+
+		for (; it != end; ++it) {
+			auto ret = static_cast<node_base*>(it->get())->nextTabStop({});
+			if (ret)
+				return ret;
+		}
+
+		return{};
+	}
+
 	bool node_base::isSupported(const std::shared_ptr<node>&)
 	{
 		auto it = m_data.find(Attr::Text);

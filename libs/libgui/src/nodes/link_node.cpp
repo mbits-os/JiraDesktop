@@ -42,4 +42,9 @@ namespace gui {
 	{
 		return cloneDetach(std::make_shared<link_node>(*this));
 	}
+
+	bool link_node::isTabStop() const
+	{
+		return true;
+	}
 }

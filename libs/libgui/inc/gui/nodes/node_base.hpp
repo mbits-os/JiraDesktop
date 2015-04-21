@@ -69,6 +69,10 @@ namespace gui {
 		pixels offsetRight() const; // border-right-width + padding-right
 		pixels offsetBottom() const; // border-bottom-width + padding-bottom
 
+		bool isTabStop() const override;
+		std::shared_ptr<node> getNextItem(bool freshLookup) const override;
+		std::shared_ptr<node> nextTabStop(const std::shared_ptr<node>& start) const;
+
 		void openLink(const std::string& url);
 		virtual void paintContents(painter* painter,
 			const pixels& offX, const pixels& offY);

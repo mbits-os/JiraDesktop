@@ -33,5 +33,6 @@ namespace gui {
 		link_node(const std::string& href);
 		link_node(const link_node&);
 		std::shared_ptr<node> cloneSelf() const override;
+		bool isTabStop() const override;
 	};
 }
