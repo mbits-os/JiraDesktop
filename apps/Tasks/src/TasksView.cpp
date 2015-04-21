@@ -466,9 +466,32 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<Serv
 	return m_servers.erase(it);
 }
 
+bool pressed(int vk) {
+	enum { SHIFTED = 0x8000 };
+	return (GetKeyState(vk) & SHIFTED) == SHIFTED;
+}
+
 BOOL CTasksView::PreTranslateMessage(MSG* pMsg)
 {
-	pMsg;
+	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_TAB) {
+		if (!pressed(VK_CONTROL) && !pressed(VK_MENU)) {
+			auto state = GetKeyState(VK_SHIFT) < 0;
+			if (state) {
+				if (!prevItem()) // if jumped out, jump right in
+					prevItem();
+			} else {
+				if (!nextItem()) // if jumped out, jump right in
+					nextItem();
+			}
+
+			return TRUE;
+		}
+	}
+
+	if (pMsg->message == WM_KEYUP && (pMsg->wParam == VK_SPACE || pMsg->wParam == VK_RETURN)) {
+		if (!pressed(VK_CONTROL) && !pressed(VK_MENU) && !pressed(VK_SHIFT))
+			selectItem();
+	}
 	return FALSE;
 }
 
@@ -1432,7 +1455,7 @@ bool CTasksView::nextItem()
 	if (m_active)
 		m_active->setActive(true);
 	if (tmp)
-		tmp->setActive(true);
+		tmp->setActive(false);
 
 	Invalidate();
 
@@ -1450,7 +1473,7 @@ bool CTasksView::prevItem()
 	if (m_active)
 		m_active->setActive(true);
 	if (tmp)
-		tmp->setActive(true);
+		tmp->setActive(false);
 
 	Invalidate();
 
