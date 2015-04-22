@@ -52,6 +52,7 @@ class NullVcs:
 	def tagLink(self, tag, text) : return text
 	def additionalShortLinks(self, build) : return []
 	def additionalLinks(self, build) : return []
+	def codeLink(self, build, file, line, text): return text
 
 class GithubVcs:
 	def __init__(self, project):
@@ -79,6 +80,11 @@ class GithubVcs:
 		for ext in ["zip", "tar.gz"]:
 			out.append('<a href="%s/archive/%s.%s" rel="nofollow"><span class="left light icon icon-github"></span>Source code (%s)</a>' % (self.uri, urllib.quote(tag), urllib.quote(ext), ext))
 		return out
+
+	def codeLink(self, build, file, line, text):
+		if 'tag' not in build:
+			return text
+		return '<a href="%s/blob/%s/%s#L%s">%s</a>' % (self.uri, build['tag'], file, line, text)
 
 def public_build(build):
 	return 'public' in build and build['public']
@@ -194,6 +200,37 @@ def page_footer(out):
 	print >>out, '</div>'
 	print >>out, '</body>'
 	print >>out, '</html>'
+
+def page_compilation(out, build, title, issues):
+	if not len(issues): return
+	print >>out, '<h4>%s</h4>' % title
+	print >>out, '<ul class="issues">'
+	for issue in issues:
+		text = '<span title="%s, line %s">%s</span>' % (issue[0], issue[1], issue[2])
+		text = build['vcs'].codeLink(build, issue[0], issue[1], text)
+		print >>out, '<li>%s</li>' % text
+	print >>out, '</ul>'
+
+def page_msbuild(out, dir, build):
+	warnings = []
+	errors = []
+	for pkg in build['files']:
+		for log in build['files'][pkg]['logs']:
+			if not log.endswith('-msbuild.log'):
+				continue
+			with open(os.path.join(dir, log)) as f:
+				for line in f:
+					m = re.match('\s+\.\..\.\..([^(]+)\(([0-9]+)\):\s+(\S+)\s+(.*)\[[^]]+\]', line.rstrip())
+					if m:
+						if m.group(3) == 'warning':
+							warnings.append((m.group(1).replace('\\', '/'), int(m.group(2)), m.group(4)))
+						elif m.group(3) == 'error':
+							errors.append((m.group(1).replace('\\', '/'), int(m.group(2)), m.group(4)))
+
+	if len(warnings) or len(errors):
+		print >>out, '<h2 class="issues">Build issues</h2>'
+	page_compilation(out, build, 'Errors', errors)
+	page_compilation(out, build, 'Warnings', warnings)
 
 def page_entry(out, link, name, latest, hints = []):
 	out.write('<li class="entry"><a href="%s/">' % urllib.quote(link))
@@ -316,6 +353,7 @@ def page_version(out, dir, link, latest):
 		if sub == build_latest: build += '<strong>'
 		build += sub
 		if sub == build_latest: build += '</strong>'
+		build += '</a>'
 		builds.append(build)
 
 	page_entry(out, link, name, latest, [["builds:", builds]])
@@ -376,6 +414,9 @@ def index_single(out, dir):
 			print >>out, '<h2><span id="notes">Release notes</span></h2>'
 			print >>out, markdown.markdown("".join(r.readlines()))
 	except: pass
+
+	if not public_build(build):
+		page_msbuild(out, dir, build)
 
 	bins = []
 	logs = []
