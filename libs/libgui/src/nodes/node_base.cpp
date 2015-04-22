@@ -291,17 +291,21 @@ namespace gui {
 		point br{ offsetRight(), offsetBottom() };
 		auto size = measureContents(painter, tl.x, tl.y);
 
-		m_position.size = { tl.x + br.x + size.width, tl.y + br.y + size.height };
+		internalSetSize(tl.x + br.x + size.width, tl.y + br.y + size.height);
 	}
 
 	void node_base::setPosition(const pixels& x, const pixels& y)
 	{
+		if (!m_position.size.empty())
+			invalidate();
 		m_position.pt = { x, y };
+		if (!m_position.size.empty())
+			invalidate();
 	}
 
 	void node_base::setSize(const pixels& width, const pixels& height)
 	{
-		m_position.size = { width, height };
+		internalSetSize(width, height);
 
 		auto styles = calculatedStyle();
 		if (!styles)
@@ -832,6 +836,17 @@ namespace gui {
 		auto parent = getParent();
 		if (parent)
 			static_cast<node_base&>(*parent).layoutRequired();
+	}
+
+	void node_base::internalSetSize(const pixels& width, const pixels& height)
+	{
+		if (!m_position.size.empty())
+			invalidate();
+
+		m_position.size = { width, height };
+
+		if (!m_position.size.empty())
+			invalidate();
 	}
 
 	bool node_base::imChildOf(const std::shared_ptr<node>& tested) const

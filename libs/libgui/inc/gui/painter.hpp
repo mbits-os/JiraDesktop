@@ -56,6 +56,11 @@ namespace gui {
 		size& operator=(const size&) = default;
 		size(size&&) = default;
 		size& operator=(size&&) = default;
+
+		bool empty() const
+		{
+			return !width.value() || !height.value();
+		}
 	};
 
 	inline point operator + (const point& lhs, const point& rhs) {

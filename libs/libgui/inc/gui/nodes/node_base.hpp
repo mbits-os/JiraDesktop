@@ -113,6 +113,8 @@ namespace gui {
 			node->setParent({});
 			return node;
 		}
+
+		void internalSetSize(const pixels& width, const pixels& height);
 	private:
 		bool imChildOf(const std::shared_ptr<node>&) const;
 	};

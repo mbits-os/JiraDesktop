@@ -125,7 +125,7 @@ namespace gui {
 		auto size = 16_px;
 		m_baseline = size + offY;
 
-		m_position.size = { size, size };
+		internalSetSize(size, size);
 		auto scaled = (size_t)(painter->trueZoom().scaleL(size.value()));
 		auto selected = 0;
 

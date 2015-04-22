@@ -58,7 +58,7 @@ namespace gui {
 		if (x < m_position.size.width)
 			m_columns->back() += m_position.size.width - x;
 		else
-			m_position.size.width = x;
+			internalSetSize(x, m_position.size.height);
 	}
 
 	std::shared_ptr<node> caption_row_node::cloneSelf() const
