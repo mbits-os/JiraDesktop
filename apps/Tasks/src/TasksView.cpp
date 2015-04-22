@@ -122,7 +122,6 @@ public:
 
 	void layoutRequired() override
 	{
-		OutputDebugString(L"PIF!\n");
 		bool expected = false;
 		if (!m_msgSent.compare_exchange_strong(expected, true))
 			return;
@@ -1193,7 +1192,6 @@ void CTasksView::setZoom(size_t newLevel)
 	m_currentZoom = newLevel;
 	m_zoom->zoom = zooms[m_currentZoom];
 	m_zoom->mul = m_zoom->device * m_zoom->zoom;
-	Invalidate();
 	updateDocumentSize();
 
 	auto tmp = nodeFromPoint();
@@ -1257,7 +1255,6 @@ LRESULT CTasksView::OnMouseDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 	m_tracking = true;
 	SetCapture();
-	Invalidate();
 
 	return 0;
 }
@@ -1269,7 +1266,6 @@ LRESULT CTasksView::OnMouseUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	auto tmp = nodeFromPoint();
 	m_tracking = false;
 	ReleaseCapture();
-	Invalidate();
 
 	if (tmp && tmp == m_active)
 		m_active->activate();
@@ -1347,8 +1343,6 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 		});
 	}
 	updateServers();
-	// TODO: unlock updates
-	Invalidate();
 
 	return 0;
 }
@@ -1361,7 +1355,6 @@ LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam
 
 	it->m_progress = ProgressInfo{100, 0, true};
 	it->m_loading = true;
-	Invalidate();
 
 	return 0;
 }
@@ -1380,8 +1373,6 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
 	it->updatePlaque(tabs[0], tabs[1], tabs[2]);
-	// TODO: redraw the report table
-	Invalidate();
 
 	std::ostringstream o;
 	bool modified = false;
@@ -1440,7 +1431,6 @@ LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 
 	it->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
 	it->m_gotProgress = true;
-	Invalidate();
 
 	return 0;
 }
@@ -1452,9 +1442,7 @@ LRESULT CTasksView::OnLayoutNeeded(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lP
 	m_hovered = nullptr;
 	m_active = nullptr;
 
-	OutputDebugString(L"...PAF!\n");
 	if (m_docOwner->updateLayout(m_body, m_fontSize, m_fontFamily)) {
-		OutputDebugString(L"..........BANG!!!\n");
 		if (tmp_hovered)
 			tmp_hovered->setHovered(false);
 
@@ -1505,7 +1493,6 @@ bool CTasksView::nextItem()
 		tmp->setActive(false);
 
 	scrollIntoView(m_active);
-	Invalidate();
 
 	return !!m_active;
 }
@@ -1524,7 +1511,6 @@ bool CTasksView::prevItem()
 		tmp->setActive(false);
 
 	scrollIntoView(m_active);
-	Invalidate();
 
 	return !!m_active;
 }
