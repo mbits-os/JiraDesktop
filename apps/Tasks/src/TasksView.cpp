@@ -92,12 +92,20 @@ public:
 	}
 };
 
-std::function<void(const gui::point&, const gui::size&)>
-	make_invalidator(HWND hWnd, const std::shared_ptr<ZoomInfo>& info)
-{
-	auto info_ = info;
-	return [hWnd, info_](const gui::point& pt, const gui::size& sz) {
-		gui::ratio zoom = info_->mul;
+class DocOwner : public gui::doc_owner {
+	HWND m_hWnd;
+	std::shared_ptr<ZoomInfo> m_zoom;
+	std::atomic<bool> m_msgSent{ false };
+public:
+	DocOwner(HWND hWnd, const std::shared_ptr<ZoomInfo>& info)
+		: m_hWnd(hWnd)
+		, m_zoom(info)
+	{
+	}
+
+	void invalidate(const gui::point& pt, const gui::size& sz) override
+	{
+		gui::ratio zoom = m_zoom->mul;
 		RECT r{
 			(LONG)std::floor(zoom.scaleD(pt.x)),
 			(LONG)std::floor(zoom.scaleD(pt.y)),
@@ -105,13 +113,44 @@ std::function<void(const gui::point&, const gui::size&)>
 			(LONG)std::ceil(zoom.scaleD(pt.y + sz.height))
 		};
 #ifdef DEBUG_UPDATES
-		info_->updates.push_back(r);
-		::InvalidateRect(hWnd, nullptr, TRUE);
+		m_zoom->updates.push_back(r);
+		::InvalidateRect(m_hWnd, nullptr, TRUE);
 #else
-		::InvalidateRect(hWnd, &r, TRUE);
+		::InvalidateRect(m_hWnd, &r, TRUE);
 #endif
-	};
-}
+	}
+
+	void layoutRequired() override
+	{
+		OutputDebugString(L"PIF!\n");
+		bool expected = false;
+		if (!m_msgSent.compare_exchange_strong(expected, true))
+			return;
+		::PostMessage(m_hWnd, UM_LAYOUTNEEDED, 0, 0);
+	}
+
+	bool updateLayout(const std::shared_ptr<gui::node>& body, const gui::pixels& fontSize, const std::string& fontFamily)
+	{
+		bool expected = true;
+		if (!m_msgSent.compare_exchange_strong(expected, false))
+			return false;
+
+		CWindowDC dc{ m_hWnd };
+
+
+		m_zoom->device = gui::ratio{ dc.GetDeviceCaps(LOGPIXELSX), 96 }.gcd();
+		m_zoom->mul = m_zoom->device * m_zoom->zoom;
+#ifdef CAIRO_PAINTER
+		gui::cairo::painter paint{ cairo_win32_surface_create(dc), m_zoom->mul, m_fontSize, m_fontFamily };
+#else
+		gui::gdi::painter paint{ (HDC)dc, nullptr, m_zoom->mul, fontSize, fontFamily };
+#endif
+
+		body->measure(&paint);
+
+		return true;
+	}
+};
 
 CTasksView::ServerInfo::ServerInfo(
 	const std::shared_ptr<jira::server>& server,
@@ -423,7 +462,8 @@ void CTasksView::ServerInfo::updateDataset(std::vector<std::string>& removed, st
 void CTasksView::ServerInfo::updateErrors()
 {
 	auto& children = m_plaque->children();
-	while (true) {
+	bool dummy = true;
+	while (dummy) {
 		size_t pos = 0;
 		for (auto& child : children) {
 			if (children[pos]->hasClass("error"))
@@ -502,7 +542,9 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	m_zoom->zoom = zooms[m_currentZoom];
 	m_zoom->mul = m_zoom->device * m_zoom->zoom;
 
-	m_body = std::make_shared<gui::doc_element>(make_invalidator(m_hWnd, m_zoom));
+	m_docOwner = std::make_shared<DocOwner>(m_hWnd, m_zoom);
+	m_body = std::make_shared<gui::doc_element>(m_docOwner);
+	m_body->applyStyles(stylesheet());
 
 	RECT empty{ 0, 0, 0, 0 };
 	m_tooltip.Create(TOOLTIPS_CLASS, m_hWnd, empty, nullptr, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, WS_EX_TOPMOST);
@@ -561,7 +603,6 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	}
 	m_body->appendChild(glyphs);
 #endif
-	updateLayout();
 
 	return 0;
 }
@@ -691,7 +732,7 @@ std::shared_ptr<gui::node> nextSibling(const std::shared_ptr<gui::node>& parent,
 	return *it;
 }
 
-void CTasksView::updateLayout()
+void CTasksView::updateServers()
 {
 	ATLASSERT(m_body);
 
@@ -703,35 +744,6 @@ void CTasksView::updateLayout()
 			m_body->insertBefore(server.m_plaque, next);
 		prev = server.m_plaque;
 	}
-
-	m_body->applyStyles(stylesheet());
-
-	CWindowDC dc{m_hWnd};
-
-
-	m_zoom->device = gui::ratio{ dc.GetDeviceCaps(LOGPIXELSX), 96 }.gcd();
-	m_zoom->mul = m_zoom->device * m_zoom->zoom;
-#ifdef CAIRO_PAINTER
-	gui::cairo::painter paint{ cairo_win32_surface_create(dc), m_zoom->mul, m_fontSize, m_fontFamily };
-#else
-	gui::gdi::painter paint{ (HDC)dc, nullptr, m_zoom->mul, m_fontSize, m_fontFamily };
-#endif
-
-	if (m_hovered)
-		m_hovered->setHovered(false);
-	m_hovered = nullptr;
-
-	if (m_active)
-		m_active->setActive(false);
-	m_active = nullptr;
-
-	m_body->measure(&paint);
-	setDocumentSize(m_body->getSize());
-
-	m_hovered = nodeFromPoint();
-	if (m_hovered)
-		m_hovered->setHovered(true);
-	updateCursorAndTooltip();
 }
 
 void CTasksView::updateCursor(bool force)
@@ -1146,8 +1158,15 @@ void CTasksView::setDocumentSize(const gui::size& newSize)
 
 void CTasksView::updateDocumentSize()
 {
-	if (m_scroller)
-		m_scroller->setContentSize(m_zoom->mul.scaleL(m_docSize.width), m_zoom->mul.scaleL(m_docSize.height));
+	if (m_scroller) {
+		auto width = m_zoom->mul.scaleL(m_docSize.width);
+		auto height = m_zoom->mul.scaleL(m_docSize.height);
+		if (width < 1)
+			width = 1;
+		if (height < 1)
+			height = 1;
+		m_scroller->setContentSize(width, height);
+	}
 }
 
 void CTasksView::mouseFromMessage(LPARAM lParam)
@@ -1203,10 +1222,7 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 	}
 
 	m_fontFamily = utf::narrowed(lf.lfFaceName);
-
-
-	updateLayout();
-	// TODO: redraw the report table
+	m_body->applyStyles(stylesheet()); // HACK
 
 	return 0;
 }
@@ -1330,7 +1346,7 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			}
 		});
 	}
-	updateLayout();
+	updateServers();
 	// TODO: unlock updates
 	Invalidate();
 
@@ -1364,7 +1380,6 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	auto& server = *it->m_server;
 	it->m_dataset = server.dataset();
 	it->updatePlaque(tabs[0], tabs[1], tabs[2]);
-	updateLayout();
 	// TODO: redraw the report table
 	Invalidate();
 
@@ -1426,6 +1441,38 @@ LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 	it->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
 	it->m_gotProgress = true;
 	Invalidate();
+
+	return 0;
+}
+
+LRESULT CTasksView::OnLayoutNeeded(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+	auto tmp_hovered = m_hovered;
+	auto tmp_active = m_active;
+	m_hovered = nullptr;
+	m_active = nullptr;
+
+	OutputDebugString(L"...PAF!\n");
+	if (m_docOwner->updateLayout(m_body, m_fontSize, m_fontFamily)) {
+		OutputDebugString(L"..........BANG!!!\n");
+		if (tmp_hovered)
+			tmp_hovered->setHovered(false);
+
+		if (tmp_active)
+			tmp_active->setActive(false);
+
+		setDocumentSize(m_body->getSize());
+
+		m_hovered = nodeFromPoint();
+		if (m_hovered)
+			m_hovered->setHovered(true);
+		updateCursorAndTooltip();
+
+		return 0;
+	}
+
+	m_hovered = tmp_hovered;
+	m_active = tmp_active;
 
 	return 0;
 }

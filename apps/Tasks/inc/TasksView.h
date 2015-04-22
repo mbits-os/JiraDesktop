@@ -12,6 +12,7 @@ enum {
 	UM_REFRESHSTART,          // wParam - server's session ID, lParam - unused
 	UM_REFRESHSTOP,           // wParam - server's session ID, lParam - unused
 	UM_PROGRESS,              // wParam - server's session ID, lParam - ProgressInfo*
+	UM_LAYOUTNEEDED,          // wParam - 0,                   lParam - 0
 };
 
 enum {
@@ -39,6 +40,8 @@ struct Scroller {
 	virtual void setContentSize(size_t width, size_t height) = 0;
 	virtual void scrollIntoView(long left, long top, long right, long bottom) = 0;
 };
+
+class DocOwner;
 
 using CTasksViewWinTraits = CWinTraits<WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_COMPOSITED>;
 class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
@@ -85,6 +88,7 @@ private:
 	std::shared_ptr<CAppModelListener> m_listener;
 	std::vector<ServerInfo> m_servers;
 	std::shared_ptr<gui::node> m_body;
+	std::shared_ptr<DocOwner> m_docOwner;
 	std::vector<ServerInfo>::iterator find(uint32_t sessionId);
 
 	std::vector<ServerInfo>::iterator insert(std::vector<ServerInfo>::const_iterator it, const ::ServerInfo& info);
@@ -108,7 +112,7 @@ private:
 	gui::pixels m_fontSize;
 	std::string m_fontFamily;
 
-	void updateLayout();
+	void updateServers();
 	void updateCursor(bool force = false);
 	void updateTooltip(bool force = false);
 	void updateCursorAndTooltip(bool force = false);
@@ -152,6 +156,7 @@ public:
 		MESSAGE_HANDLER(UM_REFRESHSTART, OnRefreshStart)
 		MESSAGE_HANDLER(UM_REFRESHSTOP, OnRefreshStop)
 		MESSAGE_HANDLER(UM_PROGRESS, OnProgress)
+		MESSAGE_HANDLER(UM_LAYOUTNEEDED, OnLayoutNeeded)
 		MESSAGE_HANDLER(AM_ZOOM, OnZoom)
 	END_MSG_MAP()
 
@@ -172,6 +177,7 @@ public:
 	LRESULT OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
+	LRESULT OnLayoutNeeded(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnZoom(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
 	void setScroller(Scroller* scroller) {
