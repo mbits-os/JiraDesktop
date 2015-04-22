@@ -84,6 +84,7 @@ namespace gui {
 		virtual void onAdded(const std::shared_ptr<node>&);
 		virtual void onRemoved(const std::shared_ptr<node>&);
 		virtual std::shared_ptr<node> cloneSelf() const = 0;
+		virtual void layoutRequired();
 
 	protected:
 		elem m_nodeName;
@@ -100,6 +101,7 @@ namespace gui {
 
 		std::atomic<int> m_hoverCount{ 0 };
 		std::atomic<int> m_activeCount{ 0 };
+		std::atomic<int> m_layoutCount{ 0 };
 
 		std::shared_ptr<styles::rule_storage> m_calculated;
 		std::shared_ptr<styles::rule_storage> m_calculatedHover;

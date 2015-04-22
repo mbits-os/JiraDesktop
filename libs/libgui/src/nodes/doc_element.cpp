@@ -30,9 +30,9 @@
 #define ASSERT(x) assert(x)
 
 namespace gui {
-	doc_element::doc_element(const std::function<void(const point&, const size&)>& invalidator)
+	doc_element::doc_element(const std::shared_ptr<doc_owner>& owner)
 		: block_node(elem::body)
-		, m_invalidator(invalidator)
+		, m_owner(owner)
 	{
 	}
 
@@ -41,8 +41,15 @@ namespace gui {
 	void doc_element::invalidate(const point& pt, const size& size)
 	{
 		auto p = pt + m_position.pt;
-		if (m_invalidator)
-			m_invalidator(pt, size);
+		if (m_owner)
+			m_owner->invalidate(pt, size);
+	}
+
+	void doc_element::layoutRequired()
+	{
+		block_node::layoutRequired();
+		if (m_owner)
+			m_owner->layoutRequired();
 	}
 
 	std::shared_ptr<node> doc_element::cloneSelf() const

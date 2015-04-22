@@ -277,6 +277,10 @@ namespace gui {
 
 	void node_base::measure(painter* painter)
 	{
+		if (!m_layoutCount)
+			return; // already calculated
+		m_layoutCount = 0;
+
 		calculateStyles();
 		style_saver saver{ painter, this };
 
@@ -531,12 +535,7 @@ namespace gui {
 
 	void node_base::applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet)
 	{
-		m_calculated.reset();
-		m_calculatedHover.reset();
-		m_calculatedActive.reset();
-		m_calculatedHoverActive.reset();
 		m_allApplying = std::make_shared<styles::stylesheet>();
-
 		m_stylesheet = stylesheet;
 		if (stylesheet) {
 			for (auto& rules : stylesheet->m_rules) {
@@ -547,6 +546,8 @@ namespace gui {
 
 		for (auto& node : children())
 			node->applyStyles(stylesheet);
+
+		layoutRequired();
 	}
 
 	pixels calculatedFontSize(node* node)
@@ -800,6 +801,19 @@ namespace gui {
 
 	void node_base::onRemoved(const std::shared_ptr<node>&)
 	{
+	}
+
+	void node_base::layoutRequired()
+	{
+		m_calculated.reset();
+		m_calculatedHover.reset();
+		m_calculatedActive.reset();
+		m_calculatedHoverActive.reset();
+
+		++m_layoutCount;
+		auto parent = getParent();
+		if (parent)
+			static_cast<node_base&>(*parent).layoutRequired();
 	}
 
 	bool node_base::imChildOf(const std::shared_ptr<node>& tested) const

@@ -25,15 +25,21 @@
 #pragma once
 
 #include <gui/nodes/block_node.hpp>
-#include <functional>
 
 namespace gui {
+	struct doc_owner {
+		virtual ~doc_owner() {}
+		virtual void invalidate(const point&, const size&) = 0;
+		virtual void layoutRequired() = 0;
+	};
+
 	class doc_element : public block_node {
-		std::function<void(const point&, const size&)> m_invalidator;
+		std::shared_ptr<doc_owner> m_owner;
 	public:
-		explicit doc_element(const std::function<void(const point&, const size&)>& invalidator);
+		explicit doc_element(const std::shared_ptr<doc_owner>& owner);
 		doc_element(const doc_element&);
 		void invalidate(const point& pt, const size& size) override;
+		void layoutRequired() override;
 		std::shared_ptr<node> cloneSelf() const override;
 	};
 }
