@@ -80,6 +80,9 @@ class GithubVcs:
 			out.append('<a href="%s/archive/%s.%s" rel="nofollow"><span class="left light icon icon-github"></span>Source code (%s)</a>' % (self.uri, urllib.quote(tag), urllib.quote(ext), ext))
 		return out
 
+def public_build(build):
+	return 'public' in build and build['public']
+
 def version_json(dir, json):
 	build = {}
 	build['vcs'] = NullVcs()
@@ -87,6 +90,7 @@ def version_json(dir, json):
 	if 'tag' in json: build['tag'] = json['tag']
 	if 'commit' in json: build['commit'] = json['commit']
 	if 'stability' in json: build['stability'] = json['stability']
+	if 'public' in json: build['public'] = json['public']
 	if 'github' in json: build['vcs'] = GithubVcs(json['github'])
 	# TODO: elif 'bitbucket' in json: ...
 
@@ -98,7 +102,8 @@ def version_json(dir, json):
 				stability = build['stability']
 				if len(stability):
 					name += '-%s' % '.'.join(stability.split(' '))
-			name += '+%s' % m.group(4)
+			if not public_build(build):
+				name += '+%s' % m.group(4)
 			build['name'] = name
 
 	if 'stability' in build:
@@ -261,6 +266,27 @@ def page_packages(out, dir, link, build, latest):
 
 	page_entry(out, link, name, latest, hints)
 
+def page_public_entry(out, dir, link, build):
+	name = link
+	latest = build["name"]
+	pkgs = build["files"]
+	keys = sorted(pkgs.keys())
+	hints = []
+
+	commit = page_commit(build)
+	tag = page_tag(build)
+
+	links = []
+	if commit: links.append(commit)
+	if tag: links.append(tag)
+
+	links += build['vcs'].additionalShortLinks(build)
+
+	if len(links):
+		hints.append([None, links, {'class':'page-hints'}])
+
+	page_entry(out, link, name, latest, hints)
+
 def page_version(out, dir, link, latest):
 	subs = os.listdir(dir)
 	subs.sort(reverse=True)
@@ -403,6 +429,21 @@ def index_versions(out, dir):
 	print >>out, '</ul>'
 	page_footer(out)
 
+def index_public(out, dir):
+	page_header(out, 'releases')
+	subs = os.listdir(dir)
+	subs.sort(reverse=True)
+
+	print >>out, '<ul class="subdirs">'
+
+	for sub in subs:
+		test = os.path.join(dir, sub)
+		if not os.path.isdir(test) : continue
+		page_public_entry(out, dir, sub, version(test))
+
+	print >>out, '</ul>'
+	page_footer(out)
+
 def index_root(out, dir):
 	title = 'Downloads'
 	try:
@@ -415,11 +456,14 @@ def index_root(out, dir):
 	subs = [
 		('latest', 'latest', 'latest build available'),
 		('builds', 'all nightlies', 'list of all builds for every version'),
-		('releases', 'versions', 'breakup of builds per package versions')
+		('versions', 'versions', 'breakup of builds per package versions'),
+		('releases', 'releases', 'nightly builds to be released to the public')
 	]
 	for sub in subs:
+		item_dir = os.path.join(dir, sub[0])
+		if not os.path.exists(item_dir):
+			continue
 		if sub[0] == 'latest':
-			item_dir = os.path.join(dir, 'latest')
 			page_packages(out, item_dir, sub[0], version(item_dir), True)
 		else:
 			page_root_link(out, *sub)
@@ -448,7 +492,9 @@ def call(dir, func, sub_func = None):
 if args.type == 'all':
 	call(args.dir, index_root)
 	call(os.path.join(args.dir, 'builds'), index_builds, index_single)
-	call(os.path.join(args.dir, 'releases'), index_versions, index_version)
+	call(os.path.join(args.dir, 'versions'), index_versions, index_version)
+	if os.path.exists(os.path.join(args.dir, 'releases')):
+		call(os.path.join(args.dir, 'releases'), index_public, index_single)
 	exit(0)
 
 if args.type == 'update':
@@ -457,12 +503,12 @@ if args.type == 'update':
 	call(args.dir, index_root)
 	call(os.path.join(args.dir, 'builds'), index_builds)
 	call(os.path.join(args.dir, 'builds', args.id), index_single)
-	call(os.path.join(args.dir, 'releases'), index_versions)
+	call(os.path.join(args.dir, 'versions'), index_versions)
 	pkgs = version(os.path.join(args.dir, 'builds', args.id))['files']
 	versions = [pkgs[pkg]['version'] for pkg in pkgs]
 	if len(versions):
 		ver = versions[0].split('+', 1)[0].split('-', 1)[0]
-		call(os.path.join(args.dir, 'releases', ver), index_version)
+		call(os.path.join(args.dir, 'versions', ver), index_version)
 	exit(0)
 
 func = 'index_' + args.type
