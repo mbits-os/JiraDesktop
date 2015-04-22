@@ -91,6 +91,7 @@ namespace gui {
 		std::vector<std::shared_ptr<node>> m_children;
 		std::vector<std::string> m_classes;
 		std::weak_ptr<node> m_parent;
+		std::shared_ptr<styles::stylesheet> m_stylesheet;
 		struct {
 			point pt;
 			size size;

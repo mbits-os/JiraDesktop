@@ -130,6 +130,7 @@ namespace gui {
 			return nullptr; // instead of NOT_FOUND_ERR
 
 		newChild->setParent(shared_from_this());
+		newChild->applyStyles(m_stylesheet);
 		m_children.insert(it, newChild);
 
 		onAdded(newChild);
@@ -154,9 +155,11 @@ namespace gui {
 			return nullptr; // instead of NOT_FOUND_ERR
 
 		oldChild->setParent({});
+		oldChild->applyStyles({});
 		onRemoved(oldChild);
 
 		newChild->setParent(shared_from_this());
+		newChild->applyStyles(m_stylesheet);
 		*it = newChild;
 
 		onAdded(newChild);
@@ -191,6 +194,7 @@ namespace gui {
 			locked->removeChild(newChild);
 
 		newChild->setParent(shared_from_this());
+		newChild->applyStyles(m_stylesheet);
 		m_children.push_back(newChild);
 
 		onAdded(newChild);
@@ -533,9 +537,12 @@ namespace gui {
 		m_calculatedHoverActive.reset();
 		m_allApplying = std::make_shared<styles::stylesheet>();
 
-		for (auto& rules : stylesheet->m_rules) {
-			if (rules->m_sel.maySelect(this))
-				m_allApplying->m_rules.push_back(rules);
+		m_stylesheet = stylesheet;
+		if (stylesheet) {
+			for (auto& rules : stylesheet->m_rules) {
+				if (rules->m_sel.maySelect(this))
+					m_allApplying->m_rules.push_back(rules);
+			}
 		}
 
 		for (auto& node : children())
