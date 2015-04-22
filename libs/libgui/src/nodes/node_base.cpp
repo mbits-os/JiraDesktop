@@ -252,6 +252,9 @@ namespace gui {
 		style_saver saver{ painter, this };
 
 		auto style = calculatedStyle();
+		if (!style)
+			return;
+
 		auto& ref = *style;
 		if (ref.has(styles::prop_background)) {
 			painter->paintBackground(ref.get(styles::prop_background),
@@ -301,6 +304,9 @@ namespace gui {
 		m_position.size = { width, height };
 
 		auto styles = calculatedStyle();
+		if (!styles)
+			return;
+
 		auto& ref = *styles;
 
 		auto disp = display::inlined;
@@ -662,6 +668,9 @@ namespace gui {
 	pixels node_base::offsetLeft() const
 	{
 		auto style = calculatedStyle();
+		if (!style)
+			return{};
+
 		auto& ref = *style;
 		return
 			calculated(ref, styles::prop_border_left_width) +
@@ -671,6 +680,9 @@ namespace gui {
 	pixels node_base::offsetTop() const
 	{
 		auto style = calculatedStyle();
+		if (!style)
+			return{};
+
 		auto& ref = *style;
 		return
 			calculated(ref, styles::prop_border_top_width) +
@@ -680,6 +692,9 @@ namespace gui {
 	pixels node_base::offsetRight() const
 	{
 		auto style = calculatedStyle();
+		if (!style)
+			return{};
+
 		auto& ref = *style;
 		return
 			calculated(ref, styles::prop_border_right_width) +
@@ -689,6 +704,9 @@ namespace gui {
 	pixels node_base::offsetBottom() const
 	{
 		auto style = calculatedStyle();
+		if (!style)
+			return{};
+
 		auto& ref = *style;
 		return
 			calculated(ref, styles::prop_border_bottom_width) +

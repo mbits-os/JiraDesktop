@@ -107,6 +107,9 @@ namespace gui { namespace base {
 	void painter::paintBorder(gui::node* node)
 	{
 		auto styles = node->calculatedStyle();
+		if (!styles)
+			return;
+
 #define BORDER_(side) \
 Border border_ ## side{*styles, \
 	styles::prop_border_ ## side ## _width, \
@@ -161,7 +164,7 @@ Border border_ ## side{*styles, \
 		}
 	}
 
-	bool painter::visible(node* node) const
+	bool painter::visible(node*) const
 	{
 		return true;
 	}
@@ -269,6 +272,9 @@ Border border_ ## side{*styles, \
 
 		// -------------------------------------------
 		auto style = node->calculatedStyle();
+		if (!style)
+			return nullptr;
+
 		auto& ref = *style;
 		using namespace styles;
 
