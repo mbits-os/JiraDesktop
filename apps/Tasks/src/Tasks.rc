@@ -53,8 +53,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "..\\res\\Tasks.ico"
-IDR_TASKBAR             ICON                    "..\\res\\tray.ico"
+IDR_MAINFRAME           ICON                    "..\\res\\tasks.ico"
 IDR_ATTENTION           ICON                    "..\\res\\attention.ico"
 
 /////////////////////////////////////////////////////////////////////////////

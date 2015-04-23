@@ -166,7 +166,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	})});
 
 	auto toolbar_icon = (HICON)LoadImage(_Module.GetResourceInstance(),
-		MAKEINTRESOURCE(IDR_TASKBAR), IMAGE_ICON,
+		MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON,
 		GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 		LR_DEFAULTCOLOR);
 	m_taskIcon.Install(m_hWnd, 1, toolbar_icon, toolbar_menu);
