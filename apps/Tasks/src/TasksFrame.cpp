@@ -26,6 +26,12 @@
 
 #include <algorithm>
 
+// {FC7805FE-9587-4985-A8D2-4260E1FCD61A}
+static const GUID UUID_TrayIcon{ 0xfc7805fe, 0x9587, 0x4985, { 0xa8, 0xd2, 0x42, 0x60, 0xe1, 0xfc, 0xd6, 0x1a } };
+
+// {599A2310-CA40-43F8-B885-D0376BC954CB}
+static const GUID UUID_AttentionIcon{ 0x599a2310, 0xca40, 0x43f8, { 0xb8, 0x85, 0xd0, 0x37, 0x6b, 0xc9, 0x54, 0xcb } };
+
 std::string contents(LPCWSTR path)
 {
 	std::unique_ptr<FILE, decltype(&fclose)> f{ _wfopen(path, L"r"), fclose };
@@ -119,14 +125,15 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	m_view.setScroller(this);
 
 	m_view.setNotifier([&](const std::wstring& title, const std::wstring& message) {
-
-		if (!m_attentionIcon.Installed()) {
-			auto toolbar_icon = (HICON)LoadImage(_Module.GetResourceInstance(),
+		if (!m_attentionIcon.IsInstalled()) {
+			auto tray_icon = (HICON)LoadImage(_Module.GetResourceInstance(),
 				MAKEINTRESOURCE(IDR_ATTENTION), IMAGE_ICON,
 				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 				LR_DEFAULTCOLOR);
-			m_attentionIcon.Install(m_hWnd, 2, toolbar_icon, nullptr);
+			m_attentionIcon.m_nid.guidItem = UUID_AttentionIcon;
+			m_attentionIcon.Install(m_hWnd, 2, tray_icon, nullptr, L"Report(s) changed");
 		}
+		m_balloonVisible = true;
 		m_attentionIcon.ShowBalloon(title.c_str(), message.c_str());
 	});
 
@@ -169,6 +176,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 		MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON,
 		GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 		LR_DEFAULTCOLOR);
+	m_taskIcon.m_nid.guidItem = UUID_TrayIcon;
 	m_taskIcon.Install(m_hWnd, 1, toolbar_icon, toolbar_menu);
 
 	auto hwnd = m_hWnd;
@@ -215,6 +223,28 @@ LRESULT CTasksFrame::OnTaskIconDefault(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
 	return 0;
 }
 
+LRESULT CTasksFrame::OnAttentionIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
+{
+	if (!IsWindowVisible())
+		ShowWindow(SW_SHOW);
+	SetForegroundWindow(m_hWnd);
+	PostMessage(WM_NULL, 0, 0);
+
+	m_attentionIcon.Uninstall();
+	m_balloonVisible = false;
+
+	return 0;
+}
+
+LRESULT CTasksFrame::OnAttentionIconTimeoutOrHide(LPARAM /*uMsg*/, BOOL& /*bHandled*/)
+{
+	m_balloonVisible = false;
+	auto active = GetActiveWindow();
+	if (m_hWnd == active || IsChild(active))
+		m_attentionIcon.Uninstall();
+	return 0;
+}
+
 
 LRESULT CTasksFrame::OnCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
@@ -253,11 +283,20 @@ LRESULT CTasksFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BO
 
 #ifdef LCLIK_TASK_MENU
 	if (!bHandled && wParam == uEvent) {
-		bHandled = FALSE;
+		bHandled = TRUE;
 		KillTimer(uEvent);
 		m_taskIcon.OnTaskbarContextMenu(WM_RBUTTONDOWN, bHandled);
 	}
 #endif
+
+	return 0;
+}
+
+LRESULT CTasksFrame::OnActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	bHandled = FALSE;
+	if (wParam != WA_INACTIVE && !m_balloonVisible)
+		m_attentionIcon.Uninstall();
 
 	return 0;
 }

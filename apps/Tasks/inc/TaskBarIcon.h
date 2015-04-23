@@ -70,10 +70,6 @@ public:
       TASKBAR_MESSAGE_HANDLER((*this), WM_RBUTTONDOWN, OnTaskbarContextMenu)
    END_MSG_MAP()
 
-   bool Installed() {
-	   return m_nid.uID != 0;
-   }
-
    BOOL Install(HWND hWnd, UINT iID, HICON hIcon, HMENU hMenu, LPTSTR lpszTip = NULL)
    {
       ATLASSERT(::IsWindow(hWnd));

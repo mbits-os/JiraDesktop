@@ -78,6 +78,7 @@ public:
 	CIcon m_bigIcon;
 	CIcon m_smallIcon;
 	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();
+	bool m_balloonVisible = false;
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();
@@ -95,6 +96,7 @@ public:
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_SYSCOMMAND, OnSysCommand)
 		MESSAGE_HANDLER(WM_TIMER, OnTimer)
+		MESSAGE_HANDLER(WM_ACTIVATE, OnActivate)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOW, OnToolTipTextW)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOA, OnToolTipTextA)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOW, OnToolTipTextW)
@@ -102,9 +104,14 @@ public:
 		TASKBAR_MESSAGE_HANDLER(m_taskIcon, WM_LBUTTONDOWN, OnTaskIconClick)
 #endif
 		TASKBAR_MESSAGE_HANDLER(m_taskIcon, WM_LBUTTONDBLCLK, OnTaskIconDefault)
+		TASKBAR_MESSAGE_HANDLER(m_attentionIcon, WM_LBUTTONUP, OnAttentionIconClick)
+		TASKBAR_MESSAGE_HANDLER(m_attentionIcon, NIN_BALLOONUSERCLICK, OnAttentionIconClick)
+		TASKBAR_MESSAGE_HANDLER(m_attentionIcon, NIN_BALLOONTIMEOUT, OnAttentionIconTimeoutOrHide)
+		TASKBAR_MESSAGE_HANDLER(m_attentionIcon, NIN_BALLOONHIDE, OnAttentionIconTimeoutOrHide)
 		CHAIN_MSG_MAP(CUpdateUI<CTasksFrame>)
 		CHAIN_MSG_MAP(CFameSuper)
 		CHAIN_MSG_MAP_MEMBER(m_taskIcon)
+		CHAIN_MSG_MAP_MEMBER(m_attentionIcon)
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):
@@ -117,6 +124,7 @@ public:
 	LRESULT OnCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnSysCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
+	LRESULT OnActivate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnToolTipTextA(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/);
 	LRESULT OnToolTipTextW(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/);
@@ -124,6 +132,8 @@ public:
 	LRESULT OnTaskIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/);
 #endif
 	LRESULT OnTaskIconDefault(LPARAM /*uMsg*/, BOOL& /*bHandled*/);
+	LRESULT OnAttentionIconClick(LPARAM /*uMsg*/, BOOL& /*bHandled*/);
+	LRESULT OnAttentionIconTimeoutOrHide(LPARAM /*uMsg*/, BOOL& /*bHandled*/);
 
 	void showHide();
 	void newConnection();
