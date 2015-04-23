@@ -33,9 +33,6 @@ struct CTasksActionsBase {
 	std::shared_ptr<gui::action> help_licences;
 	std::shared_ptr<gui::action> help_about;
 
-	std::shared_ptr<gui::icon> icon_taskbar;
-	std::shared_ptr<gui::icon> icon_frame;
-
 	bool onCommand(menu::command_id cmd);
 	HMENU createMenuBar(const std::initializer_list<menu::item>& items);
 	HWND createToolbar(const std::initializer_list<menu::item>& items, HWND hWndParent, DWORD dwStyle = ATL_SIMPLE_TOOLBAR_STYLE, UINT nID = ATL_IDW_TOOLBAR);
@@ -53,9 +50,6 @@ struct CTasksActions : CTasksActionsBase {
 		auto ico_link     = gui::make_fa_icon({ { fa::glyph::chain,   0x419641, 5, 4 }                                                 });
 		auto ico_licences = gui::make_fa_icon({ { fa::glyph::bank,    0x444444, 5, 4 }                                                 });
 		auto ico_about    = gui::make_fa_icon({ { fa::glyph::circle,  0xFFFFFF, 3, 2 }, { fa::glyph::question_circle, 0x428BCA, 3, 2 } });
-
-		icon_taskbar      = gui::make_fa_icon({ { fa::glyph::stop,    0x000000, 3, 2 }, { fa::glyph::tasks,           0xFFFFFF       } });
-		icon_frame        = gui::make_fa_icon({ { fa::glyph::stop,    0xFFFFFF, 3, 2 }, { fa::glyph::tasks,                          } });
 
 		auto pThis = static_cast<T*>(this);
 

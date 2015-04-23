@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 version="1.1"
+	 width="256px" height="256px"
+	 viewBox="0 0 1024 1024"
+	 >
+	<defs>
+		<rect id="main-shape" x="32" y="32" width="960" height="960" rx="126" />
+		<clipPath id="main-clip">
+			<rect id="main-shape" x="40" y="40" width="944" height="944" rx="118" />
+		</clipPath>
+		<filter id="drop" x="0" y="0" width="1024" height="1024">
+			<feOffset result="offOut" in="SourceAlpha" dx="12" dy="12" />
+			<feColorMatrix result="matrixOut" in="offOut" type="matrix"
+			values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.6 0" />
+			<feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="12" />
+			<feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+		</filter>
+		<filter id="inner-drop" x="0" y="0" width="1024" height="1024">
+			<feOffset result="offOut" in="SourceAlpha" dx="8" dy="8" />
+			<feColorMatrix result="matrixOut" in="offOut" type="matrix"
+			values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.6 0" />
+			<feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="8" />
+			<feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+		</filter>
+	</defs>
+	<rect id="main-shape" x="32" y="32" width="960" height="960" rx="126" fill="#666" />
+	<g clip-path="url(#main-clip)">
+		<rect y="268" width="1024" height="756" style="fill: #fed"/>
+		<rect y="256" width="1024" height="12" style="fill: #666"/>
+		<rect width="1024" height="256" style="fill: #3b73af"/>
+		<path
+		   style="fill: #000; fill-opacity: 0.1"
+		   id="shadowEdge"
+		   d="
+		   M866,40 a118,118 0 0,1 118,118 v708 a118,118 0 0,1 -118,118 h-708 a118,118 0 0,1 -118,-118
+		   a118,100 0 0,0 118,100 h708 a100,100 0 0,0 100,-100 v-708 a118,118 0 0,0 -118,-118
+		   z " />
+		<path
+		   style="fill: #fff; fill-opacity: 0.5"
+		   id="lightEdge"
+		   d="
+		   M866,40 a100,118 0 0,1 100,118 a100,100 0 0,0 -100,-100 h-708 a100,100 0 0,0 -100,100 v708 a100,100 0 0,0 100,100
+		   a118,100 0 0,1 -118,-100 v-708 a118,118 0 0,1 118,-118
+		   z " />
+		<path
+		   style="fill: #fff; fill-opacity: 0.15"
+		   id="flare"
+		   d="M944,40 L40,984 V40 z" />
+		<g  style="fill:#000;fill-opacity: 0.4">
+			<rect x="90" y="308" width="80" height="80" />
+			<rect x="240" y="308" width="151" height="80" />
+			<rect x="592" y="308" width="342" height="80" />
+
+			<rect x="90" y="436" width="80" height="80" />
+			<rect x="240" y="436" width="280" height="80" />
+			<rect x="592" y="436" width="80" height="80" />
+
+			<rect x="90" y="564" width="80" height="80" />
+			<rect x="240" y="564" width="200" height="80" />
+			<rect x="592" y="564" width="220" height="80" />
+
+			<rect x="90" y="692" width="80" height="80" />
+			<rect x="240" y="692" width="302" height="80" />
+			<rect x="592" y="692" width="288" height="80" />
+
+			<rect x="90" y="820" width="80" height="80" />
+			<rect x="240" y="820" width="80" height="80" />
+			<rect x="592" y="820" width="280" height="80" />
+		</g>
+	</g>
+
+</svg>

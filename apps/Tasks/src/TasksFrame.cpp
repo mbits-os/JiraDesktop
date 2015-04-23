@@ -157,19 +157,11 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 		tasks_exit
 	})});
 
-	auto toolbar_icon = icon_taskbar->getNativeIcon(GetSystemMetrics(SM_CXSMICON));
-	icon_taskbar->detachIcon();
-
+	auto toolbar_icon = (HICON)LoadImage(_Module.GetResourceInstance(),
+		MAKEINTRESOURCE(IDR_TASKBAR), IMAGE_ICON,
+		GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+		LR_DEFAULTCOLOR);
 	m_taskIcon.Install(m_hWnd, 1, toolbar_icon, toolbar_menu);
-
-	icon_frame->getNativeIcon(GetSystemMetrics(SM_CXSMICON));
-	m_smallIcon = icon_frame->detachIcon();
-
-	icon_frame->getNativeIcon(GetSystemMetrics(SM_CXICON));
-	m_bigIcon = icon_frame->detachIcon();
-
-	SetIcon(m_smallIcon, FALSE);
-	SetIcon(m_bigIcon, TRUE);
 
 	auto hwnd = m_hWnd;
 

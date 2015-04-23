@@ -6,6 +6,7 @@
 #define IDR_MAINFRAME                   128
 #define IDR_MAINFRAME_OLD               129
 #define IDR_TASKBAR                     130
+#define IDR_ATTENTION                   131
 #define IDD_CONNECTION                  201
 #define IDC_NAME                        1000
 #define IDC_URL                         1001
