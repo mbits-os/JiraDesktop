@@ -73,6 +73,7 @@ public:
 	CTasksView m_view;
 	CScrollContainerEx m_container;
 	CTaskBarIcon m_taskIcon;
+	CTaskBarIcon m_attentionIcon;
 	CFont m_font;
 	CIcon m_bigIcon;
 	CIcon m_smallIcon;

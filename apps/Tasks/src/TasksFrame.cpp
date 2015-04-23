@@ -119,7 +119,15 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	m_view.setScroller(this);
 
 	m_view.setNotifier([&](const std::wstring& title, const std::wstring& message) {
-		m_taskIcon.ShowBalloon(title.c_str(), message.c_str());
+
+		if (!m_attentionIcon.Installed()) {
+			auto toolbar_icon = (HICON)LoadImage(_Module.GetResourceInstance(),
+				MAKEINTRESOURCE(IDR_ATTENTION), IMAGE_ICON,
+				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+				LR_DEFAULTCOLOR);
+			m_attentionIcon.Install(m_hWnd, 2, toolbar_icon, nullptr);
+		}
+		m_attentionIcon.ShowBalloon(title.c_str(), message.c_str());
 	});
 
 	m_view.Create(m_container, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
