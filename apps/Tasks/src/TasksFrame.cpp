@@ -333,8 +333,11 @@ void CTasksFrame::showHide()
 {
 	if (IsWindowVisible())
 		ShowWindow(SW_HIDE);
-	else
+	else {
 		ShowWindow(SW_SHOW);
+		SetForegroundWindow(m_hWnd);
+		PostMessage(WM_NULL, 0, 0);
+	}
 }
 
 void CTasksFrame::newConnection()
