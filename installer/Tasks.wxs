@@ -164,6 +164,8 @@
 		<UIRef Id="WixUI_ErrorProgressText" />
 
 		<WixVariable Id="WixUILicenseRtf" Value="mit-license.rtf" />
+		<WixVariable Id="WixUIBannerBmp" Value="banner.bmp" />
+		<WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
 
 		<InstallExecuteSequence>
 			<Custom Action='NoDowngrade' After='FindRelatedProducts'>NEWERFOUND</Custom>
