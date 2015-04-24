@@ -39,6 +39,7 @@ namespace gui {
 		point getPosition() override;
 		point getAbsolutePos() override;
 		size getSize() override;
+		size getMinSize() override;
 		pixels getBaseline() override;
 
 		std::shared_ptr<node> getParent() const override;
@@ -115,6 +116,7 @@ namespace gui {
 		}
 
 		void internalSetSize(const pixels& width, const pixels& height);
+		rect getContentPosition() const;
 	private:
 		bool imChildOf(const std::shared_ptr<node>&) const;
 	};

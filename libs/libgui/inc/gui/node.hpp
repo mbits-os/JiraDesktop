@@ -55,6 +55,7 @@ namespace gui {
 		virtual point getPosition() = 0;
 		virtual point getAbsolutePos() = 0;
 		virtual size getSize() = 0;
+		virtual size getMinSize() = 0;
 		virtual pixels getBaseline() = 0;
 
 		virtual std::shared_ptr<node> getParent() const = 0;

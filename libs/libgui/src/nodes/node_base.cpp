@@ -324,40 +324,17 @@ namespace gui {
 			if (ref.has(styles::prop_text_align))
 				align = ref.get(styles::prop_text_align);
 
-			point min, max; // min is also old vector of the content
-			if (!m_children.empty()) {
-				auto& child = m_children[0];
-				min = child->getPosition();
-				max = min + child->getSize();
-			}
-
-			for (auto& child : m_children) {
-				auto tl = child->getPosition();
-				auto br = tl + child->getSize();
-
-				if (min.x > tl.x)
-					min.x = tl.x;
-				if (min.y > tl.y)
-					min.y = tl.y;
-
-				if (max.x < br.x)
-					max.x = br.x;
-				if (max.y < br.y)
-					max.y = br.y;
-			}
-
-			auto content_w = max.x - min.x;
-			auto content_h = max.y - min.y;
+			auto content = getContentPosition();
 
 			auto inside_padding_w = width - (offsetLeft() + offsetRight());
 			auto inside_padding_h = height - (offsetTop() + offsetBottom());
 
 			//new vector of the content
-			point vec = { 0, offsetTop() + (inside_padding_h - content_h) / 2 };
+			point vec = { 0, offsetTop() + (inside_padding_h - content.sz.height) / 2 };
 
 			if (align != align::left) {
 
-				vec.x = inside_padding_w - content_w;
+				vec.x = inside_padding_w - content.sz.width;
 
 				if (align == align::center)
 					vec.x = vec.x / 2;
@@ -366,8 +343,8 @@ namespace gui {
 			vec.x += offsetLeft();
 
 			// New - Old = Delta to apply
-			vec.x -= min.x;
-			vec.y -= min.y;
+			vec.x -= content.pt.x;
+			vec.y -= content.pt.y;
 
 			for (auto& child : m_children) {
 				auto pos = child->getPosition();
@@ -393,6 +370,15 @@ namespace gui {
 	size node_base::getSize()
 	{
 		return m_position.size;
+	}
+
+	size node_base::getMinSize()
+	{
+		auto content = getContentPosition();
+		return{
+			content.sz.width + offsetLeft() + offsetRight(),
+			content.sz.height + offsetTop() + offsetBottom()
+		};
 	}
 
 	pixels node_base::getBaseline()
@@ -877,6 +863,33 @@ namespace gui {
 
 		if (!m_position.size.empty())
 			invalidate();
+	}
+
+	rect node_base::getContentPosition() const
+	{
+		point min, max;
+		if (!m_children.empty()) {
+			auto& child = m_children[0];
+			min = child->getPosition();
+			max = min + child->getSize();
+		}
+
+		for (auto& child : m_children) {
+			auto tl = child->getPosition();
+			auto br = tl + child->getSize();
+
+			if (min.x > tl.x)
+				min.x = tl.x;
+			if (min.y > tl.y)
+				min.y = tl.y;
+
+			if (max.x < br.x)
+				max.x = br.x;
+			if (max.y < br.y)
+				max.y = br.y;
+		}
+
+		return{ min, max - min };
 	}
 
 	bool node_base::imChildOf(const std::shared_ptr<node>& tested) const
