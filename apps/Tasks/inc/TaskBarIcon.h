@@ -70,7 +70,7 @@ public:
       TASKBAR_MESSAGE_HANDLER((*this), WM_RBUTTONDOWN, OnTaskbarContextMenu)
    END_MSG_MAP()
 
-   BOOL Install(HWND hWnd, UINT iID, HICON hIcon, HMENU hMenu, LPTSTR lpszTip = NULL)
+   BOOL Install(HWND hWnd, UINT iID, HICON hIcon, HMENU hMenu, LPCTSTR lpszTip = NULL)
    {
       ATLASSERT(::IsWindow(hWnd));
       ATLASSERT(m_hMenu==NULL);

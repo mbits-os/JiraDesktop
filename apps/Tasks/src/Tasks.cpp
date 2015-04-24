@@ -20,6 +20,26 @@
 
 namespace fs = filesystem;
 
+#define WIDE2(x) L ## x
+#define WIDE(x) WIDE2(x)
+
+#define WPROGRAM_NAME WIDE(PROGRAM_NAME)
+#define WPROGRAM_VERSION_STRING WIDE(PROGRAM_VERSION_STRING)
+#define WPROGRAM_VERSION_STABILITY WIDE(PROGRAM_VERSION_STABILITY)
+#define WPROGRAM_VERSION_BUILD WIDE(VERSION_STRINGIFY(PROGRAM_VERSION_BUILD))
+
+#ifndef BULID_NUMBER_IN_TITLE
+#define BULID_NUMBER_IN_TITLE 1
+#endif
+
+#if  BULID_NUMBER_IN_TITLE
+#define WPROGRAM_TITLE WPROGRAM_NAME L" (" \
+		WPROGRAM_VERSION_STRING WPROGRAM_VERSION_STABILITY \
+		L", build " WPROGRAM_VERSION_BUILD L")"
+#else
+#define WPROGRAM_TITLE WPROGRAM_NAME
+#endif
+
 fs::path exe_dir() {
 	static fs::path dir = fs::app_directory();
 	return dir;
@@ -81,7 +101,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 	CTasksFrame wndMain;
 
-	if(wndMain.CreateEx() == NULL)
+	if(wndMain.Create(NULL, NULL, WPROGRAM_TITLE) == NULL)
 	{
 		ATLTRACE(_T("Main window creation failed!\n"));
 		return 0;

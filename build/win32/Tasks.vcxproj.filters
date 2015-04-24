@@ -96,5 +96,8 @@
     <Image Include="..\..\apps\Tasks\res\Tasks.ico">
       <Filter>res</Filter>
     </Image>
+    <Image Include="..\..\apps\Tasks\res\attention.ico">
+      <Filter>res</Filter>
+    </Image>
   </ItemGroup>
 </Project>

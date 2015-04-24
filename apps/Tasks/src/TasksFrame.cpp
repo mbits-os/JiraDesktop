@@ -103,7 +103,7 @@ bool CTasksFrame::updatePosition()
 	return false;
 }
 
-LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
 	// Check if Common Controls 6.0 are used. If yes, use 32-bit (alpha) images
 	// for the toolbar and command bar. If not, use the old, 4-bit images.
@@ -176,8 +176,9 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 		MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON,
 		GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 		LR_DEFAULTCOLOR);
+	auto createStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
 	m_taskIcon.m_nid.guidItem = UUID_TrayIcon;
-	m_taskIcon.Install(m_hWnd, 1, toolbar_icon, toolbar_menu);
+	m_taskIcon.Install(m_hWnd, 1, toolbar_icon, toolbar_menu, createStruct->lpszName);
 
 	auto hwnd = m_hWnd;
 
