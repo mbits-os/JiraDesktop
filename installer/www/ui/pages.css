@@ -14,11 +14,11 @@
 		width: 600px;
 		border-left: 1px solid #eee;
 		border-right: 1px solid #eee;
-		background: white;
 	}
-	body {
-		background: #fcfcfc;
-	}
+}
+
+body {
+	background: url('watermark.png') left bottom fixed no-repeat;
 }
 
 h1 {
