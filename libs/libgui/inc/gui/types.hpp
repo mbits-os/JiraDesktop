@@ -132,6 +132,18 @@ namespace gui {
 	}
 
 	template <typename Ratio>
+	length<Ratio> operator/ (const length<Ratio>& lhs, long double rhs)
+	{
+		return lhs.value() / rhs;
+	}
+
+	template <typename Ratio>
+	length<Ratio> operator* (const length<Ratio>& lhs, long double rhs)
+	{
+		return lhs.value() * rhs;
+	}
+
+	template <typename Ratio>
 	bool operator==(const length<Ratio>& lhs, const length<Ratio>& rhs)
 	{
 		return lhs.value() == rhs.value();
