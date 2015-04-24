@@ -52,10 +52,12 @@ namespace gui {
 		for (auto& w : *m_columns)
 			x += w;
 
-		if (x < m_position.size.width)
-			m_columns->back() += m_position.size.width - x;
-		else
-			internalSetSize(x, m_position.size.height);
+		auto min = getMinSize().width;
+		auto needed = std::max(x, min);
+		if (x < needed)
+			m_columns->back() += needed - x;
+
+		internalSetSize(needed, m_position.size.height);
 	}
 
 	std::shared_ptr<node> caption_row_node::cloneSelf() const

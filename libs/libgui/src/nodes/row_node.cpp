@@ -50,7 +50,7 @@ namespace gui {
 		auto it = m_columns->begin();
 
 		for (auto& node : m_children) {
-			auto ret = node->getSize();
+			auto ret = node->getMinSize();
 			if (*it < ret.width)
 				*it = ret.width;
 			++it;
