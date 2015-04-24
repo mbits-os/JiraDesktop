@@ -32,9 +32,7 @@ namespace gui {
 		caption_row_node();
 		caption_row_node(const caption_row_node&);
 
-		size measureContents(painter* painter,
-			const pixels& offX, const pixels& offY) override;
-
+		void gatherColumns() override;
 		void repositionChildren() override;
 		std::shared_ptr<node> cloneSelf() const override;
 	};

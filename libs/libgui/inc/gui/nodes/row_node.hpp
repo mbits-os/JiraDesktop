@@ -35,9 +35,7 @@ namespace gui {
 		row_node(const row_node&);
 		void setColumns(const std::shared_ptr<std::vector<pixels>>& columns);
 
-		size measureContents(painter* painter,
-			const pixels& offX, const pixels& offY) override;
-
+		virtual void gatherColumns();
 		virtual void repositionChildren();
 		std::shared_ptr<node> cloneSelf() const override;
 	};

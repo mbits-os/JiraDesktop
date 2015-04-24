@@ -56,6 +56,9 @@ namespace gui {
 		auto content = block_node::measureContents(painter, offX, offY);
 
 		for (auto& node : m_children)
+			static_cast<row_node*>(node.get())->gatherColumns();
+
+		for (auto& node : m_children)
 			static_cast<row_node*>(node.get())->repositionChildren();
 
 		content.width = m_children.empty() ? 0 : m_children[0]->getSize().width;

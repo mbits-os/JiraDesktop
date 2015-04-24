@@ -37,11 +37,8 @@ namespace gui {
 
 	caption_row_node::caption_row_node(const caption_row_node&) = default;
 
-	size caption_row_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
+	void caption_row_node::gatherColumns()
 	{
-		// Grandfather call, skip columns setting
-		return span_node::measureContents(painter, offX, offY);
 	}
 
 	void caption_row_node::repositionChildren()

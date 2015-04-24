@@ -42,34 +42,19 @@ namespace gui {
 		m_columns = columns;
 	}
 
-	size row_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
+	void row_node::gatherColumns()
 	{
 		if (!m_columns)
-			return{ 0, 0 };
+			return;
 
 		auto it = m_columns->begin();
 
-		size sz;
-		auto x = offX;
-		auto y = offY;
 		for (auto& node : m_children) {
-			node->measure(painter);
 			auto ret = node->getSize();
-			if (sz.height < ret.height)
-				sz.height = ret.height;
-
-			node->setPosition(x, y);
-
-			sz.width += ret.width;
-			x += ret.width;
-
 			if (*it < ret.width)
 				*it = ret.width;
 			++it;
 		}
-
-		return sz;
 	}
 
 	void row_node::repositionChildren()
