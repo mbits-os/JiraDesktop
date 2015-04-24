@@ -176,6 +176,7 @@ namespace gui {
 		oldChild->setParent({});
 		m_children.erase(it);
 
+		layoutRequired();
 		onRemoved(oldChild);
 
 		return oldChild;
@@ -323,25 +324,54 @@ namespace gui {
 			if (ref.has(styles::prop_text_align))
 				align = ref.get(styles::prop_text_align);
 
-			pixels w;
-			if (align != align::left) {
-				for (auto& child : m_children)
-					w += child->getSize().width;
-
-				w = (width - (offsetLeft() + offsetRight())) - w;
-
-				if (align == align::center)
-					w = w.value() / 2;
+			point min, max; // min is also old vector of the content
+			if (!m_children.empty()) {
+				auto& child = m_children[0];
+				min = child->getPosition();
+				max = min + child->getSize();
 			}
 
-			auto h = m_position.size.height;
-			h -= offsetBottom() + offsetTop();
+			for (auto& child : m_children) {
+				auto tl = child->getPosition();
+				auto br = tl + child->getSize();
+
+				if (min.x > tl.x)
+					min.x = tl.x;
+				if (min.y > tl.y)
+					min.y = tl.y;
+
+				if (max.x < br.x)
+					max.x = br.x;
+				if (max.y < br.y)
+					max.y = br.y;
+			}
+
+			auto content_w = max.x - min.x;
+			auto content_h = max.y - min.y;
+
+			auto inside_padding_w = width - (offsetLeft() + offsetRight());
+			auto inside_padding_h = height - (offsetTop() + offsetBottom());
+
+			//new vector of the content
+			point vec = { 0, offsetTop() + (inside_padding_h - content_h) / 2 };
+
+			if (align != align::left) {
+
+				vec.x = inside_padding_w - content_w;
+
+				if (align == align::center)
+					vec.x = vec.x / 2;
+			}
+
+			vec.x += offsetLeft();
+
+			// New - Old = Delta to apply
+			vec.x -= min.x;
+			vec.y -= min.y;
 
 			for (auto& child : m_children) {
 				auto pos = child->getPosition();
-				auto h_ = child->getSize().height;
-				child->setPosition(pos.x + w, pos.y +
-					pixels{ (h - h_).value() / 2 });
+				child->setPosition(pos.x + vec.x, pos.y + vec.y);
 			}
 		}
 	}
