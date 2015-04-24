@@ -42,8 +42,16 @@
 
 namespace gui { namespace gdi {
 
+	rect scale(const RECT& clip, ratio zoom)
+	{
+		point tl{ zoom.invert(clip.left), zoom.invert(clip.top) };
+		point br{ zoom.invert(clip.right), zoom.invert(clip.bottom) };
+
+		return{ tl, br - tl };
+	}
+
 	painter::painter(HDC dc, HBRUSH background, ratio zoom, const RECT& clip, const pixels& fontSize, const std::string& fontFamily)
-		: base::painter(zoom, fontSize, fontFamily)
+		: base::painter(zoom, scale(clip, zoom), fontSize, fontFamily)
 		, m_dc{ dc }
 		, m_originalDC{ nullptr }
 		, m_pixels{ nullptr }

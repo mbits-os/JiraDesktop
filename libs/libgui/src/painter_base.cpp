@@ -32,9 +32,10 @@
 
 namespace gui { namespace base {
 
-	painter::painter(ratio zoom, const pixels& fontSize, const std::string& fontFamily)
+	painter::painter(ratio zoom, const rect& clip, const pixels& fontSize, const std::string& fontFamily)
 		: m_zoom{ zoom.num, zoom.denom }
 		, m_origin{ 0, 0 }
+		, m_clip{ clip.pt, clip.sz }
 		, m_fontSize{ fontSize }
 		, m_fontFamily{ fontFamily }
 		, m_weight{ weight::normal }
@@ -164,9 +165,26 @@ Border border_ ## side{*styles, \
 		}
 	}
 
-	bool painter::visible(node*) const
+	bool painter::visible(node* node) const
 	{
-		return true;
+		if (!node)
+			return false;
+
+		if (m_clip.sz.empty())
+			return false;
+
+		auto sz = node->getSize();
+		if (sz.empty())
+			return false;
+
+		auto br = m_origin + sz;
+
+		if (br.x < m_clip.pt.x || br.y < m_clip.pt.y)
+			return false;
+
+		br = m_clip.pt + m_clip.sz;
+
+		return !(br.x < m_origin.x || br.y < m_origin.y);
 	}
 
 	struct saved_state : style_save {

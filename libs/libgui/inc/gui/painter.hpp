@@ -75,6 +75,11 @@ namespace gui {
 		return{ std::abs((lhs.x - rhs.x).value()), std::abs((lhs.y - rhs.y).value()) };
 	}
 
+	struct rect {
+		point pt;
+		size sz;
+	};
+
 	struct ratio {
 		int num;
 		int denom;
