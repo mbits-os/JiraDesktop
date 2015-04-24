@@ -26,11 +26,16 @@
 
 #include <algorithm>
 
+#ifdef TRAY_USE_GUID
 // {FC7805FE-9587-4985-A8D2-4260E1FCD61A}
 static const GUID UUID_TrayIcon{ 0xfc7805fe, 0x9587, 0x4985, { 0xa8, 0xd2, 0x42, 0x60, 0xe1, 0xfc, 0xd6, 0x1a } };
 
 // {599A2310-CA40-43F8-B885-D0376BC954CB}
 static const GUID UUID_AttentionIcon{ 0x599a2310, 0xca40, 0x43f8, { 0xb8, 0x85, 0xd0, 0x37, 0x6b, 0xc9, 0x54, 0xcb } };
+#endif
+
+constexpr UINT TRAYICON_MAIN = 1000;
+constexpr UINT TRAYICON_ATTENTION = 1001;
 
 std::string contents(LPCWSTR path)
 {
@@ -130,8 +135,12 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 				MAKEINTRESOURCE(IDR_ATTENTION), IMAGE_ICON,
 				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 				LR_DEFAULTCOLOR);
-			m_attentionIcon.m_nid.guidItem = UUID_AttentionIcon;
-			m_attentionIcon.Install(m_hWnd, 2, tray_icon, nullptr, L"Report(s) changed");
+			constexpr auto ICON_TITLE = TEXT("Report(s) changed");
+#ifdef TRAY_USE_GUID
+			m_attentionIcon.Install(m_hWnd, UUID_AttentionIcon, tray_icon, nullptr, ICON_TITLE);
+#else
+			m_attentionIcon.Install(m_hWnd, TRAYICON_ATTENTION, tray_icon, nullptr, ICON_TITLE);
+#endif
 		}
 		m_balloonVisible = true;
 		m_attentionIcon.ShowBalloon(title.c_str(), message.c_str());
@@ -177,8 +186,11 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 		GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 		LR_DEFAULTCOLOR);
 	auto createStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
-	m_taskIcon.m_nid.guidItem = UUID_TrayIcon;
-	m_taskIcon.Install(m_hWnd, 1, toolbar_icon, toolbar_menu, createStruct->lpszName);
+#ifdef TRAY_USE_GUID
+	m_taskIcon.Install(m_hWnd, UUID_TrayIcon, toolbar_icon, toolbar_menu, createStruct->lpszName);
+#else
+	m_taskIcon.Install(m_hWnd, TRAYICON_MAIN, toolbar_icon, toolbar_menu, createStruct->lpszName);
+#endif
 
 	auto hwnd = m_hWnd;
 
@@ -241,7 +253,7 @@ LRESULT CTasksFrame::OnAttentionIconTimeoutOrHide(LPARAM /*uMsg*/, BOOL& /*bHand
 {
 	m_balloonVisible = false;
 	auto active = GetActiveWindow();
-	if (m_hWnd == active || IsChild(active))
+	if ((m_hWnd == active || IsChild(active)) && IsWindowVisible())
 		m_attentionIcon.Uninstall();
 	return 0;
 }
@@ -296,7 +308,7 @@ LRESULT CTasksFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BO
 LRESULT CTasksFrame::OnActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
 	bHandled = FALSE;
-	if (wParam != WA_INACTIVE && !m_balloonVisible)
+	if (wParam != WA_INACTIVE && IsWindowVisible() && !m_balloonVisible)
 		m_attentionIcon.Uninstall();
 
 	return 0;

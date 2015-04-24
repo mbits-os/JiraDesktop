@@ -8,9 +8,9 @@
 // Copyright (c) 2001 Bjarke Viksoe.
 //
 // This code may be used in compiled form in any way you desire. This
-// source file may be redistributed by any means PROVIDING it is 
-// not sold for profit without the authors written consent, and 
-// providing that this notice and the authors name is included. 
+// source file may be redistributed by any means PROVIDING it is
+// not sold for profit without the authors written consent, and
+// providing that this notice and the authors name is included.
 //
 // This file is provided "as is" with no expressed or implied warranty.
 // The author accepts no liability if it causes any damage to you or your
@@ -45,18 +45,17 @@
          return TRUE; \
    }
 
-
 class CTaskBarIcon
 {
 public:
-   NOTIFYICONDATA m_nid; 
+   NOTIFYICONDATA m_nid;
    HMENU m_hMenu;
    UINT m_iTaskbarRestartMsg;
 
    CTaskBarIcon() : m_hMenu(NULL)
    {
       ::ZeroMemory(&m_nid, sizeof(m_nid));
-      m_nid.cbSize = sizeof(m_nid); 
+      m_nid.cbSize = sizeof(m_nid);
       m_nid.uCallbackMessage = ::RegisterWindowMessage(TEXT("TaskbarNotifyMsg"));
       m_iTaskbarRestartMsg = ::RegisterWindowMessage(TEXT("TaskbarCreated"));
    }
@@ -77,8 +76,21 @@ public:
       ATLASSERT(m_nid.hIcon==NULL);
       m_nid.hWnd = hWnd;
       m_nid.uID = iID;
-      m_nid.hIcon = hIcon; 
-      ::lstrcpyn(m_nid.szTip, (lpszTip != NULL ? lpszTip : _T("")), sizeof(m_nid.szTip)/sizeof(TCHAR)); 
+      m_nid.hIcon = hIcon;
+      ::lstrcpyn(m_nid.szTip, (lpszTip != NULL ? lpszTip : _T("")), sizeof(m_nid.szTip)/sizeof(TCHAR));
+      m_hMenu = hMenu;
+      return AddTaskBarIcon();
+   }
+   BOOL Install(HWND hWnd, const GUID& uuID, HICON hIcon, HMENU hMenu, LPCTSTR lpszTip = NULL)
+   {
+      ATLASSERT(::IsWindow(hWnd));
+      ATLASSERT(m_hMenu==NULL);
+      ATLASSERT(m_nid.hIcon==NULL);
+      m_nid.hWnd = hWnd;
+      m_nid.uID = 0;
+      m_nid.hIcon = hIcon;
+      m_nid.guidItem = uuID;
+      ::lstrcpyn(m_nid.szTip, (lpszTip != NULL ? lpszTip : _T("")), sizeof(m_nid.szTip)/sizeof(TCHAR));
       m_hMenu = hMenu;
       return AddTaskBarIcon();
    }
@@ -110,49 +122,55 @@ public:
    {
       return m_nid.hWnd!=NULL;
    }
-   void SetIcon(HICON hIcon) 
-   { 
+   void SetIcon(HICON hIcon)
+   {
       ATLASSERT(m_nid.hIcon==NULL);
-      m_nid.hIcon = hIcon; 
+      m_nid.hIcon = hIcon;
    }
-   void SetMenu(HMENU hMenu) 
-   { 
+   void SetMenu(HMENU hMenu)
+   {
       ATLASSERT(m_hMenu==NULL);
       ATLASSERT(::IsMenu(hMenu));
-      m_hMenu = hMenu; 
+      m_hMenu = hMenu;
    }
    BOOL AddTaskBarIcon()
    {
       ATLASSERT(::IsWindow(m_nid.hWnd));
       m_nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+      if (m_nid.guidItem != GUID_NULL)
+         m_nid.uFlags |= NIF_GUID;
       BOOL res = ::Shell_NotifyIcon(NIM_ADD, &m_nid);
       return res;
    }
    BOOL ShowBalloon(LPCWSTR title, LPCWSTR msg)
    {
-	   ATLASSERT(::IsWindow(m_nid.hWnd));
-	   m_nid.uFlags = NIF_INFO;
-	   wcsncpy(m_nid.szInfoTitle, title, sizeof(m_nid.szInfoTitle) / sizeof(m_nid.szInfoTitle[0]));
-	   wcsncpy(m_nid.szInfo, msg, sizeof(m_nid.szInfo) / sizeof(m_nid.szInfo[0]));
-	   m_nid.dwInfoFlags = NIIF_INFO | NIIF_RESPECT_QUIET_TIME;
-	   m_nid.uTimeout = 30000;
-	   BOOL res = ::Shell_NotifyIcon(NIM_MODIFY, &m_nid);
-	   return res;
+      ATLASSERT(::IsWindow(m_nid.hWnd));
+      m_nid.uFlags = NIF_INFO;
+      if (m_nid.guidItem != GUID_NULL)
+         m_nid.uFlags |= NIF_GUID;
+      wcsncpy(m_nid.szInfoTitle, title, sizeof(m_nid.szInfoTitle) / sizeof(m_nid.szInfoTitle[0]));
+      wcsncpy(m_nid.szInfo, msg, sizeof(m_nid.szInfo) / sizeof(m_nid.szInfo[0]));
+      m_nid.dwInfoFlags = NIIF_INFO | NIIF_RESPECT_QUIET_TIME;
+      m_nid.uTimeout = 30000;
+      BOOL res = ::Shell_NotifyIcon(NIM_MODIFY, &m_nid);
+      return res;
    }
    BOOL ChangeIcon(HICON hIcon)
    {
       // NOTE: The class takes ownership of the icon!
       ATLASSERT(::IsWindow(m_nid.hWnd));
       if( m_nid.hIcon != NULL ) ::DestroyIcon(m_nid.hIcon);
-      m_nid.uFlags = NIF_ICON; 
+      m_nid.uFlags = NIF_ICON;
+      if (m_nid.guidItem != GUID_NULL)
+         m_nid.uFlags |= NIF_GUID;
       m_nid.hIcon = hIcon;
-      BOOL res = ::Shell_NotifyIcon(NIM_MODIFY, &m_nid); 
+      BOOL res = ::Shell_NotifyIcon(NIM_MODIFY, &m_nid);
       return res;
    }
-   BOOL DeleteTaskBarIcon() 
-   { 
-       return ::Shell_NotifyIcon(NIM_DELETE, &m_nid); 
-   } 
+   BOOL DeleteTaskBarIcon()
+   {
+       return ::Shell_NotifyIcon(NIM_DELETE, &m_nid);
+   }
 
    // Message handlers
 
@@ -168,13 +186,13 @@ public:
          bHandled = FALSE;
          return 0;
       }
-      HMENU hSubMenu = ::GetSubMenu(m_hMenu, 0);   
+      HMENU hSubMenu = ::GetSubMenu(m_hMenu, 0);
       ATLASSERT(::IsMenu(hSubMenu));
       // Make first menu-item the default (bold font)
-      ::SetMenuDefaultItem(hSubMenu, 0, TRUE); 
+      ::SetMenuDefaultItem(hSubMenu, 0, TRUE);
       // Display the menu at the current mouse location.
       POINT pt = { 0 };
-      ::GetCursorPos(&pt);      
+      ::GetCursorPos(&pt);
       ::SetForegroundWindow(m_nid.hWnd);       // Fixes Win95 bug; see Q135788
       ::TrackPopupMenu(hSubMenu, 0, pt.x, pt.y, 0, m_nid.hWnd, NULL);
       ::PostMessage(m_nid.hWnd, WM_NULL, 0,0); // Fixes another Win95 bug
