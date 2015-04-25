@@ -75,6 +75,59 @@ namespace gui {
 		return{ std::abs((lhs.x - rhs.x).value()), std::abs((lhs.y - rhs.y).value()) };
 	}
 
+	struct box {
+		pixels top;
+		pixels right;
+		pixels left;
+		pixels bottom;
+
+		box() = default;
+		box(const box&) = default;
+		box& operator=(const box&) = default;
+		box(box&&) = default;
+		box& operator=(box&&) = default;
+
+		// this constructors takes top, right, bottom and left,
+		// with values filled like in CSS
+		box(const pixels& top, const pixels& right, const pixels& bottom, const pixels& left)
+			: top(top)
+			, right(right)
+			, bottom(bottom)
+			, left(left)
+		{
+		}
+
+		// this constructors takes top, right and bottom,
+		// with missing value filled like in CSS
+		box(const pixels& top, const pixels& right, const pixels& bottom)
+			: top(top)
+			, right(right)
+			, bottom(bottom)
+			, left(right)
+		{
+		}
+
+		// this constructors takes top and right,
+		// with missing values filled like in CSS
+		box(const pixels& top, const pixels& right)
+			: top(top)
+			, right(right)
+			, bottom(top)
+			, left(right)
+		{
+		}
+
+		// this constructors takes only top,
+		// with missing values filled like in CSS
+		box(const pixels& top)
+			: top(top)
+			, right(top)
+			, bottom(top)
+			, left(top)
+		{
+		}
+	};
+
 	struct rect {
 		gui::point origin;
 		gui::size size;
@@ -88,6 +141,30 @@ namespace gui {
 		rect& operator=(rect&&) = default;
 	};
 
+	struct reach {
+		rect position;
+		box values;
+
+		reach() = default;
+		reach(const rect& position, const box& values) : position(position), values(values) {}
+		reach(const reach&) = default;
+		reach& operator=(const reach&) = default;
+		reach(reach&&) = default;
+		reach& operator=(reach&&) = default;
+	};
+
+	struct css_box {
+		box margin;
+		box border;
+		box padding;
+
+		css_box() = default;
+		css_box(const box& margin, const box& border, const box& padding) : margin(margin), border(border), padding(padding) {}
+		css_box(const css_box&) = default;
+		css_box& operator=(const css_box&) = default;
+		css_box(css_box&&) = default;
+		css_box& operator=(css_box&&) = default;
+	};
 
 	struct ratio {
 		int num;
