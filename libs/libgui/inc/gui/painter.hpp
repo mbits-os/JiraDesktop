@@ -76,9 +76,18 @@ namespace gui {
 	}
 
 	struct rect {
-		point pt;
-		size sz;
+		gui::point origin;
+		gui::size size;
+
+		rect() = default;
+		rect(const gui::point& topleft, const gui::point& bottomright) : origin(topleft), size(bottomright - topleft) {}
+		rect(const gui::point& origin, const gui::size& size) : origin(origin), size(size) {}
+		rect(const rect&) = default;
+		rect& operator=(const rect&) = default;
+		rect(rect&&) = default;
+		rect& operator=(rect&&) = default;
 	};
+
 
 	struct ratio {
 		int num;

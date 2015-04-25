@@ -35,7 +35,7 @@ namespace gui { namespace base {
 	painter::painter(ratio zoom, const rect& clip, const pixels& fontSize, const std::string& fontFamily)
 		: m_zoom{ zoom.num, zoom.denom }
 		, m_origin{ 0, 0 }
-		, m_clip{ clip.pt, clip.sz }
+		, m_clip{ clip }
 		, m_fontSize{ fontSize }
 		, m_fontFamily{ fontFamily }
 		, m_weight{ weight::normal }
@@ -170,7 +170,7 @@ Border border_ ## side{*styles, \
 		if (!node)
 			return false;
 
-		if (m_clip.sz.empty())
+		if (m_clip.size.empty())
 			return false;
 
 		auto sz = node->getSize();
@@ -179,10 +179,10 @@ Border border_ ## side{*styles, \
 
 		auto br = m_origin + sz;
 
-		if (br.x < m_clip.pt.x || br.y < m_clip.pt.y)
+		if (br.x < m_clip.origin.x || br.y < m_clip.origin.y)
 			return false;
 
-		br = m_clip.pt + m_clip.sz;
+		br = m_clip.origin + m_clip.size;
 
 		return !(br.x < m_origin.x || br.y < m_origin.y);
 	}

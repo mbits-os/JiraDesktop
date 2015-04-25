@@ -330,11 +330,11 @@ namespace gui {
 			auto inside_padding_h = height - (offsetTop() + offsetBottom());
 
 			//new vector of the content
-			point vec = { 0, offsetTop() + (inside_padding_h - content.sz.height) / 2 };
+			point vec = { 0, offsetTop() + (inside_padding_h - content.size.height) / 2 };
 
 			if (align != align::left) {
 
-				vec.x = inside_padding_w - content.sz.width;
+				vec.x = inside_padding_w - content.size.width;
 
 				if (align == align::center)
 					vec.x = vec.x / 2;
@@ -343,8 +343,8 @@ namespace gui {
 			vec.x += offsetLeft();
 
 			// New - Old = Delta to apply
-			vec.x -= content.pt.x;
-			vec.y -= content.pt.y;
+			vec.x -= content.origin.x;
+			vec.y -= content.origin.y;
 
 			for (auto& child : m_children) {
 				auto pos = child->getPosition();
@@ -376,8 +376,8 @@ namespace gui {
 	{
 		auto content = getContentPosition();
 		return{
-			content.sz.width + offsetLeft() + offsetRight(),
-			content.sz.height + offsetTop() + offsetBottom()
+			content.size.width + offsetLeft() + offsetRight(),
+			content.size.height + offsetTop() + offsetBottom()
 		};
 	}
 
@@ -889,7 +889,7 @@ namespace gui {
 				max.y = br.y;
 		}
 
-		return{ min, max - min };
+		return{ min, max };
 	}
 
 	bool node_base::imChildOf(const std::shared_ptr<node>& tested) const
