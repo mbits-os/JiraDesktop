@@ -1150,6 +1150,15 @@ std::shared_ptr<gui::node> CTasksView::nodeFromPoint()
 	return m_body->nodeFromPoint(m_mouse.x, m_mouse.y);
 }
 
+std::shared_ptr<gui::node> CTasksView::activeParent(const std::shared_ptr<gui::node>& hovered)
+{
+	auto tmp = hovered;
+	while (tmp && !tmp->isTabStop())
+		tmp = tmp->getParent();
+
+	return tmp;
+}
+
 void CTasksView::setDocumentSize(const gui::size& newSize)
 {
 	m_docSize = newSize;
@@ -1248,7 +1257,7 @@ LRESULT CTasksView::OnMouseDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	mouseFromMessage(lParam);
 
 	auto tmp = m_active;
-	m_active = nodeFromPoint();
+	m_active = activeParent(nodeFromPoint());
 	if (m_active)
 		m_active->setActive(true);
 	if (tmp)
@@ -1264,7 +1273,7 @@ LRESULT CTasksView::OnMouseUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 {
 	mouseFromMessage(lParam);
 
-	auto tmp = nodeFromPoint();
+	auto tmp = activeParent(nodeFromPoint());
 	m_tracking = false;
 	ReleaseCapture();
 

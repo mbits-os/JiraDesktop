@@ -117,6 +117,7 @@ private:
 	void updateTooltip(bool force = false);
 	void updateCursorAndTooltip(bool force = false);
 	std::shared_ptr<gui::node> nodeFromPoint();
+	std::shared_ptr<gui::node> activeParent(const std::shared_ptr<gui::node>&);
 	void setDocumentSize(const gui::size& newSize);
 	void updateDocumentSize();
 
