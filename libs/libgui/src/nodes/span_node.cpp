@@ -37,23 +37,22 @@ namespace gui {
 
 	span_node::span_node(const span_node&) = default;
 
-	size span_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
+	size span_node::measureContents(painter* painter)
 	{
 		size sz;
-		auto x = offX;
-		auto y = offY;
-		m_baseline = 0;
+		pixels x = 0;
+		pixels y = 0;
+		m_contentBaseline = 0;
 
 		for (auto& node : m_children) {
 			node->measure(painter);
-			auto baseline = node->getBaseline();
-			if (baseline > m_baseline)
-				m_baseline = baseline;
+			auto baseline = node->getNodeBaseline();
+			if (baseline > m_contentBaseline)
+				m_contentBaseline = baseline;
 		}
 
 		for (auto& node : m_children) {
-			auto baseOffset = m_baseline - node->getBaseline();
+			auto baseOffset = m_contentBaseline - node->getNodeBaseline();
 			auto ret = node->getSize();
 			auto height = ret.height + baseOffset;
 			if (sz.height < height)
@@ -65,7 +64,7 @@ namespace gui {
 			x += ret.width;
 		}
 
-		m_baseline += offY;
+		m_contentBaseline += m_content.origin.y;
 		return sz;
 	}
 

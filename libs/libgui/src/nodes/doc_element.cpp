@@ -40,9 +40,9 @@ namespace gui {
 
 	void doc_element::invalidate(const point& pt, const size& size)
 	{
-		auto p = pt + m_position.pt;
+		auto p = pt + m_box.origin + m_content.origin;
 		if (m_owner)
-			m_owner->invalidate(pt, size);
+			m_owner->invalidate(p, size);
 	}
 
 	void doc_element::layoutRequired()

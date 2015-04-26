@@ -50,7 +50,8 @@ namespace gui {
 		auto it = m_columns->begin();
 
 		for (auto& node : m_children) {
-			auto ret = node->getMinSize();
+			auto ret = node->getContentSize();
+			ret.width += node->offsetLeft() + node->offsetRight();
 			if (*it < ret.width)
 				*it = ret.width;
 			++it;
@@ -62,9 +63,9 @@ namespace gui {
 		auto it = m_columns->begin();
 
 		size sz;
-		auto x = offsetLeft();
-		auto y = offsetTop();
-		auto h = m_position.size.height;
+		pixels x = 0;
+		pixels y = 0;
+		auto h = m_box.size.height;
 		h -= offsetTop() + offsetBottom();
 		for (auto& node : m_children) {
 			auto w = *it++;
@@ -73,7 +74,7 @@ namespace gui {
 			x += w;
 		}
 
-		m_position.size.width = x + offsetRight();
+		m_box.size.width = x + offsetLeft() + offsetRight();
 	}
 
 	std::shared_ptr<node> row_node::cloneSelf() const

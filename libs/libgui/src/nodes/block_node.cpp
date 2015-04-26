@@ -37,12 +37,11 @@ namespace gui {
 
 	block_node::block_node(const block_node&) = default;
 
-	size block_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
+	size block_node::measureContents(painter* painter)
 	{
 		size sz;
-		auto x = offX;
-		auto y = offY;
+		pixels x = 0;
+		pixels y = 0;
 		for (auto& node : m_children) {
 			node->measure(painter);
 			auto ret = node->getSize();
@@ -55,9 +54,9 @@ namespace gui {
 			y += ret.height;
 		}
 
-		m_baseline = offY;
+		m_contentBaseline = 0;
 		if (!m_children.empty())
-			m_baseline += m_children.front()->getBaseline();
+			m_contentBaseline = m_children.front()->getNodeBaseline();
 
 		return sz;
 	}

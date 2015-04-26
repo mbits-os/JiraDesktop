@@ -38,18 +38,14 @@ namespace gui {
 
 	text_node::text_node(const text_node&) = default;
 
-	void text_node::paintContents(painter* painter,
-		const pixels& offX, const pixels& offY)
+	void text_node::paintContents(painter* painter)
 	{
-		push_origin push{ painter };
-		painter->moveOrigin({ offX, offY });
 		painter->paintString(m_data[Attr::Text]);
 	}
 
-	size text_node::measureContents(painter* painter,
-		const pixels&, const pixels& offY)
+	size text_node::measureContents(painter* painter)
 	{
-		m_baseline = painter->fontBaseline() + offY;
+		m_contentBaseline = painter->fontBaseline();
 		return painter->measureString(m_data[Attr::Text]);
 	}
 

@@ -49,7 +49,7 @@ namespace gui {
 	{
 		m_data[Attr::Href] = uri;
 		node_base::setTooltip(tooltip);
-		m_position.size.width = m_position.size.height = 16_px;
+		m_box.size = { 16_px, 16_px };
 	}
 
 	icon_node::icon_node(const icon_node& nod) = default;
@@ -66,18 +66,14 @@ namespace gui {
 		m_image->registerListener(m_cb);
 	}
 
-	void icon_node::paintContents(painter* painter,
-		const pixels& offX, const pixels& offY)
+	void icon_node::paintContents(painter* painter)
 	{
-		push_origin push{ painter };
-		painter->moveOrigin({ offX, offY });
 		painter->paintImage(m_image.get(), 16_px, 16_px);
 	}
 
-	size icon_node::measureContents(painter*,
-		const pixels&, const pixels& offY)
+	size icon_node::measureContents(painter*)
 	{
-		m_baseline = 16_px + offY;
+		m_contentBaseline = 16_px;
 		return{ 16_px, 16_px };
 	}
 
@@ -99,7 +95,7 @@ namespace gui {
 		, m_selectedSize(0)
 	{
 		node_base::setTooltip(tooltip);
-		m_position.size.width = m_position.size.height = 16_px;
+		m_box.size = { 16_px, 16_px };
 	}
 
 	user_node::user_node(const user_node&) = default;
@@ -111,19 +107,15 @@ namespace gui {
 		m_cb->parent.reset();
 	}
 
-	void user_node::paintContents(painter* painter,
-		const pixels& offX, const pixels& offY)
+	void user_node::paintContents(painter* painter)
 	{
-		push_origin push{ painter };
-		painter->moveOrigin({ offX, offY });
 		painter->paintImage(m_image.get(), 16_px, 16_px);
 	}
 
-	size user_node::measureContents(painter* painter,
-		const pixels&, const pixels& offY)
+	size user_node::measureContents(painter* painter)
 	{
 		auto size = 16_px;
-		m_baseline = size + offY;
+		m_contentBaseline = size;
 
 		internalSetSize(size, size);
 		auto scaled = (size_t)(painter->trueZoom().scaleL(size.value()));
@@ -161,7 +153,7 @@ namespace gui {
 			}
 		}
 
-		size = m_position.size.width;
+		size = m_box.size.width;
 
 		if (selected == m_selectedSize)
 			return{ size, size };

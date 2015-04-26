@@ -33,8 +33,7 @@ namespace gui {
 		table_node();
 		table_node(const table_node&);
 
-		size measureContents(painter* painter,
-			const pixels& offX, const pixels& offY) override;
+		size measureContents(painter* painter) override;
 		bool isSupported(const std::shared_ptr<node>&) override;
 		void onAdded(const std::shared_ptr<node>&) override;
 		void onRemoved(const std::shared_ptr<node>&) override;

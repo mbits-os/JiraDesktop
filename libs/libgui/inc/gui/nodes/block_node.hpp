@@ -31,8 +31,7 @@ namespace gui {
 	public:
 		block_node(elem name);
 		block_node(const block_node&);
-		size measureContents(painter* painter,
-			const pixels& offX, const pixels& offY) override;
+		size measureContents(painter* painter) override;
 
 		std::shared_ptr<node> cloneSelf() const override;
 	};

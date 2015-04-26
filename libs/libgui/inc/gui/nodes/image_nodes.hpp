@@ -47,10 +47,8 @@ namespace gui {
 		icon_node(const icon_node& nod);
 		~icon_node();
 		void attach();
-		void paintContents(painter* painter,
-			const pixels& offX, const pixels& offY) override;
-		size measureContents(painter* painter,
-			const pixels& offX, const pixels& offY) override;
+		void paintContents(painter* painter) override;
+		size measureContents(painter* painter) override;
 
 		bool isSupported(const std::shared_ptr<node>&) override;
 		std::shared_ptr<node> cloneSelf() const override;
@@ -66,10 +64,8 @@ namespace gui {
 		user_node(const std::weak_ptr<document_impl>& document, std::map<uint32_t, std::string>&& avatar, const std::string& tooltip);
 		user_node(const user_node&);
 		~user_node();
-		void paintContents(painter* painter,
-			const pixels& offX, const pixels& offY) override;
-		size measureContents(painter* painter,
-			const pixels& offX, const pixels& offY) override;
+		void paintContents(painter* painter) override;
+		size measureContents(painter* painter) override;
 
 		bool isSupported(const std::shared_ptr<node>&) override;
 		std::shared_ptr<node> cloneSelf() const override;

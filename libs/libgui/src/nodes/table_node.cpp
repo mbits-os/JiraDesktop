@@ -39,8 +39,7 @@ namespace gui {
 
 	table_node::table_node(const table_node&) = default;
 
-	size table_node::measureContents(painter* painter,
-		const pixels& offX, const pixels& offY)
+	size table_node::measureContents(painter* painter)
 	{
 		size_t columns = 0;
 		for (auto& node : m_children) {
@@ -53,7 +52,7 @@ namespace gui {
 
 		m_columns->assign(columns, 0);
 
-		auto content = block_node::measureContents(painter, offX, offY);
+		auto content = block_node::measureContents(painter);
 
 		for (auto& node : m_children)
 			static_cast<row_node*>(node.get())->gatherColumns();
