@@ -632,9 +632,8 @@ namespace {
 			.add(gui::elem::block,                         display(gui::display::block))
 			.add(gui::elem::header,                        display(gui::display::block) <<
 			                                               font_size(1.8_em) <<
-			                                               padding(.5_em, .2_px, .4_em))
-			                                               // margin(.3_em, 0_px, .2_em) <<
-			                                               // padding(.2_em, .2_px, .2_em))
+			                                               margin(.2_em, 0_px, .3_em) <<
+			                                               padding(.2_em, 1_em, .3_em))
 
 			// TABLE
 			.add(gui::elem::table,                         display(gui::display::table))
@@ -655,7 +654,9 @@ namespace {
 
 		// Application styleshet
 		out
-			.add(gui::elem::header,                        color(0x883333))
+			.add(gui::elem::header,                        color(0x883333) <<
+			                                               border_top(1.5_px, gui::line_style::solid, 0xcc9999) <<
+			                                               border_bottom(.75_px, gui::line_style::solid, 0xcc9999))
 			.add(gui::elem::table,                         border(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add(gui::elem::table_row,                     border_top(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf5f5f5))
@@ -671,7 +672,7 @@ namespace {
 			.add(class_name{ "error" },                    color(0x171BC1))
 			.add(class_name{ "empty" },                    none_empty)
 			.add(class_name{ "none" },                     none_empty)
-			.add(class_name{ "summary" },                  font_size(.8_em) << color(0x555555))
+			.add(class_name{ "summary" },                  font_size(.8_em) << color(0x555555) << margin(1_em, 0_px))
 			.add(class_name{ "symbol" },                   font_family("FontAwesome"))
 			.add(class_name{ "unexpected" },               color(0x2600E6))
 			.add(class_name{ "label" },                    background(0xF5F5F5) <<
