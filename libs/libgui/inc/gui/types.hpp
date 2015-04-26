@@ -117,6 +117,11 @@ namespace gui {
 			m_len -= rhs.m_len;
 			return *this;
 		}
+
+		length operator-() const
+		{
+			return{ -m_len };
+		}
 	};
 
 	template <typename Ratio>

@@ -55,8 +55,19 @@ namespace gui {
 		virtual point getPosition() = 0;
 		virtual point getAbsolutePos() = 0;
 		virtual size getSize() = 0;
-		virtual size getMinSize() = 0;
-		virtual pixels getBaseline() = 0;
+		virtual box getMargin() = 0;
+		virtual box getBorder() = 0;
+		virtual box getPadding() = 0;
+		virtual box getReach() = 0;
+		virtual point getContentPosition() = 0;
+		virtual size getContentSize() = 0;
+		virtual box getContentReach() = 0;
+		virtual pixels getContentBaseline() = 0;
+		virtual pixels getNodeBaseline() = 0;
+		virtual pixels offsetLeft() const = 0; // border-left-width + padding-left
+		virtual pixels offsetTop() const = 0; // border-top-width + padding-top
+		virtual pixels offsetRight() const = 0; // border-right-width + padding-right
+		virtual pixels offsetBottom() const = 0; // border-bottom-width + padding-bottom
 
 		virtual std::shared_ptr<node> getParent() const = 0;
 		virtual void setParent(const std::shared_ptr<node>&) = 0;

@@ -259,12 +259,13 @@ namespace gui {
 		auto& ref = *style;
 		if (ref.has(styles::prop_background)) {
 			painter->paintBackground(ref.get(styles::prop_background),
-				m_position.size.width, m_position.size.height);
+				m_box.size.width, m_box.size.height);
 		}
 
 		painter->paintBorder(this);
 
-		paintContents(painter, offsetLeft(), offsetTop());
+		painter->moveOrigin(m_content.origin);
+		paintContents(painter);
 	}
 
 	static pixels calculated(const styles::rule_storage& rules,
@@ -290,17 +291,21 @@ namespace gui {
 
 		point tl{ offsetLeft(), offsetTop() };
 		point br{ offsetRight(), offsetBottom() };
-		auto size = measureContents(painter, tl.x, tl.y);
 
-		internalSetSize(tl.x + br.x + size.width, tl.y + br.y + size.height);
+		m_content.size = measureContents(painter);
+		m_content.origin = tl;
+
+		auto size = tl + br + m_content.size;
+
+		internalSetSize(size.x, size.y);
 	}
 
 	void node_base::setPosition(const pixels& x, const pixels& y)
 	{
-		if (!m_position.size.empty())
+		if (!m_box.size.empty())
 			invalidate();
-		m_position.pt = { x, y };
-		if (!m_position.size.empty())
+		m_box.origin = { x, y };
+		if (!m_box.size.empty())
 			invalidate();
 	}
 
@@ -319,43 +324,29 @@ namespace gui {
 			disp = ref.get(styles::prop_display);
 
 		if (disp == display::table_cell) {
-
 			auto align = align::left;
 			if (ref.has(styles::prop_text_align))
 				align = ref.get(styles::prop_text_align);
-
-			auto content = getContentPosition();
 
 			auto inside_padding_w = width - (offsetLeft() + offsetRight());
 			auto inside_padding_h = height - (offsetTop() + offsetBottom());
 
 			//new vector of the content
-			point vec = { 0, offsetTop() + (inside_padding_h - content.size.height) / 2 };
+			m_content.origin = { 0, offsetTop() + (inside_padding_h - m_content.size.height) / 2 };
 
 			if (align != align::left) {
-
-				vec.x = inside_padding_w - content.size.width;
+				m_content.origin.x = inside_padding_w - m_content.size.width;
 
 				if (align == align::center)
-					vec.x = vec.x / 2;
+					m_content.origin.x = m_content.origin.x / 2;
 			}
-
-			vec.x += offsetLeft();
-
-			// New - Old = Delta to apply
-			vec.x -= content.origin.x;
-			vec.y -= content.origin.y;
-
-			for (auto& child : m_children) {
-				auto pos = child->getPosition();
-				child->setPosition(pos.x + vec.x, pos.y + vec.y);
-			}
+			m_content.origin.x += offsetLeft();
 		}
 	}
 
 	point node_base::getPosition()
 	{
-		return m_position.pt;
+		return m_box.origin;
 	}
 
 	point node_base::getAbsolutePos()
@@ -364,26 +355,58 @@ namespace gui {
 		if (!parent)
 			return getPosition();
 		auto pt = parent->getAbsolutePos();
-		return pt + m_position.pt;
+		auto off = parent->getContentPosition();
+		return pt + off + m_box.origin;
 	}
 
 	size node_base::getSize()
 	{
-		return m_position.size;
+		return m_box.size;
 	}
 
-	size node_base::getMinSize()
+	box node_base::getMargin()
 	{
-		auto content = getContentPosition();
-		return{
-			content.size.width + offsetLeft() + offsetRight(),
-			content.size.height + offsetTop() + offsetBottom()
-		};
+		return m_styled.margin;
 	}
 
-	pixels node_base::getBaseline()
+	box node_base::getBorder()
 	{
-		return m_baseline;
+		return m_styled.border;
+	}
+
+	box node_base::getPadding()
+	{
+		return m_styled.padding;
+	}
+
+	box node_base::getReach()
+	{
+		return m_box.values;
+	}
+
+	point node_base::getContentPosition()
+	{
+		return m_content.origin;
+	}
+
+	size node_base::getContentSize()
+	{
+		return m_content.size;
+	}
+
+	box node_base::getContentReach()
+	{
+		return m_content.values;
+	}
+
+	pixels node_base::getContentBaseline()
+	{
+		return m_contentBaseline;
+	}
+
+	pixels node_base::getNodeBaseline()
+	{
+		return m_contentBaseline + m_content.origin.y;
 	}
 
 	std::shared_ptr<node> node_base::getParent() const
@@ -398,12 +421,12 @@ namespace gui {
 
 	void node_base::invalidate()
 	{
-		invalidate({ 0, 0 }, m_position.size);
+		invalidate(-m_content.origin, m_box.size);
 	}
 
 	void node_base::invalidate(const point& pt, const size& size)
 	{
-		auto p = pt + m_position.pt;
+		auto p = pt + m_box.origin + m_content.origin;
 		auto parent = m_parent.lock();
 		if (parent)
 			parent->invalidate(p, size);
@@ -411,13 +434,15 @@ namespace gui {
 
 	std::shared_ptr<node> node_base::nodeFromPoint(const pixels& x_, const pixels& y_)
 	{
-		auto x = x_ - m_position.pt.x;
-		auto y = y_ - m_position.pt.y;
+		auto x = x_ - m_box.origin.x;
+		auto y = y_ - m_box.origin.y;
 
-		if (x < 0 || x > m_position.size.width ||
-			y < 0 || y > m_position.size.height)
+		if (x < 0 || x > m_box.size.width ||
+			y < 0 || y > m_box.size.height)
 			return nullptr;
 
+		x -= m_content.origin.x;
+		y -= m_content.origin.y;
 		for (auto& node : m_children) {
 			auto tmp = node->nodeFromPoint(x, y);
 			if (tmp)
@@ -490,8 +515,7 @@ namespace gui {
 			parent->activate();
 	}
 
-	void node_base::paintContents(painter* painter,
-		const pixels&, const pixels&)
+	void node_base::paintContents(painter* painter)
 	{
 		for (auto& node : m_children) {
 			push_origin push{ painter };
@@ -683,54 +707,53 @@ namespace gui {
 				*m_calculatedHoverActive <<= active;
 			}
 		}
+
+		updateBoxes();
+	}
+
+	static void setBox(styles::rule_storage& ref, gui::box& box,
+		styles::length_prop top, styles::length_prop right,
+		styles::length_prop bottom, styles::length_prop left)
+	{
+		box.top = calculated(ref, top);
+		box.right = calculated(ref, right);
+		box.bottom = calculated(ref, bottom);
+		box.left = calculated(ref, left);
+	}
+
+	void node_base::updateBoxes()
+	{
+		m_styled = {};
+		auto style = calculatedStyle();
+		if (!style)
+			return;
+
+		auto& ref = *style;
+		using namespace styles;
+
+		setBox(ref, m_styled.margin, prop_margin_top, prop_margin_right, prop_margin_bottom, prop_margin_left);
+		setBox(ref, m_styled.border, prop_border_top_width, prop_border_right_width, prop_border_bottom_width, prop_border_left_width);
+		setBox(ref, m_styled.padding, prop_padding_top, prop_padding_right, prop_padding_bottom, prop_padding_left);
 	}
 
 	pixels node_base::offsetLeft() const
 	{
-		auto style = calculatedStyle();
-		if (!style)
-			return{};
-
-		auto& ref = *style;
-		return
-			calculated(ref, styles::prop_border_left_width) +
-			calculated(ref, styles::prop_padding_left);
+		return m_styled.border.left + m_styled.padding.left;
 	}
 
 	pixels node_base::offsetTop() const
 	{
-		auto style = calculatedStyle();
-		if (!style)
-			return{};
-
-		auto& ref = *style;
-		return
-			calculated(ref, styles::prop_border_top_width) +
-			calculated(ref, styles::prop_padding_top);
+		return m_styled.border.top + m_styled.padding.top;
 	}
 
 	pixels node_base::offsetRight() const
 	{
-		auto style = calculatedStyle();
-		if (!style)
-			return{};
-
-		auto& ref = *style;
-		return
-			calculated(ref, styles::prop_border_right_width) +
-			calculated(ref, styles::prop_padding_right);
+		return m_styled.border.right + m_styled.padding.right;
 	}
 
 	pixels node_base::offsetBottom() const
 	{
-		auto style = calculatedStyle();
-		if (!style)
-			return{};
-
-		auto& ref = *style;
-		return
-			calculated(ref, styles::prop_border_bottom_width) +
-			calculated(ref, styles::prop_padding_bottom);
+		return m_styled.border.bottom + m_styled.padding.bottom;
 	}
 
 	bool node_base::isTabStop() const
@@ -856,16 +879,16 @@ namespace gui {
 
 	void node_base::internalSetSize(const pixels& width, const pixels& height)
 	{
-		if (!m_position.size.empty())
+		if (!m_box.size.empty())
 			invalidate();
 
-		m_position.size = { width, height };
+		m_box.size = { width, height };
 
-		if (!m_position.size.empty())
+		if (!m_box.size.empty())
 			invalidate();
 	}
 
-	rect node_base::getContentPosition() const
+	rect node_base::getContentRect() const
 	{
 		point min, max;
 		if (!m_children.empty()) {

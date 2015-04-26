@@ -39,8 +39,15 @@ namespace gui {
 		point getPosition() override;
 		point getAbsolutePos() override;
 		size getSize() override;
-		size getMinSize() override;
-		pixels getBaseline() override;
+		box getMargin() override;
+		box getBorder() override;
+		box getPadding() override;
+		box getReach() override;
+		point getContentPosition() override;
+		size getContentSize() override;
+		box getContentReach() override;
+		pixels getContentBaseline() override;
+		pixels getNodeBaseline() override;
 
 		std::shared_ptr<node> getParent() const override;
 		void setParent(const std::shared_ptr<node>&) override;
@@ -65,10 +72,10 @@ namespace gui {
 		std::shared_ptr<styles::stylesheet> styles() const override;
 		void applyStyles(const std::shared_ptr<styles::stylesheet>& stylesheet) override;
 		void calculateStyles();
-		pixels offsetLeft() const; // border-left-width + padding-left
-		pixels offsetTop() const; // border-top-width + padding-top
-		pixels offsetRight() const; // border-right-width + padding-right
-		pixels offsetBottom() const; // border-bottom-width + padding-bottom
+		pixels offsetLeft() const;
+		pixels offsetTop() const;
+		pixels offsetRight() const;
+		pixels offsetBottom() const;
 
 		bool isTabStop() const override;
 		std::shared_ptr<node> getNextItem(bool freshLookup) const override;
@@ -77,10 +84,8 @@ namespace gui {
 		std::shared_ptr<node> prevTabStop(const std::shared_ptr<node>& start) const;
 
 		void openLink(const std::string& url);
-		virtual void paintContents(painter* painter,
-			const pixels& offX, const pixels& offY);
-		virtual size measureContents(painter* painter,
-			const pixels& offX, const pixels& offY) = 0;
+		virtual void paintContents(painter* painter);
+		virtual size measureContents(painter* painter) = 0;
 		virtual bool isSupported(const std::shared_ptr<node>&);
 		virtual void onAdded(const std::shared_ptr<node>&);
 		virtual void onRemoved(const std::shared_ptr<node>&);
@@ -94,11 +99,10 @@ namespace gui {
 		std::vector<std::string> m_classes;
 		std::weak_ptr<node> m_parent;
 		std::shared_ptr<styles::stylesheet> m_stylesheet;
-		struct {
-			point pt;
-			size size;
-		} m_position;
-		pixels m_baseline;
+		reach m_content;
+		reach m_box;
+		css_box m_styled;
+		pixels m_contentBaseline;
 
 		std::atomic<int> m_hoverCount{ 0 };
 		std::atomic<int> m_activeCount{ 0 };
@@ -116,7 +120,8 @@ namespace gui {
 		}
 
 		void internalSetSize(const pixels& width, const pixels& height);
-		rect getContentPosition() const;
+		rect getContentRect() const;
+		void updateBoxes();
 	private:
 		bool imChildOf(const std::shared_ptr<node>&) const;
 	};

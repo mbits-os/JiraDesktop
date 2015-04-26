@@ -44,6 +44,10 @@ namespace gui {
 		point& operator=(const point&) = default;
 		point(point&&) = default;
 		point& operator=(point&&) = default;
+
+		point operator-() const {
+			return{ -x, -y };
+		}
 	};
 
 	struct size {
@@ -141,12 +145,11 @@ namespace gui {
 		rect& operator=(rect&&) = default;
 	};
 
-	struct reach {
-		rect position;
+	struct reach : rect {
 		box values;
 
 		reach() = default;
-		reach(const rect& position, const box& values) : position(position), values(values) {}
+		reach(const rect& position, const box& values) : rect(position), values(values) {}
 		reach(const reach&) = default;
 		reach& operator=(const reach&) = default;
 		reach(reach&&) = default;
