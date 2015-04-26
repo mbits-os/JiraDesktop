@@ -394,6 +394,50 @@ def page_dls(dir, files):
 		out.append('<a href="%s" rel="nofollow"><small class="right light">%s</small><span class="left light icon icon-%s"></span>%s</a>' % (urllib.quote(fname), sizeOf(os.path.join(dir, fname)), iconClass(fname), fname))
 	return out
 
+def page_prev_notes(dir):
+	full = os.path.abspath(dir)
+	parent, here = os.path.split(full)
+	try:
+		if here != str(int(here)):
+			print 'u-oh!'
+			return None
+	except:
+		print "uuups!"
+		return None
+	here = int(here)
+	for i in range(1, here):
+		test = os.path.join(parent, str(here - i), 'release-notes.txt')
+		if os.path.exists(test): return test
+
+def issues_in(lines):
+	issues = {}
+	for line in lines:
+		m = re.match('\s*\*\s+\[([A-Z]+)-([0-9]+)\]', line.rstrip())
+		if m: issues[(m.group(1), m.group(2))] = 1
+	return sorted(issues.keys())
+
+def apply_diff(lines, path):
+	new = issues_in(lines)
+	old = []
+	
+	with open(path) as f:
+		old = issues_in(f.readlines())
+
+	added = []
+	for issue in new:
+		if issue not in old:
+			added.append(issue)
+
+	text = []
+	for line in lines:
+		m = re.match('(\s*\*\s+)(\[([A-Z]+)-([0-9]+)\]\s+.*)', line.rstrip())
+		if m and (m.group(3), m.group(4)) in added:
+			text.append('%s<ins>%s</ins>' % (m.group(1), m.group(2)))
+		else:
+			text.append(line.rstrip())
+
+	return text
+
 def index_single(out, dir):
 	build = version(dir)
 	commit = page_commit(build)
@@ -411,8 +455,14 @@ def index_single(out, dir):
 
 	try:
 		with open(os.path.join(dir, 'release-notes.txt')) as r:
+			lines = r.readlines()
+			prev = page_prev_notes(dir)
+			if prev is not None:
+				lines = apply_diff(lines, prev)
+			else:
+				lines = [line.rstrip() for line in lines]
 			print >>out, '<h2><span id="notes">Release notes</span></h2>'
-			print >>out, markdown.markdown("".join(r.readlines()))
+			print >>out, markdown.markdown("\n".join(lines))
 	except: pass
 
 	if not public_build(build):

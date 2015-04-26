@@ -218,3 +218,9 @@ li.entry:last-child {
 	color: #fff;
 	background: #60b044;
 }
+
+ins {
+	text-decoration: none;
+	color: #080;
+	background: #cfc
+}
