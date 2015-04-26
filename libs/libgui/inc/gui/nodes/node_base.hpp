@@ -120,8 +120,9 @@ namespace gui {
 		}
 
 		void internalSetSize(const pixels& width, const pixels& height);
-		rect getContentRect() const;
 		void updateBoxes();
+		void findContentReach();
+		void updateReach();
 	private:
 		bool imChildOf(const std::shared_ptr<node>&) const;
 	};

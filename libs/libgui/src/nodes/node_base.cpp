@@ -298,6 +298,8 @@ namespace gui {
 		auto size = tl + br + m_content.size;
 
 		internalSetSize(size.x, size.y);
+
+		findContentReach();
 	}
 
 	void node_base::setPosition(const pixels& x, const pixels& y)
@@ -341,6 +343,8 @@ namespace gui {
 					m_content.origin.x = m_content.origin.x / 2;
 			}
 			m_content.origin.x += offsetLeft();
+
+			updateReach();
 		}
 	}
 
@@ -734,6 +738,47 @@ namespace gui {
 		setBox(ref, m_styled.margin, prop_margin_top, prop_margin_right, prop_margin_bottom, prop_margin_left);
 		setBox(ref, m_styled.border, prop_border_top_width, prop_border_right_width, prop_border_bottom_width, prop_border_left_width);
 		setBox(ref, m_styled.padding, prop_padding_top, prop_padding_right, prop_padding_bottom, prop_padding_left);
+
+		updateReach();
+	}
+
+	void node_base::findContentReach()
+	{
+		pixels before, after;
+		if (!m_children.empty()) {
+			auto& child = m_children[0];
+			auto reach = child->getReach();
+			auto height = child->getSize().height;
+			auto y = child->getPosition().y;
+			before = y - reach.top;
+			after = y + height + reach.bottom;
+		}
+
+		for (auto& child : m_children) {
+			auto reach = child->getReach();
+			auto height = child->getSize().height;
+			auto y = child->getPosition().y;
+
+			auto B = y - reach.top;
+			auto A = y + height + reach.bottom;
+
+			if (before > B)
+				before = B;
+			if (after < A)
+				after = A;
+		}
+
+		m_content.values = { m_content.origin.y - before, 0, after - (m_content.origin.y + m_content.size.height) };
+		updateReach();
+	}
+
+	void node_base::updateReach()
+	{
+		m_box.values.left = m_styled.margin.left;
+		m_box.values.right = m_styled.margin.right;
+		m_box.values.top = std::max(m_styled.margin.top, m_content.values.top - m_content.origin.y);
+		auto content_after = m_box.size.height - m_content.origin.y - m_content.size.height;
+		m_box.values.bottom = std::max(m_styled.margin.bottom, m_content.values.bottom - content_after);
 	}
 
 	pixels node_base::offsetLeft() const
@@ -886,33 +931,6 @@ namespace gui {
 
 		if (!m_box.size.empty())
 			invalidate();
-	}
-
-	rect node_base::getContentRect() const
-	{
-		point min, max;
-		if (!m_children.empty()) {
-			auto& child = m_children[0];
-			min = child->getPosition();
-			max = min + child->getSize();
-		}
-
-		for (auto& child : m_children) {
-			auto tl = child->getPosition();
-			auto br = tl + child->getSize();
-
-			if (min.x > tl.x)
-				min.x = tl.x;
-			if (min.y > tl.y)
-				min.y = tl.y;
-
-			if (max.x < br.x)
-				max.x = br.x;
-			if (max.y < br.y)
-				max.y = br.y;
-		}
-
-		return{ min, max };
 	}
 
 	bool node_base::imChildOf(const std::shared_ptr<node>& tested) const

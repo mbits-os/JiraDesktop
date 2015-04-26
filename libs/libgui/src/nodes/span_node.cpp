@@ -54,14 +54,16 @@ namespace gui {
 		for (auto& node : m_children) {
 			auto baseOffset = m_contentBaseline - node->getNodeBaseline();
 			auto ret = node->getSize();
+			auto reach = node->getReach();
 			auto height = ret.height + baseOffset;
 			if (sz.height < height)
 				sz.height = height;
 
-			node->setPosition(x, y + baseOffset);
+			node->setPosition(x + reach.left, y + baseOffset);
 
-			sz.width += ret.width;
-			x += ret.width;
+			auto width = ret.width + reach.left + reach.right;
+			sz.width += width;
+			x += width;
 		}
 
 		m_contentBaseline += m_content.origin.y;

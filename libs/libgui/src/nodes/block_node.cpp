@@ -42,16 +42,28 @@ namespace gui {
 		size sz;
 		pixels x = 0;
 		pixels y = 0;
+		pixels previous = 0;
+		bool first = 0;
 		for (auto& node : m_children) {
 			node->measure(painter);
 			auto ret = node->getSize();
-			if (sz.width < ret.width)
-				sz.width = ret.width;
+			auto reach = node->getReach();
+			auto width = ret.width + reach.left + reach.right;
+			if (sz.width < width)
+				sz.width = width;
 
-			node->setPosition(x, y);
+			pixels pre;
+			if (first)
+				first = true;
+			else
+				pre = max(previous, reach.top);
 
-			sz.height += ret.height;
-			y += ret.height;
+			node->setPosition(x + reach.left, y + pre);
+
+			sz.height += ret.height + pre;
+			y += ret.height + pre;
+
+			previous = reach.bottom;
 		}
 
 		m_contentBaseline = 0;
