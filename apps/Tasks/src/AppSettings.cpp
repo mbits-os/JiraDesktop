@@ -3,46 +3,51 @@
 #include "version.h"
 
 namespace servers {
-	static std::shared_ptr<jira::server> load(const settings::Section& section, const std::string& prefix)
+	static std::shared_ptr<jira::server> load_srv(const settings::Section& section)
 	{
-		auto name = section.getString(prefix + "name");
-		auto login = section.getString(prefix + "login");
-		auto password = section.getBinary(prefix + "password");
-		auto url = section.getString(prefix + "url");
-		auto jql = section.getString(prefix + "query");
-		auto fields = section.getString(prefix + "fields");
-		auto timeout = section.getType(prefix + "timeout") == settings::UInt32 ?
-			std::chrono::seconds{ section.getUInt32(prefix + "timeout") } : std::chrono::milliseconds::max();
+		auto name = section.getString("Name");
+		auto login = section.getString("Login");
+		auto password = section.getBinary("Password");
+		auto url = section.getString("URL");
+		auto items = section.getUInt32("Items");
+		auto sub = section.group("0");
+		auto jql = sub.getString("Query");
+		auto fields = sub.getString("Fields");
+		auto timeout = sub.getType("Timeout") == settings::UInt32 ?
+			std::chrono::seconds{ sub.getUInt32("Timeout") } : std::chrono::milliseconds::max();
 
 		return std::make_shared<jira::server>(name, login, password, url, jira::search_def{ jql, fields, timeout }, jira::server::stored);
 	}
 
-	static void store(const jira::server* server, settings::Section& section, const std::string& prefix)
+	static void store_srv(const jira::server* server, settings::Section& section)
 	{
 		if (!server->name().empty())
-			section.setString(prefix + "name", server->name());
+			section.setString("Name", server->name());
 		else
-			section.unset(prefix + "name");
+			section.unset("Name");
 
-		section.setString(prefix + "login", server->login());
-		section.setBinary(prefix + "password", server->password());
-		section.setString(prefix + "url", server->url());
+		section.setString("Login", server->login());
+		section.setBinary("Password", server->password());
+		section.setString("URL", server->url());
+		section.setUInt32("Items", 1);
 
+		auto sub = section.group("0");
+		sub.setString("Type", "query");
 		auto& view = server->view();
 		if (!view.jql().empty())
-			section.setString(prefix + "query", view.jql());
+			sub.setString("Query", view.jql());
 		else
-			section.unset(prefix + "query");
+			sub.unset("Query");
 
 		if (!view.columns().empty())
-			section.setString(prefix + "fields", view.columnsDescr());
+			sub.setString("Fields", view.columnsDescr());
 		else
-			section.unset(prefix + "field");
+			sub.unset("Fields");
 
 		if (view.timeout().count() < std::numeric_limits<uint32_t>::max())
-			section.setUInt32(prefix + "timeout", (uint32_t)view.timeout().count());
+			sub.setUInt32("Timeout", (uint32_t)view.timeout().count());
 		else
-			section.unset(prefix + "timeout");
+			sub.unset("Timeout");
 	}
 
 	static std::vector<std::shared_ptr<jira::server>> load(const settings::Section& section)
@@ -53,7 +58,8 @@ namespace servers {
 		servers.reserve(size);
 
 		for (decltype(size) i = 0; i < size; ++i) {
-			servers.push_back(load(section, "Server" + std::to_string(i) + "."));
+			auto sub = section.group(std::to_string(i));
+			servers.push_back(load_srv(sub));
 		}
 
 		return std::move(servers);
@@ -65,7 +71,8 @@ namespace servers {
 
 		size_t i = 0;
 		for (auto& server : servers) {
-			store(server.get(), section, "Server" + std::to_string(i) + ".");
+			auto sub = section.group(std::to_string(i));
+			store_srv(server.get(), sub);
 			++i;
 		}
 	}
@@ -84,12 +91,12 @@ CAppSettings::CAppSettings()
 
 std::vector<std::shared_ptr<jira::server>> CAppSettings::jiraServers() const
 {
-	return servers::load(group("JiraServers"));
+	return servers::load(group("Jira").group("Servers"));
 }
 
 void CAppSettings::jiraServers(const std::vector<std::shared_ptr<jira::server>>& list)
 {
-	unsetGroup("Servers");
-	auto servers = group("JiraServers");
+	group("Jira").unsetGroup("Servers");
+	auto servers = group("Jira").group("Servers");
 	servers::store(list, servers);
 }
