@@ -61,13 +61,15 @@ namespace jira
 	};
 
 	class search_def {
+		std::string m_title;
 		std::string m_jql;
 		std::vector<std::string> m_columns;
 		std::chrono::milliseconds m_timeout{ std::chrono::milliseconds::max() };
 	public:
 		search_def() = default;
-		search_def(const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout);
-		search_def(const std::string& jql, const std::vector<std::string>& columns, std::chrono::milliseconds timeout);
+		search_def(const std::string& title, const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout);
+		search_def(const std::string& title, const std::string& jql, const std::vector<std::string>& columns, std::chrono::milliseconds timeout);
+		const std::string& title() const { return m_title; }
 		const std::string& jql() const { return m_jql; }
 		const std::vector<std::string>& columns() const { return m_columns; }
 		std::string columnsDescr() const;

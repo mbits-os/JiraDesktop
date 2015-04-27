@@ -52,7 +52,7 @@ struct on_exit_t {
 
 namespace jira
 {
-	search_def const search_def::standard{ "assignee=currentUser() and resolution is empty"s,
+	search_def const search_def::standard{ "Assigned to Me"s, "assignee=currentUser() and resolution is empty"s,
 		{ "status"s, "assignee"s, "key"s, "priority"s, "summary"s, "resolution"s },
 		15min
 	};
@@ -101,8 +101,9 @@ namespace jira
 		}
 	}
 
-	search_def::search_def(const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout)
-		: m_jql(jql)
+	search_def::search_def(const std::string& title, const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout)
+		: m_title(title)
+		, m_jql(jql)
 		, m_columns(split(columnsDescr, ","))
 		, m_timeout((size_t)timeout.count())
 	{
@@ -110,8 +111,9 @@ namespace jira
 			m_columns.clear();
 	}
 
-	search_def::search_def(const std::string& jql, const std::vector<std::string>& columns, std::chrono::milliseconds timeout)
-		: m_jql(jql)
+	search_def::search_def(const std::string& title, const std::string& jql, const std::vector<std::string>& columns, std::chrono::milliseconds timeout)
+		: m_title(title)
+		, m_jql(jql)
 		, m_columns(columns)
 		, m_timeout((size_t)timeout.count())
 	{
