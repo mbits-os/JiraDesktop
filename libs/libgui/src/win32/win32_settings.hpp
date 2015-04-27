@@ -30,9 +30,20 @@
 
 namespace settings { namespace win32 {
 	class Win32Impl : public Section::Impl {
-		HKEY m_key;
+		enum class mode {
+			closed,
+			readonly,
+			writeable
+		};
+
+		std::wstring m_keyName;
+		mutable HKEY m_key;
+		mutable mode m_open;
+
+		bool ensureReadable() const;
+		bool ensureWriteable() const;
 	public:
-		Win32Impl(HKEY key);
+		Win32Impl(const std::wstring& keyName);
 		~Win32Impl();
 
 		std::shared_ptr<Section::Impl> group(const std::string& name) const override;
