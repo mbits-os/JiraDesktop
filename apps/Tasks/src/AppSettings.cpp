@@ -9,15 +9,23 @@ namespace servers {
 		auto login = section.getString("Login");
 		auto password = section.getBinary("Password");
 		auto url = section.getString("URL");
-		auto items = section.getUInt32("Items");
-		auto sub = section.group("0");
-		auto title = sub.getString("Title");
-		auto jql = sub.getString("Query");
-		auto fields = sub.getString("Fields");
-		auto timeout = sub.getType("Timeout") == settings::UInt32 ?
-			std::chrono::seconds{ sub.getUInt32("Timeout") } : std::chrono::milliseconds::max();
 
-		return std::make_shared<jira::server>(name, login, password, url, jira::search_def{ title, jql, fields, timeout }, jira::server::stored);
+		auto items = section.getUInt32("Items");
+		std::vector<jira::search_def> views;
+		views.reserve(items);
+
+		for (size_t id = 0; id < items; ++id) {
+			auto sub = section.group(std::to_string(id));
+			auto title = sub.getString("Title");
+			auto jql = sub.getString("Query");
+			auto fields = sub.getString("Fields");
+			auto timeout = sub.getType("Timeout") == settings::UInt32 ?
+				std::chrono::seconds{ sub.getUInt32("Timeout") } : std::chrono::milliseconds::max();
+
+			views.emplace_back(title, jql, fields, timeout);
+		}
+
+		return std::make_shared<jira::server>(name, login, password, url, views, jira::server::stored);
 	}
 
 	static void store_srv(const jira::server* server, settings::Section& section)
@@ -30,28 +38,33 @@ namespace servers {
 		section.setString("Login", server->login());
 		section.setBinary("Password", server->password());
 		section.setString("URL", server->url());
-		section.setUInt32("Items", 1);
 
-		auto sub = section.group("0");
-		sub.setString("Type", "query");
-		auto& view = server->view();
-		if (!view.jql().empty()) {
-			sub.setString("Query", view.jql());
-			sub.setString("Title", view.title());
-		} else {
-			sub.unset("Query");
-			sub.unset("Title");
+		auto& views = server->views();
+		section.setUInt32("Items", views.size());
+
+		size_t id = 0;
+		for (auto& view : views) {
+			auto sub = section.group(std::to_string(id++));
+			sub.setString("Type", "query");
+			if (!view.jql().empty()) {
+				sub.setString("Query", view.jql());
+				sub.setString("Title", view.title());
+			}
+			else {
+				sub.unset("Query");
+				sub.unset("Title");
+			}
+
+			if (!view.columns().empty())
+				sub.setString("Fields", view.columnsDescr());
+			else
+				sub.unset("Fields");
+
+			if (view.timeout().count() < std::numeric_limits<uint32_t>::max())
+				sub.setUInt32("Timeout", (uint32_t)view.timeout().count());
+			else
+				sub.unset("Timeout");
 		}
-
-		if (!view.columns().empty())
-			sub.setString("Fields", view.columnsDescr());
-		else
-			sub.unset("Fields");
-
-		if (view.timeout().count() < std::numeric_limits<uint32_t>::max())
-			sub.setUInt32("Timeout", (uint32_t)view.timeout().count());
-		else
-			sub.unset("Timeout");
 	}
 
 	static std::vector<std::shared_ptr<jira::server>> load(const settings::Section& section)
