@@ -101,6 +101,12 @@ namespace jira
 		}
 	}
 
+	search_def::search_def() = default;
+	search_def::search_def(const search_def&) = default;
+	search_def::search_def(search_def&&) = default;
+	search_def& search_def::operator=(const search_def&) = default;
+	search_def& search_def::operator=(search_def&&) = default;
+
 	search_def::search_def(const std::string& title, const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout)
 		: m_title(title)
 		, m_jql(jql)
@@ -132,12 +138,12 @@ namespace jira
 		std::string getPassword() { return m_parent->passwd(); }
 	};
 
-	server::server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const search_def& view, from_storage)
+	server::server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const std::vector<search_def>& views, from_storage)
 		: m_name(name)
 		, m_login(login)
 		, m_password(password)
 		, m_url(url)
-		, m_view(view)
+		, m_views(views)
 		, m_db(url)
 		, m_id(nextToken())
 	{
@@ -145,12 +151,12 @@ namespace jira
 			m_url = "http://" + url;
 	}
 
-	server::server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const search_def& view)
+	server::server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const std::vector<search_def>& views)
 		: m_name(name)
 		, m_login(login)
 		, m_password()
 		, m_url(url)
-		, m_view(view)
+		, m_views(views)
 		, m_db(url)
 		, m_id(nextToken())
 	{
@@ -170,8 +176,12 @@ namespace jira
 
 	void server::onListenerAdded(const std::shared_ptr<server_listener>& listener)
 	{
-		if (m_isLoadingView)
-			listener->onRefreshStarted();
+		size_t id = 0;
+		for (auto& view : m_views) {
+			if (view.loading())
+				listener->onRefreshStarted(id);
+			++id;
+		}
 	}
 
 	std::string server::passwd() const
@@ -205,9 +215,11 @@ namespace jira
 
 			ON_EXIT([this] {
 				m_isLoadingFields = false;
-				auto doc = m_refreshDoc;
-				if (doc)
-					refresh(doc);
+				auto copy = m_viewsToRefresh;
+				for (auto& pair : copy) {
+					if (pair.second)
+						refresh(pair.second, pair.first);
+				}
 			});
 
 			if ((xhr->getStatus() / 100) != 2) {
@@ -298,34 +310,47 @@ namespace jira
 		}, ONPROGRESS{}, true);
 	}
 
-	void server::refresh(const std::shared_ptr<gui::document>& doc)
+	void server::refresh(const std::shared_ptr<gui::document>& doc, size_t id)
 	{
-		if (m_isLoadingView && !m_refreshDoc)
+		if (id >= m_views.size())
 			return;
 
-		if (!m_isLoadingView)
-			emit([&](server_listener* listener) { listener->onRefreshStarted(); });
+		auto it = m_viewsToRefresh.find(id);
+		if (m_views[id].loading() && (it == m_viewsToRefresh.end() || !it->second))
+			return;
 
-		m_refreshDoc.reset();
-		m_isLoadingView = true;
+		if (!m_views[id].loading())
+			emit([&, id](server_listener* listener) { listener->onRefreshStarted(id); });
+
+		if (it != m_viewsToRefresh.end())
+			m_viewsToRefresh.erase(it);
+		m_views[id].startLoading();
 
 		if (m_isLoadingFields) {
-			m_refreshDoc = doc;
+			m_viewsToRefresh[id] = doc;
 			return;
 		}
 
 		auto thiz = shared_from_this();
-		search(doc, [thiz](XHR* /*xhr*/, jira::report&& report) {
-			ON_EXIT([thiz] {
-				thiz->emit([&](server_listener* listener) { listener->onRefreshFinished(); });
-				thiz->m_isLoadingView = false;
-			});
+		search(doc, id, [id, thiz](XHR* /*xhr*/, jira::report&& report) {
+			auto fn = [id, thiz] {
+				thiz->emit([&, id](server_listener* listener) { listener->onRefreshFinished(id); });
+				thiz->m_views[id].endLoading();
+			};
+			ON_EXIT(fn);
 
 			thiz->m_dataset = std::make_shared<jira::report>(std::move(report));
-		}, [thiz](net::http::client::XmlHttpRequest* /*req*/, bool calculable, uint64_t content, uint64_t loaded) {
-			thiz->emit([&](server_listener* listener) { listener->onProgress(calculable, content, loaded); });
+		}, [id, thiz](net::http::client::XmlHttpRequest* /*req*/, bool calculable, uint64_t content, uint64_t loaded) {
+			thiz->emit([&, id](server_listener* listener) { listener->onProgress(id, calculable, content, loaded); });
 		});
 
+	}
+
+	void server::refresh(const std::shared_ptr<gui::document>& doc)
+	{
+		auto count = m_views.size();
+		for (size_t id = 0; id < count; ++id)
+			refresh(doc, id);
 	}
 
 	void server::debugDump(std::ostream& o)
@@ -434,6 +459,12 @@ namespace jira
 
 			response(xhr, std::move(dataset));
 		}, progress, async);
+	}
+
+	void server::search(const std::shared_ptr<gui::document>& doc, size_t id, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress, bool async)
+	{
+		if (id < m_views.size())
+			search(doc, m_views[id], response, progress, async);
 	}
 };
 

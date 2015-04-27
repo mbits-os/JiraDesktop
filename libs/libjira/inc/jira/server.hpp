@@ -65,8 +65,13 @@ namespace jira
 		std::string m_jql;
 		std::vector<std::string> m_columns;
 		std::chrono::milliseconds m_timeout{ std::chrono::milliseconds::max() };
+		bool m_isLoadingView = false;
 	public:
-		search_def() = default;
+		search_def();
+		search_def(const search_def&);
+		search_def(search_def&&);
+		search_def& operator=(const search_def&);
+		search_def& operator=(search_def&&);
 		search_def(const std::string& title, const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout);
 		search_def(const std::string& title, const std::string& jql, const std::vector<std::string>& columns, std::chrono::milliseconds timeout);
 		const std::string& title() const { return m_title; }
@@ -74,15 +79,18 @@ namespace jira
 		const std::vector<std::string>& columns() const { return m_columns; }
 		std::string columnsDescr() const;
 		std::chrono::milliseconds timeout() const { return m_timeout; }
+		bool loading() const { return m_isLoadingView; }
+		void startLoading() { m_isLoadingView = true; }
+		void endLoading() { m_isLoadingView = false; }
 
 		static const search_def standard;
 	};
 
 	struct server_listener {
 		virtual ~server_listener() {}
-		virtual void onRefreshStarted() = 0;
-		virtual void onProgress(bool calculable, uint64_t content, uint64_t loaded) = 0;
-		virtual void onRefreshFinished() = 0;
+		virtual void onRefreshStarted(size_t id) = 0;
+		virtual void onProgress(size_t id, bool calculable, uint64_t content, uint64_t loaded) = 0;
+		virtual void onRefreshFinished(size_t id) = 0;
 	};
 
 	class server : public listeners<server_listener, server>, public std::enable_shared_from_this<server> {
@@ -93,10 +101,9 @@ namespace jira
 		uint32_t m_id;
 
 		std::atomic<bool> m_isLoadingFields = false;
-		std::atomic<bool> m_isLoadingView = false;
-		std::shared_ptr<gui::document> m_refreshDoc;
+		std::map<size_t, std::shared_ptr<gui::document>> m_viewsToRefresh;
 
-		search_def m_view;
+		std::vector<search_def> m_views;
 		std::shared_ptr<report> m_dataset;
 		std::vector<std::string> m_errors;
 
@@ -117,14 +124,14 @@ namespace jira
 		using ONPROGRESS = std::function<void(XHR*, bool, uint64_t, uint64_t)>;
 
 		server() = default;
-		server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const search_def& view, from_storage);
-		server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const search_def& view);
+		server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const std::vector<search_def>& views, from_storage);
+		server(const std::string& name, const std::string& login, const std::string& password, const std::string& url, const std::vector<search_def>& views);
 		const std::vector<uint8_t>& password() const { return m_password; }
 		const std::string& name() const { return m_name; }
 		const std::string& displayName() const { return m_name.empty() ? m_url : m_name; }
 		const std::string& login() const { return m_login; }
 		const std::string& url() const { return m_url; }
-		const search_def& view() const { return m_view; }
+		const std::vector<search_def>& views() const { return m_views; }
 		uint32_t sessionId() const { return m_id; }
 		const std::vector<std::string>& errors() const { return m_errors; }
 
@@ -132,16 +139,17 @@ namespace jira
 		void setName(const std::string& name) { m_name = name; }
 		void setLogin(const std::string& login) { m_login = login; }
 		void setUrl(const std::string& url) { m_url = url; }
-		void setView(const search_def& view) { m_view = view; }
+		void setViews(const std::vector<search_def>& views) { m_views = views; }
 
 		void loadFields();
+		void refresh(const std::shared_ptr<gui::document>&, size_t);
 		void refresh(const std::shared_ptr<gui::document>&);
 		const std::shared_ptr<report>& dataset() const { return m_dataset; }
 		void debugDump(std::ostream&);
 		void get(const std::string& uri, const std::function<void(XHR*)>& onDone, const ONPROGRESS& progress = {}, bool async = true);
 		void loadJSON(const std::string& uri, const std::function<void (XHR*, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 		void search(const std::shared_ptr<gui::document>& doc, const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
-		void search(const std::shared_ptr<gui::document>& doc, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true) { search(doc, m_view, response, progress, async); }
+		void search(const std::shared_ptr<gui::document>& doc, size_t id, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 	};
 }
 
