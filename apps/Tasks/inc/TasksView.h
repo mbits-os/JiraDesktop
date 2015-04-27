@@ -9,8 +9,8 @@
 
 enum {
 	UM_LISTCHANGED = WM_USER, // wParam - server's session ID, lParam - unused
-	UM_REFRESHSTART,          // wParam - server's session ID, lParam - unused
-	UM_REFRESHSTOP,           // wParam - server's session ID, lParam - unused
+	UM_REFRESHSTART,          // wParam - server's session ID, lParam - view id
+	UM_REFRESHSTOP,           // wParam - server's session ID, lParam - view id
 	UM_PROGRESS,              // wParam - server's session ID, lParam - ProgressInfo*
 	UM_LAYOUTNEEDED,          // wParam - 0,                   lParam - 0
 };
@@ -23,6 +23,7 @@ struct ProgressInfo {
 	uint64_t content;
 	uint64_t loaded;
 	bool calculable;
+	size_t id;
 };
 
 struct ZoomInfo {

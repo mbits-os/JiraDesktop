@@ -170,7 +170,7 @@ void CAppModel::startTimer(uint32_t sessionId)
 		if (server.m_server->sessionId() != sessionId)
 			continue;
 
-		auto timeout = server.m_server->view().timeout();
+		auto timeout = (server.m_server->views().empty() ? jira::search_def::standard : server.m_server->views().front()).timeout();
 		if (timeout == std::chrono::milliseconds::max())
 			timeout = jira::search_def::standard.timeout();
 

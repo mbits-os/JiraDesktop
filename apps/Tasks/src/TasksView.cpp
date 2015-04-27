@@ -70,24 +70,24 @@ class ServerListener : public jira::server_listener {
 public:
 	ServerListener(HWND hWnd, uint32_t sessionId) : m_hWnd(hWnd), m_sessionId(sessionId) {}
 
-	void onRefreshStarted() override
+	void onRefreshStarted(size_t id) override
 	{
 		if (IsWindow(m_hWnd))
-			PostMessage(m_hWnd, UM_REFRESHSTART, m_sessionId, 0);
+			PostMessage(m_hWnd, UM_REFRESHSTART, m_sessionId, id);
 	}
 
-	void onRefreshFinished() override
+	void onRefreshFinished(size_t id) override
 	{
 		if (IsWindow(m_hWnd))
-			PostMessage(m_hWnd, UM_REFRESHSTOP, m_sessionId, 0);
+			PostMessage(m_hWnd, UM_REFRESHSTOP, m_sessionId, id);
 	}
 
-	void onProgress(bool calculable, uint64_t content, uint64_t loaded) override
+	void onProgress(size_t id, bool calculable, uint64_t content, uint64_t loaded) override
 	{
 		if (!IsWindow(m_hWnd))
 			return;
 
-		ProgressInfo info{ content, loaded, calculable };
+		ProgressInfo info{ content, loaded, calculable, id };
 		SendMessage(m_hWnd, UM_PROGRESS, m_sessionId, (LPARAM)&info);
 	}
 };
@@ -401,8 +401,9 @@ void CTasksView::ServerInfo::createTable()
 
 	{
 		auto caption = m_document->createElement(gui::elem::table_caption);
-		auto jql = m_server->view().jql();
-		auto title = m_server->view().title();
+		auto& view = m_server->views().empty() ? jira::search_def::standard : m_server->views().front();
+		auto jql = view.jql();
+		auto title = view.title();
 		if (jql.empty()) {// if JQL is taken from the standard, title should be taken as well
 			title = jira::search_def::standard.title();
 			jql = jira::search_def::standard.jql();
@@ -1364,8 +1365,12 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	return 0;
 }
 
-LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
 {
+	// For now, only zeroth view is shown
+	if (lParam)
+		return 0;
+
 	auto it = find(wParam);
 	if (it == m_servers.end())
 		return 0;
@@ -1376,8 +1381,12 @@ LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam
 	return 0;
 }
 
-LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
 {
+	// For now, only zeroth view is shown
+	if (lParam)
+		return 0;
+
 	auto it = find(wParam);
 	if (it == m_servers.end())
 		return 0;
@@ -1440,6 +1449,10 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
 {
 	if (!lParam)
+		return 0;
+
+	// For now, only zeroth view is shown
+	if (reinterpret_cast<ProgressInfo*>(lParam)->id)
 		return 0;
 
 	auto it = find(wParam);
