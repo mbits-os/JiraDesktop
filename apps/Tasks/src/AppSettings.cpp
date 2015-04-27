@@ -11,12 +11,13 @@ namespace servers {
 		auto url = section.getString("URL");
 		auto items = section.getUInt32("Items");
 		auto sub = section.group("0");
+		auto title = sub.getString("Title");
 		auto jql = sub.getString("Query");
 		auto fields = sub.getString("Fields");
 		auto timeout = sub.getType("Timeout") == settings::UInt32 ?
 			std::chrono::seconds{ sub.getUInt32("Timeout") } : std::chrono::milliseconds::max();
 
-		return std::make_shared<jira::server>(name, login, password, url, jira::search_def{ jql, fields, timeout }, jira::server::stored);
+		return std::make_shared<jira::server>(name, login, password, url, jira::search_def{ title, jql, fields, timeout }, jira::server::stored);
 	}
 
 	static void store_srv(const jira::server* server, settings::Section& section)
@@ -34,10 +35,13 @@ namespace servers {
 		auto sub = section.group("0");
 		sub.setString("Type", "query");
 		auto& view = server->view();
-		if (!view.jql().empty())
+		if (!view.jql().empty()) {
 			sub.setString("Query", view.jql());
-		else
+			sub.setString("Title", view.title());
+		} else {
 			sub.unset("Query");
+			sub.unset("Title");
+		}
 
 		if (!view.columns().empty())
 			sub.setString("Fields", view.columnsDescr());

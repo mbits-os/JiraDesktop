@@ -401,10 +401,17 @@ void CTasksView::ServerInfo::createTable()
 
 	{
 		auto caption = m_document->createElement(gui::elem::table_caption);
-		auto jql = std::string{};// server.view().jql();
-		if (jql.empty())
+		auto jql = m_server->view().jql();
+		auto title = m_server->view().title();
+		if (jql.empty()) {// if JQL is taken from the standard, title should be taken as well
+			title = jira::search_def::standard.title();
 			jql = jira::search_def::standard.jql();
-		caption->innerText(jql);
+		} else if (title.empty()) // if there is no title set in config, fall back to the JQL
+			title = jql;
+			
+		caption->innerText(title);
+		if (jql != title)
+			caption->setTooltip(jql);
 		table->appendChild(caption);
 	}
 	{
