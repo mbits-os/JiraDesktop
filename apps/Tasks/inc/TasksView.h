@@ -56,6 +56,7 @@ public:
 		std::shared_ptr<jira::report> m_previous;
 
 		std::shared_ptr<gui::node> m_plaque;
+		std::shared_ptr<gui::node> m_progressCtrl;
 
 		ProgressInfo m_progress;
 		bool m_loading = false;
@@ -69,6 +70,7 @@ public:
 		ViewInfo(ViewInfo&&) = default;
 		ViewInfo& operator=(ViewInfo&&) = default;
 
+		void updateProgress();
 		std::shared_ptr<gui::node> buildPlaque();
 		void updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
 

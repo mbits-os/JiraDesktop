@@ -229,6 +229,22 @@ std::vector<CTasksView::ViewInfo>::iterator CTasksView::ServerInfo::findInfo(uin
 	return std::find_if(std::begin(m_views), std::end(m_views), [sessionId](const ViewInfo& view) { return view.m_view.sessionId() == sessionId; });
 }
 
+void CTasksView::ViewInfo::updateProgress()
+{
+	if (!m_progressCtrl)
+		return;
+
+	while (!m_progressCtrl->children().empty())
+		m_progressCtrl->removeChild(m_progressCtrl->children().front());
+
+	if (m_loading) {
+		if (m_gotProgress)
+			m_progressCtrl->innerText("   []");
+		else
+			m_progressCtrl->innerText("   ...");
+	}
+}
+
 std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque()
 {
 	if (m_plaque) {
@@ -243,6 +259,10 @@ std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque()
 	{
 		auto note = m_document->createElement(gui::elem::span);
 		note->innerText("Empty");
+		m_progressCtrl = note->appendChild(m_document->createElement(gui::elem::span));
+		m_progressCtrl->addClass("symbol");
+		updateProgress();
+
 		note->addClass("empty");
 		m_plaque->appendChild(std::move(note));
 	}
@@ -461,6 +481,9 @@ void CTasksView::ViewInfo::createTable()
 		if (jql != title)
 			caption->setTooltip(jql);
 		table->appendChild(caption);
+		m_progressCtrl = caption->appendChild(m_document->createElement(gui::elem::span));
+		m_progressCtrl->addClass("symbol");
+		updateProgress();
 	}
 	{
 		auto header = m_document->createElement(gui::elem::table_head);
@@ -1432,6 +1455,7 @@ LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam
 
 	it->m_progress = ProgressInfo{100, 0, true};
 	it->m_loading = true;
+	it->updateProgress();
 
 	return 0;
 }
@@ -1448,6 +1472,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	it->m_loading = false;
 	it->m_gotProgress = false;
+	it->updateProgress();
 
 	std::vector<std::string> tabs[3];
 
@@ -1513,6 +1538,7 @@ LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 
 	it->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
 	it->m_gotProgress = true;
+	it->updateProgress();
 
 	return 0;
 }
