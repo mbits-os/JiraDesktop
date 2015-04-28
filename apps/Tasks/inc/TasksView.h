@@ -6,6 +6,7 @@
 
 #include "AppModel.h"
 #include <gui/styles.hpp>
+#include <gui/win32_animation.hpp>
 
 enum {
 	UM_LISTCHANGED = WM_USER, // wParam - server's session ID, lParam - unused
@@ -42,6 +43,8 @@ struct Scroller {
 };
 
 class DocOwner;
+
+enum { TIMER_SCENE = 0x1001F00D };
 
 using CTasksViewWinTraits = CWinTraits<WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_COMPOSITED>;
 class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
@@ -135,6 +138,7 @@ private:
 	gui::size m_docSize;
 	gui::pixels m_fontSize;
 	std::string m_fontFamily;
+	ani::win32::scene m_scene{TIMER_SCENE};
 
 	void updateServers();
 	void updateCursor(bool force = false);
@@ -183,6 +187,12 @@ public:
 		MESSAGE_HANDLER(UM_PROGRESS, OnProgress)
 		MESSAGE_HANDLER(UM_LAYOUTNEEDED, OnLayoutNeeded)
 		MESSAGE_HANDLER(AM_ZOOM, OnZoom)
+		{
+			bool handled = false;
+			lResult = m_scene.handle_message(uMsg, wParam, lParam, handled);
+			if (handled)
+				return TRUE;
+		}
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):

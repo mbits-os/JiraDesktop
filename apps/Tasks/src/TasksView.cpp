@@ -622,6 +622,8 @@ BOOL CTasksView::PreTranslateMessage(MSG* pMsg)
 
 LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	m_scene.setWindow(m_hWnd);
+
 	m_currentZoom = defaultZoom;
 	m_zoom->device = { 1, 1 };
 	m_zoom->zoom = zooms[m_currentZoom];
