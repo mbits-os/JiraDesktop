@@ -48,6 +48,7 @@ namespace settings { namespace win32 {
 
 		std::shared_ptr<Section::Impl> group(const std::string& name) const override;
 		type getType(const std::string& key) const override;
+		bool hasGroup(const std::string& name) const override;
 
 		std::string getString(const std::string& key) const override;
 		uint32_t getUInt32(const std::string& key) const override;

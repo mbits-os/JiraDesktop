@@ -31,6 +31,7 @@ namespace settings {
 
 		virtual std::shared_ptr<Impl> group(const std::string& name) const = 0;
 		virtual type getType(const std::string& key) const = 0;
+		virtual bool hasGroup(const std::string& name) const = 0;
 
 		virtual std::string getString(const std::string& key) const = 0;
 		virtual uint32_t getUInt32(const std::string& key) const = 0;

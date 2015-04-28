@@ -117,6 +117,12 @@ namespace settings { namespace win32 {
 		return None;
 	}
 
+	bool Win32Impl::hasGroup(const std::string& name) const
+	{
+		Win32Impl test{ m_keyName + L"\\" + utf::widen(name) };
+		return test.ensureReadable();
+	}
+
 	std::string Win32Impl::getString(const std::string& key) const
 	{
 		if (!ensureReadable())

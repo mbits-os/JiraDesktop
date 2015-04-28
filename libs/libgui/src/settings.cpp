@@ -56,6 +56,11 @@ namespace settings {
 		return m_impl->getType(key) != None;
 	}
 
+	bool Section::hasGroup(const std::string& name) const
+	{
+		return m_impl->hasGroup(name);
+	}
+
 	std::string Section::getString(const std::string& key) const
 	{
 		return m_impl->getString(key);

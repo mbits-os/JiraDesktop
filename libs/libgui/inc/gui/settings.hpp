@@ -54,6 +54,7 @@ namespace settings {
 
 		type getType(const std::string& key) const;
 		bool contains(const std::string& key) const;
+		bool hasGroup(const std::string& name) const;
 
 		std::string getString(const std::string& key) const;
 		uint32_t getUInt32(const std::string& key) const;
