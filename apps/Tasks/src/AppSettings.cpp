@@ -2,6 +2,8 @@
 #include "AppSettings.h"
 #include "version.h"
 
+using namespace std::literals;
+
 namespace servers {
 	static std::shared_ptr<jira::server> load_srv(const settings::Section& section)
 	{
@@ -19,7 +21,7 @@ namespace servers {
 			auto title = sub.getString("Title");
 			auto jql = sub.getString("Query");
 			auto fields = sub.getString("Fields");
-			auto timeout = sub.getType("Timeout") == settings::UInt32 ?
+			auto timeout = sub.contains("Timeout") ?
 				std::chrono::seconds{ sub.getUInt32("Timeout") } : std::chrono::milliseconds::max();
 
 			views.emplace_back(title, jql, fields, timeout);
@@ -48,7 +50,10 @@ namespace servers {
 			sub.setString("Type", "query");
 			if (!view.jql().empty()) {
 				sub.setString("Query", view.jql());
-				sub.setString("Title", view.title());
+				if (!view.title().empty() && view.jql() != view.title())
+					sub.setString("Title", view.title());
+				else
+					sub.unset("Title");
 			}
 			else {
 				sub.unset("Query");
@@ -93,6 +98,38 @@ namespace servers {
 			++i;
 		}
 	}
+
+	namespace zero {
+		static std::shared_ptr<jira::server> load(const settings::Section& section, const std::string& prefix)
+		{
+			auto name = section.getString(prefix + "name");
+			auto login = section.getString(prefix + "login");
+			auto password = section.getBinary(prefix + "password");
+			auto url = section.getString(prefix + "url");
+			auto jql = section.getString(prefix + "query");
+			auto fields = section.getString(prefix + "fields");
+			auto timeout = section.contains(prefix + "timeout") ?
+				std::chrono::seconds{ section.getUInt32(prefix + "timeout") } : std::chrono::milliseconds::max();
+
+			std::vector<jira::search_def> views;
+			views.emplace_back(""s, jql, fields, timeout);
+			return std::make_shared<jira::server>(name, login, password, url, views, jira::server::stored);
+		}
+
+		static std::vector<std::shared_ptr<jira::server>> load(const settings::Section& section)
+		{
+			auto size = section.getUInt32("Items");
+
+			std::vector<std::shared_ptr<jira::server>> servers;
+			servers.reserve(size);
+
+			for (decltype(size) i = 0; i < size; ++i) {
+				servers.push_back(load(section, "Server" + std::to_string(i) + "."));
+			}
+
+			return std::move(servers);
+		}
+	}
 }
 
 #if PROGRAM_VERSION_MAJOR == 0
@@ -106,14 +143,20 @@ CAppSettings::CAppSettings()
 {
 }
 
-std::vector<std::shared_ptr<jira::server>> CAppSettings::jiraServers() const
+std::vector<std::shared_ptr<jira::server>> CAppSettings::jiraServers()
 {
-	return servers::load(group("Jira").group("Servers"));
+	if (!group("Jira"s).hasGroup("Servers"s) && hasGroup("JiraServers"s)) {
+		auto servers = group("Jira"s).group("Servers"s);
+		servers::store(servers::zero::load(group("JiraServers"s)), servers);
+		unsetGroup("JiraServers"s);
+	}
+
+	return servers::load(group("Jira"s).group("Servers"s));
 }
 
 void CAppSettings::jiraServers(const std::vector<std::shared_ptr<jira::server>>& list)
 {
-	group("Jira").unsetGroup("Servers");
-	auto servers = group("Jira").group("Servers");
+	group("Jira"s).unsetGroup("Servers"s);
+	auto servers = group("Jira"s).group("Servers"s);
 	servers::store(list, servers);
 }

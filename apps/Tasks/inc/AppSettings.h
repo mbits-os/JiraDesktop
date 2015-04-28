@@ -10,7 +10,7 @@ class CAppSettings : public settings::Section {
 public:
 	CAppSettings();
 
-	std::vector<std::shared_ptr<jira::server>> jiraServers() const;
+	std::vector<std::shared_ptr<jira::server>> jiraServers();
 	void jiraServers(const std::vector<std::shared_ptr<jira::server>>& list);
 };
 
