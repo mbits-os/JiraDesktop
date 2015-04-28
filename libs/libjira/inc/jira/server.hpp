@@ -103,7 +103,7 @@ namespace jira
 		uint32_t m_id;
 
 		std::atomic<bool> m_isLoadingFields = false;
-		std::map<size_t, std::shared_ptr<gui::document>> m_viewsToRefresh;
+		std::map<uint32_t, std::shared_ptr<gui::document>> m_viewsToRefresh;
 
 		std::vector<search_def> m_views;
 		std::shared_ptr<report> m_dataset;
@@ -144,14 +144,14 @@ namespace jira
 		void setViews(const std::vector<search_def>& views) { m_views = views; }
 
 		void loadFields();
-		void refresh(const std::shared_ptr<gui::document>&, size_t);
+		void refresh(const std::shared_ptr<gui::document>&, uint32_t);
 		void refresh(const std::shared_ptr<gui::document>&);
 		const std::shared_ptr<report>& dataset() const { return m_dataset; }
 		void debugDump(std::ostream&);
 		void get(const std::string& uri, const std::function<void(XHR*)>& onDone, const ONPROGRESS& progress = {}, bool async = true);
 		void loadJSON(const std::string& uri, const std::function<void (XHR*, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 		void search(const std::shared_ptr<gui::document>& doc, const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
-		void search(const std::shared_ptr<gui::document>& doc, size_t id, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
+		void search(const std::shared_ptr<gui::document>& doc, uint32_t id, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 	};
 }
 

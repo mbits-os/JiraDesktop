@@ -181,7 +181,7 @@ namespace jira
 		size_t id = 0;
 		for (auto& view : m_views) {
 			if (view.loading())
-				listener->onRefreshStarted(id);
+				listener->onRefreshStarted(view.sessionId());
 			++id;
 		}
 	}
@@ -312,47 +312,51 @@ namespace jira
 		}, ONPROGRESS{}, true);
 	}
 
-	void server::refresh(const std::shared_ptr<gui::document>& doc, size_t id)
+	void server::refresh(const std::shared_ptr<gui::document>& doc, uint32_t viewID)
 	{
-		if (id >= m_views.size())
+		auto it = std::find_if(std::begin(m_views), std::end(m_views), [viewID](const search_def& info) { return info.sessionId() == viewID; });
+		if (it == m_views.end())
 			return;
 
-		auto it = m_viewsToRefresh.find(id);
-		if (m_views[id].loading() && (it == m_viewsToRefresh.end() || !it->second))
+		auto doc_it = m_viewsToRefresh.find(viewID);
+		if (it->loading() && (doc_it == m_viewsToRefresh.end() || !doc_it->second))
 			return;
 
-		if (!m_views[id].loading())
-			emit([&, id](server_listener* listener) { listener->onRefreshStarted(id); });
+		if (!it->loading())
+			emit([&, viewID](server_listener* listener) { listener->onRefreshStarted(viewID); });
 
-		if (it != m_viewsToRefresh.end())
-			m_viewsToRefresh.erase(it);
-		m_views[id].startLoading();
+		if (doc_it != m_viewsToRefresh.end())
+			m_viewsToRefresh.erase(doc_it);
+		it->startLoading();
 
 		if (m_isLoadingFields) {
-			m_viewsToRefresh[id] = doc;
+			m_viewsToRefresh[viewID] = doc;
 			return;
 		}
 
 		auto thiz = shared_from_this();
-		search(doc, id, [id, thiz](XHR* /*xhr*/, jira::report&& report) {
-			auto fn = [id, thiz] {
-				thiz->emit([&, id](server_listener* listener) { listener->onRefreshFinished(id); });
-				thiz->m_views[id].endLoading();
+		search(doc, viewID, [viewID, thiz](XHR* /*xhr*/, jira::report&& report) {
+			auto fn = [viewID, thiz] {
+				thiz->emit([&, viewID](server_listener* listener) { listener->onRefreshFinished(viewID); });
+				auto it = std::find_if(std::begin(thiz->m_views), std::end(thiz->m_views),
+					[viewID](const search_def& info) { return info.sessionId() == viewID; });
+				if (it == thiz->m_views.end())
+					return;
+				it->endLoading();
 			};
 			ON_EXIT(fn);
 
 			thiz->m_dataset = std::make_shared<jira::report>(std::move(report));
-		}, [id, thiz](net::http::client::XmlHttpRequest* /*req*/, bool calculable, uint64_t content, uint64_t loaded) {
-			thiz->emit([&, id](server_listener* listener) { listener->onProgress(id, calculable, content, loaded); });
+		}, [viewID, thiz](net::http::client::XmlHttpRequest* /*req*/, bool calculable, uint64_t content, uint64_t loaded) {
+			thiz->emit([&, viewID](server_listener* listener) { listener->onProgress(viewID, calculable, content, loaded); });
 		});
 
 	}
 
 	void server::refresh(const std::shared_ptr<gui::document>& doc)
 	{
-		auto count = m_views.size();
-		for (size_t id = 0; id < count; ++id)
-			refresh(doc, id);
+		for (auto& view : m_views)
+			refresh(doc, view.sessionId());
 	}
 
 	void server::debugDump(std::ostream& o)
@@ -463,10 +467,12 @@ namespace jira
 		}, progress, async);
 	}
 
-	void server::search(const std::shared_ptr<gui::document>& doc, size_t id, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress, bool async)
+	void server::search(const std::shared_ptr<gui::document>& doc, uint32_t viewID, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress, bool async)
 	{
-		if (id < m_views.size())
-			search(doc, m_views[id], response, progress, async);
+		auto it = std::find_if(std::begin(m_views), std::end(m_views), [viewID](const search_def& info) { return info.sessionId() == viewID; });
+		if (it == m_views.end())
+			return;
+		search(doc, *it, response, progress, async);
 	}
 };
 
