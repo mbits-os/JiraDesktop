@@ -65,6 +65,7 @@ namespace jira
 		std::string m_jql;
 		std::vector<std::string> m_columns;
 		std::chrono::milliseconds m_timeout{ std::chrono::milliseconds::max() };
+		uint32_t m_id;
 		bool m_isLoadingView = false;
 	public:
 		search_def();
@@ -74,6 +75,7 @@ namespace jira
 		search_def& operator=(search_def&&);
 		search_def(const std::string& title, const std::string& jql, const std::string& columnsDescr, std::chrono::milliseconds timeout);
 		search_def(const std::string& title, const std::string& jql, const std::vector<std::string>& columns, std::chrono::milliseconds timeout);
+		uint32_t sessionId() const { return m_id; }
 		const std::string& title() const { return m_title; }
 		const std::string& jql() const { return m_jql; }
 		const std::vector<std::string>& columns() const { return m_columns; }
@@ -88,9 +90,9 @@ namespace jira
 
 	struct server_listener {
 		virtual ~server_listener() {}
-		virtual void onRefreshStarted(size_t id) = 0;
-		virtual void onProgress(size_t id, bool calculable, uint64_t content, uint64_t loaded) = 0;
-		virtual void onRefreshFinished(size_t id) = 0;
+		virtual void onRefreshStarted(uint32_t viewID) = 0;
+		virtual void onProgress(uint32_t viewID, bool calculable, uint64_t content, uint64_t loaded) = 0;
+		virtual void onRefreshFinished(uint32_t viewID) = 0;
 	};
 
 	class server : public listeners<server_listener, server>, public std::enable_shared_from_this<server> {

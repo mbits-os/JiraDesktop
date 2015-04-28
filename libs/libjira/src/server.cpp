@@ -112,6 +112,7 @@ namespace jira
 		, m_jql(jql)
 		, m_columns(split(columnsDescr, ","))
 		, m_timeout((size_t)timeout.count())
+		, m_id(nextToken())
 	{
 		if (m_columns.size() == 1 && m_columns[0].empty())
 			m_columns.clear();
@@ -122,6 +123,7 @@ namespace jira
 		, m_jql(jql)
 		, m_columns(columns)
 		, m_timeout((size_t)timeout.count())
+		, m_id(nextToken())
 	{
 	}
 
