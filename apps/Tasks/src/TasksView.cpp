@@ -66,29 +66,28 @@ public:
 
 class ServerListener : public jira::server_listener {
 	HWND m_hWnd;
-	uint32_t m_sessionId;
 public:
-	ServerListener(HWND hWnd, uint32_t sessionId) : m_hWnd(hWnd), m_sessionId(sessionId) {}
+	ServerListener(HWND hWnd) : m_hWnd(hWnd) {}
 
-	void onRefreshStarted(size_t id) override
+	void onRefreshStarted(uint32_t viewID) override
 	{
 		if (IsWindow(m_hWnd))
-			PostMessage(m_hWnd, UM_REFRESHSTART, m_sessionId, id);
+			PostMessage(m_hWnd, UM_REFRESHSTART, viewID, 0);
 	}
 
-	void onRefreshFinished(size_t id) override
+	void onRefreshFinished(uint32_t viewID) override
 	{
 		if (IsWindow(m_hWnd))
-			PostMessage(m_hWnd, UM_REFRESHSTOP, m_sessionId, id);
+			PostMessage(m_hWnd, UM_REFRESHSTOP, viewID, 0);
 	}
 
-	void onProgress(size_t id, bool calculable, uint64_t content, uint64_t loaded) override
+	void onProgress(uint32_t viewID, bool calculable, uint64_t content, uint64_t loaded) override
 	{
 		if (!IsWindow(m_hWnd))
 			return;
 
-		ProgressInfo info{ content, loaded, calculable, id };
-		SendMessage(m_hWnd, UM_PROGRESS, m_sessionId, (LPARAM)&info);
+		ProgressInfo info{ content, loaded, calculable };
+		SendMessage(m_hWnd, UM_PROGRESS, viewID, (LPARAM)&info);
 	}
 };
 
@@ -151,6 +150,19 @@ public:
 	}
 };
 
+CTasksView::ViewInfo::ViewInfo(
+	const jira::search_def& view,
+	const std::shared_ptr<gui::document>& doc)
+	: m_view(view)
+	, m_document(doc)
+{
+}
+
+CTasksView::ViewInfo::~ViewInfo()
+{
+}
+
+
 CTasksView::ServerInfo::ServerInfo(
 	const std::shared_ptr<jira::server>& server,
 	const std::shared_ptr<gui::document>& doc,
@@ -158,8 +170,10 @@ CTasksView::ServerInfo::ServerInfo(
 	: m_server(server)
 	, m_document(doc)
 	, m_listener(listener)
-	, m_sessionId(server->sessionId())
 {
+	for (auto& view : m_server->views())
+		m_views.emplace_back(view, doc);
+
 	m_server->registerListener(m_listener);
 	buildPlaque();
 }
@@ -184,15 +198,12 @@ void CTasksView::ServerInfo::buildPlaque()
 	{
 		auto block = m_document->createElement(gui::elem::header);
 		block->innerText(m_server->login() + "@" + m_server->displayName());
+		block->setTooltip(m_server->url());
 		m_plaque->appendChild(block);
 	}
 
-	{
-		auto note = m_document->createElement(gui::elem::span);
-		note->innerText("Empty");
-		note->addClass("empty");
-		m_plaque->appendChild(std::move(note));
-	}
+	for (auto& view : m_views)
+		m_plaque->appendChild(view.buildPlaque());
 
 	std::vector<std::string> dummy;
 	updatePlaque(dummy, dummy, dummy);
@@ -202,15 +213,52 @@ void CTasksView::ServerInfo::updatePlaque(std::vector<std::string>& removed, std
 {
 	ATLASSERT(m_plaque);
 
-	if (m_dataset)
-		updateDataset(removed, modified, added);
+	for (auto& view : m_views)
+		view.updatePlaque(removed, modified, added);
 
 	updateErrors();
-
-	//buildPlaque();
 }
 
-std::shared_ptr<gui::node> CTasksView::ServerInfo::buildSchema()
+std::vector<jira::search_def>::const_iterator CTasksView::ServerInfo::findDefinition(uint32_t sessionId) const
+{
+	return std::find_if(std::begin(m_server->views()), std::end(m_server->views()), [sessionId](const jira::search_def& def) { return def.sessionId() == sessionId; });
+}
+
+std::vector<CTasksView::ViewInfo>::iterator CTasksView::ServerInfo::findInfo(uint32_t sessionId)
+{
+	return std::find_if(std::begin(m_views), std::end(m_views), [sessionId](const ViewInfo& view) { return view.m_view.sessionId() == sessionId; });
+}
+
+std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque()
+{
+	if (m_plaque) {
+		auto parent = m_plaque->getParent();
+		if (parent)
+			parent->removeChild(m_plaque);
+	}
+
+	m_plaque = m_document->createElement(gui::elem::block);
+	m_plaque->setId("view-" + std::to_string(m_view.sessionId()));
+
+	{
+		auto note = m_document->createElement(gui::elem::span);
+		note->innerText("Empty");
+		note->addClass("empty");
+		m_plaque->appendChild(std::move(note));
+	}
+
+	return m_plaque;
+}
+
+void CTasksView::ViewInfo::updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+{
+	ATLASSERT(m_plaque);
+
+	if (m_dataset)
+		updateDataset(removed, modified, added);
+}
+
+std::shared_ptr<gui::node> CTasksView::ViewInfo::buildSchema()
 {
 	auto header = m_document->createElement(gui::elem::table_head);
 	for (auto& col : m_dataset->schema.cols()) {
@@ -272,7 +320,7 @@ static bool equals(const std::shared_ptr<gui::node>& lhs, const std::shared_ptr<
 	return true;
 }
 
-std::shared_ptr<gui::node> CTasksView::ServerInfo::createNote()
+std::shared_ptr<gui::node> CTasksView::ViewInfo::createNote()
 {
 	std::ostringstream o;
 	auto low = m_dataset->data.empty() ? 0 : 1;
@@ -287,7 +335,7 @@ std::shared_ptr<gui::node> CTasksView::ServerInfo::createNote()
 	return note;
 }
 
-void CTasksView::ServerInfo::mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ViewInfo::mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
 {
 	std::shared_ptr<gui::node> table, note;
 
@@ -395,15 +443,14 @@ void CTasksView::ServerInfo::mergeTable(std::vector<std::string>& removed, std::
 		m_plaque->appendChild(createNote());
 }
 
-void CTasksView::ServerInfo::createTable()
+void CTasksView::ViewInfo::createTable()
 {
 	auto table = m_document->createElement(gui::elem::table);
 
 	{
 		auto caption = m_document->createElement(gui::elem::table_caption);
-		auto& view = m_server->views().empty() ? jira::search_def::standard : m_server->views().front();
-		auto jql = view.jql();
-		auto title = view.title();
+		auto jql = m_view.jql();
+		auto title = m_view.title();
 		if (jql.empty()) {// if JQL is taken from the standard, title should be taken as well
 			title = jira::search_def::standard.title();
 			jql = jira::search_def::standard.jql();
@@ -452,7 +499,7 @@ void CTasksView::ServerInfo::createTable()
 	m_plaque->insertBefore(table, note);
 }
 
-void CTasksView::ServerInfo::updateDataset(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ViewInfo::updateDataset(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
 {
 	ATLASSERT(m_dataset);
 	if (m_previous == m_dataset)
@@ -493,16 +540,24 @@ void CTasksView::ServerInfo::updateErrors()
 	}
 }
 
-std::vector<CTasksView::ServerInfo>::iterator CTasksView::find(uint32_t sessionId)
+std::vector<CTasksView::ServerInfo>::iterator CTasksView::findServer(uint32_t sessionId)
 {
-	return std::find_if(std::begin(m_servers), std::end(m_servers), [sessionId](const ServerInfo& info) { return info.m_sessionId == sessionId; });
+	return std::find_if(std::begin(m_servers), std::end(m_servers), [sessionId](const ServerInfo& info) { return info.m_server->sessionId() == sessionId; });
+}
+
+std::vector<CTasksView::ServerInfo>::iterator CTasksView::findViewServer(uint32_t sessionId)
+{
+	return std::find_if(std::begin(m_servers), std::end(m_servers), [sessionId](const ServerInfo& info) {
+		auto it = info.findDefinition(sessionId);
+		return it != info.m_server->views().end();
+	});
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<ServerInfo>::const_iterator it, const ::ServerInfo& info)
 {
 	// TODO: create UI element
 	// TDOD: attach refresh listener to the server
-	auto listener = std::make_shared<ServerListener>(m_hWnd, info.m_server->sessionId());
+	auto listener = std::make_shared<ServerListener>(m_hWnd);
 	return m_servers.emplace(it, info.m_server, info.m_document, listener);
 }
 
@@ -1306,7 +1361,7 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	// TODO: lock updates
 	if (wParam) { 
 		// a server has been added or removed...
-		auto it = find(wParam);
+		auto it = findServer(wParam);
 		if (it == m_servers.end()) { // it was added
 			synchronize(*m_model, [&] {
 				auto& servers = m_model->servers();
@@ -1333,7 +1388,7 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 			// for each ServerInfo: if not in model - remove
 			while (it != end) {
-				auto query = std::find_if(std::begin(servers), std::end(servers), [&](const ::ServerInfo& info) { return info.m_server->sessionId() == it->m_sessionId; });
+				auto query = std::find_if(std::begin(servers), std::end(servers), [&](const ::ServerInfo& info) { return info.m_server->sessionId() == it->m_server->sessionId(); });
 				if (query == std::end(servers))
 				{
 					it = erase(it);
@@ -1352,7 +1407,7 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			auto srv_end = std::end(servers);
 
 			for (; srv_it != srv_end; ++srv_it, ++it) {
-				if (it != end && (srv_it->m_server)->sessionId() == it->m_sessionId)
+				if (it != end && (srv_it->m_server)->sessionId() == it->m_server->sessionId())
 					continue;
 
 				it = insert(it, *srv_it); // fill in blanks...
@@ -1365,14 +1420,14 @@ LRESULT CTasksView::OnListChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	return 0;
 }
 
-LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	// For now, only zeroth view is shown
-	if (lParam)
+	auto srv = findViewServer(wParam);
+	if (srv == m_servers.end())
 		return 0;
 
-	auto it = find(wParam);
-	if (it == m_servers.end())
+	auto it = srv->findInfo(wParam);
+	if (it == srv->m_views.end())
 		return 0;
 
 	it->m_progress = ProgressInfo{100, 0, true};
@@ -1381,14 +1436,14 @@ LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, 
 	return 0;
 }
 
-LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	// For now, only zeroth view is shown
-	if (lParam)
+	auto srv = findViewServer(wParam);
+	if (srv == m_servers.end())
 		return 0;
 
-	auto it = find(wParam);
-	if (it == m_servers.end())
+	auto it = srv->findInfo(wParam);
+	if (it == srv->m_views.end())
 		return 0;
 
 	it->m_loading = false;
@@ -1396,7 +1451,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, B
 
 	std::vector<std::string> tabs[3];
 
-	auto& server = *it->m_server;
+	auto& server = *srv->m_server;
 	it->m_dataset = server.dataset();
 	it->updatePlaque(tabs[0], tabs[1], tabs[2]);
 
@@ -1442,21 +1497,18 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, B
 		m_notifier(title, msg);
 	}
 
-	m_model->startTimer(it->m_sessionId);
+	m_model->startTimer(it->m_view.sessionId());
 	return 0;
 }
 
 LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
 {
-	if (!lParam)
+	auto srv = findViewServer(wParam);
+	if (srv == m_servers.end())
 		return 0;
 
-	// For now, only zeroth view is shown
-	if (reinterpret_cast<ProgressInfo*>(lParam)->id)
-		return 0;
-
-	auto it = find(wParam);
-	if (it == m_servers.end())
+	auto it = srv->findInfo(wParam);
+	if (it == srv->m_views.end())
 		return 0;
 
 	it->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);

@@ -9,9 +9,9 @@
 
 enum {
 	UM_LISTCHANGED = WM_USER, // wParam - server's session ID, lParam - unused
-	UM_REFRESHSTART,          // wParam - server's session ID, lParam - view id
-	UM_REFRESHSTOP,           // wParam - server's session ID, lParam - view id
-	UM_PROGRESS,              // wParam - server's session ID, lParam - ProgressInfo*
+	UM_REFRESHSTART,          // wParam - views's session ID,  lParam - unused
+	UM_REFRESHSTOP,           // wParam - views's session ID,  lParam - unused
+	UM_PROGRESS,              // wParam - views's session ID,  lParam - ProgressInfo*
 	UM_LAYOUTNEEDED,          // wParam - 0,                   lParam - 0
 };
 
@@ -23,7 +23,6 @@ struct ProgressInfo {
 	uint64_t content;
 	uint64_t loaded;
 	bool calculable;
-	size_t id;
 };
 
 struct ZoomInfo {
@@ -50,18 +49,43 @@ class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 	using CViewSuper = CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>;
 
 public:
-	struct ServerInfo {
-		std::shared_ptr<jira::server> m_server;
+	struct ViewInfo {
+		jira::search_def m_view;
 		std::shared_ptr<gui::document> m_document;
-		std::shared_ptr<jira::server_listener> m_listener;
 		std::shared_ptr<jira::report> m_dataset;
 		std::shared_ptr<jira::report> m_previous;
-		uint32_t m_sessionId;
+
+		std::shared_ptr<gui::node> m_plaque;
 
 		ProgressInfo m_progress;
 		bool m_loading = false;
 		bool m_gotProgress = false;
-		// TODO : relation to UI element
+
+		ViewInfo(const jira::search_def& view,
+			const std::shared_ptr<gui::document>& doc);
+		~ViewInfo();
+		ViewInfo(const ViewInfo&) = delete;
+		ViewInfo& operator=(const ViewInfo&) = delete;
+		ViewInfo(ViewInfo&&) = default;
+		ViewInfo& operator=(ViewInfo&&) = default;
+
+		std::shared_ptr<gui::node> buildPlaque();
+		void updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
+
+	private:
+		void updateDataset(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
+		std::shared_ptr<gui::node> buildSchema();
+		std::shared_ptr<gui::node> createNote();
+		void mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
+		void createTable();
+	};
+
+	struct ServerInfo {
+		std::shared_ptr<jira::server> m_server;
+		std::shared_ptr<gui::document> m_document;
+		std::shared_ptr<jira::server_listener> m_listener;
+		std::vector<ViewInfo> m_views;
+
 		std::shared_ptr<gui::node> m_plaque;
 
 		ServerInfo(const std::shared_ptr<jira::server>& server,
@@ -75,14 +99,10 @@ public:
 
 		void buildPlaque();
 		void updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
-
+		std::vector<jira::search_def>::const_iterator findDefinition(uint32_t sessionId) const;
+		std::vector<ViewInfo>::iterator findInfo(uint32_t sessionId);
 	private:
-		void updateDataset(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
 		void updateErrors();
-		std::shared_ptr<gui::node> buildSchema();
-		std::shared_ptr<gui::node> createNote();
-		void mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
-		void createTable();
 	};
 
 private:
@@ -90,7 +110,8 @@ private:
 	std::vector<ServerInfo> m_servers;
 	std::shared_ptr<gui::node> m_body;
 	std::shared_ptr<DocOwner> m_docOwner;
-	std::vector<ServerInfo>::iterator find(uint32_t sessionId);
+	std::vector<ServerInfo>::iterator findServer(uint32_t sessionId);
+	std::vector<ServerInfo>::iterator findViewServer(uint32_t sessionId);
 
 	std::vector<ServerInfo>::iterator insert(std::vector<ServerInfo>::const_iterator it, const ::ServerInfo& info);
 	std::vector<ServerInfo>::iterator erase(std::vector<ServerInfo>::const_iterator it);
