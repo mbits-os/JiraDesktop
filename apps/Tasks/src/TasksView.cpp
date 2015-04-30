@@ -150,6 +150,36 @@ public:
 	}
 };
 
+class text_animator : public ani::animation {
+	const char* m_mask;
+	size_t m_frame_length, m_frame_count, m_frame = std::numeric_limits<size_t>::max();
+	std::weak_ptr<text_animator_cb> m_cb;
+public:
+	text_animator(const char* mask, size_t frame_length, const std::shared_ptr<text_animator_cb>& cb)
+		: m_mask(mask)
+		, m_frame_length(frame_length)
+		, m_frame_count(strlen(mask)/frame_length)
+		, m_cb(cb)
+	{
+	}
+	text_animator(const char* mask, const std::shared_ptr<text_animator_cb>& cb)
+		: text_animator(mask, 1, cb)
+	{
+	}
+	void init() override {}
+	void step(uint32_t step) override
+	{
+		auto frame = step * m_frame_count / step_max;
+		if (m_frame != frame) {
+			m_frame = frame;
+			auto cb = m_cb.lock();
+			if (cb)
+				cb->setText(m_mask + frame * m_frame_length, m_frame_length);
+		}
+	}
+	void shutdown() override {}
+};
+
 CTasksView::ViewInfo::ViewInfo(
 	const jira::search_def& view,
 	const std::shared_ptr<gui::document>& doc)
@@ -160,22 +190,34 @@ CTasksView::ViewInfo::ViewInfo(
 
 CTasksView::ViewInfo::~ViewInfo()
 {
+	//if (m_wait)
+	//	std::static_pointer_cast<text_animator>(m_wait)->set_callback(nullptr);
+	//if (m_load)
+	//	std::static_pointer_cast<text_animator>(m_load)->set_callback(nullptr);
 }
 
+void CTasksView::ViewInfo::setText(const char* value, size_t count)
+{
+	if (!m_progressCtrl)
+		return;
+
+	m_progressCtrl->innerText(" " + std::string{ value, count });
+}
 
 CTasksView::ServerInfo::ServerInfo(
 	const std::shared_ptr<jira::server>& server,
 	const std::shared_ptr<gui::document>& doc,
-	const std::shared_ptr<jira::server_listener>& listener)
+	const std::shared_ptr<jira::server_listener>& listener,
+	ani::win32::scene& scene)
 	: m_server(server)
 	, m_document(doc)
 	, m_listener(listener)
 {
 	for (auto& view : m_server->views())
-		m_views.emplace_back(view, doc);
+		m_views.push_back(std::make_shared<ViewInfo>(view, doc));
 
 	m_server->registerListener(m_listener);
-	buildPlaque();
+	buildPlaque(scene);
 }
 
 CTasksView::ServerInfo::~ServerInfo()
@@ -184,7 +226,7 @@ CTasksView::ServerInfo::~ServerInfo()
 		m_server->unregisterListener(m_listener);
 }
 
-void CTasksView::ServerInfo::buildPlaque()
+void CTasksView::ServerInfo::buildPlaque(ani::win32::scene& scene)
 {
 	if (m_plaque) {
 		auto parent = m_plaque->getParent();
@@ -203,18 +245,18 @@ void CTasksView::ServerInfo::buildPlaque()
 	}
 
 	for (auto& view : m_views)
-		m_plaque->appendChild(view.buildPlaque());
+		m_plaque->appendChild(view->buildPlaque(scene));
 
 	std::vector<std::string> dummy;
-	updatePlaque(dummy, dummy, dummy);
+	updatePlaque(scene, dummy, dummy, dummy);
 }
 
-void CTasksView::ServerInfo::updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ServerInfo::updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
 {
 	ATLASSERT(m_plaque);
 
 	for (auto& view : m_views)
-		view.updatePlaque(removed, modified, added);
+		view->updatePlaque(scene, removed, modified, added);
 
 	updateErrors();
 }
@@ -224,13 +266,23 @@ std::vector<jira::search_def>::const_iterator CTasksView::ServerInfo::findDefini
 	return std::find_if(std::begin(m_server->views()), std::end(m_server->views()), [sessionId](const jira::search_def& def) { return def.sessionId() == sessionId; });
 }
 
-std::vector<CTasksView::ViewInfo>::iterator CTasksView::ServerInfo::findInfo(uint32_t sessionId)
+std::vector<std::shared_ptr<CTasksView::ViewInfo>>::iterator CTasksView::ServerInfo::findInfo(uint32_t sessionId)
 {
-	return std::find_if(std::begin(m_views), std::end(m_views), [sessionId](const ViewInfo& view) { return view.m_view.sessionId() == sessionId; });
+	return std::find_if(std::begin(m_views), std::end(m_views), [sessionId](const std::shared_ptr<ViewInfo>& view) {
+		return view->m_view.sessionId() == sessionId;
+	});
 }
 
-void CTasksView::ViewInfo::updateProgress()
+void CTasksView::ViewInfo::updateProgress(ani::win32::scene& scene)
 {
+	if (!m_wait)
+		m_wait = std::make_shared<text_animator>("|\\--/", shared_from_this());
+	if (!m_load)
+		m_load = std::make_shared<text_animator>("|/--\\", shared_from_this());
+
+	scene.remove(m_wait);
+	scene.remove(m_load);
+
 	if (!m_progressCtrl)
 		return;
 
@@ -239,13 +291,13 @@ void CTasksView::ViewInfo::updateProgress()
 
 	if (m_loading) {
 		if (m_gotProgress)
-			m_progressCtrl->innerText("   []");
+			scene.animate(m_load, 2s);
 		else
-			m_progressCtrl->innerText("   ...");
+			scene.animate(m_wait, 5s);
 	}
 }
 
-std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque()
+std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque(ani::win32::scene& scene)
 {
 	if (m_plaque) {
 		auto parent = m_plaque->getParent();
@@ -261,7 +313,7 @@ std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque()
 		note->innerText("Empty");
 		m_progressCtrl = note->appendChild(m_document->createElement(gui::elem::span));
 		m_progressCtrl->addClass("symbol");
-		updateProgress();
+		updateProgress(scene);
 
 		note->addClass("empty");
 		m_plaque->appendChild(std::move(note));
@@ -270,12 +322,12 @@ std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque()
 	return m_plaque;
 }
 
-void CTasksView::ViewInfo::updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ViewInfo::updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
 {
 	ATLASSERT(m_plaque);
 
 	if (m_dataset)
-		updateDataset(removed, modified, added);
+		updateDataset(scene, removed, modified, added);
 }
 
 std::shared_ptr<gui::node> CTasksView::ViewInfo::buildSchema()
@@ -463,7 +515,7 @@ void CTasksView::ViewInfo::mergeTable(std::vector<std::string>& removed, std::ve
 		m_plaque->appendChild(createNote());
 }
 
-void CTasksView::ViewInfo::createTable()
+void CTasksView::ViewInfo::createTable(ani::win32::scene& scene)
 {
 	auto table = m_document->createElement(gui::elem::table);
 
@@ -483,7 +535,7 @@ void CTasksView::ViewInfo::createTable()
 		table->appendChild(caption);
 		m_progressCtrl = caption->appendChild(m_document->createElement(gui::elem::span));
 		m_progressCtrl->addClass("symbol");
-		updateProgress();
+		updateProgress(scene);
 	}
 	{
 		auto header = m_document->createElement(gui::elem::table_head);
@@ -522,7 +574,7 @@ void CTasksView::ViewInfo::createTable()
 	m_plaque->insertBefore(table, note);
 }
 
-void CTasksView::ViewInfo::updateDataset(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ViewInfo::updateDataset(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
 {
 	ATLASSERT(m_dataset);
 	if (m_previous == m_dataset)
@@ -531,7 +583,7 @@ void CTasksView::ViewInfo::updateDataset(std::vector<std::string>& removed, std:
 	if (m_previous)
 		mergeTable(removed, modified, added);
 	else
-		createTable();
+		createTable(scene);
 
 	m_previous = m_dataset;
 }
@@ -581,7 +633,7 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<Ser
 	// TODO: create UI element
 	// TDOD: attach refresh listener to the server
 	auto listener = std::make_shared<ServerListener>(m_hWnd);
-	return m_servers.emplace(it, info.m_server, info.m_document, listener);
+	return m_servers.emplace(it, info.m_server, info.m_document, listener, std::ref(m_scene));
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<ServerInfo>::const_iterator it)
@@ -1455,9 +1507,9 @@ LRESULT CTasksView::OnRefreshStart(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam
 	if (it == srv->m_views.end())
 		return 0;
 
-	it->m_progress = ProgressInfo{100, 0, true};
-	it->m_loading = true;
-	it->updateProgress();
+	(*it)->m_progress = ProgressInfo{100, 0, true};
+	(*it)->m_loading = true;
+	(*it)->updateProgress(m_scene);
 
 	return 0;
 }
@@ -1472,15 +1524,15 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	if (it == srv->m_views.end())
 		return 0;
 
-	it->m_loading = false;
-	it->m_gotProgress = false;
-	it->updateProgress();
+	(*it)->m_loading = false;
+	(*it)->m_gotProgress = false;
+	(*it)->updateProgress(m_scene);
 
 	std::vector<std::string> tabs[3];
 
 	auto& server = *srv->m_server;
-	it->m_dataset = server.dataset();
-	it->updatePlaque(tabs[0], tabs[1], tabs[2]);
+	(*it)->m_dataset = server.dataset();
+	(*it)->updatePlaque(m_scene, tabs[0], tabs[1], tabs[2]);
 
 	std::ostringstream o;
 	bool modified = false;
@@ -1524,7 +1576,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 		m_notifier(title, msg);
 	}
 
-	m_model->startTimer(it->m_view.sessionId());
+	m_model->startTimer((*it)->m_view.sessionId());
 	return 0;
 }
 
@@ -1538,9 +1590,9 @@ LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 	if (it == srv->m_views.end())
 		return 0;
 
-	it->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
-	it->m_gotProgress = true;
-	it->updateProgress();
+	(*it)->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
+	(*it)->m_gotProgress = true;
+	(*it)->updateProgress(m_scene);
 
 	return 0;
 }

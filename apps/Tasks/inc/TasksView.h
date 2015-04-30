@@ -46,13 +46,17 @@ class DocOwner;
 
 enum { TIMER_SCENE = 0x1001F00D };
 
+struct text_animator_cb {
+	virtual void setText(const char* value, size_t count) = 0;
+};
+
 using CTasksViewWinTraits = CWinTraits<WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_COMPOSITED>;
 class CTasksView : public CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>
 {
 	using CViewSuper = CWindowImpl<CTasksView, CWindow, CTasksViewWinTraits>;
 
 public:
-	struct ViewInfo {
+	struct ViewInfo: text_animator_cb, std::enable_shared_from_this<ViewInfo> {
 		jira::search_def m_view;
 		std::shared_ptr<gui::document> m_document;
 		std::shared_ptr<jira::report> m_dataset;
@@ -60,6 +64,8 @@ public:
 
 		std::shared_ptr<gui::node> m_plaque;
 		std::shared_ptr<gui::node> m_progressCtrl;
+
+		std::shared_ptr<ani::animation> m_wait, m_load;
 
 		ProgressInfo m_progress;
 		bool m_loading = false;
@@ -73,39 +79,41 @@ public:
 		ViewInfo(ViewInfo&&) = default;
 		ViewInfo& operator=(ViewInfo&&) = default;
 
-		void updateProgress();
-		std::shared_ptr<gui::node> buildPlaque();
-		void updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
+		void updateProgress(ani::win32::scene& scene);
+		std::shared_ptr<gui::node> buildPlaque(ani::win32::scene& scene);
+		void updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
 
 	private:
-		void updateDataset(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
+		void updateDataset(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
 		std::shared_ptr<gui::node> buildSchema();
 		std::shared_ptr<gui::node> createNote();
 		void mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
-		void createTable();
+		void createTable(ani::win32::scene& scene);
+		void setText(const char* value, size_t count) override;
 	};
 
 	struct ServerInfo {
 		std::shared_ptr<jira::server> m_server;
 		std::shared_ptr<gui::document> m_document;
 		std::shared_ptr<jira::server_listener> m_listener;
-		std::vector<ViewInfo> m_views;
+		std::vector<std::shared_ptr<ViewInfo>> m_views;
 
 		std::shared_ptr<gui::node> m_plaque;
 
 		ServerInfo(const std::shared_ptr<jira::server>& server,
 			const std::shared_ptr<gui::document>& doc,
-			const std::shared_ptr<jira::server_listener>& listener);
+			const std::shared_ptr<jira::server_listener>& listener,
+			ani::win32::scene& scene);
 		~ServerInfo();
 		ServerInfo(const ServerInfo&) = delete;
 		ServerInfo& operator=(const ServerInfo&) = delete;
 		ServerInfo(ServerInfo&&) = default;
 		ServerInfo& operator=(ServerInfo&&) = default;
 
-		void buildPlaque();
-		void updatePlaque(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
+		void buildPlaque(ani::win32::scene& scene);
+		void updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added);
 		std::vector<jira::search_def>::const_iterator findDefinition(uint32_t sessionId) const;
-		std::vector<ViewInfo>::iterator findInfo(uint32_t sessionId);
+		std::vector<std::shared_ptr<ViewInfo>>::iterator findInfo(uint32_t sessionId);
 	private:
 		void updateErrors();
 	};
@@ -139,6 +147,7 @@ private:
 	gui::pixels m_fontSize;
 	std::string m_fontFamily;
 	ani::win32::scene m_scene{TIMER_SCENE};
+	std::shared_ptr<ani::animation> m_wait, m_load;
 
 	void updateServers();
 	void updateCursor(bool force = false);

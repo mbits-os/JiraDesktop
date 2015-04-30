@@ -33,6 +33,7 @@ using namespace std::chrono_literals;
 
 namespace ani {
 	struct animation {
+		static const uint32_t step_max = 1000;
 		virtual ~animation() {}
 		virtual void init() = 0;
 		virtual void step(uint32_t step) = 0;

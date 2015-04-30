@@ -72,8 +72,10 @@ namespace ani {
 			return false;
 
 		auto timeframe = running % m_duration;
-		auto frame = 1000 * timeframe / m_duration;
+		auto frame = animation::step_max * timeframe / m_duration;
 		m_target->step((uint32_t)frame);
+
+		return true;
 	}
 
 	void scene::animate(const std::shared_ptr<animation>& target, std::chrono::milliseconds duration, uint32_t counts)
