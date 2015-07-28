@@ -595,7 +595,7 @@ void CTasksView::ServerInfo::updateErrors()
 	while (dummy) {
 		size_t pos = 0;
 		for (auto& child : children) {
-			if (children[pos]->hasClass("error"))
+			if (child->hasClass("error"))
 				break;
 			++pos;
 		}

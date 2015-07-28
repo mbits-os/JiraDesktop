@@ -100,12 +100,10 @@ HMENU CTasksActionsBase::createMenuBar(const std::initializer_list<menu::item>& 
 
 HWND CTasksActionsBase::createToolbar(const std::initializer_list<menu::item>& items, HWND hWndParent, DWORD dwStyle, UINT nID)
 {
-	HINSTANCE hInst = ModuleHelper::GetResourceInstance();
 	size_t count = items.size();
 	auto btns = std::make_unique<TBBUTTON[]>(count);
 
 	const int cxSeparator = 8;
-	int nBmp = 0;
 
 	auto cx = GetSystemMetrics(SM_CXSMICON);
 	HIMAGELIST hImageList = ImageList_Create(cx, cx, ILC_COLOR32, 1, 5);

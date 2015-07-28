@@ -192,8 +192,6 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	m_taskIcon.Install(m_hWnd, TRAYICON_MAIN, toolbar_icon, toolbar_menu, createStruct->lpszName);
 #endif
 
-	auto hwnd = m_hWnd;
-
 	m_model->startup();
 
 	return 0;
