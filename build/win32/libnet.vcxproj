@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libs\libnet\inc\net\filesystem.hpp" />
+    <ClInclude Include="..\..\libs\libnet\inc\net\post_mortem.hpp" />
     <ClInclude Include="..\..\libs\libnet\inc\net\uri.hpp" />
     <ClInclude Include="..\..\libs\libnet\inc\net\utf8.hpp" />
     <ClInclude Include="..\..\libs\libnet\inc\net\xhr.hpp" />

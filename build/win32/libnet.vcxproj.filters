@@ -60,5 +60,8 @@
     <ClInclude Include="..\..\libs\libnet\inc\net\xhr.hpp">
       <Filter>inc\net</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\libs\libnet\inc\net\post_mortem.hpp">
+      <Filter>inc\net</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
