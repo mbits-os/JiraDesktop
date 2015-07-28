@@ -15,6 +15,7 @@
 #include <memory>
 #include <net/filesystem.hpp>
 #include <net/xhr.hpp>
+#include <net/post_mortem.hpp>
 
 #include <gdiplus.h>
 
@@ -100,42 +101,47 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	_Module.AddMessageLoop(&theLoop);
 
 	CTasksFrame wndMain;
+    int nRet = 0;
 
-	if(wndMain.Create(NULL, NULL, WPROGRAM_TITLE) == NULL)
-	{
-		ATLTRACE(_T("Main window creation failed!\n"));
-		return 0;
-	}
+    pm::PostMortemSupport([&] {
+        if (wndMain.Create(NULL, NULL, WPROGRAM_TITLE) == NULL)
+        {
+            ATLTRACE(_T("Main window creation failed!\n"));
+            return;
+        }
 
-	wndMain.rebuildAccel();
-	if (!wndMain.updatePosition()) {
-		WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
-		placement.showCmd = nCmdShow;
+        wndMain.rebuildAccel();
+        if (!wndMain.updatePosition()) {
+            WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
+            placement.showCmd = nCmdShow;
 
-		RECT workArea;
-		if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
-			workArea.right -= workArea.left;
-			workArea.bottom -= workArea.top;
-			workArea.left = workArea.top = 0;
+            RECT workArea;
+            if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
+                workArea.right -= workArea.left;
+                workArea.bottom -= workArea.top;
+                workArea.left = workArea.top = 0;
 
-			auto padding = GetSystemMetrics(SM_CYCAPTION);
-			workArea.left += padding;
-			workArea.top += padding;
-			workArea.right -= padding;
-			workArea.bottom -= padding;
+                auto padding = GetSystemMetrics(SM_CYCAPTION);
+                workArea.left += padding;
+                workArea.top += padding;
+                workArea.right -= padding;
+                workArea.bottom -= padding;
 
-			workArea.left = (workArea.right + workArea.left) / 2;
-			workArea.top  = (workArea.bottom + workArea.top) / 2;
-			placement.rcNormalPosition = workArea;
-			wndMain.SetWindowPlacement(&placement);
-		} else
-			wndMain.ShowWindow(nCmdShow);
-	}
+                workArea.left = (workArea.right + workArea.left) / 2;
+                workArea.top = (workArea.bottom + workArea.top) / 2;
+                placement.rcNormalPosition = workArea;
+                wndMain.SetWindowPlacement(&placement);
+            }
+            else
+                wndMain.ShowWindow(nCmdShow);
+        }
 
-	int nRet = theLoop.Run();
+        nRet = theLoop.Run();
 
-	_Module.RemoveMessageLoop();
-	return nRet;
+        _Module.RemoveMessageLoop();
+    });
+
+    return nRet;
 }
 
 class Fonts {
