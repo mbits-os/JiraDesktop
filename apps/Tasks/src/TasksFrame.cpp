@@ -15,7 +15,6 @@
 #include <net/utf8.hpp>
 #include <net/xhr.hpp>
 #include <sstream>
-#include <thread>
 
 #include "AppSettings.h"
 

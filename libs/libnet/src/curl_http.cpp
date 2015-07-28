@@ -28,7 +28,7 @@
 #include <curl/curl.h>
 #include <string.h>
 #include <sstream>
-#include <thread>
+#include <net/post_mortem.hpp>
 
 #include <string>
 #include <cctype>
@@ -262,7 +262,7 @@ namespace net { namespace http {
 			auto cb = m_callback.lock();
 			auto thiz = shared_from_this();
 			if (async && cb)
-				std::thread([thiz]{ thiz->run(); }).detach();
+				pm::thread([thiz]{ thiz->run(); }).detach();
 			else
 				run();
 		}

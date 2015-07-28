@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "AppModel.h"
 #include "AppSettings.h"
-#include <thread>
+#include <net/post_mortem.hpp>
 #include <net/xhr.hpp>
 #include <net/utf8.hpp>
 #include <sstream>
@@ -72,10 +72,10 @@ void CAppModel::startup()
 
 	auto local = m_servers;
 	for (auto server : local) {
-		std::thread{ [server] {
+		pm::thread( [server] {
 			server.m_server->loadFields();
 			server.m_server->refresh(server.m_document);
-		} }.detach();
+		} ).detach();
 	}
 }
 
@@ -157,10 +157,10 @@ void CAppModel::update(const std::shared_ptr<jira::server>& server)
 
 	if (it != m_servers.end()) {
 		auto document = it->m_document;
-		std::thread{ [server, document] {
+		pm::thread( [server, document] {
 			server->loadFields();
 			server->refresh(document);
-		} }.detach();
+		} ).detach();
 	}
 }
 
