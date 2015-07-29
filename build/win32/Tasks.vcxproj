@@ -66,6 +66,7 @@
     <ClInclude Include="..\..\apps\Tasks\inc\AppModel.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\AppSettings.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\ConnectionDlg.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\langs.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\stdafx.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TaskBarIcon.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\Tasks.h" />
@@ -80,5 +81,12 @@
     <Image Include="..\..\apps\Tasks\res\toolbar_old.bmp" />
     <Image Include="..\..\apps\Tasks\res\toolbar.bmp" />
     <Image Include="..\..\apps\Tasks\res\Tasks.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\apps\Tasks\src\TasksStrings.idl">
+      <Command>lngs enums -vi "%(Identity)" -o "%(RelativeDir)..\inc\langs.h"</Command>
+      <Outputs>$(TargetDir)..\inc\langs.h</Outputs>
+      <Message>Building string ids</Message>
+    </CustomBuild>
   </ItemGroup>
 </Project>
