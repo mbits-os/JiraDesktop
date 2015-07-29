@@ -1,97 +1,97 @@
 [
 	project("Tasks"),
 	version("1.0"),
-	serial(0)
+	serial(1)
 ]
 strings
 {
 
 	// Application title ********************************************************************************
-	[help("Application name for window title"), id(-1)]
+	[help("Application name for window title"), id(1001)]
 	LNG_APP_NAME = "Tasks";
-	[help("Full window title. %1 is LNG_APP_NAME, %2 is version and %3 is the build number"), id(-1)]
+	[help("Full window title. %1 is LNG_APP_NAME, %2 is version and %3 is the build number"), id(1002)]
 	LNG_APP_TITLE = "%1 (%2, build %3)";
 
 	// Menu bar *****************************************************************************************
-	[help("Top level menu name for application commands"), id(-1)]
+	[help("Top level menu name for application commands"), id(1003)]
 	LNG_APP_MENU_TASKS = "&Tasks";
-	[help("Top level menu name for connection commands"), id(-1)]
+	[help("Top level menu name for connection commands"), id(1004)]
 	LNG_APP_MENU_CONNNECTIONS = "&Connections";
-	[help("Top level menu name for help commands"), id(-1)]
+	[help("Top level menu name for help commands"), id(1005)]
 	LNG_APP_MENU_HELP = "&Help";
 
 	// Menu items ***************************************************************************************
-	[help("Tray command. Allows to switch the application between visible/invisible states"), id(-1)]
+	[help("Tray command. Allows to switch the application between visible/invisible states"), id(1006)]
 	LNG_APP_MENUITEM_SHOWHIDE = "Show/hide Tasks";
-	[help("Tasks command. Starts adding a new connection to the task server."), id(-1)]
+	[help("Tasks command. Starts adding a new connection to the task server."), id(1007)]
 	LNG_APP_MENUITEM_NEWCONN = "New &Connection...";
-	[help("Tasks command. Begins process of refreshing all tables"), id(-1)]
+	[help("Tasks command. Begins process of refreshing all tables"), id(1008)]
 	LNG_APP_MENUITEM_REFRESHALL = "&Refresh All";
-	[help("Tasks command. Shows settings dialog"), id(-1)]
+	[help("Tasks command. Shows settings dialog"), id(1009)]
 	LNG_APP_MENUITEM_SETTINGS = "&Settings...";
-	[help("Tasks command. Closes the application"), id(-1)]
+	[help("Tasks command. Closes the application"), id(1010)]
 	LNG_APP_MENUITEM_EXIT = "E&xit";
-	[help("Connection command. Edits details of an exisiting connection"), id(-1)]
+	[help("Connection command. Edits details of an exisiting connection"), id(1011)]
 	LNG_APP_MENUITEM_EDIT = "&Edit...";
-	[help("Connection command. Begins process of refreshing current table"), id(-1)]
+	[help("Connection command. Begins process of refreshing current table"), id(1012)]
 	LNG_APP_MENUITEM_REFRESH = "&Refresh";
-	[help("Connection command. Deletes the connection and all its tables"), id(-1)]
+	[help("Connection command. Deletes the connection and all its tables"), id(1013)]
 	LNG_APP_MENUITEM_REMOVE = "Re&move";
-	[help("Connection command. Opens current issue in web browser"), id(-1)]
+	[help("Connection command. Opens current issue in web browser"), id(1014)]
 	LNG_APP_MENUITEM_GOTO = "&Go To Issue";
-	[help("Connection command. Logs time spent with current issue"), id(-1)]
+	[help("Connection command. Logs time spent with current issue"), id(1015)]
 	LNG_APP_MENUITEM_LOGWORK = "Log &Work...";
-	[help("Help command. Presents licences of all third party components"), id(-1)]
+	[help("Help command. Presents licences of all third party components"), id(1016)]
 	LNG_APP_MENUITEM_LICENSES = "Show &Licences";
-	[help("Help command. Shows dialog with name, version and copyright info."), id(-1)]
+	[help("Help command. Shows dialog with name, version and copyright info."), id(1017)]
 	LNG_APP_MENUITEM_ABOUTTASKS = "&About Tasks...";
 
 	// Toolbar button tooltips **************************************************************************
-	[help("Tooltip for LNG_APP_MENUITEM_NEWCONN"), id(-1)]
+	[help("Tooltip for LNG_APP_MENUITEM_NEWCONN"), id(1018)]
 	LNG_APP_MENUITEM_NEWCONN_TIP = "New Connection";
-	[help("Tooltip for LNG_APP_MENUITEM_REFRESHALL"), id(-1)]
+	[help("Tooltip for LNG_APP_MENUITEM_REFRESHALL"), id(1019)]
 	LNG_APP_MENUITEM_REFRESHALL_TIP = "Refresh All";
-	[help("Tooltip for LNG_APP_MENUITEM_SETTINGS"), id(-1)]
+	[help("Tooltip for LNG_APP_MENUITEM_SETTINGS"), id(1020)]
 	LNG_APP_MENUITEM_SETTINGS_TIP = "Settings";
-	[help("Tooltip for LNG_APP_MENUITEM_EXIT"), id(-1)]
+	[help("Tooltip for LNG_APP_MENUITEM_EXIT"), id(1021)]
 	LNG_APP_MENUITEM_EXIT_TIP = "Exit";
-	[help("Tooltip for LNG_APP_MENUITEM_LICENSES"), id(-1)]
+	[help("Tooltip for LNG_APP_MENUITEM_LICENSES"), id(1022)]
 	LNG_APP_MENUITEM_LICENSES_TIP = "Licences";
-	[help("Tooltip for LNG_APP_MENUITEM_ABOUTTASKS"), id(-1)]
+	[help("Tooltip for LNG_APP_MENUITEM_ABOUTTASKS"), id(1023)]
 	LNG_APP_MENUITEM_ABOUTTASKS_TIP = "About Tasks";
 
 	// Begin of JIRA strings; strings that will not have localication from server ***********************
-	[help("Column title for issue key - in case of field definition error; most of the time this string will come from JIRA server"), id(-1)]
+	[help("Column title for issue key - in case of field definition error; most of the time this string will come from JIRA server"), id(1024)]
 	LNG_JIRA_KEY = "Key";
-	[help("Table footer presenting the data slice; as if '(Issues 1-25 of 30)'"), id(-1)]
+	[help("Table footer presenting the data slice; as if '(Issues 1-25 of 30)'"), id(1025)]
 	LNG_JIRA_ISSUES = "(Issues %1-%2 of %3)";
 
 	// JIRA strings; Notification icon ******************************************************************
-	[help("Tooltip title for attention icon"), id(-1)]
+	[help("Tooltip title for attention icon"), id(1026)]
 	LNG_ATTENTION_TOOLTIP = "Report(s) changed";
-	[help("Tooltip baloon title for attention icon notification"), id(-1)]
+	[help("Tooltip baloon title for attention icon notification"), id(1027)]
 	LNG_JIRA_NOTIFY = "Changes in %1@%2";
-	[help("Tooltip baloon notification name for removed issues"), id(-1)]
+	[help("Tooltip baloon notification name for removed issues"), id(1028)]
 	LNG_JIRA_REMOVED = "Removed";
-	[help("Tooltip baloon notification name for changed issues"), id(-1)]
+	[help("Tooltip baloon notification name for changed issues"), id(1029)]
 	LNG_JIRA_CHANGED = "Changed";
-	[help("Tooltip baloon notification name for added issues"), id(-1)]
+	[help("Tooltip baloon notification name for added issues"), id(1030)]
 	LNG_JIRA_ADDED = "Added";
 
 	[
 		help("Notification text for issue group. As if 'Added 4 issues'"),
 		plural("%1 %2 issues"),
-		id(-1)
+		id(1031)
 	]
 	LNG_JIRA_NOTIFY_GROUP = "%1 %2 issue";
 
-	[help("Notification text for issue group contents, used when group consists of two issues only. As if 'KEY-1 and KEY-2'"), id(-1)]
+	[help("Notification text for issue group contents, used when group consists of two issues only. As if 'KEY-1 and KEY-2'"), id(1032)]
 	LNG_JIRA_NOTIFY_TWO = "%1 and %2";
 
 	[
 		help("Notification text for issue group contents, used when group consists of more than two issues. As if 'KEY-1, KEY-2 and 5 others'"),
 		plural("%1, %2 and %3 others"),
-		id(-1)
+		id(1033)
 	]
 	LNG_JIRA_NOTIFY_MORE = "%1, %2 and %3 other";
 };
