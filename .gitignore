@@ -41,3 +41,4 @@ int
 ipch
 *.log
 apps/Tasks/inc/langs.h
+locale

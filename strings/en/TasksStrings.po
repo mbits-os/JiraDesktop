@@ -1,0 +1,191 @@
+# Copyright (C) 2012 midnightBITS
+# This file is distributed under the same license as the Aggregate package.
+# Marcin Zdun <mzdun@midnightbits.com>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Tasks 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-07-29 21:22+0200\n"
+"PO-Revision-Date: 2015-07-29 21:27+0100\n"
+"Last-Translator: Marcin Zdun <mzdun@midnightbits.com>\n"
+"Language-Team: Translators <translate@midnightbits.com>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.6.9\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Help command. Shows dialog with name, version and copyright info.
+msgctxt "LNG_APP_MENUITEM_ABOUTTASKS"
+msgid "&About Tasks..."
+msgstr "&About Tasks..."
+
+#. Tooltip for LNG_APP_MENUITEM_ABOUTTASKS
+msgctxt "LNG_APP_MENUITEM_ABOUTTASKS_TIP"
+msgid "About Tasks"
+msgstr "About Tasks"
+
+#. Connection command. Edits details of an exisiting connection
+msgctxt "LNG_APP_MENUITEM_EDIT"
+msgid "&Edit..."
+msgstr "&Edit..."
+
+#. Tasks command. Closes the application
+msgctxt "LNG_APP_MENUITEM_EXIT"
+msgid "E&xit"
+msgstr "E&xit"
+
+#. Tooltip for LNG_APP_MENUITEM_EXIT
+msgctxt "LNG_APP_MENUITEM_EXIT_TIP"
+msgid "Exit"
+msgstr "Exit"
+
+#. Connection command. Opens current issue in web browser
+msgctxt "LNG_APP_MENUITEM_GOTO"
+msgid "&Go To Issue"
+msgstr "&Go To Issue"
+
+#. Help command. Presents licences of all third party components
+msgctxt "LNG_APP_MENUITEM_LICENSES"
+msgid "Show &Licences"
+msgstr "Show &Licences"
+
+#. Tooltip for LNG_APP_MENUITEM_LICENSES
+msgctxt "LNG_APP_MENUITEM_LICENSES_TIP"
+msgid "Licences"
+msgstr "Licences"
+
+#. Connection command. Logs time spent with current issue
+msgctxt "LNG_APP_MENUITEM_LOGWORK"
+msgid "Log &Work..."
+msgstr "Log &Work..."
+
+#. Tasks command. Starts adding a new connection to the task server.
+msgctxt "LNG_APP_MENUITEM_NEWCONN"
+msgid "New &Connection..."
+msgstr "New &Connection..."
+
+#. Tooltip for LNG_APP_MENUITEM_NEWCONN
+msgctxt "LNG_APP_MENUITEM_NEWCONN_TIP"
+msgid "New Connection"
+msgstr "New Connection"
+
+#. Connection command. Begins process of refreshing current table
+msgctxt "LNG_APP_MENUITEM_REFRESH"
+msgid "&Refresh"
+msgstr "&Refresh"
+
+#. Tasks command. Begins process of refreshing all tables
+msgctxt "LNG_APP_MENUITEM_REFRESHALL"
+msgid "&Refresh All"
+msgstr "&Refresh All"
+
+#. Tooltip for LNG_APP_MENUITEM_REFRESHALL
+msgctxt "LNG_APP_MENUITEM_REFRESHALL_TIP"
+msgid "Refresh All"
+msgstr "Refresh All"
+
+#. Connection command. Deletes the connection and all its tables
+msgctxt "LNG_APP_MENUITEM_REMOVE"
+msgid "Re&move"
+msgstr "Re&move"
+
+#. Tasks command. Shows settings dialog
+msgctxt "LNG_APP_MENUITEM_SETTINGS"
+msgid "&Settings..."
+msgstr "&Settings..."
+
+#. Tooltip for LNG_APP_MENUITEM_SETTINGS
+msgctxt "LNG_APP_MENUITEM_SETTINGS_TIP"
+msgid "Settings"
+msgstr "Settings"
+
+#. Tray command. Allows to switch the application between visible/invisible states
+msgctxt "LNG_APP_MENUITEM_SHOWHIDE"
+msgid "Show/hide Tasks"
+msgstr "Show/hide Tasks"
+
+#. Top level menu name for connection commands
+msgctxt "LNG_APP_MENU_CONNNECTIONS"
+msgid "&Connections"
+msgstr "&Connections"
+
+#. Top level menu name for help commands
+msgctxt "LNG_APP_MENU_HELP"
+msgid "&Help"
+msgstr "&Help"
+
+#. Top level menu name for application commands
+msgctxt "LNG_APP_MENU_TASKS"
+msgid "&Tasks"
+msgstr "&Tasks"
+
+#. Application name for window title
+msgctxt "LNG_APP_NAME"
+msgid "Tasks"
+msgstr "Tasks"
+
+#. Full window title. %1 is LNG_APP_NAME, %2 is version and %3 is the build number
+msgctxt "LNG_APP_TITLE"
+msgid "%1 (%2, build %3)"
+msgstr "%1 (%2, build %3)"
+
+#. Tooltip title for attention icon
+msgctxt "LNG_ATTENTION_TOOLTIP"
+msgid "Report(s) changed"
+msgstr "Report(s) changed"
+
+#. Tooltip baloon notification name for added issues
+msgctxt "LNG_JIRA_ADDED"
+msgid "Added"
+msgstr "Added"
+
+#. Tooltip baloon notification name for changed issues
+msgctxt "LNG_JIRA_CHANGED"
+msgid "Changed"
+msgstr "Changed"
+
+#. Table footer presenting the data slice; as if '(Issues 1-25 of 30)'
+msgctxt "LNG_JIRA_ISSUES"
+msgid "(Issues %1-%2 of %3)"
+msgstr "(Issues %1-%2 of %3)"
+
+#. Column title for issue key - in case of field definition error; most of the time this string will come from JIRA server
+msgctxt "LNG_JIRA_KEY"
+msgid "Key"
+msgstr "Key"
+
+#. Tooltip baloon title for attention icon notification
+msgctxt "LNG_JIRA_NOTIFY"
+msgid "Changes in %1@%2"
+msgstr "Changes in %1@%2"
+
+#. Notification text for issue group. As if 'Added 4 issues'
+msgctxt "LNG_JIRA_NOTIFY_GROUP"
+msgid "%1 %2 issue"
+msgid_plural "%1 %2 issues"
+msgstr[0] "%1 one issue"
+msgstr[1] "%1 %2 issues"
+
+#. Notification text for issue group contents, used when group consists of more than two issues. As if 'KEY-1, KEY-2 and 5 others'
+msgctxt "LNG_JIRA_NOTIFY_MORE"
+msgid "%1, %2 and %3 other"
+msgid_plural "%1, %2 and %3 others"
+msgstr[0] "%1, %2 and one other"
+msgstr[1] "%1, %2 and %3 others"
+
+#. Notification text for issue group contents, used when group consists of two issues only. As if 'KEY-1 and KEY-2'
+msgctxt "LNG_JIRA_NOTIFY_TWO"
+msgid "%1 and %2"
+msgstr "%1 and %2"
+
+#. Tooltip baloon notification name for removed issues
+msgctxt "LNG_JIRA_REMOVED"
+msgid "Removed"
+msgstr "Removed"
+
+#~ msgctxt "ATTR_LANGUAGE"
+#~ msgid "Name of the language"
+#~ msgstr "English"

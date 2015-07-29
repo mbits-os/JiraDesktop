@@ -1,0 +1,4 @@
+en English
+en_US English (United States)
+pl polski
+pl_PL polski (Polska)
