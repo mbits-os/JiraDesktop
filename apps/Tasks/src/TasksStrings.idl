@@ -94,4 +94,7 @@ strings
 		id(1033)
 	]
 	LNG_JIRA_NOTIFY_MORE = "%1, %2 and %3 other";
+
+	[help("Replacement text for empty report"), id(-1)]
+	LNG_JIRA_REPORT_EMPTY = "Empty";
 };
