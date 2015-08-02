@@ -56,6 +56,9 @@
     <ClCompile Include="..\..\apps\Tasks\src\Tasks.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\TasksActions.cpp" />
     <ClCompile Include="..\..\apps\Tasks\src\TasksFrame.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\TasksStrings.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\apps\Tasks\src\TasksView.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -84,8 +87,10 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\apps\Tasks\src\TasksStrings.idl">
-      <Command>lngs enums -vi "%(Identity)" -o "%(RelativeDir)..\inc\langs.h"</Command>
-      <Outputs>$(TargetDir)..\inc\langs.h</Outputs>
+      <Command>lngs enums -vri "%(Identity)" -o "%(RelativeDir)..\inc\langs.h"
+lngs res -vwi "%(Identity)" -o "%(RelativeDir)\%(Filename).cpp" --include "langs.h"
+</Command>
+      <Outputs>%(RelativeDir)\..\inc\langs.h;%(RelativeDir)\%(Filename).cpp;%(Outputs)</Outputs>
       <Message>Building string ids</Message>
     </CustomBuild>
   </ItemGroup>
