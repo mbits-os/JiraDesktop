@@ -118,11 +118,12 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	if (SUCCEEDED(hRet) && dwMajor >= 6)
 		uResID = IDR_MAINFRAME;
 
-	createItems();
+	createItems(_);
 
 	m_model->setTimerHandle(m_hWnd);
 
 	m_view.m_model = m_model;
+	m_view._ = _;
 
 	m_hWndClient = m_container.Create(m_hWnd, rcDefault, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 
@@ -134,11 +135,11 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 				MAKEINTRESOURCE(IDR_ATTENTION), IMAGE_ICON,
 				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 				LR_DEFAULTCOLOR);
-			constexpr auto ICON_TITLE = TEXT("Report(s) changed");
+			auto ICON_TITLE = _(lng::LNG_ATTENTION_TOOLTIP);
 #ifdef TRAY_USE_GUID
-			m_attentionIcon.Install(m_hWnd, UUID_AttentionIcon, tray_icon, nullptr, ICON_TITLE);
+			m_attentionIcon.Install(m_hWnd, UUID_AttentionIcon, tray_icon, nullptr, utf::widen(ICON_TITLE).c_str());
 #else
-			m_attentionIcon.Install(m_hWnd, TRAYICON_ATTENTION, tray_icon, nullptr, ICON_TITLE);
+			m_attentionIcon.Install(m_hWnd, TRAYICON_ATTENTION, tray_icon, nullptr, utf::widen(ICON_TITLE).c_str());
 #endif
 		}
 		m_balloonVisible = true;

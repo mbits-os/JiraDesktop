@@ -208,7 +208,8 @@ CTasksView::ServerInfo::ServerInfo(
 	const std::shared_ptr<jira::server>& server,
 	const std::shared_ptr<gui::document>& doc,
 	const std::shared_ptr<jira::server_listener>& listener,
-	ani::win32::scene& scene)
+	ani::win32::scene& scene,
+	const Strings& tr)
 	: m_server(server)
 	, m_document(doc)
 	, m_listener(listener)
@@ -217,7 +218,7 @@ CTasksView::ServerInfo::ServerInfo(
 		m_views.push_back(std::make_shared<ViewInfo>(view, doc));
 
 	m_server->registerListener(m_listener);
-	buildPlaque(scene);
+	buildPlaque(scene, tr);
 }
 
 CTasksView::ServerInfo::~ServerInfo()
@@ -226,7 +227,7 @@ CTasksView::ServerInfo::~ServerInfo()
 		m_server->unregisterListener(m_listener);
 }
 
-void CTasksView::ServerInfo::buildPlaque(ani::win32::scene& scene)
+void CTasksView::ServerInfo::buildPlaque(ani::win32::scene& scene, const Strings& tr)
 {
 	if (m_plaque) {
 		auto parent = m_plaque->getParent();
@@ -245,18 +246,18 @@ void CTasksView::ServerInfo::buildPlaque(ani::win32::scene& scene)
 	}
 
 	for (auto& view : m_views)
-		m_plaque->appendChild(view->buildPlaque(scene));
+		m_plaque->appendChild(view->buildPlaque(scene, tr));
 
 	std::vector<std::string> dummy;
-	updatePlaque(scene, dummy, dummy, dummy);
+	updatePlaque(scene, dummy, dummy, dummy, tr);
 }
 
-void CTasksView::ServerInfo::updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ServerInfo::updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added, const Strings& tr)
 {
 	ATLASSERT(m_plaque);
 
 	for (auto& view : m_views)
-		view->updatePlaque(scene, removed, modified, added);
+		view->updatePlaque(scene, removed, modified, added, tr);
 
 	updateErrors();
 }
@@ -297,7 +298,7 @@ void CTasksView::ViewInfo::updateProgress(ani::win32::scene& scene)
 	}
 }
 
-std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque(ani::win32::scene& scene)
+std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque(ani::win32::scene& scene, const Strings& tr)
 {
 	if (m_plaque) {
 		auto parent = m_plaque->getParent();
@@ -310,7 +311,7 @@ std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque(ani::win32::scene& 
 
 	{
 		auto note = m_document->createElement(gui::elem::span);
-		note->innerText("Empty");
+		note->innerText(tr(lng::LNG_JIRA_REPORT_EMPTY));
 		m_progressCtrl = note->appendChild(m_document->createElement(gui::elem::span));
 		m_progressCtrl->addClass("symbol");
 		updateProgress(scene);
@@ -322,12 +323,12 @@ std::shared_ptr<gui::node> CTasksView::ViewInfo::buildPlaque(ani::win32::scene& 
 	return m_plaque;
 }
 
-void CTasksView::ViewInfo::updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ViewInfo::updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added, const Strings& tr)
 {
 	ATLASSERT(m_plaque);
 
 	if (m_dataset)
-		updateDataset(scene, removed, modified, added);
+		updateDataset(scene, removed, modified, added, tr);
 }
 
 std::shared_ptr<gui::node> CTasksView::ViewInfo::buildSchema()
@@ -392,22 +393,22 @@ static bool equals(const std::shared_ptr<gui::node>& lhs, const std::shared_ptr<
 	return true;
 }
 
-std::shared_ptr<gui::node> CTasksView::ViewInfo::createNote()
+std::shared_ptr<gui::node> CTasksView::ViewInfo::createNote(const Strings& tr)
 {
-	std::ostringstream o;
 	auto low = m_dataset->data.empty() ? 0 : 1;
-	o << "(Issues " << (m_dataset->startAt + low)
-		<< '-' << (m_dataset->startAt + m_dataset->data.size())
-		<< " of " << m_dataset->total << ")";
 
+	auto slice = tr(lng::LNG_JIRA_ISSUES,
+		m_dataset->startAt + low,
+		m_dataset->startAt + m_dataset->data.size(),
+		m_dataset->total);
 	auto note = m_document->createElement(gui::elem::span);
-	note->innerText(o.str());
+	note->innerText(slice);
 	note->addClass("summary");
 
 	return note;
 }
 
-void CTasksView::ViewInfo::mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ViewInfo::mergeTable(std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added, const Strings& tr)
 {
 	std::shared_ptr<gui::node> table, note;
 
@@ -510,12 +511,12 @@ void CTasksView::ViewInfo::mergeTable(std::vector<std::string>& removed, std::ve
 	}
 
 	if (note)
-		m_plaque->replaceChild(createNote(), note);
+		m_plaque->replaceChild(createNote(tr), note);
 	else
-		m_plaque->appendChild(createNote());
+		m_plaque->appendChild(createNote(tr));
 }
 
-void CTasksView::ViewInfo::createTable(ani::win32::scene& scene)
+void CTasksView::ViewInfo::createTable(ani::win32::scene& scene, const Strings& tr)
 {
 	auto table = m_document->createElement(gui::elem::table);
 
@@ -566,7 +567,7 @@ void CTasksView::ViewInfo::createTable(ani::win32::scene& scene)
 		}
 	}
 
-	auto note = createNote();
+	auto note = createNote(tr);
 	if (empty)
 		m_plaque->replaceChild(note, empty);
 	else
@@ -574,16 +575,16 @@ void CTasksView::ViewInfo::createTable(ani::win32::scene& scene)
 	m_plaque->insertBefore(table, note);
 }
 
-void CTasksView::ViewInfo::updateDataset(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added)
+void CTasksView::ViewInfo::updateDataset(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added, const Strings& tr)
 {
 	ATLASSERT(m_dataset);
 	if (m_previous == m_dataset)
 		return;
 
 	if (m_previous)
-		mergeTable(removed, modified, added);
+		mergeTable(removed, modified, added, tr);
 	else
-		createTable(scene);
+		createTable(scene, tr);
 
 	m_previous = m_dataset;
 }
@@ -633,7 +634,7 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<Ser
 	// TODO: create UI element
 	// TDOD: attach refresh listener to the server
 	auto listener = std::make_shared<ServerListener>(m_hWnd);
-	return m_servers.emplace(it, info.m_server, info.m_document, listener, std::ref(m_scene));
+	return m_servers.emplace(it, info.m_server, info.m_document, listener, std::ref(m_scene), _);
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<ServerInfo>::const_iterator it)
@@ -1532,7 +1533,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *srv->m_server;
 	(*it)->m_dataset = server.dataset();
-	(*it)->updatePlaque(m_scene, tabs[0], tabs[1], tabs[2]);
+	(*it)->updatePlaque(m_scene, tabs[0], tabs[1], tabs[2], _);
 
 	std::ostringstream o;
 	bool modified = false;
@@ -1540,7 +1541,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 		modified |= !tab.empty();
 
 	if (modified) {
-		const char* names[] = { "Removed", "Changed", "Added" };
+		lng names[] = { lng::LNG_JIRA_REMOVED, lng::LNG_JIRA_CHANGED, lng::LNG_JIRA_ADDED };
 		auto name_it = names;
 
 		bool first = true;
@@ -1553,17 +1554,18 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			if (first) first = false;
 			else o << "\n";
 
-			o << name << " " << issues.size() << " issue(s): ";
+			
+			o << _(lngs::LNG_JIRA_NOTIFY_GROUP, issues.size(), _(name), issues.size()) << ": ";
 
 			switch (issues.size()) {
 			case 1:
 				o << issues[0];
 				break;
 			case 2:
-				o << issues[0] << " and " << issues[1];
+				o << _(lng::LNG_JIRA_NOTIFY_TWO, issues[0], issues[1]);
 				break;
 			default:
-				o << issues[0] << ", " << issues[1] << " and " << (issues.size() - 2) << " other(s)";
+				o << _(lngs::LNG_JIRA_NOTIFY_MORE, (issues.size() - 2), issues[0], issues[1], (issues.size() - 2));
 				break;
 			}
 		}
@@ -1572,7 +1574,8 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 	auto msg = utf::widen(o.str());
 
 	if (!msg.empty() && m_notifier) {
-		auto title = utf::widen("Changes in " + server.login() + "@" + server.displayName());
+		
+		auto title = utf::widen(_(lng::LNG_JIRA_NOTIFY, server.login(), server.displayName()));
 		m_notifier(title, msg);
 	}
 

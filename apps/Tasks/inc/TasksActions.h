@@ -3,6 +3,7 @@
 #include <vector>
 #include <gui/menu.hpp>
 #include <map>
+#include "langs.h"
 
 class Win32Manager : public menu::ui_manager {
 	std::map<menu::command_id, std::shared_ptr<gui::action>> m_knownActions;
@@ -38,10 +39,30 @@ struct CTasksActionsBase {
 	HWND createToolbar(const std::initializer_list<menu::item>& items, HWND hWndParent, DWORD dwStyle = ATL_SIMPLE_TOOLBAR_STYLE, UINT nID = ATL_IDW_TOOLBAR);
 };
 
+struct lng_or_empty {
+	lng m_lng { (lng)0 };
+	lng_or_empty() {}
+	lng_or_empty(lng l) : m_lng(l) {}
+
+	std::string visit(const Strings& tr) const
+	{
+		if (m_lng == (lng)0)
+			return { };
+
+		return tr(m_lng);
+	}
+};
+
+inline std::shared_ptr<gui::action>
+make_action(const Strings& tr, const std::shared_ptr<gui::icon>& icon, const lng_or_empty& text, const hotkey& hotkey = { }, const lng_or_empty& tooltip = { }, const std::function<void()>& f = { })
+{
+	return gui::make_action(icon, text.visit(tr), hotkey, tooltip.visit(tr), f);
+}
+
 template <typename T>
 struct CTasksActions : CTasksActionsBase {
 
-	void createItems() {
+	void createItems(const Strings& tr) {
 		std::shared_ptr<gui::icon> ico_none;
 		auto ico_new_file = gui::make_fa_icon({ { fa::glyph::file,    0xFFFFFF       }, { fa::glyph::file_o                          } });
 		auto ico_refresh  = gui::make_fa_icon({ { fa::glyph::refresh                 }                                                 });
@@ -53,23 +74,23 @@ struct CTasksActions : CTasksActionsBase {
 
 		auto pThis = static_cast<T*>(this);
 
-		toolbar_default = gui::make_action(ico_none,   "Show/hide Tasks",    {},                         {},               [pThis] { pThis->showHide(); });
-		tasks_new     = gui::make_action(ico_new_file, "New &Connection...", { modifier::ctrl, vk::N },  "New Connection", [pThis] { pThis->newConnection(); });
-		tasks_refresh = gui::make_action(ico_refresh,  "&Refresh All",       { vk::F5 },                 "Refresh All",    [pThis] { pThis->refreshAll(); });
-		tasks_setup   = gui::make_action(ico_setup,    "&Settings...",       { },                        "Settings");
-		tasks_exit    = gui::make_action(ico_none,     "E&xit",              { modifier::ctrl, vk::F4 }, "Exit",           [pThis] { pThis->exitApplication(); });
+		toolbar_default = make_action(tr, ico_none,   lng::LNG_APP_MENUITEM_SHOWHIDE,   {},                         {},                                    [pThis] { pThis->showHide(); });
+		tasks_new     = make_action(tr, ico_new_file, lng::LNG_APP_MENUITEM_NEWCONN,    { modifier::ctrl, vk::N },  lng::LNG_APP_MENUITEM_NEWCONN_TIP,     [pThis] { pThis->newConnection(); });
+		tasks_refresh = make_action(tr, ico_refresh,  lng::LNG_APP_MENUITEM_REFRESHALL, { vk::F5 },                 lng::LNG_APP_MENUITEM_REFRESHALL_TIP,  [pThis] { pThis->refreshAll(); });
+		tasks_setup   = make_action(tr, ico_setup,    lng::LNG_APP_MENUITEM_SETTINGS,   { },                        lng::LNG_APP_MENUITEM_SETTINGS_TIP);
+		tasks_exit    = make_action(tr, ico_none,     lng::LNG_APP_MENUITEM_EXIT,       { modifier::ctrl, vk::F4 }, lng::LNG_APP_MENUITEM_EXIT_TIP,        [pThis] { pThis->exitApplication(); });
 
-		conn_edit     = gui::make_action(ico_edit,     "&Edit...");
-		conn_refresh  = gui::make_action(ico_none,     "&Refresh");
-		conn_remove   = gui::make_action(ico_none,     "Re&move");
-		conn_goto     = gui::make_action(ico_link,     "&Go To Issue");
-		conn_logwork  = gui::make_action(ico_none,     "Log &Work...");
+		conn_edit     = make_action(tr, ico_edit,     lng::LNG_APP_MENUITEM_EDIT);
+		conn_refresh  = make_action(tr, ico_none,     lng::LNG_APP_MENUITEM_REFRESH);
+		conn_remove   = make_action(tr, ico_none,     lng::LNG_APP_MENUITEM_REMOVE);
+		conn_goto     = make_action(tr, ico_link,     lng::LNG_APP_MENUITEM_GOTO);
+		conn_logwork  = make_action(tr, ico_none,     lng::LNG_APP_MENUITEM_LOGWORK);
 
-		help_licences = gui::make_action(ico_licences, "Show &Licences",    {},                          "Licences",       [pThis] { pThis->showLicence(); });
-		help_about    = gui::make_action(ico_about,    "&About Tasks...",   {},                          "About Tasks",    [pThis] { pThis->about(); });
+		help_licences = make_action(tr, ico_licences, lng::LNG_APP_MENUITEM_LICENSES,   {},                          lng::LNG_APP_MENUITEM_LICENSES_TIP,   [pThis] { pThis->showLicence(); });
+		help_about    = make_action(tr, ico_about,    lng::LNG_APP_MENUITEM_ABOUTTASKS, {},                          lng::LNG_APP_MENUITEM_ABOUTTASKS_TIP, [pThis] { pThis->about(); });
 
 		pThis->SetMenu(createMenuBar({
-			menu::submenu(gui::make_action({}, "&Tasks"),{
+			menu::submenu(make_action(tr, {}, lng::LNG_APP_MENU_TASKS),{
 				tasks_new,
 				menu::separator(),
 				tasks_refresh,
@@ -78,7 +99,7 @@ struct CTasksActions : CTasksActionsBase {
 				tasks_exit,
 			}),
 
-			menu::submenu(gui::make_action({}, "&Connections"),{
+			menu::submenu(make_action(tr, {}, lng::LNG_APP_MENU_CONNNECTIONS),{
 				conn_edit,
 				conn_refresh,
 				conn_remove,
@@ -87,7 +108,7 @@ struct CTasksActions : CTasksActionsBase {
 				conn_logwork
 			}),
 
-			menu::submenu(gui::make_action({}, "&Help"),{
+			menu::submenu(make_action(tr, {}, lng::LNG_APP_MENU_HELP),{
 				help_licences,
 				menu::separator(),
 				help_about,

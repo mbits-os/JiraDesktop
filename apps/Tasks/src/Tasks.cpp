@@ -9,6 +9,7 @@
 #include "TasksView.h"
 #include "AboutDlg.h"
 #include "TasksFrame.h"
+#include "langs.h"
 
 #include <shellapi.h>
 
@@ -31,14 +32,6 @@ namespace fs = filesystem;
 
 #ifndef BULID_NUMBER_IN_TITLE
 #define BULID_NUMBER_IN_TITLE 1
-#endif
-
-#if  BULID_NUMBER_IN_TITLE
-#define WPROGRAM_TITLE WPROGRAM_NAME L" (" \
-		WPROGRAM_VERSION_STRING WPROGRAM_VERSION_STABILITY \
-		L", build " WPROGRAM_VERSION_BUILD L")"
-#else
-#define WPROGRAM_TITLE WPROGRAM_NAME
 #endif
 
 fs::path exe_dir() {
@@ -101,47 +94,67 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	_Module.AddMessageLoop(&theLoop);
 
 	CTasksFrame wndMain;
-    int nRet = 0;
+	int nRet = 0;
 
-    pm::PostMortemSupport([&] {
-        if (wndMain.Create(NULL, NULL, WPROGRAM_TITLE) == NULL)
-        {
-            ATLTRACE(_T("Main window creation failed!\n"));
-            return;
-        }
+	Strings _;
 
-        wndMain.rebuildAccel();
-        if (!wndMain.updatePosition()) {
-            WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
-            placement.showCmd = nCmdShow;
+	pm::PostMortemSupport([&] {
+		_.init();
+		_.path_manager<locale::manager::ExtensionPath>((fs::app_directory() / "locale").string(), "Tasks");
+		_.open("en"); // TODO: detect the language form the OS
 
-            RECT workArea;
-            if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
-                workArea.right -= workArea.left;
-                workArea.bottom -= workArea.top;
-                workArea.left = workArea.top = 0;
+		wndMain._ = _;
 
-                auto padding = GetSystemMetrics(SM_CYCAPTION);
-                workArea.left += padding;
-                workArea.top += padding;
-                workArea.right -= padding;
-                workArea.bottom -= padding;
+#if BULID_NUMBER_IN_TITLE
+		auto title = utf::widen(
+			_(lng::LNG_APP_TITLE,
+				_(lng::LNG_APP_NAME),
+				PROGRAM_VERSION_STRING PROGRAM_VERSION_STABILITY,
+				PROGRAM_VERSION_BUILD
+				)
+			);
+#else
+		auto title = utf::widen(tr(lng::LNG_APP_NAME));
+#endif
 
-                workArea.left = (workArea.right + workArea.left) / 2;
-                workArea.top = (workArea.bottom + workArea.top) / 2;
-                placement.rcNormalPosition = workArea;
-                wndMain.SetWindowPlacement(&placement);
-            }
-            else
-                wndMain.ShowWindow(nCmdShow);
-        }
+		if (wndMain.Create(NULL, NULL, title.c_str()) == NULL)
+		{
+			ATLTRACE(_T("Main window creation failed!\n"));
+			return;
+		}
 
-        nRet = theLoop.Run();
+		wndMain.rebuildAccel();
+		if (!wndMain.updatePosition()) {
+			WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
+			placement.showCmd = nCmdShow;
 
-        _Module.RemoveMessageLoop();
-    });
+			RECT workArea;
+			if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
+				workArea.right -= workArea.left;
+				workArea.bottom -= workArea.top;
+				workArea.left = workArea.top = 0;
 
-    return nRet;
+				auto padding = GetSystemMetrics(SM_CYCAPTION);
+				workArea.left += padding;
+				workArea.top += padding;
+				workArea.right -= padding;
+				workArea.bottom -= padding;
+
+				workArea.left = (workArea.right + workArea.left) / 2;
+				workArea.top = (workArea.bottom + workArea.top) / 2;
+				placement.rcNormalPosition = workArea;
+				wndMain.SetWindowPlacement(&placement);
+			}
+			else
+				wndMain.ShowWindow(nCmdShow);
+		}
+
+		nRet = theLoop.Run();
+
+		_Module.RemoveMessageLoop();
+	});
+
+	return nRet;
 }
 
 class Fonts {
@@ -171,9 +184,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	Fonts external;
 
 	HRESULT hRes = ::CoInitialize(NULL);
-// If you are running on NT 4.0 or higher you can use the following call instead to 
-// make the EXE free threaded. This means that calls come in on a random RPC thread.
-//	HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	// If you are running on NT 4.0 or higher you can use the following call instead to 
+	// make the EXE free threaded. This means that calls come in on a random RPC thread.
+	//	HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	ATLASSERT(SUCCEEDED(hRes));
 
 	dpi::checkHighDpi();

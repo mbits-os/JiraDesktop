@@ -7,6 +7,7 @@
 #include "TaskBarIcon.h"
 #include "AppModel.h"
 #include "TasksActions.h"
+#include "langs.h"
 
 class CScrollContainerEx : public CScrollContainerImpl<CScrollContainerEx>
 {
@@ -79,6 +80,7 @@ public:
 	CIcon m_smallIcon;
 	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();
 	bool m_balloonVisible = false;
+	Tasks::Strings _;
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();
