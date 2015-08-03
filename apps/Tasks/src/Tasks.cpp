@@ -88,52 +88,6 @@ namespace dpi {
 
 CAppModule _Module;
 
-namespace {
-	inline bool inside(const std::vector<std::string>& locales, const std::string& key)
-	{
-		for (auto&& locale : locales) {
-			if (locale == key)
-				return true;
-		}
-		return false;
-	}
-
-	void appendLocale(std::vector<std::string>& locales, const std::string & locale)
-	{
-		auto candidate = locale;
-		while (true) {
-			if (inside(locales, candidate))
-				break;
-
-			locales.push_back(candidate);
-
-			auto pos = candidate.find_last_of('-');
-			if (pos == std::string::npos)
-				break; // no tags in the language range
-
-			candidate = candidate.substr(0, pos);
-		};
-	}
-
-	auto langs()
-	{
-		std::vector<std::string> locales;
-		{
-			wchar_t locale[LOCALE_NAME_MAX_LENGTH];
-
-			GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH);
-			appendLocale(locales, utf::narrowed(locale));
-
-			GetSystemDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH);
-			appendLocale(locales, utf::narrowed(locale));
-
-			appendLocale(locales, "en");
-		}
-
-		return locales;
-	}
-}
-
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
 	CMessageLoop theLoop;
@@ -147,11 +101,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	pm::PostMortemSupport([&] {
 		_.init();
 		_.path_manager<locale::manager::ExtensionPath>((fs::app_directory() / "locale").string(), "Tasks");
-
-		for (auto& lang : langs()) {
-			if (_.open(lang))
-				break;
-		}
+		_.open_first_of(locale::system_locales());
 
 		wndMain._ = _;
 
