@@ -28,6 +28,11 @@
       <AdditionalDependencies>ws2_32.lib;libjson.lib;libjira.lib;libgui.lib;libnet.lib;curl.lib;libz.lib;locale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep />
+    <PostBuildEvent>
+      <Command>c:\cygwin\bin\make -C "$(SolutionDir)..\..\strings" langs
+xcopy /I /D /L /Y "$(SolutionDir)..\..\locale" "$(TargetDir)locale"</Command>
+      <Message>Copying strings</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

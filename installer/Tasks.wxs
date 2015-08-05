@@ -69,11 +69,13 @@
 <?ifdef MSVCRT ?>
 		<Media Id='4' Cabinet='MSVCRT.cab' EmbedCab='yes' />
 <?endif?>
+		<Media Id='5' Cabinet='Locale.cab' EmbedCab='yes' />
 			
 		<Directory Id='TARGETDIR' Name='SourceDir'>
 			<Directory Id='ProgramFilesFolder' Name='PFiles'>
 				<Directory Id='INSTALLDIR' Name='$(var.PACKAGE)'>
 					<Directory Id='Fonts' Name='fonts' />
+					<Directory Id='Locale' Name='locale' />
 				</Directory>
 			</Directory>
 
@@ -101,6 +103,15 @@
 			<File Id='fonts_FontAwesome_OTF'
 				  Name='FontAwesome.otf' Source='fonts/FontAwesome.otf'
 				  DiskId='2' KeyPath='yes'  />
+		</Component>
+
+		<Component Id='Locale.Component' Guid='{32BD8778-F9E8-4613-9291-5518711547C2}' Directory='Locale'>
+			<File Id='locale_Tasks_en'
+				  Name='Tasks.en' Source='res/locale/Tasks.en'
+				  DiskId='5' KeyPath='yes' />
+			<File Id='locale_Tasks_pl'
+				  Name='Tasks.pl' Source='res/locale/Tasks.pl'
+				  DiskId='5' />
 		</Component>
 
 		<Component Id='Curl.Component' Guid='{C40018C7-B3EA-4B2F-8D1F-307F01324CD7}' Directory='INSTALLDIR'>
@@ -146,6 +157,7 @@
 				 ConfigurableDirectory='INSTALLDIR' AllowAdvertise='no'>
 			<ComponentRef Id='MainExecutable.Component' />
 			<ComponentRef Id='Fonts.Component' />
+			<ComponentRef Id='Locale.Component' />
 			<Feature Id='Curl' Title='libCurl'
 					 Description='The libCurl libraries. You do not need to install those, if you have a version of libCurl DLLs instaleld somewhere on your system.'
 					 AllowAdvertise='no' Level='1'>

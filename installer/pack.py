@@ -44,7 +44,7 @@ ARTIFACTS = "artifacts"
 RES = "res"
 
 artifactFiles = [ "Tasks.exe" ]
-resFiles = [ "LICENSE", "apps/Tasks/res/Tasks.ico" ]
+resFiles = [ "LICENSE", "apps/Tasks/res/Tasks.ico", "locale" ]
 
 storage = {
 	ARTIFACTS: "",
@@ -66,6 +66,14 @@ def copyFilesFlat(src, dst, files):
 	for f in files:
 		s = path.join(src, f)
 		d = path.join(dst, path.basename(f))
+		if os.path.isdir(s):
+			for root, dirs, files in os.walk(s):
+				try:
+					os.makedirs(d)
+				except:
+					pass
+				copyFilesFlat(s, d, dirs + files)
+				return
 		s_time = mtime(s)
 		d_time = mtime(d)
 		if s_time > d_time:
@@ -124,10 +132,19 @@ with zipfile.ZipFile(ZIPNAME, 'w') as zip:
 	for key in storage:
 		dir = storage[key]
 		for f in glob.iglob(path.join(key, "*")):
-			dest = f[len(key)+1:]
-			if dir != "":
-				dest = path.join(dir, dest)
-			zip.write(f, dest)
+			if os.path.isdir(f):
+				for root, dirs, files in os.walk(f):
+					for p in files:
+						s = os.path.join(root, p)
+						dest = os.path.join(root[len(key)+1:], p)
+						if dir != "":
+							dest = path.join(dir, dest)
+						zip.write(s, dest)
+			else:
+				dest = f[len(key)+1:]
+				if dir != "":
+					dest = path.join(dir, dest)
+				zip.write(f, dest)
 
 additional=[]
 if MSVCRT: additional += ['-dMSVCRT']
