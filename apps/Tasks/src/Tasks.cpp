@@ -10,6 +10,7 @@
 #include "AboutDlg.h"
 #include "TasksFrame.h"
 #include "langs.h"
+#include "AppSettings.h"
 
 #include <shellapi.h>
 
@@ -101,7 +102,15 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	pm::PostMortemSupport([&] {
 		_.init();
 		_.path_manager<locale::manager::ExtensionPath>((fs::app_directory() / "locale").string(), "Tasks");
-		_.open_first_of(locale::system_locales());
+
+		{
+			auto language { CAppSettings { }.language() };
+			bool localeSet = language.empty();
+			if (!localeSet)
+				localeSet = _.open(language);
+			if (!localeSet)
+				_.open_first_of(locale::system_locales());
+		}
 
 		wndMain._ = _;
 

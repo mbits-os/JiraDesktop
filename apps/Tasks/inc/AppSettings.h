@@ -12,5 +12,7 @@ public:
 
 	std::vector<std::shared_ptr<jira::server>> jiraServers();
 	void jiraServers(const std::vector<std::shared_ptr<jira::server>>& list);
+	std::string language();
+	void language(const std::string& lng);
 };
 

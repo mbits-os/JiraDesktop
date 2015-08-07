@@ -31,7 +31,7 @@
     <PostBuildEvent>
       <Command>set "PATH=%PATH%;c:\cygwin\bin"
 make -C "$(SolutionDir)..\..\strings" langs
-xcopy /I /D /L /Y "$(SolutionDir)..\..\locale" "$(TargetDir)locale"</Command>
+xcopy /I /D /F /Y "$(SolutionDir)..\..\locale" "$(TargetDir)locale"</Command>
       <Message>Copying strings</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>

@@ -160,3 +160,17 @@ void CAppSettings::jiraServers(const std::vector<std::shared_ptr<jira::server>>&
 	auto servers = group("Jira"s).group("Servers"s);
 	servers::store(list, servers);
 }
+
+std::string CAppSettings::language()
+{
+	if (getType("Language"s) == settings::String)
+		return getString("Language"s);
+	return { };
+}
+
+void CAppSettings::language(const std::string& lng)
+{
+	unset("Language"s);
+	if (!lng.empty())
+		setString("Language"s, lng);
+}
