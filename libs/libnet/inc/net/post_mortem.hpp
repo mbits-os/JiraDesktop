@@ -82,9 +82,30 @@ namespace pm
                 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 
             if (file && file != INVALID_HANDLE_VALUE) {
+                wchar_t buffer[2048];
                 MINIDUMP_EXCEPTION_INFORMATION mei{ GetCurrentThreadId(), ep, TRUE };
-                MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), file, mdt, ep ? &mei : nullptr, nullptr, nullptr);
-                CloseHandle(file);
+                if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), file, mdt, ep ? &mei : nullptr, nullptr, nullptr)) {
+                    auto err = GetLastError();
+                    CloseHandle(file);
+                    DeleteFileW(dumpPath());
+                    if (!err) {
+                        swprintf_s(buffer, L"An error occured, but memory was not dumped due to unknown reason.");
+                    } else {
+                        swprintf_s(buffer, L"An error occured, but memory was not dumped due to error %08x.", err);
+                    }
+                } else {
+                    CloseHandle(file);
+                    if (ep) {
+                        swprintf_s(buffer, L"An error %08x occured at %p (thread %u), memory dumped to:\n\n%s",
+                            ep->ExceptionRecord->ExceptionCode,
+                            ep->ExceptionRecord->ExceptionAddress,
+                            GetCurrentThreadId(),
+                            dumpPath());
+                    } else {
+                        swprintf_s(buffer, L"An unkown error occured, memory dumped to:\n\n%s", dumpPath());
+                    }
+                }
+                MessageBoxW(nullptr, buffer, L"This program perfomed illegal operation", MB_ICONINFORMATION);
             }
             TerminateProcess(GetCurrentProcess(), 1);
         }
