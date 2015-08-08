@@ -7,6 +7,7 @@
 #include "AppModel.h"
 #include <gui/styles.hpp>
 #include <gui/win32_animation.hpp>
+#include <net/post_mortem.hpp>
 #include "langs.h"
 
 enum {
@@ -184,7 +185,7 @@ public:
 
 	BOOL PreTranslateMessage(MSG* pMsg);
 
-	BEGIN_MSG_MAP(CTasksView)
+	BEGIN_MSG_MAP_POSTMORTEM(CTasksView)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
@@ -205,7 +206,7 @@ public:
 			if (handled)
 				return TRUE;
 		}
-	END_MSG_MAP()
+	END_MSG_MAP_POSTMORTEM()
 
 // Handler prototypes (uncomment arguments if needed):
 //	LRESULT MessageHandler(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)

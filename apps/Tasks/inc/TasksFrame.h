@@ -91,7 +91,7 @@ public:
 	BEGIN_UPDATE_UI_MAP(CTasksFrame)
 	END_UPDATE_UI_MAP()
 
-	BEGIN_MSG_MAP(CTasksFrame)
+	BEGIN_MSG_MAP_POSTMORTEM(CTasksFrame)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_COMMAND, OnCommand)
@@ -114,7 +114,7 @@ public:
 		CHAIN_MSG_MAP(CFameSuper)
 		CHAIN_MSG_MAP_MEMBER(m_taskIcon)
 		CHAIN_MSG_MAP_MEMBER(m_attentionIcon)
-	END_MSG_MAP()
+	END_MSG_MAP_POSTMORTEM()
 
 // Handler prototypes (uncomment arguments if needed):
 //	LRESULT MessageHandler(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)

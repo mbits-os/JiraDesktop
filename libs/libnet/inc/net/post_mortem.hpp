@@ -142,4 +142,37 @@ namespace pm
     }
 };
 
+#define BEGIN_MSG_MAP_POSTMORTEM(theClass) \
+public: \
+	BOOL ProcessWindowMessage(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, \
+		_In_ LPARAM lParam, _Inout_ LRESULT& lResult, _In_ DWORD dwMsgMapID = 0) \
+	{ \
+		BOOL retVal = FALSE; \
+		pm::PostMortemSupport([&, this] () mutable { \
+			auto innerLambda = [&, this] () mutable -> BOOL { \
+				BOOL bHandled = TRUE; \
+				(hWnd); \
+				(uMsg); \
+				(wParam); \
+				(lParam); \
+				(lResult); \
+				(bHandled); \
+				switch (dwMsgMapID) \
+				{ \
+				case 0:
+
+#define END_MSG_MAP_POSTMORTEM() \
+					break; \
+				default: \
+					ATLTRACE(static_cast<int>(ATL::atlTraceWindowing), 0, _T("Invalid message map ID (%i)\n"), dwMsgMapID); \
+					ATLASSERT(FALSE); \
+					break; \
+				} \
+				return FALSE; \
+			}; \
+			retVal = innerLambda(); \
+		}); \
+		return retVal; \
+	}
+
 #endif // __POST_MORTEM_HPP__

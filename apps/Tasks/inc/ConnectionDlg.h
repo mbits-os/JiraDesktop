@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <net/post_mortem.hpp>
 
 class CConnectionDlg : public CDialogImpl<CConnectionDlg>
 {
@@ -17,12 +18,12 @@ class CConnectionDlg : public CDialogImpl<CConnectionDlg>
 public:
 	enum { IDD = IDD_CONNECTION };
 
-	BEGIN_MSG_MAP(CConnectionDlg)
+	BEGIN_MSG_MAP_POSTMORTEM(CConnectionDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		COMMAND_ID_HANDLER(IDOK, OnCloseCmd)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCloseCmd)
 		COMMAND_CODE_HANDLER(EN_CHANGE, OnTextChanged)
-	END_MSG_MAP()
+	END_MSG_MAP_POSTMORTEM()
 
 // Handler prototypes (uncomment arguments if needed):
 //	LRESULT MessageHandler(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
