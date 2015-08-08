@@ -28,6 +28,7 @@ namespace gui {
 		std::shared_ptr<node> replaceChild(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& oldChild) override;
 		std::shared_ptr<node> removeChild(const std::shared_ptr<node>& oldChild) override;
 		std::shared_ptr<node> appendChild(const std::shared_ptr<node>& newChild) override;
+		void removeAllChildren() override;
 		bool hasChildNodes() const override;
 		std::shared_ptr<node> cloneNode(bool deep) const override;
 		const std::vector<std::shared_ptr<node>>& children() const override;

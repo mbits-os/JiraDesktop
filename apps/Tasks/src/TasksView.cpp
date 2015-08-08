@@ -287,8 +287,7 @@ void CTasksView::ViewInfo::updateProgress(ani::win32::scene& scene)
 	if (!m_progressCtrl)
 		return;
 
-	while (!m_progressCtrl->children().empty())
-		m_progressCtrl->removeChild(m_progressCtrl->children().front());
+	m_progressCtrl->removeAllChildren();
 
 	if (m_loading) {
 		if (m_gotProgress)
@@ -1593,9 +1592,11 @@ LRESULT CTasksView::OnProgress(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 	if (it == srv->m_views.end())
 		return 0;
 
-	(*it)->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
-	(*it)->m_gotProgress = true;
-	(*it)->updateProgress(m_scene);
+	// Bug [JIRDESK-89] Random crash during progress update
+	auto server = *it;
+	server->m_progress = *reinterpret_cast<ProgressInfo*>(lParam);
+	server->m_gotProgress = true;
+	server->updateProgress(m_scene);
 
 	return 0;
 }

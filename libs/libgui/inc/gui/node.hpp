@@ -35,6 +35,7 @@ namespace gui {
 		virtual std::shared_ptr<node> replaceChild(const std::shared_ptr<node>& newChild, const std::shared_ptr<node>& oldChild) = 0;
 		virtual std::shared_ptr<node> removeChild (const std::shared_ptr<node>& oldChild) = 0;
 		virtual std::shared_ptr<node> appendChild (const std::shared_ptr<node>& newChild) = 0;
+		virtual void removeAllChildren() = 0;
 		virtual bool hasChildNodes() const = 0;
 		virtual std::shared_ptr<node> cloneNode(bool deep) const = 0;
 		virtual const std::vector<std::shared_ptr<node>>& children() const = 0;

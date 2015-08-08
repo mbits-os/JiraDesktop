@@ -203,6 +203,19 @@ namespace gui {
 		return newChild;
 	}
 
+	void node_base::removeAllChildren()
+	{
+		std::vector<std::shared_ptr<node>> nodes;
+		nodes.swap(m_children);
+
+		for (auto& oldChild : nodes)
+			oldChild->setParent({});
+
+		layoutRequired();
+		for (auto& oldChild : nodes)
+			onRemoved(oldChild);
+	}
+
 	bool node_base::hasChildNodes() const
 	{
 		return !m_children.empty();
