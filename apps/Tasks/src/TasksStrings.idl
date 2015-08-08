@@ -29,6 +29,12 @@ strings
 	LNG_APP_MENUITEM_REFRESHALL = "&Refresh All";
 	[help("Tasks command. Shows settings dialog"), id(1009)]
 	LNG_APP_MENUITEM_SETTINGS = "&Settings...";
+	[help("Tasks submenu. Shows a list of available translations"), id(-1)]
+	LNG_APP_MENUITEM_LANGUAGES = "&Languages";
+	[help("Languages submenu. Used for action representing the default user language"), id(-1)]
+	LNG_APP_MENUITEM_SYSLANG = "&System language (%1)";
+	[help("Languages submenu. Used for disabled action representing no languages at all"), id(-1)]
+	LNG_APP_MENUITEM_MISSING = "(Empty)";
 	[help("Tasks command. Closes the application"), id(1010)]
 	LNG_APP_MENUITEM_EXIT = "E&xit";
 	[help("Connection command. Edits details of an exisiting connection"), id(1011)]
