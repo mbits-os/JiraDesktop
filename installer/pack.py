@@ -6,13 +6,13 @@ from subprocess import call, check_output
 
 MSVCRT = False
 
-WiX = "c:\\Program Files (x86)\\WiX Toolset v3.9\\bin"
+WiX = "c:\\Program Files (x86)\\WiX Toolset v3.10\\bin"
 VERSION_H = "../apps/Tasks/src/version.h"
 
 ROOT = ".."
 PLATFORM = "Win32"
 CONFIG = "Release"
-VERSION = "1.0.2a"
+VERSION = None
 
 VERSION_MAJOR = None
 VERSION_MINOR = None
