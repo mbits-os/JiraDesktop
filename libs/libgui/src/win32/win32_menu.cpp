@@ -76,19 +76,23 @@ HMENU menu::item::createPopup(ui_manager* manager) const
 		if (icon) {
 			CBitmapHandle image = icon->getNativeBitmap(GetSystemMetrics(SM_CXSMICON));
 
-			if (image) {
-				int pos = menu.GetMenuItemCount();
-				if (pos) {
-					--pos;
-					MENUITEMINFO mii = { 0 };
-					mii.cbSize = sizeof(mii);
-					mii.fMask = MIIM_BITMAP;
-					mii.hbmpItem = image;
+			int pos = menu.GetMenuItemCount();
+			if (image && pos) {
+				--pos;
+				MENUITEMINFO mii = { 0 };
+				mii.cbSize = sizeof(mii);
+				mii.fMask = MIIM_BITMAP;
+				mii.hbmpItem = image;
 
-					menu.SetMenuItemInfo(pos, TRUE, &mii);
-				}
+				menu.SetMenuItemInfo(pos, TRUE, &mii);
 			}
 		}
+
+		if (action->checked())
+			menu.CheckMenuItem(action->id(), MF_CHECKED);
+
+		if (!action->enabled())
+			menu.EnableMenuItem(action->id(), MF_GRAYED);
 
 		//bmp.Detach();
 	}

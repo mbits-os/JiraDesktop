@@ -55,6 +55,11 @@ namespace menu {
 			, m_action(action)
 			, m_items(items)
 		{}
+		item(const std::shared_ptr<gui::action>& action, const std::vector<item>& items)
+			: m_type(itemtype::submenu)
+			, m_action(action)
+			, m_items(items)
+		{}
 		item()
 			: m_type(itemtype::separator)
 		{}
@@ -71,5 +76,6 @@ namespace menu {
 	inline item menu(const std::initializer_list<item>& items) { return{ nullptr, items }; }
 	inline item popup(const std::initializer_list<item>& items) { return{ nullptr, items }; }
 	inline item submenu(const std::shared_ptr<gui::action>& action, const std::initializer_list<item>& items) { return{ action, items }; }
+	inline item submenu(const std::shared_ptr<gui::action>& action, const std::vector<item>& items) { return{ action, items }; }
 	inline item separator() { return{}; }
 };

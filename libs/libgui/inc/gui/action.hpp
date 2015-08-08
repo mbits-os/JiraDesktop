@@ -45,12 +45,38 @@ namespace gui {
 	};
 
 	class action {
-		std::shared_ptr<icon> m_icon;
+        enum class flag {
+            none = 0,
+            disabled = 1,
+            checked = 2,
+        };
+        friend flag& operator |= (flag& lhs, flag rhs)
+        {
+            return (flag&)((int&)lhs |= (int)rhs);
+        }
+        friend flag& operator &= (flag& lhs, flag rhs)
+        {
+            return (flag&)((int&)lhs &= (int)rhs);
+        }
+        friend flag operator | (flag lhs, flag rhs)
+        {
+            return (flag)((int)lhs | (int)rhs);
+        }
+        friend flag operator & (flag lhs, flag rhs)
+        {
+            return (flag)((int)lhs & (int)rhs);
+        }
+        friend flag operator ~ (flag lhs)
+        {
+            return (flag)(~(int)lhs);
+        }
+        std::shared_ptr<icon> m_icon;
 		std::string m_text;
 		std::string m_tooltip;
 		hotkey m_hotkey;
 		std::function<void()> m_fn;
 		uint16_t m_osId = 0;
+        flag m_flags = flag::none;
 	public:
 		action(const std::shared_ptr<icon>& icon, const std::string& text, const hotkey& hotkey, const std::string& tooltip, const std::function<void()>& f)
 			: m_icon(icon)
@@ -68,6 +94,29 @@ namespace gui {
 		void id(uint16_t val) { m_osId = val; }
 
 		void call() { if (m_fn) m_fn(); }
+
+        void check(bool set = true)
+        {
+            if (set)
+                m_flags |= flag::checked;
+            else
+                m_flags &= ~flag::checked;
+
+            // TODO: notify UI subsystem?
+        }
+        bool checked() const { return (m_flags & flag::checked) == flag::checked; }
+
+        void enable(bool set = true) { disable(!set); }
+        void disable(bool set = true)
+        {
+            if (set)
+                m_flags |= flag::disabled;
+            else
+                m_flags &= ~flag::disabled;
+
+            // TODO: notify UI subsystem?
+        }
+        bool enabled() const { return int(m_flags & flag::disabled) == 0; }
 	};
 
 	inline std::shared_ptr<action>
