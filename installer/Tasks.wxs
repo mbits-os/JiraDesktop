@@ -36,7 +36,7 @@
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<Product Name="$(var.PRODUCT)"
-			 Id="{6B8BACFA-161B-433B-9B1E-8652FE3CD90E}"
+			 Id="*"
 			 UpgradeCode="{2E10A6B5-33CF-422C-810C-8B18DFC03C6E}"
 			 Language="1033"
 			 Codepage="1252"
@@ -56,6 +56,8 @@
 		<Upgrade Id="{2E10A6B5-33CF-422C-810C-8B18DFC03C6E}">
 			<UpgradeVersion OnlyDetect='yes' Property='NEWERFOUND'
 			  Minimum='$(var.LONG_VERSION)' IncludeMinimum='no' />
+			<UpgradeVersion Property='OLDERVERSIONBEINGUPGRADED'
+			  Minimum='0.0.0.0' Maximum='$(var.LONG_VERSION)' IncludeMinimum='yes' IncludeMaximum='yes' />
 		</Upgrade>
 		<CustomAction Id='NoDowngrade' Error='A later version of [ProductName] is already installed.' />
 
@@ -180,8 +182,13 @@
 		<WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
 
 		<InstallExecuteSequence>
+			<RemoveExistingProducts After="InstallInitialize" />
 			<Custom Action='NoDowngrade' After='FindRelatedProducts'>NEWERFOUND</Custom>
 		</InstallExecuteSequence>
+
+		<InstallUISequence>
+			<FindRelatedProducts Before='LaunchConditions' />
+		</InstallUISequence>
 	</Product>
 
 </Wix>

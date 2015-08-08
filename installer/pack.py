@@ -161,5 +161,5 @@ if PACKAGE is not None:
 	else: additional += ['-dPACKAGE=%s'%PACKAGE]
 
 call(["candle", "-nologo", WXS] + additional)
-call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-ext", "WixUIExtension", WIXOBJ, "-out", MSINAME])
+call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-sice:ICE61", "-ext", "WixUIExtension", WIXOBJ, "-out", MSINAME])
 call(["signtool", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s Installer" % SIGNVER, MSINAME])
