@@ -140,6 +140,7 @@ public:
 	void showHide();
 	void newConnection();
 	void refreshAll();
+	void setLanguage(const std::string&);
 	void exitApplication();
 	void showLicence();
 	void about();

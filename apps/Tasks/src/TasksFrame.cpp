@@ -118,7 +118,10 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	if (SUCCEEDED(hRet) && dwMajor >= 6)
 		uResID = IDR_MAINFRAME;
 
+	createIcons();
 	createItems(_);
+	SetMenu(createAppMenu(_));
+	m_hWndToolBar = createToolbar(createAppToolbar(_), m_hWnd);
 
 	m_model->setTimerHandle(m_hWnd);
 
@@ -410,6 +413,17 @@ void CTasksFrame::refreshAll()
 			} }.detach();
 		}
 	});
+}
+
+void CTasksFrame::setLanguage(const std::string& lang)
+{
+	CAppSettings { }.language(lang);
+	// TODO: switch languages in runtime
+	if (lang.empty() || !_.open(lang))
+		_.open_first_of(locale::system_locales());
+
+	createItems(_);
+	SetMenu(createAppMenu(_));
 }
 
 void CTasksFrame::exitApplication()

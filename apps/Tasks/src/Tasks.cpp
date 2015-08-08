@@ -105,8 +105,8 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 		{
 			auto language { CAppSettings { }.language() };
-			bool localeSet = language.empty();
-			if (!localeSet)
+			bool localeSet = false;
+			if (!language.empty())
 				localeSet = _.open(language);
 			if (!localeSet)
 				_.open_first_of(locale::system_locales());
