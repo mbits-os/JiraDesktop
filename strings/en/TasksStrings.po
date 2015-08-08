@@ -1,13 +1,13 @@
-# Copyright (C) 2012 midnightBITS
+# Copyright (C) 2015 midnightBITS
 # This file is distributed under the same license as the Aggregate package.
-# Marcin Zdun <mzdun@midnightbits.com>, 2012.
+# Marcin Zdun <mzdun@midnightbits.com>, 2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Tasks 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-02 22:16+0200\n"
-"PO-Revision-Date: 2015-08-02 22:21+0200\n"
+"POT-Creation-Date: 2015-08-08 10:04+0100\n"
+"PO-Revision-Date: 2015-08-08 11:05+0200\n"
 "Last-Translator: Marcin Zdun <mzdun@midnightbits.com>\n"
 "Language-Team: Translators <translate@midnightbits.com>\n"
 "Language: en\n"
@@ -47,6 +47,11 @@ msgctxt "LNG_APP_MENUITEM_GOTO"
 msgid "&Go To Issue"
 msgstr "&Go To Issue"
 
+#. Tasks submenu. Shows a list of available translations
+msgctxt "LNG_APP_MENUITEM_LANGUAGES"
+msgid "&Languages"
+msgstr "&Languages"
+
 #. Help command. Presents licences of all third party components
 msgctxt "LNG_APP_MENUITEM_LICENSES"
 msgid "Show &Licences"
@@ -61,6 +66,11 @@ msgstr "Licences"
 msgctxt "LNG_APP_MENUITEM_LOGWORK"
 msgid "Log &Work..."
 msgstr "Log &Work..."
+
+#. Languages submenu. Used for disabled action representing no languages at all
+msgctxt "LNG_APP_MENUITEM_MISSING"
+msgid "(Empty)"
+msgstr "(Empty)"
 
 #. Tasks command. Starts adding a new connection to the task server.
 msgctxt "LNG_APP_MENUITEM_NEWCONN"
@@ -106,6 +116,11 @@ msgstr "Settings"
 msgctxt "LNG_APP_MENUITEM_SHOWHIDE"
 msgid "Show/hide Tasks"
 msgstr "Show/hide Tasks"
+
+#. Languages submenu. Used for action representing the default user language
+msgctxt "LNG_APP_MENUITEM_SYSLANG"
+msgid "&System language (%1)"
+msgstr "&System language (%1)"
 
 #. Top level menu name for connection commands
 msgctxt "LNG_APP_MENU_CONNNECTIONS"

@@ -14,24 +14,23 @@ all: help
 help:
 	@echo Targets: pot langs
 	@echo pot - updates $(FILE).pot from $(FILE).idl
-	# @echo po - updates $(FILE).po files
+	@echo po - updates $(FILE).po files
 	@echo langs - updates final files from $(FILE).po
 
 pot: $(FILE).pot
-# po: $(POS)
 langs: $(TARGETS)
 clean:
 	@rm -f $(MOS) $(TARGETS) $(FILE).pot
+po: $(LNGS)
+$(LNGS): $(FILE).pot
+	@echo $(addsuffix /$(FILE).po,$@)
+	@msgmerge "$(addsuffix /$(FILE).po,$@)" "$<" -o "$(addsuffix /$(FILE).po,$@)"
 
 $(FILE).pot: $(IDL)
 	@echo $@
 	@lngs pot -i "$<" -o "$@" -c "$(EMAIL)" -a "$(EMAIL)"
 
-# $(POS): $(FILE).pot
-# 	@echo $@
-# 	@msgmerge "$@" "$<" -o "$@"
-
-$(TARGETS): $(MOS)
+$(TARGETS): $(MOS) $(IDL)
 	@echo $@
 	@mkdir -p "$(TARGET)"
 	@lngs make -o "$@" -m "$(addprefix $(subst .,,$(suffix $@)),/$(FILE).mo)" -l attr_language.txt -i "$(IDL)"
@@ -40,4 +39,4 @@ $(MOS): $(POS)
 	@echo $@
 	@msgfmt "$(addsuffix .po,$(basename $@))" -o "$@"
 
-.PHONY: all clean help pot langs po
+.PHONY: all clean help pot langs po $(LNGS)
