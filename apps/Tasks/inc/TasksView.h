@@ -171,6 +171,7 @@ private:
 public:
 	std::shared_ptr<CAppModel> m_model;
 	Strings _;
+	bool m_elevated = false;
 
 	static ATL::CWndClassInfo& GetWndClassInfo()
 	{

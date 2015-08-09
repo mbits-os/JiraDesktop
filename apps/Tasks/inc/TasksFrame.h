@@ -81,6 +81,7 @@ public:
 	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();
 	bool m_balloonVisible = false;
 	Tasks::Strings _;
+	bool m_elevated = false;
 
 	UINT WM_UNINSTALL = RegisterWindowMessageW(L"Tasks-uninstall-2E10A6B5-33CF-422C-810C-8B18DFC03C6E");
 

@@ -125,6 +125,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 
 	m_model->setTimerHandle(m_hWnd);
 
+	m_view.m_elevated = m_elevated;
 	m_view.m_model = m_model;
 	m_view._ = _;
 

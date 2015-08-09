@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Tasks 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-08 10:04+0100\n"
-"PO-Revision-Date: 2015-08-08 11:05+0200\n"
+"POT-Creation-Date: 2015-08-09 16:27+0100\n"
+"PO-Revision-Date: 2015-08-09 17:28+0200\n"
 "Last-Translator: Marcin Zdun <mzdun@midnightbits.com>\n"
 "Language-Team: Translators <translate@midnightbits.com>\n"
 "Language: en\n"
@@ -146,6 +146,11 @@ msgstr "Tasks"
 msgctxt "LNG_APP_TITLE"
 msgid "%1 (%2, build %3)"
 msgstr "%1 (%2, build %3)"
+
+#. Window title for elevated runs. %1 is LNG_APP_NAME or LNG_APP_TITLE
+msgctxt "LNG_APP_TITLE_ELEVATED"
+msgid "Administrator: %1"
+msgstr "Administrator: %1"
 
 #. Tooltip title for attention icon
 msgctxt "LNG_ATTENTION_TOOLTIP"

@@ -87,6 +87,34 @@ namespace dpi {
 	}
 };
 
+namespace elevation {
+	enum class type {
+		unknown,
+		low,
+		full
+	};
+
+	type get_type()
+	{
+		std::unique_ptr<void, decltype(&CloseHandle)> handle { nullptr, CloseHandle };
+
+		HANDLE token = nullptr;
+		if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+			return type::unknown;
+
+		handle.reset(token);
+
+		TOKEN_ELEVATION_TYPE elevationType;
+		DWORD dwSize;
+		if (!GetTokenInformation(token, TokenElevationType, &elevationType, sizeof(elevationType), &dwSize))
+			return type::unknown;
+
+		if (elevationType == TokenElevationTypeFull)
+			return type::full;
+		return type::low;
+	}
+}
+
 CAppModule _Module;
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
@@ -125,6 +153,11 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 #else
 		auto title = utf::widen(tr(lng::LNG_APP_NAME));
 #endif
+		auto etype = elevation::get_type();
+		if (etype == elevation::type::full) {
+			title = utf::widen(_(lng::LNG_APP_TITLE_ELEVATED, utf::narrowed(title)));
+			wndMain.m_elevated = true;
+		}
 
 		if (wndMain.Create(NULL, NULL, title.c_str()) == NULL)
 		{

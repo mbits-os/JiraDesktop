@@ -27,7 +27,7 @@
 #endif
 
 namespace {
-	const std::shared_ptr<styles::stylesheet>& stylesheet();
+	const std::shared_ptr<styles::stylesheet>& stylesheet(bool elevated);
 }
 
 gui::ratio zooms[] = {
@@ -683,7 +683,7 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 
 	m_docOwner = std::make_shared<DocOwner>(m_hWnd, m_zoom);
 	m_body = std::make_shared<gui::doc_element>(m_docOwner);
-	m_body->applyStyles(stylesheet());
+	m_body->applyStyles(stylesheet(m_elevated));
 
 	RECT empty{ 0, 0, 0, 0 };
 	m_tooltip.Create(TOOLTIPS_CLASS, m_hWnd, empty, nullptr, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, WS_EX_TOPMOST);
@@ -754,7 +754,7 @@ LRESULT CTasksView::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 namespace {
 
-	std::shared_ptr<styles::stylesheet> stylesheetCreate()
+	std::shared_ptr<styles::stylesheet> stylesheetCreate(bool elevated)
 	{
 		using namespace gui::literals;
 		using namespace styles::literals;
@@ -793,6 +793,8 @@ namespace {
 			.add({ gui::elem::link, pseudo::hover },       underline());
 
 		// Application styleshet
+		gui::colorref _caption = elevated ? 0x002188 : 0xaf733b;
+		gui::colorref _caption_text = elevated ? 0x88A1ff : 0xffffff;
 		out
 			.add(gui::elem::header,                        color(0x883333) <<
 			                                               border_top(1.5_px, gui::line_style::solid, 0xcc9999) <<
@@ -800,7 +802,7 @@ namespace {
 			.add(gui::elem::table,                         border(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add(gui::elem::table_row,                     border_top(1_px, gui::line_style::solid, 0xc0c0c0))
 			.add({ gui::elem::table_row, pseudo::hover },  background(0xf5f5f5))
-			.add(gui::elem::table_caption,                 background(0xaf733b) << color(0xFFFFFF) <<
+			.add(gui::elem::table_caption,                 background(_caption) << color(_caption_text) <<
 			                                               font_weight(gui::weight::bold) <<
 			                                               font_size(.75_em) << padding(.6_em) <<
 			                                               font_family("Courier New"))
@@ -823,9 +825,9 @@ namespace {
 		return std::make_shared<styles::stylesheet>(std::move(out));
 	};
 
-	const std::shared_ptr<styles::stylesheet>& stylesheet()
+	const std::shared_ptr<styles::stylesheet>& stylesheet(bool elevated)
 	{
-		static std::shared_ptr<styles::stylesheet> sheet = stylesheetCreate();
+		static std::shared_ptr<styles::stylesheet> sheet = stylesheetCreate(elevated);
 		return sheet;
 	}
 };
@@ -1370,7 +1372,7 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 	}
 
 	m_fontFamily = utf::narrowed(lf.lfFaceName);
-	m_body->applyStyles(stylesheet()); // HACK
+	m_body->applyStyles(stylesheet(m_elevated)); // HACK
 
 	return 0;
 }
