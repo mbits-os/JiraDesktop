@@ -131,5 +131,5 @@ if PACKAGE is not None:
 
 call(["candle", "-nologo", WXS] + additional)
 call(["candle", "-nologo", WXS_SOURCES])
-call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-ext", "WixUIExtension", WIXOBJ, WIXOBJ_SOURCES, "-out", MSINAME])
+call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-ext", "WixUIExtension",  "-ext", "WixUtilExtension", WIXOBJ, WIXOBJ_SOURCES, "-out", MSINAME])
 call(["signtool", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s Installer" % SIGNVER, MSINAME])

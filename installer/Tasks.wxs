@@ -107,15 +107,22 @@
 <?endif?>
 		</Feature>
 
-		<UIRef Id="WixUI_FeatureTree" />
-		<UIRef Id="WixUI_ErrorProgressText" />
+		<UI>
+			<UIRef Id="WixUI_FeatureTree" />
+			<UIRef Id="WixUI_ErrorProgressText" />
+			<Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+		</UI>
 
 		<WixVariable Id="WixUILicenseRtf" Value="mit-license.rtf" />
 		<WixVariable Id="WixUIBannerBmp" Value="banner.bmp" />
 		<WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
+		<Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch Tasks" />
+		<Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+		<Property Id="WixShellExecTarget" Value="[#Tasks_exe]" />
 
 		<Binary Id='TasksActions' SourceFile='TasksCustomActions.dll'/>
 		<CustomAction Id='CloseTasksApp' DllEntry='CloseTasksApp' BinaryKey='TasksActions' Execute='immediate' Return='check'/>
+		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
 
 		<InstallExecuteSequence>
 			<Custom Action='CloseTasksApp' Before='ValidateProductID'/>
