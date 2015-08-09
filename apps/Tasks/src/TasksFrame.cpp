@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "resource.h"
+#include "version.h"
 
 #include "AboutDlg.h"
 #include "ConnectionDlg.h"
@@ -24,6 +25,13 @@
 #undef max
 
 #include <algorithm>
+
+#define WIDE2(x) L ## x
+#define WIDE(x) WIDE2(x)
+
+#ifndef BULID_NUMBER_IN_TITLE
+#define BULID_NUMBER_IN_TITLE 1
+#endif
 
 #ifdef TRAY_USE_GUID
 // {FC7805FE-9587-4985-A8D2-4260E1FCD61A}
@@ -68,6 +76,25 @@ void print(FILE* f, const char(&s)[length])
 	if (!s)
 		return;
 	fwrite(s, 1, strlen(s), f);
+}
+
+std::wstring CTasksFrame::buildTitle()
+{
+#if BULID_NUMBER_IN_TITLE
+	auto title = utf::widen(
+		_(lng::LNG_APP_TITLE,
+			_(lng::LNG_APP_NAME),
+			PROGRAM_VERSION_STRING PROGRAM_VERSION_STABILITY,
+			PROGRAM_VERSION_BUILD
+			)
+		);
+#else
+	auto title = utf::widen(_(lng::LNG_APP_NAME));
+#endif
+	if (m_elevated)
+		title = utf::widen(_(lng::LNG_APP_TITLE_ELEVATED, utf::narrowed(title)));
+
+	return title;
 }
 
 BOOL CTasksFrame::PreTranslateMessage(MSG* pMsg)
@@ -440,6 +467,7 @@ void CTasksFrame::setLanguage(const std::string& lang)
 
 	createItems(_);
 	SetMenu(createAppMenu(_));
+	SetWindowTextW(buildTitle().c_str());
 }
 
 void CTasksFrame::exitApplication()
@@ -453,7 +481,7 @@ void CTasksFrame::showLicence()
 
 void CTasksFrame::about()
 {
-	CAboutDlg dlg;
+	CAboutDlg dlg {_};
 	dlg.DoModal();
 }
 

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Tasks 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-09 16:27+0100\n"
-"PO-Revision-Date: 2015-08-09 17:28+0200\n"
+"POT-Creation-Date: 2015-08-09 18:25+0100\n"
+"PO-Revision-Date: 2015-08-09 19:35+0200\n"
 "Last-Translator: Marcin Zdun <mzdun@midnightbits.com>\n"
 "Language-Team: Translators <translate@midnightbits.com>\n"
 "Language: en\n"
@@ -16,6 +16,22 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.4\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Main text for About dialog.  %1 is LNG_APP_NAME, %2 is version, %3 is fancy stability (-β, -rc1, etc), %4 is the build number and %5 is the copyright holder
+msgctxt "LNG_APP_ABOUT_MESSAGE"
+msgid ""
+"%1 v%2%3, Build %4\n"
+"\n"
+"© 2015 %5"
+msgstr ""
+"%1 v%2%3, Build %4\n"
+"\n"
+"© 2015 %5"
+
+#. Title for About dialog
+msgctxt "LNG_APP_ABOUT_TITLE"
+msgid "About Tasks"
+msgstr "About Tasks"
 
 #. Help command. Shows dialog with name, version and copyright info.
 msgctxt "LNG_APP_MENUITEM_ABOUTTASKS"

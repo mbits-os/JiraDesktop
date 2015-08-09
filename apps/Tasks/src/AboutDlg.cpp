@@ -8,6 +8,7 @@
 
 #include "AboutDlg.h"
 #include <string>
+#include <format.hpp>
 
 #define WIDE2(x) L ## x
 #define WIDE(x) WIDE2(x)
@@ -17,21 +18,22 @@
 #define WPROGRAM_VERSION_BUILD WIDE(VERSION_STRINGIFY(PROGRAM_VERSION_BUILD))
 #define WPROGRAM_COPYRIGHT_HOLDER WIDE(PROGRAM_COPYRIGHT_HOLDER)
 
-const wchar_t* fancyStability() {
-	if (*WPROGRAM_VERSION_STABILITY == '-') {
-		switch (WPROGRAM_VERSION_STABILITY[1]) {
-		case 'a': return L"-\x03B1";
-		case 'b': return L"-\x03B2";
+const char* fancyStability() {
+	if (*PROGRAM_VERSION_STABILITY == '-') {
+		switch (PROGRAM_VERSION_STABILITY[1]) {
+		case 'a': return "-\xCE\xB1";
+		case 'b': return "-\xCE\xB2";
 		}
 	}
-	return WPROGRAM_VERSION_STABILITY;
+	return PROGRAM_VERSION_STABILITY;
 }
 
 LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	std::wstring ver{ WPROGRAM_NAME L" v" WPROGRAM_VERSION_STRING };
-	ver.append(fancyStability());
-	ver.append(L", Build " WPROGRAM_VERSION_BUILD L"\n\n\xA9 2015 " WPROGRAM_COPYRIGHT_HOLDER);
+	SetWindowText(utf::widen(tr(lng::LNG_APP_ABOUT_TITLE)).c_str());
+	auto ver = utf::widen(
+		tr(lng::LNG_APP_ABOUT_MESSAGE, tr(lng::LNG_APP_NAME), PROGRAM_VERSION_STRING, fancyStability(), PROGRAM_VERSION_BUILD, PROGRAM_COPYRIGHT_HOLDER)
+		);
 
 	SetDlgItemText(IDC_STATIC_VERSION, ver.c_str());
 	CenterWindow(GetParent());

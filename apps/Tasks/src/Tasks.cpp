@@ -23,18 +23,6 @@
 
 namespace fs = filesystem;
 
-#define WIDE2(x) L ## x
-#define WIDE(x) WIDE2(x)
-
-#define WPROGRAM_NAME WIDE(PROGRAM_NAME)
-#define WPROGRAM_VERSION_STRING WIDE(PROGRAM_VERSION_STRING)
-#define WPROGRAM_VERSION_STABILITY WIDE(PROGRAM_VERSION_STABILITY)
-#define WPROGRAM_VERSION_BUILD WIDE(VERSION_STRINGIFY(PROGRAM_VERSION_BUILD))
-
-#ifndef BULID_NUMBER_IN_TITLE
-#define BULID_NUMBER_IN_TITLE 1
-#endif
-
 fs::path exe_dir() {
 	static fs::path dir = fs::app_directory();
 	return dir;
@@ -153,24 +141,11 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 		wndMain._ = _;
 
-#if BULID_NUMBER_IN_TITLE
-		auto title = utf::widen(
-			_(lng::LNG_APP_TITLE,
-				_(lng::LNG_APP_NAME),
-				PROGRAM_VERSION_STRING PROGRAM_VERSION_STABILITY,
-				PROGRAM_VERSION_BUILD
-				)
-			);
-#else
-		auto title = utf::widen(tr(lng::LNG_APP_NAME));
-#endif
-		auto etype = elevation::get_type();
-		if (etype == elevation::type::full) {
-			title = utf::widen(_(lng::LNG_APP_TITLE_ELEVATED, utf::narrowed(title)));
+		if (elevation::get_type() == elevation::type::full) {
 			wndMain.m_elevated = true;
 		}
 
-		if (wndMain.Create(NULL, NULL, title.c_str()) == NULL)
+		if (wndMain.Create(NULL, NULL, wndMain.buildTitle().c_str()) == NULL)
 		{
 			ATLTRACE(_T("Main window creation failed!\n"));
 			return;

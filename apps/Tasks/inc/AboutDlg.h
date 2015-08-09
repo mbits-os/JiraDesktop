@@ -5,10 +5,14 @@
 #pragma once
 
 #include <net/post_mortem.hpp>
+#include "langs.h"
 
 class CAboutDlg : public CDialogImpl<CAboutDlg>
 {
+	Strings tr;
 public:
+	CAboutDlg(const Strings& tr) : tr(tr) {}
+
 	enum { IDD = IDD_ABOUTBOX };
 
 	BEGIN_MSG_MAP_POSTMORTEM(CAboutDlg)

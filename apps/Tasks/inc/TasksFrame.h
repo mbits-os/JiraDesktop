@@ -97,6 +97,8 @@ public:
 
 	UINT WM_UNINSTALL = RegisterWindowMessageW(L"Tasks-uninstall-2E10A6B5-33CF-422C-810C-8B18DFC03C6E");
 
+	std::wstring buildTitle();
+
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();
 

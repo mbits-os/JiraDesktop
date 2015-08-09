@@ -68,6 +68,12 @@ strings
 	[help("Tooltip for LNG_APP_MENUITEM_ABOUTTASKS"), id(1023)]
 	LNG_APP_MENUITEM_ABOUTTASKS_TIP = "About Tasks";
 
+	// About dialog **************************************************************************
+	[help("Title for About dialog"), id(-1)]
+	LNG_APP_ABOUT_TITLE = "About Tasks";
+	[help("Main text for About dialog.  %1 is LNG_APP_NAME, %2 is version, %3 is fancy stability (-β, -rc1, etc), %4 is the build number and %5 is the copyright holder"), id(-1)]
+	LNG_APP_ABOUT_MESSAGE = "%1 v%2%3, Build %4\n\n© 2015 %5";
+
 	// Begin of JIRA strings; strings that will not have localication from server ***********************
 	[help("Column title for issue key - in case of field definition error; most of the time this string will come from JIRA server"), id(1024)]
 	LNG_JIRA_KEY = "Key";
