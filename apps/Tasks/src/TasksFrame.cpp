@@ -315,6 +315,12 @@ LRESULT CTasksFrame::OnActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/,
 	return 0;
 }
 
+LRESULT CTasksFrame::OnUninstall(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+	tasks_exit->call();
+	return 0;
+}
+
 LRESULT CTasksFrame::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	ShowWindow(SW_HIDE);

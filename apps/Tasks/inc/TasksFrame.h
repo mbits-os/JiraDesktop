@@ -69,7 +69,7 @@ class CTasksFrame
 {
 	using CFameSuper = CFrameWindowImpl<CTasksFrame, CWindow, CTasksFrameWinTraits>;
 public:
-	DECLARE_FRAME_WND_CLASS_EX(_T("TasksWindow"), IDR_MAINFRAME, 0, COLOR_WINDOW)
+	DECLARE_FRAME_WND_CLASS_EX(_T("TasksWindow[mBITS]"), IDR_MAINFRAME, 0, COLOR_WINDOW)
 
 	CTasksView m_view;
 	CScrollContainerEx m_container;
@@ -81,6 +81,8 @@ public:
 	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();
 	bool m_balloonVisible = false;
 	Tasks::Strings _;
+
+	UINT WM_UNINSTALL = RegisterWindowMessageW(L"Tasks-uninstall-2E10A6B5-33CF-422C-810C-8B18DFC03C6E");
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();
@@ -99,6 +101,7 @@ public:
 		MESSAGE_HANDLER(WM_SYSCOMMAND, OnSysCommand)
 		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_ACTIVATE, OnActivate)
+		MESSAGE_HANDLER(WM_UNINSTALL, OnUninstall)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOW, OnToolTipTextW)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOA, OnToolTipTextA)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOW, OnToolTipTextW)
@@ -127,6 +130,7 @@ public:
 	LRESULT OnSysCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnActivate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
+	LRESULT OnUninstall(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnToolTipTextA(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/);
 	LRESULT OnToolTipTextW(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/);
