@@ -61,6 +61,9 @@ def build_sln(out):
 	global VERSION
 	call(out, "python", "msbuild.py", "tasks-%s-win32-msbuild.log" % VERSION)
 
+def build_custom_actions(out):
+	call(out, "python", "cabuild.py")
+
 def version_json(out):
 	call(out, "python", "version_json.py", "-t" + Tag(), "-otasks-%s-version.json" % Version())
 
@@ -86,6 +89,7 @@ if policy == POLICY_TAG_AND_PUSH:
 
 prog.step("Getting dependencies", call, "python", "copy_res.py") \
 	.step("Building 'Release:Win32'", build_sln) \
+	.step("Building custom installer actions", build_custom_actions) \
 	.step("Packing", call, "python", "pack.py") \
 	.step("Metadata: JSON", version_json)
 
