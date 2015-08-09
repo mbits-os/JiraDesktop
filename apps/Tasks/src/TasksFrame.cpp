@@ -198,6 +198,15 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 
 	m_model->startup();
 
+#if 0 // startup_info usage example:
+	if (startup_info.type != StartupType::Normal) {
+		std::wstring msg = startup_info.type == StartupType::Fresh ?
+			L"Wow, hello, how are you?" :
+			L"Hope this version is as nice as " + utf::widen(startup_info.previous);
+		MessageBoxW(msg.c_str());
+	}
+#endif
+
 	return 0;
 }
 

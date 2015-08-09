@@ -14,5 +14,7 @@ public:
 	void jiraServers(const std::vector<std::shared_ptr<jira::server>>& list);
 	std::string language();
 	void language(const std::string& lng);
+	std::string lastVersion();
+	void lastVersion(const std::string& ver);
 };
 

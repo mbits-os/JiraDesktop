@@ -174,3 +174,17 @@ void CAppSettings::language(const std::string& lng)
 	if (!lng.empty())
 		setString("Language"s, lng);
 }
+
+std::string CAppSettings::lastVersion()
+{
+	if (getType("CurrentVersion"s) == settings::String)
+		return getString("CurrentVersion"s);
+	return { };
+}
+
+void CAppSettings::lastVersion(const std::string& ver)
+{
+	unset("CurrentVersion"s);
+	if (!ver.empty())
+		setString("CurrentVersion"s, ver);
+}

@@ -132,12 +132,23 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 		_.path_manager<locale::manager::ExtensionPath>((fs::app_directory() / "locale").string(), "Tasks");
 
 		{
-			auto language { CAppSettings { }.language() };
+			CAppSettings settings;
+			auto language { settings.language() };
 			bool localeSet = false;
 			if (!language.empty())
 				localeSet = _.open(language);
 			if (!localeSet)
 				_.open_first_of(locale::system_locales());
+
+			auto last_version { settings.lastVersion() };
+			std::string current_version = PROGRAM_VERSION_STRING "." VERSION_STRINGIFY(PROGRAM_VERSION_BUILD);
+			settings.lastVersion(current_version);
+
+			wndMain.startup_info.previous = last_version;
+			wndMain.startup_info.type =
+				last_version.empty() ? StartupType::Fresh :
+				last_version == current_version ? StartupType::Normal :
+				StartupType::Upgrade;
 		}
 
 		wndMain._ = _;

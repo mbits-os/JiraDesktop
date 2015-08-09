@@ -58,6 +58,17 @@ public:
 	}
 };
 
+enum class StartupType {
+	Normal,
+	Upgrade,
+	Fresh
+};
+
+struct StartupTypeInfo {
+	StartupType type;
+	std::string previous;
+};
+
 using CTasksFrameWinTraits = CWinTraits<WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_APPWINDOW>;
 class CTasksFrame
 	: public CFrameWindowImpl<CTasksFrame, CWindow, CTasksFrameWinTraits>
@@ -82,6 +93,7 @@ public:
 	bool m_balloonVisible = false;
 	Tasks::Strings _;
 	bool m_elevated = false;
+	StartupTypeInfo startup_info;
 
 	UINT WM_UNINSTALL = RegisterWindowMessageW(L"Tasks-uninstall-2E10A6B5-33CF-422C-810C-8B18DFC03C6E");
 
