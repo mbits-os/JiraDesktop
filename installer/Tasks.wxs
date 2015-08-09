@@ -66,18 +66,14 @@
 		<Property Id="ALLUSERS" Value="0"/>
 
 		<Media Id='1' Cabinet='$(var.PACKAGE).cab' EmbedCab='yes' />
-		<Media Id='2' Cabinet='Fonts.cab' EmbedCab='yes' />
-		<Media Id='3' Cabinet='Libcurl.cab' EmbedCab='yes' />
+		<Media Id='2' Cabinet='Libcurl.cab' EmbedCab='yes' />
 <?ifdef MSVCRT ?>
 		<Media Id='4' Cabinet='MSVCRT.cab' EmbedCab='yes' />
 <?endif?>
-		<Media Id='5' Cabinet='Locale.cab' EmbedCab='yes' />
 			
 		<Directory Id='TARGETDIR' Name='SourceDir'>
 			<Directory Id='ProgramFilesFolder' Name='PFiles'>
 				<Directory Id='INSTALLDIR' Name='$(var.PACKAGE)'>
-					<Directory Id='Fonts' Name='fonts' />
-					<Directory Id='Locale' Name='locale' />
 				</Directory>
 			</Directory>
 
@@ -87,79 +83,12 @@
 		
 		<Icon Id="Tasks.ico" SourceFile="res/Tasks.ico" />
 		
-		<Component Id='MainExecutable.Component' Guid='{0BF923DF-8E07-40F6-B937-02B2FF523DC0}' Directory='INSTALLDIR'>
-			<File Id='Tasks_EXE' Name='Tasks.exe' DiskId='1' Source='artifacts/Tasks.exe' KeyPath='yes'>
-				<Shortcut Id="startmenuTask" Directory="ProgramMenuFolder" Name="Tasks"
-						  WorkingDirectory='INSTALLDIR'
-						  Icon="$(var.PACKAGE).ico" IconIndex="0"
-						  Advertise="yes" />
-				<Shortcut Id="desktopTasks" Directory="DesktopFolder" Name="Tasks"
-						  WorkingDirectory='INSTALLDIR'
-						  Icon="Tasks.ico" IconIndex="0"
-						  Advertise="yes" />
-			</File>
-			<File Id='LICENSE' Name='LICENSE' DiskId='1' Source='res/LICENSE' />
-		</Component>
-
-		<Component Id='Fonts.Component' Guid='{7D0F0F45-4967-4E2D-B903-421763CF3CFF}' Directory='Fonts'>
-			<File Id='fonts_FontAwesome_OTF'
-				  Name='FontAwesome.otf' Source='fonts/FontAwesome.otf'
-				  DiskId='2' KeyPath='yes'  />
-		</Component>
-
-		<Component Id='Locale.Component' Guid='{32BD8778-F9E8-4613-9291-5518711547C2}' Directory='Locale'>
-			<File Id='locale_Tasks_en'
-				  Name='Tasks.en' Source='res/locale/Tasks.en'
-				  DiskId='5' KeyPath='yes' />
-			<File Id='locale_Tasks_pl'
-				  Name='Tasks.pl' Source='res/locale/Tasks.pl'
-				  DiskId='5' />
-		</Component>
-
-		<Component Id='Curl.Component' Guid='{C40018C7-B3EA-4B2F-8D1F-307F01324CD7}' Directory='INSTALLDIR'>
-			<File Id='libcurl_DLL'
-				  Name='libcurl.dll' Source='libcurl/libcurl.dll'
-				  DiskId='3' KeyPath='yes' />
-			<File Id='libeay32_DLL'
-				  Name='libeay32.dll' Source='libcurl/libeay32.dll'
-				  DiskId='3' />
-			<File Id='libssh2_DLL'
-				  Name='libssh2.dll' Source='libcurl/libssh2.dll'
-				  DiskId='3' />
-			<File Id='msvcr120_DLL'
-				  Name='msvcr120.dll' Source='libcurl/msvcr120.dll'
-				  DiskId='3' />
-			<File Id='ssleay32_DLL'
-				  Name='ssleay32.dll' Source='libcurl/ssleay32.dll'
-				  DiskId='3' />
-			<File Id='zlib1_DLL'
-				  Name='zlib1.dll' Source='libcurl/zlib1.dll'
-				  DiskId='3' />
-		</Component>
-
-<?ifdef MSVCRT ?>
-		<Component Id='MSVCRT.Component' Guid='{6D42C511-CF7F-4480-A5FE-5FC3A0C3FF5D}' Directory='INSTALLDIR'>
-			<File Id='vcruntime140_DLL'
-				  Name='vcruntime140.dll' Source='msvcrt/vcruntime140.dll'
-				  DiskId='4' KeyPath='yes' />
-			<File Id='vccorlib140_DLL'
-				  Name='vccorlib140.dll' Source='msvcrt/vccorlib140.dll'
-				  DiskId='4' />
-			<File Id='msvcp140_DLL'
-				  Name='msvcp140.dll' Source='msvcrt/msvcp140.dll'
-				  DiskId='4' />
-			<File Id='concrt140_DLL'
-				  Name='concrt140.dll' Source='msvcrt/concrt140.dll'
-				  DiskId='4' />
-		</Component>
-<?endif?>
-
 		<Feature Id='Complete' Title='$(var.PACKAGE) $(var.VERSION)'
 				 Display='expand' Description='The complete package' Level='1'
 				 ConfigurableDirectory='INSTALLDIR' AllowAdvertise='no'>
-			<ComponentRef Id='MainExecutable.Component' />
-			<ComponentRef Id='Fonts.Component' />
-			<ComponentRef Id='Locale.Component' />
+			<ComponentRef Id='Main.Component' />
+			<ComponentRef Id='fonts.Component' />
+			<ComponentRef Id='locale.Component' />
 			<Feature Id='Curl' Title='libCurl'
 					 Description='The libCurl libraries. You do not need to install those, if you have a version of libCurl DLLs instaleld somewhere on your system.'
 					 AllowAdvertise='no' Level='1'>

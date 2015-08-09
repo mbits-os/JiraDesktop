@@ -11,5 +11,7 @@ res
 *.wixobj
 *.wixpdb
 *.pyc
+*.sources.wxs
+
 notes.ans
 upload.ans
