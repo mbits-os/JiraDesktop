@@ -48,6 +48,7 @@ RES = "res"
 
 artifactFiles = [ "Tasks.exe" ]
 resFiles = [ "LICENSE", "apps/Tasks/res/Tasks.ico", "locale" ]
+custom = "TasksCustomActions.dll"
 
 storage = {
 	ARTIFACTS: "",
@@ -69,11 +70,13 @@ if not path.exists(RES) : os.makedirs(RES)
 
 lib.copyFilesFlat(path.join(ROOT, "bin", PLATFORM, CONFIG), ARTIFACTS, artifactFiles)
 lib.copyFilesFlat(ROOT, RES, resFiles)
+lib.copyFilesFlat(path.join("custom", "bin", PLATFORM, CONFIG), "", [ custom ])
 
 # sign
 if sdk is not None:
 	for f in artifactFiles:
 		call([ "signtool.exe", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s" % SIGNVER, path.join(ARTIFACTS, f) ])
+	call([ "signtool.exe", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s Installer Extensions" % SIGNVER, custom ])
 
 contents = lib.file_list(storage)
 
@@ -128,5 +131,5 @@ if PACKAGE is not None:
 
 call(["candle", "-nologo", WXS] + additional)
 call(["candle", "-nologo", WXS_SOURCES])
-call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-sice:ICE61", "-ext", "WixUIExtension", WIXOBJ, WIXOBJ_SOURCES, "-out", MSINAME])
+call(["light", "-nologo", "-sice:ICE07", "-sice:ICE60", "-ext", "WixUIExtension", WIXOBJ, WIXOBJ_SOURCES, "-out", MSINAME])
 call(["signtool", "sign", "/a", "/t", "http://timestamp.verisign.com/scripts/timstamp.dll", "-d", "Tasks %s Installer" % SIGNVER, MSINAME])

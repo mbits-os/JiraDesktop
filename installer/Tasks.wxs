@@ -55,11 +55,15 @@
 
 		<Upgrade Id="{2E10A6B5-33CF-422C-810C-8B18DFC03C6E}">
 			<UpgradeVersion OnlyDetect='yes' Property='NEWERFOUND'
-			  Minimum='$(var.LONG_VERSION)' IncludeMinimum='no' />
+				Minimum='$(var.LONG_VERSION)' IncludeMinimum='no' />
+			<UpgradeVersion OnlyDetect='yes' Property='SAMEFOUND'
+				Minimum='$(var.LONG_VERSION)' Maximum='$(var.LONG_VERSION)'
+				IncludeMinimum='yes' IncludeMaximum='yes' />
 			<UpgradeVersion Property='OLDERVERSIONBEINGUPGRADED'
-			  Minimum='0.0.0.0' Maximum='$(var.LONG_VERSION)' IncludeMinimum='yes' IncludeMaximum='yes' />
+				Minimum='0.0.0.0' Maximum='$(var.LONG_VERSION)' IncludeMinimum='yes' IncludeMaximum='no' />
 		</Upgrade>
-		<CustomAction Id='NoDowngrade' Error='A later version of [ProductName] is already installed.' />
+		<CustomAction Id='NoDowngrade' Error='A later version of [ProductName] is already installed. Please uninstall older version before installing this version.' />
+		<CustomAction Id='NoOverwrite' Error='This version of [ProductName] is already installed. Please either repair your existing installation or uninstall exisiting version before installing this one.' />
 
 		<Property Id="ARPPRODUCTICON" Value="Tasks.ico" />
 		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
@@ -110,10 +114,19 @@
 		<WixVariable Id="WixUIBannerBmp" Value="banner.bmp" />
 		<WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
 
+		<Binary Id='TasksActions' SourceFile='TasksCustomActions.dll'/>
+		<CustomAction Id='CloseTasksApp' DllEntry='CloseTasksApp' BinaryKey='TasksActions' Execute='immediate' Return='check'/>
+
 		<InstallExecuteSequence>
-			<RemoveExistingProducts After="InstallInitialize" />
+			<Custom Action='CloseTasksApp' Before='ValidateProductID'/>
+			<RemoveExistingProducts After='InstallInitialize' />
 			<Custom Action='NoDowngrade' After='FindRelatedProducts'>NEWERFOUND</Custom>
+			<Custom Action='NoOverwrite' After='FindRelatedProducts'>SAMEFOUND</Custom>
 		</InstallExecuteSequence>
+
+		<AdminExecuteSequence>
+			<Custom Action='CloseTasksApp' Before='CostInitialize'/>
+		</AdminExecuteSequence>
 
 		<InstallUISequence>
 			<FindRelatedProducts Before='LaunchConditions' />
