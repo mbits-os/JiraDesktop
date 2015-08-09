@@ -1,0 +1,4 @@
+LIBRARY "WixTasksExtensions"
+
+EXPORTS
+	CloseTasksApp
