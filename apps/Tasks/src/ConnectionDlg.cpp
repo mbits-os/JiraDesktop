@@ -8,6 +8,7 @@
 #include "ConnectionDlg.h"
 #include <net/utf8.hpp>
 #include <net/uri.hpp>
+#include <jira/server.hpp>
 #include <atlstr.h>
 
 void CConnectionDlg::setWindowText(const std::string& value, int id)
@@ -57,7 +58,7 @@ namespace {
 
 void CConnectionDlg::updateExitState()
 {
-	GetDlgItem(IDOK).EnableWindow(hasText(IDC_URL) && hasText(IDC_LOGIN) && hasText(IDC_PASSWORD) && isURL(getWindowText(IDC_URL)));
+	GetDlgItem(IDOK).EnableWindow(hasText(IDC_URL) && hasText(IDC_LOGIN) && hasText(IDC_PASSWORD) && (m_urlTestStage == URL_VALID));
 }
 
 LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -89,9 +90,54 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 	return TRUE;
 }
 
-LRESULT CConnectionDlg::OnTextChanged(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+void CConnectionDlg::testURL(std::string url)
+{
+	if (isURL(url)) {
+		Uri uri { url };
+		if (uri.relative()) {
+			url = "http://" + url;
+		}
+
+		GetDlgItem(IDC_NAME).EnableWindow(FALSE);
+		auto handle = m_hWnd;
+		auto counter = ++m_urlTestCounter;
+		m_urlTestStage = ACTIVE;
+		jira::server::find_root(url, [handle, counter](const jira::server_info& info) {
+			::SendMessage(handle, UM_SERVER_INFO, counter, (LPARAM)&info);
+		});
+	}
+}
+
+LRESULT CConnectionDlg::OnServerInfo(UINT, WPARAM wParam, LPARAM lParam, BOOL &)
+{
+	if (wParam != m_urlTestCounter)
+		return 0;
+
+	bool valid = false;
+	auto info = reinterpret_cast<const jira::server_info*>(lParam);
+	if (info && !info->baseUrl.empty()) {
+		valid = true;
+		if (!info->serverTitle.empty())
+			setWindowText(info->serverTitle, IDC_NAME);
+		if (info->baseUrl != getWindowText(IDC_URL))
+			setWindowText(info->baseUrl, IDC_URL);
+	}
+	GetDlgItem(IDC_NAME).EnableWindow();
+	m_urlTestStage = valid ? URL_VALID : URL_INVALID;
+	if (!valid)
+		MessageBeep(MB_ICONERROR);
+
+	updateExitState();
+
+	return 0;
+}
+
+LRESULT CConnectionDlg::OnTextChanged(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	updateExitState();
+	if (wID == IDC_URL && hasText(IDC_URL))
+		testURL(getWindowText(IDC_URL));
+
 	return 0;
 }
 
