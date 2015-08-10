@@ -199,9 +199,10 @@ struct CTasksActions : CTasksActionsBase {
 		});
 	}
 
-	std::initializer_list<menu::item> createAppToolbar(const Strings&)
+	template <typename Fn>
+	void createAppToolbar(const Strings&, Fn&& fn)
 	{
-		return {
+		fn({
 			tasks_new,
 			menu::separator(),
 			tasks_refresh,
@@ -209,7 +210,7 @@ struct CTasksActions : CTasksActionsBase {
 			menu::separator(),
 			help_licences,
 			help_about,
-		};
+		});
 	};
 
 	void showHide() {}

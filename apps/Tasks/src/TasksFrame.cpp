@@ -148,7 +148,9 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	createIcons();
 	createItems(_);
 	SetMenu(createAppMenu(_));
-	m_hWndToolBar = createToolbar(createAppToolbar(_), m_hWnd);
+	createAppToolbar(_, [this](const std::initializer_list<menu::item>& items) {
+		m_hWndToolBar = createToolbar(items, m_hWnd);
+	});
 
 	m_model->setTimerHandle(m_hWnd);
 
