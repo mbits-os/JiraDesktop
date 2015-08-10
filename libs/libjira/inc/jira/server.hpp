@@ -95,6 +95,11 @@ namespace jira
 		virtual void onRefreshFinished(uint32_t viewID) = 0;
 	};
 
+	struct server_info {
+		std::string baseUrl;
+		std::string serverTitle;
+	};
+
 	class server : public listeners<server_listener, server>, public std::enable_shared_from_this<server> {
 		std::string m_name;
 		std::string m_login;
@@ -152,6 +157,8 @@ namespace jira
 		void loadJSON(const std::string& uri, const std::function<void (XHR*, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 		void search(const std::shared_ptr<gui::document>& doc, const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 		void search(const std::shared_ptr<gui::document>& doc, uint32_t id, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
+
+		static void find_root(const std::string& url, const std::function<void(const server_info&)>& cb);
 	};
 }
 

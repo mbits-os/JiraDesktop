@@ -474,5 +474,93 @@ namespace jira
 			return;
 		search(doc, *it, response, progress, async);
 	}
+
+	class server_locator : public std::enable_shared_from_this<server_locator> {
+		Uri m_uri;
+		std::string m_path;
+		std::function<void(const server_info&)> m_cb;
+
+	public:
+		server_locator(const Uri& uri, const std::function<void(const server_info&)>& cb)
+			: m_uri { uri }
+			, m_cb { cb }
+		{
+			m_uri.query({ });
+			m_path = m_uri.path();
+			m_uri.path({ });
+		}
+
+		void next_try(bool async)
+		{
+			using namespace net::http::client;
+
+			auto xhr = create();
+			auto keep = shared_from_this();
+
+			xhr->setDebug();
+			xhr->onreadystatechange([xhr, keep, async](XmlHttpRequest* req) {
+				if (req->getReadyState() != XmlHttpRequest::DONE)
+					return;
+
+				keep->analyze(req, async);
+				req->onreadystatechange({ }); // clean up xhr 
+			});
+
+			auto combined = Uri::canonical("rest/api/2/serverInfo"s, Uri::canonical(m_path, m_uri));
+
+			xhr->open(HTTP_GET, combined.string(), async);
+			xhr->send();
+		}
+
+	private:
+		void analyze(net::http::client::XmlHttpRequest* req, bool async)
+		{
+			auto status = req->getStatus();
+			if (status / 100 == 2)
+				if (answer(req))
+					return;
+
+			if (m_path.empty())
+				return m_cb({ });
+			m_path = fs::path{ m_path }.parent_path().string();
+
+			next_try(async);
+		}
+
+		bool answer(net::http::client::XmlHttpRequest* req)
+		{
+			auto text = req->getResponseText();
+			auto length = req->getResponseTextLength();
+			auto val = json::from_string(text, length);
+
+			server_info ret;
+
+			if (val.is<json::map>()) {
+				json::map obj { val };
+				auto it = obj.find("baseUrl");
+				if (it != obj.end() && it->second.is<std::string>()) {
+					ret.baseUrl = it->second.as<std::string>();
+					it = obj.find("serverTitle");
+					if (it != obj.end() && it->second.is<std::string>()) {
+						ret.serverTitle = it->second.as<std::string>();
+					}
+					m_cb(ret);
+
+					return true;
+				}
+			}
+
+			return false;
+		}
+	};
+
+	/*static*/ void server::find_root(const std::string& url, const std::function<void(const server_info&)>& cb)
+	{
+		if (!cb)
+			return;
+
+		auto locator = std::make_shared<server_locator>(url, cb);
+		locator->next_try(true);
+	}
 };
 
