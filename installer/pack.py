@@ -65,8 +65,11 @@ if sdk is not None:
 
 os.environ["PATH"] += os.pathsep + WiX
 
-if not path.exists(ARTIFACTS) : os.makedirs(ARTIFACTS)
-if not path.exists(RES) : os.makedirs(RES)
+call([ "rm", "-rf", ARTIFACTS ])
+call([ "rm", "-rf", RES ])
+
+os.makedirs(ARTIFACTS)
+os.makedirs(RES)
 
 lib.copyFilesFlat(path.join(ROOT, "bin", PLATFORM, CONFIG), ARTIFACTS, artifactFiles)
 lib.copyFilesFlat(ROOT, RES, resFiles)
