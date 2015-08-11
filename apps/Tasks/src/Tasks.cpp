@@ -139,7 +139,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 				StartupType::Upgrade;
 		}
 
-		wndMain._ = _;
+		wndMain._.tr = _;
 
 		if (elevation::get_type() == elevation::type::full) {
 			wndMain.m_elevated = true;

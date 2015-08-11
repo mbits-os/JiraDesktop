@@ -262,6 +262,12 @@ void CTasksView::ServerInfo::updatePlaque(ani::win32::scene& scene, std::vector<
 	updateErrors();
 }
 
+void CTasksView::ServerInfo::updateStrings(const Strings& tr)
+{
+	for (auto& view : m_views)
+		view->updateStrings(tr);
+}
+
 std::vector<jira::search_def>::const_iterator CTasksView::ServerInfo::findDefinition(uint32_t sessionId) const
 {
 	return std::find_if(std::begin(m_server->views()), std::end(m_server->views()), [sessionId](const jira::search_def& def) { return def.sessionId() == sessionId; });
@@ -328,6 +334,45 @@ void CTasksView::ViewInfo::updatePlaque(ani::win32::scene& scene, std::vector<st
 
 	if (m_dataset)
 		updateDataset(scene, removed, modified, added, tr);
+}
+
+void CTasksView::ViewInfo::updateStrings(const Strings& tr)
+{
+	if (!m_plaque)
+		return;
+
+	if (!m_dataset) {
+		if (m_progressCtrl) {
+			auto note = m_progressCtrl->getParent();
+			if (note) {
+				auto text = note->children().front();
+				if (text && text != m_progressCtrl) {
+					text->innerText(tr(lng::LNG_JIRA_REPORT_EMPTY));
+				}
+			}
+		}
+
+		return;
+	}
+
+	std::shared_ptr<gui::node> note;
+
+	auto it = std::begin(m_plaque->children());
+	auto end = std::end(m_plaque->children());
+
+	for (; it != end; ++it) {
+		if ((*it)->getNodeName() == gui::elem::table)
+			break;
+	}
+
+	if (it != end) {
+		++it;
+		if (it != end)
+			note = *it;
+	}
+
+	if (note)
+		m_plaque->replaceChild(createNote(tr), note);
 }
 
 std::shared_ptr<gui::node> CTasksView::ViewInfo::buildSchema()
@@ -633,7 +678,7 @@ std::vector<CTasksView::ServerInfo>::iterator CTasksView::insert(std::vector<Ser
 	// TODO: create UI element
 	// TDOD: attach refresh listener to the server
 	auto listener = std::make_shared<ServerListener>(m_hWnd);
-	return m_servers.emplace(it, info.m_server, info.m_document, listener, std::ref(m_scene), _);
+	return m_servers.emplace(it, info.m_server, info.m_document, listener, std::ref(m_scene), _.tr);
 }
 
 std::vector<CTasksView::ServerInfo>::iterator CTasksView::erase(std::vector<ServerInfo>::const_iterator it)
@@ -742,6 +787,8 @@ LRESULT CTasksView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	}
 	m_body->appendChild(glyphs);
 #endif
+
+	_.onupdate(std::bind(&CTasksView::updateStrings, this));
 
 	return 0;
 }
@@ -1534,7 +1581,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	auto& server = *srv->m_server;
 	(*it)->m_dataset = server.dataset();
-	(*it)->updatePlaque(m_scene, tabs[0], tabs[1], tabs[2], _);
+	(*it)->updatePlaque(m_scene, tabs[0], tabs[1], tabs[2], _.tr);
 
 	std::ostringstream o;
 	bool modified = false;
@@ -1556,17 +1603,17 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 			else o << "\n";
 
 			
-			o << _(lngs::LNG_JIRA_NOTIFY_GROUP, issues.size(), _(name), issues.size()) << ": ";
+			o << _.tr(lngs::LNG_JIRA_NOTIFY_GROUP, issues.size(), _.tr(name), issues.size()) << ": ";
 
 			switch (issues.size()) {
 			case 1:
 				o << issues[0];
 				break;
 			case 2:
-				o << _(lng::LNG_JIRA_NOTIFY_TWO, issues[0], issues[1]);
+				o << _.tr(lng::LNG_JIRA_NOTIFY_TWO, issues[0], issues[1]);
 				break;
 			default:
-				o << _(lngs::LNG_JIRA_NOTIFY_MORE, (issues.size() - 2), issues[0], issues[1], (issues.size() - 2));
+				o << _.tr(lngs::LNG_JIRA_NOTIFY_MORE, (issues.size() - 2), issues[0], issues[1], (issues.size() - 2));
 				break;
 			}
 		}
@@ -1576,7 +1623,7 @@ LRESULT CTasksView::OnRefreshStop(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*
 
 	if (!msg.empty() && m_notifier) {
 		
-		auto title = utf::widen(_(lng::LNG_JIRA_NOTIFY, server.login(), server.displayName()));
+		auto title = utf::widen(_.tr(lng::LNG_JIRA_NOTIFY, server.login(), server.displayName()));
 		m_notifier(title, msg);
 	}
 
@@ -1698,4 +1745,10 @@ void CTasksView::scrollIntoView(const std::shared_ptr<gui::node>& node)
 	auto br = tl + node->getSize();
 
 	m_scroller->scrollIntoView(m_zoom->mul.scaleL(tl.x), m_zoom->mul.scaleL(tl.y), m_zoom->mul.scaleL(br.x), m_zoom->mul.scaleL(br.y));
+}
+
+void CTasksView::updateStrings()
+{
+	for (auto& srv : m_servers)
+		srv.updateStrings(_.tr);
 }

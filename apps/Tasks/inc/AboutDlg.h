@@ -9,9 +9,12 @@
 
 class CAboutDlg : public CDialogImpl<CAboutDlg>
 {
-	Strings tr;
+	locale::Translation<Strings> _;
 public:
-	CAboutDlg(const Strings& tr) : tr(tr) {}
+	CAboutDlg(const Strings& tr)
+	{
+		_.tr = tr;
+	}
 
 	enum { IDD = IDD_ABOUTBOX };
 

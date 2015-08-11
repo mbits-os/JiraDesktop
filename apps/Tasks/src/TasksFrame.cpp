@@ -82,8 +82,8 @@ std::wstring CTasksFrame::buildTitle()
 {
 #if BULID_NUMBER_IN_TITLE
 	auto title = utf::widen(
-		_(lng::LNG_APP_TITLE,
-			_(lng::LNG_APP_NAME),
+		_.tr(lng::LNG_APP_TITLE,
+			_.tr(lng::LNG_APP_NAME),
 			PROGRAM_VERSION_STRING PROGRAM_VERSION_STABILITY,
 			PROGRAM_VERSION_BUILD
 			)
@@ -92,7 +92,7 @@ std::wstring CTasksFrame::buildTitle()
 	auto title = utf::widen(_(lng::LNG_APP_NAME));
 #endif
 	if (m_elevated)
-		title = utf::widen(_(lng::LNG_APP_TITLE_ELEVATED, utf::narrowed(title)));
+		title = utf::widen(_.tr(lng::LNG_APP_TITLE_ELEVATED, utf::narrowed(title)));
 
 	return title;
 }
@@ -146,17 +146,23 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 		uResID = IDR_MAINFRAME;
 
 	createIcons();
-	createItems(_);
-	SetMenu(createAppMenu(_));
-	createAppToolbar(_, [this](const std::initializer_list<menu::item>& items) {
+	createItems(_.tr);
+	SetMenu(createAppMenu(_.tr));
+	createAppToolbar(_.tr, [this](const std::initializer_list<menu::item>& items) {
 		m_hWndToolBar = createToolbar(items, m_hWnd);
+	});
+
+	_.onupdate([this] {
+		createItems(_.tr);
+		SetMenu(createAppMenu(_.tr));
+		SetWindowTextW(buildTitle().c_str());
 	});
 
 	m_model->setTimerHandle(m_hWnd);
 
 	m_view.m_elevated = m_elevated;
 	m_view.m_model = m_model;
-	m_view._ = _;
+	m_view._.tr = _.tr;
 
 	m_hWndClient = m_container.Create(m_hWnd, rcDefault, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 
@@ -168,7 +174,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 				MAKEINTRESOURCE(IDR_ATTENTION), IMAGE_ICON,
 				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
 				LR_DEFAULTCOLOR);
-			auto ICON_TITLE = _(lng::LNG_ATTENTION_TOOLTIP);
+			auto ICON_TITLE = _.tr(lng::LNG_ATTENTION_TOOLTIP);
 #ifdef TRAY_USE_GUID
 			m_attentionIcon.Install(m_hWnd, UUID_AttentionIcon, tray_icon, nullptr, utf::widen(ICON_TITLE).c_str());
 #else
@@ -360,6 +366,30 @@ LRESULT CTasksFrame::OnUninstall(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 	return 0;
 }
 
+typedef HRESULT(_stdcall *RegisterApplicationRestartT)(PCWSTR, DWORD);
+static HRESULT RegisterApplicationRestartStub(PCWSTR pwzCommandline, DWORD dwFlags)
+{
+	HMODULE hModule = ::LoadLibrary(_T("kernel32.dll"));
+	if (hModule == NULL)
+		return E_FAIL;
+	RegisterApplicationRestartT proc =
+		reinterpret_cast<RegisterApplicationRestartT>(::GetProcAddress(hModule, "RegisterApplicationRestart"));
+	if (proc == NULL) {
+		::FreeLibrary(hModule);
+		return E_FAIL;
+	}
+	HRESULT ret = (proc)(pwzCommandline, dwFlags);
+	::FreeLibrary(hModule);
+	return ret;
+}
+
+LRESULT CTasksFrame::OnQueryEndSession(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+	RegisterApplicationRestartStub(L"--quiet", 0);
+	PostMessage(WM_COMMAND, tasks_exit->id(), 0);
+	return TRUE;
+}
+
 LRESULT CTasksFrame::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	ShowWindow(SW_HIDE);
@@ -463,13 +493,9 @@ void CTasksFrame::refreshAll()
 void CTasksFrame::setLanguage(const std::string& lang)
 {
 	CAppSettings { }.language(lang);
-	// TODO: switch languages in runtime
-	if (lang.empty() || !_.open(lang))
-		_.open_first_of(locale::system_locales());
 
-	createItems(_);
-	SetMenu(createAppMenu(_));
-	SetWindowTextW(buildTitle().c_str());
+	if (lang.empty() || !_.tr.open(lang))
+		_.tr.open_first_of(locale::system_locales());
 }
 
 void CTasksFrame::exitApplication()
@@ -483,7 +509,7 @@ void CTasksFrame::showLicence()
 
 void CTasksFrame::about()
 {
-	CAboutDlg dlg {_};
+	CAboutDlg dlg {_.tr};
 	dlg.DoModal();
 }
 

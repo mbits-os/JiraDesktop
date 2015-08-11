@@ -91,7 +91,7 @@ public:
 	CIcon m_smallIcon;
 	std::shared_ptr<CAppModel> m_model = std::make_shared<CAppModel>();
 	bool m_balloonVisible = false;
-	Tasks::Strings _;
+	locale::Translation<Strings> _;
 	bool m_elevated = false;
 	StartupTypeInfo startup_info;
 
@@ -117,6 +117,7 @@ public:
 		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_ACTIVATE, OnActivate)
 		MESSAGE_HANDLER(WM_UNINSTALL, OnUninstall)
+		MESSAGE_HANDLER(WM_QUERYENDSESSION, OnQueryEndSession)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOW, OnToolTipTextW)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOA, OnToolTipTextA)
 		NOTIFY_CODE_HANDLER(TTN_GETDISPINFOW, OnToolTipTextW)
@@ -146,6 +147,7 @@ public:
 	LRESULT OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnActivate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnUninstall(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnQueryEndSession(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnToolTipTextA(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/);
 	LRESULT OnToolTipTextW(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/);

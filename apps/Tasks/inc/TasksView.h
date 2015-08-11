@@ -84,6 +84,7 @@ public:
 		void updateProgress(ani::win32::scene& scene);
 		std::shared_ptr<gui::node> buildPlaque(ani::win32::scene& scene, const Strings& tr);
 		void updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added, const Strings& tr);
+		void updateStrings(const Strings& tr);
 
 	private:
 		void updateDataset(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added, const Strings& tr);
@@ -115,6 +116,7 @@ public:
 
 		void buildPlaque(ani::win32::scene& scene, const Strings& tr);
 		void updatePlaque(ani::win32::scene& scene, std::vector<std::string>& removed, std::vector<std::string>& modified, std::vector<std::string>& added, const Strings& tr);
+		void updateStrings(const Strings& tr);
 		std::vector<jira::search_def>::const_iterator findDefinition(uint32_t sessionId) const;
 		std::vector<std::shared_ptr<ViewInfo>>::iterator findInfo(uint32_t sessionId);
 	private:
@@ -170,7 +172,7 @@ private:
 	void scrollIntoView(const std::shared_ptr<gui::node>& node);
 public:
 	std::shared_ptr<CAppModel> m_model;
-	Strings _;
+	locale::Translation<Strings> _;
 	bool m_elevated = false;
 
 	static ATL::CWndClassInfo& GetWndClassInfo()
@@ -241,4 +243,6 @@ public:
 	bool nextItem();
 	bool prevItem();
 	void selectItem();
+
+	void updateStrings();
 };

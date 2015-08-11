@@ -31,6 +31,7 @@ namespace gui {
 	public:
 		text_node(const std::string& text);
 		text_node(const text_node&);
+		void innerText(const std::string& text) override;
 		void paintContents(painter* painter) override;
 		size measureContents(painter* painter) override;
 		bool isSupported(const std::shared_ptr<node>&) override;

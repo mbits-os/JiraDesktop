@@ -38,6 +38,11 @@ namespace gui {
 
 	text_node::text_node(const text_node&) = default;
 
+	void text_node::innerText(const std::string& text)
+	{
+		m_data[Attr::Text] = text;
+	}
+
 	void text_node::paintContents(painter* painter)
 	{
 		painter->paintString(m_data[Attr::Text]);

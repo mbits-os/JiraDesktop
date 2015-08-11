@@ -30,12 +30,16 @@ const char* fancyStability() {
 
 LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	SetWindowText(utf::widen(tr(lng::LNG_APP_ABOUT_TITLE)).c_str());
-	auto ver = utf::widen(
-		tr(lng::LNG_APP_ABOUT_MESSAGE, tr(lng::LNG_APP_NAME), PROGRAM_VERSION_STRING, fancyStability(), PROGRAM_VERSION_BUILD, PROGRAM_COPYRIGHT_HOLDER)
-		);
+	auto updateStrings = [this] {
+		SetWindowText(utf::widen(_.tr(lng::LNG_APP_ABOUT_TITLE)).c_str());
+		auto ver = utf::widen(
+			_.tr(lng::LNG_APP_ABOUT_MESSAGE, _.tr(lng::LNG_APP_NAME), PROGRAM_VERSION_STRING, fancyStability(), PROGRAM_VERSION_BUILD, PROGRAM_COPYRIGHT_HOLDER)
+			);
 
-	SetDlgItemText(IDC_STATIC_VERSION, ver.c_str());
+		SetDlgItemText(IDC_STATIC_VERSION, ver.c_str());
+	};
+	updateStrings();
+	_.onupdate(updateStrings);
 	CenterWindow(GetParent());
 	return TRUE;
 }
