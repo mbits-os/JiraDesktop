@@ -94,4 +94,7 @@ lngs res -vwi "%(Identity)" -o "%(RelativeDir)\%(Filename).cpp" --include "langs
       <Message>Building string ids</Message>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\apps\Tasks\src\Tasks.rcconf" />
+  </ItemGroup>
 </Project>

@@ -4,7 +4,9 @@
 //
 #define IDD_ABOUTBOX                    100
 #define IDR_MAINFRAME                   128
+#define IDS_PROGRAM_LINK_NAME           128
 #define IDR_MAINFRAME_OLD               129
+#define IDS_PROGRAM_LINK_INFO           129
 #define IDR_TASKBAR                     130
 #define IDR_ATTENTION                   131
 #define IDD_CONNECTION                  201

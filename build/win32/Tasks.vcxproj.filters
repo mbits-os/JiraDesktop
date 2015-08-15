@@ -111,4 +111,9 @@
       <Filter>src</Filter>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\apps\Tasks\src\Tasks.rcconf">
+      <Filter>src</Filter>
+    </None>
+  </ItemGroup>
 </Project>

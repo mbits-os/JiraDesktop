@@ -31,9 +31,13 @@
     <PostBuildEvent>
       <Command>set "PATH=%PATH%;c:\cygwin\bin"
 make -C "$(SolutionDir)..\..\strings" langs
-xcopy /I /D /F /Y "$(SolutionDir)..\..\locale" "$(TargetDir)locale"</Command>
+xcopy /I /D /F /Y "$(SolutionDir)..\..\locale" "$(TargetDir)locale"
+nmake -nologo -f mui.mak all CFG=$(Configuration) PTF=$(Platform)</Command>
       <Message>Copying strings</Message>
     </PostBuildEvent>
+    <ResourceCompile>
+      <AdditionalOptions>/G1 /FM "$(IntDir)%(Filename).mui.res"  /Q "$(MSBuildProjectDirectory)\..\..\apps\Tasks\src\Tasks.rcconf" %(AdditionalOptions)</AdditionalOptions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

@@ -159,6 +159,17 @@ BEGIN
     END
 END
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+	IDS_PROGRAM_LINK_NAME "Tasks"
+	IDS_PROGRAM_LINK_INFO "Tasks v" PROGRAM_VERSION_STRING PROGRAM_VERSION_STABILITY ", Build " VERSION_STRINGIFY(PROGRAM_VERSION_BUILD)
+END
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

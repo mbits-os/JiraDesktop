@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "version.h"
+#include "atlres.h"
 
 #include "AboutDlg.h"
 #include <string>
@@ -18,7 +19,7 @@
 #define WPROGRAM_VERSION_BUILD WIDE(VERSION_STRINGIFY(PROGRAM_VERSION_BUILD))
 #define WPROGRAM_COPYRIGHT_HOLDER WIDE(PROGRAM_COPYRIGHT_HOLDER)
 
-const char* fancyStability() {
+std::string fancyStability() {
 	if (*PROGRAM_VERSION_STABILITY == '-') {
 		switch (PROGRAM_VERSION_STABILITY[1]) {
 		case 'a': return "-\xCE\xB1";
@@ -33,7 +34,7 @@ LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	auto updateStrings = [this] {
 		SetWindowText(utf::widen(_.tr(lng::LNG_APP_ABOUT_TITLE)).c_str());
 		auto ver = utf::widen(
-			_.tr(lng::LNG_APP_ABOUT_MESSAGE, _.tr(lng::LNG_APP_NAME), PROGRAM_VERSION_STRING, fancyStability(), PROGRAM_VERSION_BUILD, PROGRAM_COPYRIGHT_HOLDER)
+			_.tr(lng::LNG_APP_ABOUT_MESSAGE, _.tr(lng::LNG_APP_NAME), PROGRAM_VERSION_STRING + fancyStability(), PROGRAM_VERSION_BUILD, PROGRAM_COPYRIGHT_HOLDER)
 			);
 
 		SetDlgItemText(IDC_STATIC_VERSION, ver.c_str());

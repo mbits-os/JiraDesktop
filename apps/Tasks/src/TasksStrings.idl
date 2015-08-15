@@ -13,6 +13,8 @@ strings
 	LNG_APP_TITLE = "%1 (%2, build %3)";
 	[help("Window title for elevated runs. %1 is LNG_APP_NAME or LNG_APP_TITLE"), id(-1)]
 	LNG_APP_TITLE_ELEVATED = "Administrator: %1";
+	[help("Application description for VERSIONINFO"), id(-1)]
+	LNG_APP_DESCRIPTION = "Tasks and issues";
 
 	// Menu bar *****************************************************************************************
 	[help("Top level menu name for application commands"), id(1003)]
@@ -71,8 +73,10 @@ strings
 	// About dialog **************************************************************************
 	[help("Title for About dialog"), id(-1)]
 	LNG_APP_ABOUT_TITLE = "About Tasks";
-	[help("Main text for About dialog.  %1 is LNG_APP_NAME, %2 is version, %3 is fancy stability (-β, -rc1, etc), %4 is the build number and %5 is the copyright holder"), id(-1)]
-	LNG_APP_ABOUT_MESSAGE = "%1 v%2%3, Build %4\n\n© 2015 %5";
+	[help("Main text for About dialog.  %1 is LNG_APP_NAME, %2 is version with fancy stability (-β, -rc1, etc), %3 is the build number and %4 is the copyright holder"), id(-1)]
+	LNG_APP_ABOUT_MESSAGE = "%1 v%2, Build %3\n\n© 2015 %4";
+	[help("Infotip text for program links.  %1 is LNG_APP_NAME, %2 is version with stability (-beta, -rc1, etc) and %3 is the build number"), id(-1)]
+	LNG_APP_INFOTIP = "%1 v%2, Build %3";
 
 	// Begin of JIRA strings; strings that will not have localication from server ***********************
 	[help("Column title for issue key - in case of field definition error; most of the time this string will come from JIRA server"), id(1024)]
