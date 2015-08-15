@@ -1,0 +1,49 @@
+#include "resource.h"
+
+#ifdef RC_INVOKED
+  #define VS_VERSION_INFO     1
+  #include <winresrc.h>
+#endif // RC_INVOKED
+#include "version.h"
+
+LANGUAGE $(LANG_ID), $(SUBLANG_ID)
+#pragma code_page($(CODEPAGE))
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION PROGRAM_VERSION_RC,PROGRAM_VERSION_BUILD
+ PRODUCTVERSION PROGRAM_VERSION_RC,PROGRAM_VERSION_BUILD
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "$(LANG_HEX)04B0"
+        BEGIN
+            VALUE "FileDescription", $(LNG_APP_DESCRIPTION)
+            VALUE "CompanyName", PROGRAM_COPYRIGHT_HOLDER
+            VALUE "FileVersion", PROGRAM_VERSION_FULL
+            VALUE "InternalName", $(LNG_APP_NAME)
+            VALUE "LegalCopyright", "\xA9 2015 " PROGRAM_COPYRIGHT_HOLDER
+            VALUE "OriginalFilename", PROGRAM_NAME ".exe"
+            VALUE "ProductName", $(LNG_APP_NAME)
+            VALUE "ProductVersion", PROGRAM_VERSION_FULL
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x$(LANG_HEX), 1200
+    END
+END
+
+STRINGTABLE
+BEGIN
+	IDS_PROGRAM_LINK_NAME $(LNG_APP_NAME)
+	IDS_PROGRAM_LINK_INFO $(LNG_APP_LINK_INFOTIP)
+END
