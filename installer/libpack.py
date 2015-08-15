@@ -10,10 +10,23 @@ def mtime(f):
 	except:
 		return 0
 
-def copyFilesFlat(src, dst, files):
+def unglob(src, files):
+	out = []
 	for f in files:
-		s = path.join(src, f)
-		d = path.join(dst, path.basename(f))
+		if '*' in f:
+			for o in glob.iglob(path.join(src, f)):
+				out.append(o[len(src)+1:])
+		else: out.append(f)
+	return out
+
+def copyFilesFlat(src, dst, files):
+	for __f in files:
+		f_s = __f
+		f_d = __f
+		if '|' in __f:
+			f_d, f_s = __f.split('|', 1)
+		s = path.join(src, f_s)
+		d = path.join(dst, f_d)
 		if path.isdir(s):
 			for root, dirs, files in os.walk(s):
 				try:
@@ -26,6 +39,8 @@ def copyFilesFlat(src, dst, files):
 		d_time = mtime(d)
 		if s_time > d_time:
 			print d
+			try: os.mkdir(os.path.dirname(d))
+			except: pass
 			shutil.copy(s, d)
 
 # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows
@@ -91,12 +106,13 @@ class component:
 	def print_out(self, out, links, depth = 1):
 		print >>out, '{}<Component Id="{}" Guid="{}">'.format("  " * depth, self.name, self.guid)
 		depth += 1
-		prefix = self.dir.replace(os.sep, '_')
+		prefix = self.dir.replace(os.sep, '_').replace('-', '_')
 		if len(prefix):
 			prefix += '_'
 		keypath = ' KeyPath="yes"'
 		for file in self.files:
-			out.write('{}<File Id="{}{}" Name="{}" Source="{}" DiskId="{}"{} '.format("  " * depth, prefix, file[0].replace('.', '_'), file[0], file[1], self.id, keypath))
+			__id = '{}{}'.format(prefix, file[0].replace('.', '_'))
+			out.write('{}<File Id="{}" Name="{}" Source="{}" DiskId="{}"{} '.format("  " * depth, __id, file[0], file[1], self.id, keypath))
 			if file[0] in links:
 				print >>out, '>'
 				for link in links[file[0]]:
@@ -104,6 +120,10 @@ class component:
 					print >>out, '{}  <Shortcut Id="{}" Directory="{}" Name="{}"'.format("  " * depth, id, link[1], link[0])
 					print >>out, '{}            WorkingDirectory="{}"'.format("  " * depth, self.dir_name)
 					print >>out, '{}            Icon="{}" IconIndex="{}"'.format("  " * depth, link[2], link[3])
+					if len(link) > 4: # Display name
+						print >>out, '{}            DisplayResourceDll="[#{}]" DisplayResourceId="{}"'.format("  " * depth, __id, link[4])
+					if len(link) > 5: # Infotip
+						print >>out, '{}            DescriptionResourceDll="[#{}]" DescriptionResourceId="{}"'.format("  " * depth, __id, link[5])
 					print >>out, '{}            Advertise="yes" />'.format("  " * depth)
 				print >>out, '{}</File>'.format("  " * depth)
 			else:
@@ -130,7 +150,7 @@ class directory:
 				comp_name, comp_guid = comp_tmpl[comp_id]
 				
 			if comp_name is None:
-				comp_name = "{}.Component".format(self.dir.replace(os.sep, '_'))
+				comp_name = "{}.Component".format(self.dir.replace(os.sep, '_').replace('-', '_'))
 
 			self.comps[cabId] = component(cabId, self.dir, self.id, comp_name, comp_guid)
 		self.comps[cabId].append(file, source)
@@ -144,7 +164,7 @@ class directory:
 		if here not in self.subs:
 			dir_here = path.join(self.dir, here)
 			if self.dir == "": dir_here = here
-			dir_id = dir_here.replace(os.sep, "_") + ".Directory"
+			dir_id = dir_here.replace(os.sep, "_").replace('-', '_') + ".Directory"
 			self.subs[here] = directory(dir_id, path.join(self.dir, here), here)
 		self.subs[here].append_deep(deep, cabId, file, source, comp_tmpl)
 

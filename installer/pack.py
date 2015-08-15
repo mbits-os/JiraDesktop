@@ -46,8 +46,8 @@ WIXOBJ_SOURCES = "Tasks.sources.wixobj"
 ARTIFACTS = "artifacts"
 RES = "res"
 
-artifactFiles = [ "Tasks.exe" ]
-resFiles = [ "LICENSE", "apps/Tasks/res/Tasks.ico", "locale" ]
+artifactFiles = [ "Tasks.exe", "*/Tasks.exe.mui" ]
+resFiles = [ "LICENSE", "Tasks.ico|apps/Tasks/res/Tasks.ico", "locale" ]
 custom = "TasksCustomActions.dll"
 
 storage = {
@@ -70,6 +70,9 @@ call([ "rm", "-rf", RES ])
 
 os.makedirs(ARTIFACTS)
 os.makedirs(RES)
+
+artifactFiles = lib.unglob(path.join(ROOT, "bin", PLATFORM, CONFIG), artifactFiles)
+resFiles = lib.unglob(ROOT, resFiles)
 
 lib.copyFilesFlat(path.join(ROOT, "bin", PLATFORM, CONFIG), ARTIFACTS, artifactFiles)
 lib.copyFilesFlat(ROOT, RES, resFiles)
@@ -105,13 +108,15 @@ comps = {
 	(2, "") : ("Curl.Component", "C40018C7-B3EA-4B2F-8D1F-307F01324CD7"),
 	(3, "") : ("MSVCRT.Component", "6D42C511-CF7F-4480-A5FE-5FC3A0C3FF5D"),
 	(1, "fonts") : (None, "7D0F0F45-4967-4E2D-B903-421763CF3CFF"),
-	(1, "locale") : (None, "32BD8778-F9E8-4613-9291-5518711547C2")
+	(1, "locale") : (None, "32BD8778-F9E8-4613-9291-5518711547C2"),
+	(1, "en-US") : (None, "56DE880E-02F5-4D2E-9DEE-6D31C19AA4A2"),
+	(1, "pl-PL") : (None, "5CD08E68-E63E-41B5-BD43-BED834BF5859")
 }
 
 links = {
 	"Tasks.exe": [
-		("Tasks", "ProgramMenuFolder", "Tasks.ico", 0),
-		("Tasks", "DesktopFolder", "Tasks.ico", 0)
+		("Tasks", "ProgramMenuFolder", "Tasks.ico", 0, 128, 129),
+		("Tasks", "DesktopFolder", "Tasks.ico", 0, 128, 129)
 	]
 }
 

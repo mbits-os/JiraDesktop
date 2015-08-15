@@ -93,6 +93,8 @@
 			<ComponentRef Id='Main.Component' />
 			<ComponentRef Id='fonts.Component' />
 			<ComponentRef Id='locale.Component' />
+			<ComponentRef Id='en_US.Component' />
+			<ComponentRef Id='pl_PL.Component' />
 			<Feature Id='Curl' Title='libCurl'
 					 Description='The libCurl libraries. You do not need to install those, if you have a version of libCurl DLLs instaleld somewhere on your system.'
 					 AllowAdvertise='no' Level='1'>
