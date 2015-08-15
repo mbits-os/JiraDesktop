@@ -1,7 +1,7 @@
 [
 	project("Tasks"),
 	version("1.0"),
-	serial(1)
+	serial(2)
 ]
 strings
 {
@@ -11,9 +11,9 @@ strings
 	LNG_APP_NAME = "Tasks";
 	[help("Full window title. %1 is LNG_APP_NAME, %2 is version and %3 is the build number"), id(1002)]
 	LNG_APP_TITLE = "%1 (%2, build %3)";
-	[help("Window title for elevated runs. %1 is LNG_APP_NAME or LNG_APP_TITLE"), id(-1)]
+	[help("Window title for elevated runs. %1 is LNG_APP_NAME or LNG_APP_TITLE"), id(1034)]
 	LNG_APP_TITLE_ELEVATED = "Administrator: %1";
-	[help("Application description for VERSIONINFO"), id(-1)]
+	[help("Application description for VERSIONINFO"), id(1035)]
 	LNG_APP_DESCRIPTION = "Tasks and issues";
 
 	// Menu bar *****************************************************************************************
@@ -33,11 +33,11 @@ strings
 	LNG_APP_MENUITEM_REFRESHALL = "&Refresh All";
 	[help("Tasks command. Shows settings dialog"), id(1009)]
 	LNG_APP_MENUITEM_SETTINGS = "&Settings...";
-	[help("Tasks submenu. Shows a list of available translations"), id(-1)]
+	[help("Tasks submenu. Shows a list of available translations"), id(1036)]
 	LNG_APP_MENUITEM_LANGUAGES = "&Languages";
-	[help("Languages submenu. Used for action representing the default user language"), id(-1)]
+	[help("Languages submenu. Used for action representing the default user language"), id(1037)]
 	LNG_APP_MENUITEM_SYSLANG = "&System language (%1)";
-	[help("Languages submenu. Used for disabled action representing no languages at all"), id(-1)]
+	[help("Languages submenu. Used for disabled action representing no languages at all"), id(1038)]
 	LNG_APP_MENUITEM_MISSING = "(Empty)";
 	[help("Tasks command. Closes the application"), id(1010)]
 	LNG_APP_MENUITEM_EXIT = "E&xit";
@@ -71,11 +71,11 @@ strings
 	LNG_APP_MENUITEM_ABOUTTASKS_TIP = "About Tasks";
 
 	// About dialog **************************************************************************
-	[help("Title for About dialog"), id(-1)]
+	[help("Title for About dialog"), id(1039)]
 	LNG_APP_ABOUT_TITLE = "About Tasks";
-	[help("Main text for About dialog.  %1 is LNG_APP_NAME, %2 is version with fancy stability (-β, -rc1, etc), %3 is the build number and %4 is the copyright holder"), id(-1)]
+	[help("Main text for About dialog.  %1 is LNG_APP_NAME, %2 is version with fancy stability (-β, -rc1, etc), %3 is the build number and %4 is the copyright holder"), id(1040)]
 	LNG_APP_ABOUT_MESSAGE = "%1 v%2, Build %3\n\n© 2015 %4";
-	[help("Infotip text for program links.  %1 is LNG_APP_NAME, %2 is version with stability (-beta, -rc1, etc) and %3 is the build number"), id(-1)]
+	[help("Infotip text for program links.  %1 is LNG_APP_NAME, %2 is version with stability (-beta, -rc1, etc) and %3 is the build number"), id(1041)]
 	LNG_APP_INFOTIP = "%1 v%2, Build %3";
 
 	// Begin of JIRA strings; strings that will not have localication from server ***********************
@@ -113,6 +113,6 @@ strings
 	]
 	LNG_JIRA_NOTIFY_MORE = "%1, %2 and %3 other";
 
-	[help("Replacement text for empty report"), id(-1)]
+	[help("Replacement text for empty report"), id(1042)]
 	LNG_JIRA_REPORT_EMPTY = "Empty";
 };
