@@ -89,9 +89,9 @@ namespace gui {
 				auto src = bmp24.pixels + y * bmp24.stride;
 
 				for (LONG x = 0; x < size; ++x) {
-					*src++;
+					src++;
 					auto alpha = *src++;
-					*src++;
+					src++;
 					*dest++ = premul(0xFF - alpha, r, g, b, color);
 				}
 			}

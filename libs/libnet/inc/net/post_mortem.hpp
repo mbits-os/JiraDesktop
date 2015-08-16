@@ -105,6 +105,7 @@ namespace pm
                         swprintf_s(buffer, L"An unkown error occured, memory dumped to:\n\n%s", dumpPath());
                     }
                 }
+                buffer[__countof(buffer) - 1] = 0;
                 MessageBoxW(nullptr, buffer, L"This program perfomed illegal operation", MB_ICONINFORMATION);
             }
             TerminateProcess(GetCurrentProcess(), 1);

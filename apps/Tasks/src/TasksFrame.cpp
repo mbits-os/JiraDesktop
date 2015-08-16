@@ -44,40 +44,6 @@ static const GUID UUID_AttentionIcon{ 0x599a2310, 0xca40, 0x43f8, { 0xb8, 0x85, 
 constexpr UINT TRAYICON_MAIN = 1000;
 constexpr UINT TRAYICON_ATTENTION = 1001;
 
-std::string contents(LPCWSTR path)
-{
-	std::unique_ptr<FILE, decltype(&fclose)> f{ _wfopen(path, L"r"), fclose };
-	if (!f)
-		return std::string();
-
-	std::string out;
-	char buffer[8192];
-	int read = 0;
-	while ((read = fread(buffer, 1, sizeof(buffer), f.get())) > 0)
-		out.append(buffer, buffer + read);
-	return out;
-}
-
-void print(FILE* f, const std::string& s)
-{
-	fwrite(s.c_str(), 1, s.length(), f);
-}
-
-void print(FILE* f, const char* s)
-{
-	if (!s)
-		return;
-	fwrite(s, 1, strlen(s), f);
-}
-
-template <size_t length>
-void print(FILE* f, const char(&s)[length])
-{
-	if (!s)
-		return;
-	fwrite(s, 1, strlen(s), f);
-}
-
 std::wstring CTasksFrame::buildTitle()
 {
 #if BULID_NUMBER_IN_TITLE

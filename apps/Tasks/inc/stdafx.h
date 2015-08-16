@@ -41,3 +41,8 @@ extern CAppModule _Module;
 #endif
 
 #pragma comment (lib, "gdiplus.lib")
+
+template <typename T, size_t length>
+size_t __countof(T (&)[length]){ return length; }
+template <typename T, size_t length>
+size_t __countof(const T (&)[length]){ return length; }

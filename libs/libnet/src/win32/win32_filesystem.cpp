@@ -62,14 +62,14 @@ namespace filesystem
 	path current_path()
 	{
 		wchar_t buffer[2048];
-		GetCurrentDirectory(sizeof(buffer), buffer);
+		GetCurrentDirectory(__countof(buffer), buffer);
 		return buffer;
 	}
 
 	path app_directory()
 	{
 		wchar_t buffer[2048];
-		GetModuleFileName(nullptr, buffer, sizeof(buffer));
+		GetModuleFileName(nullptr, buffer, __countof(buffer));
 		return path(buffer).parent_path();
 	}
 
