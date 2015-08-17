@@ -29,16 +29,17 @@
 #include <memory>
 #include <map>
 #include <functional>
+#include <net/xhr_logger.hpp>
 
 namespace net { namespace http { namespace client {
 	struct HttpResponse;
 	struct XmlHttpRequest;
 	struct CredentialProvider;
-	typedef std::shared_ptr<HttpResponse> HttpResponsePtr;
-	typedef std::shared_ptr<XmlHttpRequest> XmlHttpRequestPtr;
-	typedef std::shared_ptr<CredentialProvider> CredentialProviderPtr;
+	using HttpResponsePtr = std::shared_ptr<HttpResponse>;
+	using XmlHttpRequestPtr = std::shared_ptr<XmlHttpRequest>;
+	using CredentialProviderPtr = std::shared_ptr<CredentialProvider>;
 
-	typedef std::map<std::string, std::string> HTTPArgs;
+	using HTTPArgs = std::map<std::string, std::string>;
 
 	enum HTTP_METHOD
 	{
@@ -91,7 +92,7 @@ namespace net { namespace http { namespace client {
 		virtual size_t getResponseTextLength() const = 0;
 		virtual const char* getResponseText() const = 0;
 
-		virtual void setDebug(bool debug = true) = 0;
+		virtual void setLogging(const LoggingClientPtr& logger) = 0;
 		virtual void setShouldFollowLocation(bool follow) = 0;
 		virtual void setMaxRedirects(size_t redirects) = 0;
 

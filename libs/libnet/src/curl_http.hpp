@@ -25,6 +25,8 @@
 #ifndef __CURL_HTTP_HPP__
 #define __CURL_HTTP_HPP__
 
+#include <net/xhr_logger.hpp>
+
 namespace net { namespace http {
 	struct HttpEndpoint;
 	struct HttpCallback;
@@ -63,7 +65,7 @@ namespace net { namespace http {
 		virtual std::string getUrl() = 0;
 		virtual std::string getUserAgent() = 0;
 		virtual void* getContent(size_t& length) = 0;
-		virtual bool getDebug() = 0;
+		virtual const client::LoggingClientPtr& getLogger() const = 0;
 		virtual long getMaxRedirs() = 0;
 		virtual bool shouldFollowLocation() = 0;
 		virtual HttpCredentials* getCredentials() = 0;

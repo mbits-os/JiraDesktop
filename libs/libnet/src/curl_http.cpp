@@ -235,6 +235,7 @@ namespace net { namespace http {
 	class CurlEndpoint : public http::HttpEndpoint, public std::enable_shared_from_this<CurlEndpoint>
 	{
 		std::weak_ptr<HttpCallback> m_callback;
+		client::LoggingClientPtr m_logger;
 		bool aborting = false;
 		curl_slist* headers = nullptr;
 		Curl m_curl;
@@ -344,7 +345,8 @@ namespace net { namespace http {
 		if (cred)
 			m_curl.setCredentials(cred->username(), cred->password());
 
-		m_curl.setDebug(http_callback->getDebug());
+		m_logger = http_callback->getLogger();
+		m_curl.setDebug(!!m_logger);
 
 		size_t length;
 		void* content = http_callback->getContent(length);

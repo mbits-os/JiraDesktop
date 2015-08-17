@@ -126,8 +126,9 @@ namespace net { namespace http {
 			Headers response_headers;
 			ContentData response;
 
-			bool send_flag, done_flag, debug;
+			bool send_flag, done_flag;
 			HttpEndpointPtr m_endpoint;
+			client::LoggingClientPtr logger;
 
 			bool m_followRedirects;
 			size_t m_redirects;
@@ -188,7 +189,6 @@ namespace net { namespace http {
 				, http_status(0)
 				, send_flag(false)
 				, done_flag(false)
-				, debug(false)
 				, m_followRedirects(true)
 				, m_redirects(10)
 				, m_wasRedirected(false)
@@ -223,7 +223,7 @@ namespace net { namespace http {
 			bool wasRedirected() const override;
 			const std::string getFinalLocation() const override;
 
-			void setDebug(bool) override;
+			void setLogging(const client::LoggingClientPtr& logger) override;
 			void setMaxRedirects(size_t) override;
 			void setShouldFollowLocation(bool) override;
 			void setCredentials(const client::CredentialProviderPtr& provider) override;
@@ -240,7 +240,7 @@ namespace net { namespace http {
 			std::string getUrl() override;
 			std::string getUserAgent() override;
 			void* getContent(size_t&) override;
-			bool getDebug() override;
+			const client::LoggingClientPtr& getLogger() const override;
 			bool shouldFollowLocation() override;
 			long getMaxRedirs() override;
 			HttpCredentials* getCredentials() override;
@@ -394,9 +394,9 @@ namespace net { namespace http {
 		bool XmlHttpRequest::wasRedirected() const { return m_wasRedirected; }
 		const std::string XmlHttpRequest::getFinalLocation() const { return m_finalLocation; }
 
-		void XmlHttpRequest::setDebug(bool debug_)
+		void XmlHttpRequest::setLogging(const client::LoggingClientPtr& logger_)
 		{
-			debug = debug_;
+			logger = logger_;
 		}
 
 		void XmlHttpRequest::setMaxRedirects(size_t redirects)
@@ -497,7 +497,7 @@ namespace net { namespace http {
 		std::string XmlHttpRequest::getUrl() { return url; }
 		std::string XmlHttpRequest::getUserAgent() { return userAgent; }
 		void* XmlHttpRequest::getContent(size_t& length) { if (http_method == client::HTTP_POST) { length = body.content_length; return body.content; } return nullptr; }
-		bool XmlHttpRequest::getDebug() { return debug; }
+		const client::LoggingClientPtr& XmlHttpRequest::getLogger() const { return logger; }
 		bool XmlHttpRequest::shouldFollowLocation() { return m_followRedirects; }
 		long XmlHttpRequest::getMaxRedirs() { return m_redirects; }
 		HttpCredentials* XmlHttpRequest::getCredentials() { return m_credentials; }
