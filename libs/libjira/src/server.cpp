@@ -208,11 +208,11 @@ namespace jira
 		}
 		return std::to_string((int)type);
 	}
-	void server::loadFields()
+	void server::loadFields(const std::shared_ptr<gui::document>& doc)
 	{
 		m_errors.clear();
 		m_isLoadingFields = true;
-		loadJSON("rest/api/2/field", [this](XHR* xhr, const json::value& doc) {
+		loadJSON(doc, "rest/api/2/field", [this](XHR* xhr, const json::value& doc) {
 			m_db.reset_defs();
 
 			ON_EXIT([this] {
@@ -364,12 +364,11 @@ namespace jira
 		m_db.debug_dump(o);
 	}
 
-	void server::get(const std::string & uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, const ONPROGRESS& progress, bool async)
+	void server::get(const std::shared_ptr<gui::document>& doc, const std::string & uri, const std::function<void(net::http::client::XmlHttpRequest*)>& onDone, const ONPROGRESS& progress, bool async)
 	{
 		using namespace net::http::client;
 
-		auto xhr = create();
-		// xhr->setDebug();
+		auto xhr = doc->createXHR();
 		xhr->onreadystatechange([xhr, onDone, this](XmlHttpRequest* req) {
 			if (req->getReadyState() != XmlHttpRequest::DONE)
 				return;
@@ -391,10 +390,10 @@ namespace jira
 		xhr->send();
 	}
 
-	void server::loadJSON(const std::string& uri, const std::function<void(XHR*, const json::value&)>& response, const ONPROGRESS& progress, bool async)
+	void server::loadJSON(const std::shared_ptr<gui::document>& doc, const std::string& uri, const std::function<void(XHR*, const json::value&)>& response, const ONPROGRESS& progress, bool async)
 	{
 		using namespace net::http::client;
-		get(uri, [response](XmlHttpRequest* req) {
+		get(doc, uri, [response](XmlHttpRequest* req) {
 			if (req->getStatus() / 100 == 2) {
 				auto text = req->getResponseText();
 				auto length = req->getResponseTextLength();
@@ -433,7 +432,7 @@ namespace jira
 		uri.query(Uri::QueryBuilder{}.add("jql", jql).add("fields", joined).string());
 
 		auto base = url();
-		loadJSON(uri.string(), [this, doc, response, columns, base](XHR* xhr, const json::value& data) {
+		loadJSON(doc, uri.string(), [this, doc, response, columns, base](XHR* xhr, const json::value& data) {
 
 			if ((xhr->getStatus() / 100) != 2) {
 				m_errors.emplace_back("Error loading query reply: " + std::to_string(xhr->getStatus()) + " " + xhr->getStatusText());
@@ -478,11 +477,13 @@ namespace jira
 	class server_locator : public std::enable_shared_from_this<server_locator> {
 		Uri m_uri;
 		std::string m_path;
+		std::shared_ptr<gui::document> m_doc;
 		std::function<void(const server_info&)> m_cb;
 
 	public:
-		server_locator(const Uri& uri, const std::function<void(const server_info&)>& cb)
+		server_locator(const std::shared_ptr<gui::document>& doc, const Uri& uri, const std::function<void(const server_info&)>& cb)
 			: m_uri { uri }
+			, m_doc { doc }
 			, m_cb { cb }
 		{
 			m_uri.query({ });
@@ -494,10 +495,9 @@ namespace jira
 		{
 			using namespace net::http::client;
 
-			auto xhr = create();
+			auto xhr = m_doc->createXHR();
 			auto keep = shared_from_this();
 
-			xhr->setDebug();
 			xhr->onreadystatechange([xhr, keep, async](XmlHttpRequest* req) {
 				if (req->getReadyState() != XmlHttpRequest::DONE)
 					return;
@@ -554,12 +554,12 @@ namespace jira
 		}
 	};
 
-	/*static*/ void server::find_root(const std::string& url, const std::function<void(const server_info&)>& cb)
+	/*static*/ void server::find_root(const std::shared_ptr<gui::document>& doc, const std::string& url, const std::function<void(const server_info&)>& cb)
 	{
 		if (!cb)
 			return;
 
-		auto locator = std::make_shared<server_locator>(url, cb);
+		auto locator = std::make_shared<server_locator>(doc, url, cb);
 		locator->next_try(true);
 	}
 };

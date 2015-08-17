@@ -148,17 +148,17 @@ namespace jira
 		void setUrl(const std::string& url) { m_url = url; }
 		void setViews(const std::vector<search_def>& views) { m_views = views; }
 
-		void loadFields();
+		void loadFields(const std::shared_ptr<gui::document>&);
 		void refresh(const std::shared_ptr<gui::document>&, uint32_t);
 		void refresh(const std::shared_ptr<gui::document>&);
 		const std::shared_ptr<report>& dataset() const { return m_dataset; }
 		void debugDump(std::ostream&);
-		void get(const std::string& uri, const std::function<void(XHR*)>& onDone, const ONPROGRESS& progress = {}, bool async = true);
-		void loadJSON(const std::string& uri, const std::function<void (XHR*, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
+		void get(const std::shared_ptr<gui::document>&, const std::string& uri, const std::function<void(XHR*)>& onDone, const ONPROGRESS& progress = {}, bool async = true);
+		void loadJSON(const std::shared_ptr<gui::document>&, const std::string& uri, const std::function<void (XHR*, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 		void search(const std::shared_ptr<gui::document>& doc, const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 		void search(const std::shared_ptr<gui::document>& doc, uint32_t id, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 
-		static void find_root(const std::string& url, const std::function<void(const server_info&)>& cb);
+		static void find_root(const std::shared_ptr<gui::document>& doc, const std::string& url, const std::function<void(const server_info&)>& cb);
 	};
 }
 
