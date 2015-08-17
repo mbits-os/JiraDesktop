@@ -22,7 +22,7 @@ public:
 	explicit CJiraImageRef();
 	~CJiraImageRef();
 
-	void start(const std::shared_ptr<jira::server>& srv, const std::string& uri);
+	void start(const std::shared_ptr<gui::document>& doc, const std::shared_ptr<jira::server>& srv, const std::string& uri);
 };
 
 CAppModel::CAppModel()
@@ -36,23 +36,45 @@ void CAppModel::onListChanged(uint32_t addedOrRemoved)
 
 class ImageCreator: public gui::image_creator {
 	std::shared_ptr<jira::server> m_server;
+	std::weak_ptr<gui::document> m_doc;
 public:
 	explicit ImageCreator(const std::shared_ptr<jira::server>& srvr)
 		: m_server(srvr)
 	{
 	}
 
+	void setDoc(const std::shared_ptr<gui::document>& doc) { m_doc = doc; }
+
 	std::shared_ptr<gui::image_ref> create(const std::string& uri) override
 	{
+		auto doc = m_doc.lock();
+		if (!doc)
+			return { };
 		auto ref = std::make_shared<CJiraImageRef>();
-		ref->start(m_server, uri);
+		ref->start(doc, m_server, uri);
 		return ref;
 	}
 };
 
+class XHRConstructor : public gui::xhr_constructor {
+	std::weak_ptr<gui::document> m_doc;
+public:
+	net::http::client::XmlHttpRequestPtr create()
+	{
+		return net::http::client::create();
+	}
+
+	void setDoc(const std::shared_ptr<gui::document>& doc) { m_doc = doc; }
+};
+
 std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr)
 {
-	return gui::document::make_doc(std::make_shared<ImageCreator>(srvr));
+	auto imgCreator = std::make_shared<ImageCreator>(srvr);
+	auto xhrCtor = std::make_shared<XHRConstructor>();
+	auto doc = gui::document::make_doc(imgCreator, xhrCtor);
+	imgCreator->setDoc(doc);
+	xhrCtor->setDoc(doc);
+	return doc;
 }
 
 void CAppModel::startup()
@@ -73,7 +95,7 @@ void CAppModel::startup()
 	auto local = m_servers;
 	for (auto server : local) {
 		pm::thread( [server] {
-			server.m_server->loadFields();
+			server.m_server->loadFields(server.m_document);
 			server.m_server->refresh(server.m_document);
 		} ).detach();
 	}
@@ -158,7 +180,7 @@ void CAppModel::update(const std::shared_ptr<jira::server>& server)
 	if (it != m_servers.end()) {
 		auto document = it->m_document;
 		pm::thread( [server, document] {
-			server->loadFields();
+			server->loadFields(document);
 			server->refresh(document);
 		} ).detach();
 	}
@@ -193,12 +215,12 @@ CJiraImageRef::~CJiraImageRef()
 	delete m_bitmap;
 }
 
-void CJiraImageRef::start(const std::shared_ptr<jira::server>& srv, const std::string& uri)
+void CJiraImageRef::start(const std::shared_ptr<gui::document>& doc, const std::shared_ptr<jira::server>& srv, const std::string& uri)
 {
 	using namespace net::http::client;
 	auto local = shared_from_this();
 	m_state = gui::load_state::image_missing;
-	srv->get(uri, [srv, uri, local](XmlHttpRequest* req) {
+	srv->get(doc, uri, [srv, uri, local](XmlHttpRequest* req) {
 		auto thiz = local.get();
 		if ((req->getStatus() / 100) != 2) {
 			thiz->emit([thiz](gui::image_ref_callback* cb) { cb->onImageChange(thiz); });

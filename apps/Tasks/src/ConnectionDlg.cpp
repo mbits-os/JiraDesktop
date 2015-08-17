@@ -90,6 +90,9 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 	return TRUE;
 }
 
+// defined in AppModel.cpp
+std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr);
+
 void CConnectionDlg::testURL(std::string url)
 {
 	if (isURL(url)) {
@@ -102,7 +105,7 @@ void CConnectionDlg::testURL(std::string url)
 		auto handle = m_hWnd;
 		auto counter = ++m_urlTestCounter;
 		m_urlTestStage = ACTIVE;
-		jira::server::find_root(url, [handle, counter](const jira::server_info& info) {
+		jira::server::find_root(make_document({ }), url, [handle, counter](const jira::server_info& info) {
 			::SendMessage(handle, UM_SERVER_INFO, counter, (LPARAM)&info);
 		});
 	}

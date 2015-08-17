@@ -298,7 +298,7 @@ LRESULT CTasksFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BO
 				bHandled = TRUE;
 
 				std::thread{ [info] {
-					info.m_server->loadFields();
+					info.m_server->loadFields(info.m_document);
 					info.m_server->refresh(info.m_document);
 				} }.detach();
 				break;
@@ -449,7 +449,7 @@ void CTasksFrame::refreshAll()
 		auto local = m_model->servers();
 		for (auto info : local) {
 			std::thread{ [info] {
-				info.m_server->loadFields();
+				info.m_server->loadFields(info.m_document);
 				info.m_server->refresh(info.m_document);
 			} }.detach();
 		}
