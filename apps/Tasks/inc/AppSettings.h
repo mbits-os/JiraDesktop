@@ -16,5 +16,7 @@ public:
 	void language(const std::string& lng);
 	std::string lastVersion();
 	void lastVersion(const std::string& ver);
+
+	std::string connectionLog();
 };
 

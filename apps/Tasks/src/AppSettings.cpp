@@ -188,3 +188,10 @@ void CAppSettings::lastVersion(const std::string& ver)
 	if (!ver.empty())
 		setString("CurrentVersion"s, ver);
 }
+
+std::string CAppSettings::connectionLog()
+{
+	if (getType("ConnectionLog"s) == settings::String)
+		return getString("ConnectionLog"s);
+	return { };
+}

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AppModel.h"
 #include "AppSettings.h"
+#include "Logger.hpp"
 #include <net/post_mortem.hpp>
 #include <net/xhr.hpp>
 #include <net/utf8.hpp>
@@ -56,12 +57,28 @@ public:
 	}
 };
 
+class XhrLoggingClient : public net::http::client::LoggingClient {
+	std::shared_ptr<Logger> m_log;
+public:
+	XhrLoggingClient(const std::shared_ptr<Logger>& log) : m_log { log }
+	{
+	}
+};
+
 class XHRConstructor : public gui::xhr_constructor {
 	std::weak_ptr<gui::document> m_doc;
 public:
 	net::http::client::XmlHttpRequestPtr create()
 	{
-		return net::http::client::create();
+		auto xhr = net::http::client::create();
+		auto log = CAppSettings { }.connectionLog();
+		if (!log.empty()) {
+			auto logger = open_log(log);
+			if (logger) {
+				xhr->setLogging(std::make_shared<XhrLoggingClient>(logger));
+			}
+		}
+		return xhr;
 	}
 
 	void setDoc(const std::shared_ptr<gui::document>& doc) { m_doc = doc; }
