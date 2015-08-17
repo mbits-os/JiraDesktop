@@ -41,13 +41,14 @@
 namespace gui {
 	using namespace styles::literals;
 
-	std::shared_ptr<document> document::make_doc(const std::shared_ptr<image_creator>& creator)
+	std::shared_ptr<document> document::make_doc(const std::shared_ptr<image_creator>& imageCreator, const std::shared_ptr<xhr_constructor>& xhrCtor)
 	{
-		return std::make_shared<document_impl>(creator);
+		return std::make_shared<document_impl>(imageCreator, xhrCtor);
 	}
 
-	document_impl::document_impl(const std::shared_ptr<image_creator>& creator)
-		: m_creator(creator)
+	document_impl::document_impl(const std::shared_ptr<image_creator>& imageCreator, const std::shared_ptr<xhr_constructor>& xhrCtor)
+		: m_creator(imageCreator)
+		, m_xhr(xhrCtor)
 	{
 	}
 
@@ -121,5 +122,10 @@ namespace gui {
 		};
 
 		return{};
+	}
+
+	net::http::client::XmlHttpRequestPtr document_impl::createXHR()
+	{
+		return m_xhr->create();
 	}
 }

@@ -35,13 +35,15 @@ namespace gui {
 		std::shared_ptr<node> createLink(const std::string& href) override;
 		std::shared_ptr<node> createText(const std::string& text) override;
 		std::shared_ptr<node> createElement(const elem name) override;
+		net::http::client::XmlHttpRequestPtr createXHR() override;
 
 		std::mutex m_guard;
 		std::map<std::string, std::shared_ptr<image_ref>> m_cache;
 		std::shared_ptr<image_creator> m_creator;
+		std::shared_ptr<xhr_constructor> m_xhr;
 
 	public:
-		explicit document_impl(const std::shared_ptr<image_creator>&);
+		explicit document_impl(const std::shared_ptr<image_creator>&, const std::shared_ptr<xhr_constructor>&);
 
 		std::shared_ptr<image_ref> createImage(const std::string& uri);
 	};

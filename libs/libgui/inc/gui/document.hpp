@@ -25,6 +25,7 @@
 #pragma once
 
 #include <gui/node.hpp>
+#include <net/xhr.hpp>
 
 namespace gui {
 	struct image_creator {
@@ -32,8 +33,13 @@ namespace gui {
 		virtual std::shared_ptr<image_ref> create(const std::string&) = 0;
 	};
 
+	struct xhr_constructor {
+		virtual ~xhr_constructor() {}
+		virtual net::http::client::XmlHttpRequestPtr create() = 0;
+	};
+
 	struct document {
-		static std::shared_ptr<document> make_doc(const std::shared_ptr<image_creator>&);
+		static std::shared_ptr<document> make_doc(const std::shared_ptr<image_creator>&, const std::shared_ptr<xhr_constructor>&);
 
 		virtual ~document() {}
 		virtual std::shared_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
@@ -41,5 +47,6 @@ namespace gui {
 		virtual std::shared_ptr<node> createLink(const std::string& href) = 0;
 		virtual std::shared_ptr<node> createText(const std::string& text) = 0;
 		virtual std::shared_ptr<node> createElement(const elem name) = 0;
+		virtual net::http::client::XmlHttpRequestPtr createXHR() = 0;
 	};
 };
