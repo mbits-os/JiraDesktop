@@ -45,6 +45,9 @@
     <ClCompile Include="..\..\apps\Tasks\src\TasksStrings.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\Logger.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\apps\Tasks\src\resource.h">
@@ -84,6 +87,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\apps\Tasks\inc\langs.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\Logger.hpp">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>

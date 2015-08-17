@@ -64,6 +64,7 @@
     <ClInclude Include="..\..\libs\libnet\inc\net\uri.hpp" />
     <ClInclude Include="..\..\libs\libnet\inc\net\utf8.hpp" />
     <ClInclude Include="..\..\libs\libnet\inc\net\xhr.hpp" />
+    <ClInclude Include="..\..\libs\libnet\inc\net\xhr_logger.hpp" />
     <ClInclude Include="..\..\libs\libnet\pch\pch.h" />
     <ClInclude Include="..\..\libs\libnet\src\curl_http.hpp" />
   </ItemGroup>
