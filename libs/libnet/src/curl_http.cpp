@@ -147,10 +147,10 @@ namespace net { namespace http {
 			curl_easy_setopt(m_curl, CURLOPT_PASSWORD, password.c_str());
 		}
 
-		void setDebug(bool debug = true)
+		void setLogger(const client::LoggingClientPtr& logger)
 		{
-			curl_easy_setopt(m_curl, CURLOPT_VERBOSE, debug ? 1L : 0L);
-			if (debug)
+			curl_easy_setopt(m_curl, CURLOPT_VERBOSE, logger ? 1L : 0L);
+			if (logger)
 			{
 				curl_easy_setopt(m_curl, CURLOPT_DEBUGFUNCTION, curl_onTrace);
 				curl_easy_setopt(m_curl, CURLOPT_DEBUGDATA, static_cast<Final*>(this));
@@ -200,6 +200,7 @@ namespace net { namespace http {
 		std::weak_ptr<HttpCallback> m_callback;
 		bool m_wasRedirected;
 		std::string m_finalLocation;
+		client::LoggingClientPtr m_logger;
 
 		void wasRedirected();
 
@@ -222,6 +223,12 @@ namespace net { namespace http {
 			CurlBase<Curl>::setUrl(url);
 		}
 
+		void setLogger(const client::LoggingClientPtr& logger)
+		{
+			m_logger = logger;
+			CurlBase<Curl>::setLogger(logger);
+		}
+
 		inline bool isRedirect() const;
 		void sendHeaders() const;
 
@@ -235,7 +242,6 @@ namespace net { namespace http {
 	class CurlEndpoint : public http::HttpEndpoint, public std::enable_shared_from_this<CurlEndpoint>
 	{
 		std::weak_ptr<HttpCallback> m_callback;
-		client::LoggingClientPtr m_logger;
 		bool aborting = false;
 		curl_slist* headers = nullptr;
 		Curl m_curl;
@@ -329,6 +335,10 @@ namespace net { namespace http {
 		m_curl.setUrl(http_callback->getUrl());
 		m_curl.setHeaders(headers);
 
+		auto logger = http_callback->getLogger();
+		if (logger)
+			logger->onStart(http_callback->getUrl());
+
 		if (http_callback->shouldFollowLocation())
 		{
 			m_curl.followLocation();
@@ -345,8 +355,7 @@ namespace net { namespace http {
 		if (cred)
 			m_curl.setCredentials(cred->username(), cred->password());
 
-		m_logger = http_callback->getLogger();
-		m_curl.setDebug(!!m_logger);
+		m_curl.setLogger(logger);
 
 		size_t length;
 		void* content = http_callback->getContent(length);
@@ -372,6 +381,9 @@ namespace net { namespace http {
 			http_callback->onFinish();
 		else
 			http_callback->onError(http_callback->getUrl() + " error: " + m_curl.error(ret));
+
+		if (logger)
+			logger->onStop(ret == CURLE_OK);
 	}
 
 	namespace Transfer
@@ -632,70 +644,49 @@ namespace net { namespace http {
 
 		if (m_wasRedirected)
 			callback->onFinalLocation(m_finalLocation);
+
 		callback->onHeaders(m_statusText, m_status, m_headers);
+		if (m_logger) {
+			m_logger->onResponse(m_statusText, m_status, m_headers);
+			if (m_wasRedirected)
+				m_logger->onFinalLocation(m_finalLocation);
+		}
 	}
 
 	int Curl::onTrace(curl_infotype type, char *data, size_t size)
 	{
-		const char *text = nullptr;
+		using http::client::trace;
+
+		trace kind = trace::unknown;
 
 		switch (type)
 		{
 		case CURLINFO_TEXT:
-			//text = "TEXT";
-			fprintf(stderr, "# %s", data);
-#ifdef WIN32
-			OutputDebugStringA("# ");
-			OutputDebugStringA(data);
-#endif
+			if (m_logger)
+				m_logger->onDebug(data);
 			return 0;
-		default: /* in case a new one is introduced to shock us */
-			fprintf(stderr, "trace(%d)\n", type);
-			return 0;
-
 		case CURLINFO_HEADER_OUT:
-			//text = "HEADER_OUT";
-			break;
+			if (m_logger)
+				m_logger->onRequestHeaders(data, size);
+			return 0;
 		case CURLINFO_DATA_OUT:
-			//text = "DATA_OUT";
+			kind = trace::data_out;
 			break;
 		case CURLINFO_SSL_DATA_OUT:
-			text = "=> Send SSL data";
-			return 0;
+			kind = trace::ssl_out;
 			break;
 		case CURLINFO_HEADER_IN:
-			//text = "HEADER_IN";
-			break;
+			return 0; // will be handled in onHeaders
 		case CURLINFO_DATA_IN:
-			//text = "DATA_IN";
+			kind = trace::data_in;
 			break;
 		case CURLINFO_SSL_DATA_IN:
-			text = "<= Recv SSL data";
-			return 0;
+			kind = trace::data_in;
 			break;
 		}
 
-		if (text) fprintf(stderr, "%s, %ld bytes (0x%lx)\n", text, (long)size, (long)size); 
-		fwrite(data, 1, size, stderr);
-
-#ifdef WIN32
-		char buffer [8192];
-		size_t SIZE = size;
-		auto ptr = data;
-		while (SIZE)
-		{
-			size_t s = sizeof(buffer)-1;
-			if (s > SIZE) s = SIZE;
-			SIZE -= s;
-
-			memcpy(buffer, ptr, s);
-			buffer[s] = 0;
-			OutputDebugStringA(buffer);
-			ptr += s;
-		}
-		if (size && data[size-1] != '\n')
-			OutputDebugStringA("\n");
-#endif //WIN32
+		if (kind != trace::unknown && m_logger)
+			m_logger->onTrace(kind, data, size);
 
 		return 0;
 	}

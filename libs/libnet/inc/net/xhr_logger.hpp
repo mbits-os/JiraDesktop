@@ -25,10 +25,27 @@
 #pragma once
 
 #include <memory>
+#include <map>
+#include <string>
 
 
 namespace net { namespace http { namespace client {
+	enum class trace {
+		unknown,
+		data_in,
+		data_out,
+		ssl_in,
+		ssl_out
+	};
 	struct LoggingClient {
+		virtual ~LoggingClient() {}
+		virtual void onStart(const std::string& url) = 0;
+		virtual void onFinalLocation(const std::string& location) = 0;
+		virtual void onDebug(const char *data) = 0;
+		virtual void onRequestHeaders(const char* data, size_t length) = 0;
+		virtual void onResponse(const std::string& reason, int http_status, const std::map<std::string, std::string>& headers) = 0;
+		virtual void onTrace(trace mode, const char *data, size_t size) = 0;
+		virtual void onStop(bool success) = 0;
 	};
 
 	using LoggingClientPtr = std::shared_ptr<LoggingClient>;
