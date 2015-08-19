@@ -5,8 +5,9 @@
 
 struct Logger {
 	virtual ~Logger() {};
-	virtual void print(const std::string&) = 0;
+	virtual void write(const std::string&) = 0;
+	virtual void flush() = 0;
 };
 
 
-std::shared_ptr<Logger> open_log(const std::string& path);
+std::shared_ptr<Logger> open_log(const std::string& path, bool caching);

@@ -18,5 +18,6 @@ public:
 	void lastVersion(const std::string& ver);
 
 	std::string connectionLog();
+	bool fastLog();
 };
 

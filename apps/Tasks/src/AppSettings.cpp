@@ -195,3 +195,12 @@ std::string CAppSettings::connectionLog()
 		return getString("ConnectionLog"s);
 	return { };
 }
+
+bool CAppSettings::fastLog()
+{
+	if (getType("FastLog"s) == settings::UInt32)
+		return !!getUInt32("FastLog"s);
+	if (getType("FastLog"s) == settings::UInt64)
+		return !!getUInt64("FastLog"s);
+	return false;
+}

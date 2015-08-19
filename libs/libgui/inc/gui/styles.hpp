@@ -28,6 +28,8 @@
 #include <ratio>
 #include <string>
 #include <map>
+#include <vector>
+#include <memory>
 
 namespace gui {
 	struct node;

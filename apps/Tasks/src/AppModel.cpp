@@ -1,11 +1,8 @@
 #include "stdafx.h"
 #include "AppModel.h"
 #include "AppSettings.h"
-#include "Logger.hpp"
+#include "XHRConstructor.h"
 #include <net/post_mortem.hpp>
-#include <net/xhr.hpp>
-#include <net/utf8.hpp>
-#include <sstream>
 #include <algorithm>
 
 class CJiraImageRef : public gui::image_ref, public std::enable_shared_from_this<CJiraImageRef> {
@@ -55,33 +52,6 @@ public:
 		ref->start(doc, m_server, uri);
 		return ref;
 	}
-};
-
-class XhrLoggingClient : public net::http::client::LoggingClient {
-	std::shared_ptr<Logger> m_log;
-public:
-	XhrLoggingClient(const std::shared_ptr<Logger>& log) : m_log { log }
-	{
-	}
-};
-
-class XHRConstructor : public gui::xhr_constructor {
-	std::weak_ptr<gui::document> m_doc;
-public:
-	net::http::client::XmlHttpRequestPtr create()
-	{
-		auto xhr = net::http::client::create();
-		auto log = CAppSettings { }.connectionLog();
-		if (!log.empty()) {
-			auto logger = open_log(log);
-			if (logger) {
-				xhr->setLogging(std::make_shared<XhrLoggingClient>(logger));
-			}
-		}
-		return xhr;
-	}
-
-	void setDoc(const std::shared_ptr<gui::document>& doc) { m_doc = doc; }
 };
 
 std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr)

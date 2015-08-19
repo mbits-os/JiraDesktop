@@ -61,6 +61,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\apps\Tasks\src\TasksView.cpp" />
+    <ClCompile Include="..\..\apps\Tasks\src\XHRConstructor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\apps\Tasks\src\Tasks.rc" />
@@ -78,6 +79,7 @@
     <ClInclude Include="..\..\apps\Tasks\inc\TasksActions.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksFrame.h" />
     <ClInclude Include="..\..\apps\Tasks\inc\TasksView.h" />
+    <ClInclude Include="..\..\apps\Tasks\inc\XHRConstructor.h" />
     <ClInclude Include="..\..\apps\Tasks\src\resource.h" />
     <ClInclude Include="..\..\apps\Tasks\src\version.h" />
   </ItemGroup>
