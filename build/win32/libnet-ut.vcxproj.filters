@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ut">
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="inc">
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="gtest">
+      <UniqueIdentifier>{9849e5ae-5637-4f2b-a8e6-97c6b7f22180}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\libs\libnet\ut\uri.cc">
+      <Filter>ut</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gtest\src\gtest-all.cc">
+      <Filter>gtest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gtest\src\gtest_main.cc">
+      <Filter>gtest</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
