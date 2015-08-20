@@ -162,6 +162,11 @@ namespace net { namespace http {
 			}
 		}
 
+		void setHeadersOnly()
+		{
+			curl_easy_setopt(m_curl, CURLOPT_NOBODY, 1);
+		}
+
 		CURLcode fetch()
 		{
 			return curl_easy_perform(m_curl);
@@ -365,6 +370,9 @@ namespace net { namespace http {
 			//curl_httppost; HTTPPOST_CALLBACK;
 			m_curl.setPostData(content, length);
 		}
+
+		if (http_callback->headersOnly())
+			m_curl.setHeadersOnly();
 
 		CURLcode ret = m_curl.fetch();
 

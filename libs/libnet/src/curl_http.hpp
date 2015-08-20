@@ -69,6 +69,7 @@ namespace net { namespace http {
 		virtual long getMaxRedirs() = 0;
 		virtual bool shouldFollowLocation() = 0;
 		virtual HttpCredentials* getCredentials() = 0;
+		virtual bool headersOnly() const = 0;
 	};
 
 	HttpEndpointPtr GetEndpoint(const HttpCallbackPtr&);

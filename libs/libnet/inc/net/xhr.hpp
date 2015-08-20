@@ -44,7 +44,8 @@ namespace net { namespace http { namespace client {
 	enum HTTP_METHOD
 	{
 		HTTP_GET,
-		HTTP_POST
+		HTTP_POST,
+		HTTP_HEAD
 	};
 
 	//http://www.w3.org/TR/XMLHttpRequest/

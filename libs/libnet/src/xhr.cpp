@@ -244,6 +244,7 @@ namespace net { namespace http {
 			bool shouldFollowLocation() override;
 			long getMaxRedirs() override;
 			HttpCredentials* getCredentials() override;
+			bool headersOnly() const override;
 		};
 
 		void XmlHttpRequest::onreadystatechange(ONREADYSTATECHANGE fn)
@@ -422,7 +423,8 @@ namespace net { namespace http {
 
 		void XmlHttpRequest::onStart()
 		{
-			if (!body.content || !body.content_length)
+			if (http_method == client::HTTP_POST &&
+				(!body.content || !body.content_length))
 				http_method = client::HTTP_GET;
 
 			//onReadyStateChange();
@@ -501,6 +503,7 @@ namespace net { namespace http {
 		bool XmlHttpRequest::shouldFollowLocation() { return m_followRedirects; }
 		long XmlHttpRequest::getMaxRedirs() { return m_redirects; }
 		HttpCredentials* XmlHttpRequest::getCredentials() { return m_credentials; }
+		bool XmlHttpRequest::headersOnly() const { return http_method == client::HTTP_HEAD; }
 	} // http::impl
 
 
