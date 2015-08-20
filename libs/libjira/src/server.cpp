@@ -498,21 +498,52 @@ namespace jira
 			auto xhr = m_doc->createXHR();
 			auto keep = shared_from_this();
 
-			xhr->onreadystatechange([xhr, keep, async](XmlHttpRequest* req) {
+			auto combined = Uri::canonical("rest/api/2/serverInfo"s, Uri::canonical(m_path, m_uri));
+
+			xhr->onreadystatechange([xhr, keep, async, combined](XmlHttpRequest* req) {
 				if (req->getReadyState() != XmlHttpRequest::DONE)
 					return;
 
-				keep->analyze(req, async);
+				keep->analyzeFromHeaders(req, combined, async);
 				req->onreadystatechange({ }); // clean up xhr 
 			});
 
-			auto combined = Uri::canonical("rest/api/2/serverInfo"s, Uri::canonical(m_path, m_uri));
-
-			xhr->open(HTTP_GET, combined.string(), async);
+			xhr->open(HTTP_HEAD, combined.string(), async);
 			xhr->send();
 		}
 
 	private:
+		void analyzeFromHeaders(net::http::client::XmlHttpRequest* req, const Uri& uri, bool async)
+		{
+			auto status = req->getStatus();
+			if (status / 100 == 2) {
+				using namespace net::http::client;
+
+				auto xhr = m_doc->createXHR();
+				auto keep = shared_from_this();
+
+
+				xhr->onreadystatechange([xhr, keep, async](XmlHttpRequest* req) {
+					if (req->getReadyState() != XmlHttpRequest::DONE)
+						return;
+
+					keep->analyze(req, async);
+					req->onreadystatechange({ }); // clean up xhr 
+				});
+
+				xhr->open(HTTP_GET, uri.string(), async);
+				xhr->send();
+
+				return;
+			}
+
+			if (m_path.empty())
+				return m_cb({ });
+			m_path = fs::path{ m_path }.parent_path().string();
+
+			next_try(async);
+		}
+
 		void analyze(net::http::client::XmlHttpRequest* req, bool async)
 		{
 			auto status = req->getStatus();
@@ -522,7 +553,7 @@ namespace jira
 
 			if (m_path.empty())
 				return m_cb({ });
-			m_path = fs::path{ m_path }.parent_path().string();
+			m_path = fs::path { m_path }.parent_path().string();
 
 			next_try(async);
 		}
