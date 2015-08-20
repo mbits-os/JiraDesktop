@@ -267,6 +267,21 @@ public:
 		return tmp;
 	}
 
+	static Uri canonical(const char* uri, const char* base)
+	{
+		return canonical(Uri { uri }, Uri { base });
+	}
+
+	static Uri canonical(const Uri& uri, const char* base)
+	{
+		return canonical(uri, Uri { base });
+	}
+
+	static Uri canonical(const char* uri, const Uri& base)
+	{
+		return canonical(Uri { uri }, base);
+	}
+
 	static Uri canonical(const Uri& uri, const Uri& base)
 	{
 		if (uri.absolute())
@@ -275,6 +290,13 @@ public:
 		auto temp = base;
 		temp.fragment(uri.fragment());
 		temp.query(uri.query());
+
+		if (base.path().empty()) {
+			auto p = uri.path();
+			if (p.empty() || p[0] != '/')
+				p = "/" + p;
+			return temp.path(p), temp;
+		}
 
 		auto path = filesystem::canonical(uri.path(), base.path());
 		if (path.has_root_name())

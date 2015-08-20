@@ -539,7 +539,7 @@ namespace jira
 				json::map obj { val };
 				auto it = obj.find("baseUrl");
 				if (it != obj.end() && it->second.is<std::string>()) {
-					ret.baseUrl = it->second.as<std::string>();
+					ret.baseUrl = Uri::canonical("", it->second.as<std::string>()).string();
 					it = obj.find("serverTitle");
 					if (it != obj.end() && it->second.is<std::string>()) {
 						ret.serverTitle = it->second.as<std::string>();
