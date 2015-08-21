@@ -24,6 +24,7 @@ class CAppModel : public listeners<CAppModelListener, CAppModel> {
 	void onListChanged(uint32_t addedOrRemoved);
 	std::mutex m_guard;
 	HWND m_hwndTimer = nullptr;
+	gui::credential_ui_ptr m_cred_ui;
 public:
 	CAppModel();
 
@@ -32,7 +33,7 @@ public:
 		m_hwndTimer = hwndTimer;
 	}
 
-	void startup();
+	void startup(const gui::credential_ui_ptr& cred_ui);
 
 	void lock();
 	const std::vector<ServerInfo>& servers() const;

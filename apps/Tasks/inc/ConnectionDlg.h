@@ -6,6 +6,7 @@
 
 #include <string>
 #include <net/post_mortem.hpp>
+#include <CredentialManager.h>
 
 enum {
 	UM_SERVER_INFO = WM_USER + 0x100
@@ -25,6 +26,9 @@ class CConnectionDlg : public CDialogImpl<CConnectionDlg>
 		URL_VALID,
 		ACTIVE
 	} m_urlTestStage = URL_INVALID;
+
+	std::shared_ptr<CredentialManager> m_credUI = std::make_shared<CredentialManager>();
+
 public:
 	enum { IDD = IDD_CONNECTION };
 
@@ -34,6 +38,7 @@ public:
 		COMMAND_ID_HANDLER(IDOK, OnCloseCmd)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCloseCmd)
 		COMMAND_CODE_HANDLER(EN_CHANGE, OnTextChanged)
+		CHAIN_MSG_MAP_MEMBER((*m_credUI))
 	END_MSG_MAP_POSTMORTEM()
 
 // Handler prototypes (uncomment arguments if needed):

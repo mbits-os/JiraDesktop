@@ -54,25 +54,26 @@ public:
 	}
 };
 
-std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr)
+std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr, const gui::credential_ui_ptr& ui)
 {
 	auto imgCreator = std::make_shared<ImageCreator>(srvr);
 	auto xhrCtor = std::make_shared<XHRConstructor>();
-	auto doc = gui::document::make_doc(imgCreator, xhrCtor);
+	auto doc = gui::document::make_doc(imgCreator, xhrCtor, ui);
 	imgCreator->setDoc(doc);
 	xhrCtor->setDoc(doc);
 	return doc;
 }
 
-void CAppModel::startup()
+void CAppModel::startup(const gui::credential_ui_ptr& cred_ui)
 {
+	m_cred_ui = cred_ui;
 	synchronize(m_guard, [&] {
 		CAppSettings settings;
 		auto servers = settings.jiraServers();
 		m_servers.clear();
 		m_servers.reserve(servers.size());
 		for (auto server : servers) {
-			ServerInfo info{ server, make_document(server) };
+			ServerInfo info{ server, make_document(server, m_cred_ui) };
 			m_servers.push_back(std::move(info));
 		}
 	});
@@ -109,7 +110,7 @@ void CAppModel::add(const std::shared_ptr<jira::server>& server)
 		return;
 
 	synchronize(m_guard, [&]{
-		ServerInfo info{ server, make_document(server) };
+		ServerInfo info{ server, make_document(server, m_cred_ui) };
 		m_servers.push_back(std::move(info));
 	});
 	onListChanged(server->sessionId());

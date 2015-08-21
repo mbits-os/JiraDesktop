@@ -8,6 +8,7 @@
 #include "AppModel.h"
 #include "TasksActions.h"
 #include "langs.h"
+#include "CredentialManager.h"
 
 class CScrollContainerEx : public CScrollContainerImpl<CScrollContainerEx>
 {
@@ -94,6 +95,7 @@ public:
 	locale::Translation<Strings> _;
 	bool m_elevated = false;
 	StartupTypeInfo startup_info;
+	std::shared_ptr<CredentialManager> m_credUI = std::make_shared<CredentialManager>();
 
 	UINT WM_UNINSTALL = RegisterWindowMessageW(L"Tasks-uninstall-2E10A6B5-33CF-422C-810C-8B18DFC03C6E");
 
@@ -133,6 +135,7 @@ public:
 		CHAIN_MSG_MAP(CFameSuper)
 		CHAIN_MSG_MAP_MEMBER(m_taskIcon)
 		CHAIN_MSG_MAP_MEMBER(m_attentionIcon)
+		CHAIN_MSG_MAP_MEMBER((*m_credUI))
 	END_MSG_MAP_POSTMORTEM()
 
 // Handler prototypes (uncomment arguments if needed):

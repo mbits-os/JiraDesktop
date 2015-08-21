@@ -65,6 +65,8 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 {
 	CenterWindow(GetParent());
 
+	m_credUI->setHandle(m_hWnd);
+
 	setWindowText(serverName, IDC_NAME);
 	setWindowText(serverUrl, IDC_URL);
 	setWindowText(userName, IDC_LOGIN);
@@ -91,7 +93,7 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 }
 
 // defined in AppModel.cpp
-std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr);
+std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr, const gui::credential_ui_ptr& ui);
 
 void CConnectionDlg::testURL(std::string url)
 {
@@ -105,7 +107,7 @@ void CConnectionDlg::testURL(std::string url)
 		auto handle = m_hWnd;
 		auto counter = ++m_urlTestCounter;
 		m_urlTestStage = ACTIVE;
-		jira::server::find_root(make_document({ }), url, [handle, counter](const jira::server_info& info) {
+		jira::server::find_root(make_document({ }, m_credUI), url, [handle, counter](const jira::server_info& info) {
 			::SendMessage(handle, UM_SERVER_INFO, counter, (LPARAM)&info);
 		});
 	}

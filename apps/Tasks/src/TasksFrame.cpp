@@ -197,7 +197,8 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	m_taskIcon.Install(m_hWnd, TRAYICON_MAIN, toolbar_icon, toolbar_menu, createStruct->lpszName);
 #endif
 
-	m_model->startup();
+	m_credUI->setHandle(m_hWnd);
+	m_model->startup(m_credUI);
 
 #if 0 // startup_info usage example:
 	if (startup_info.type != StartupType::Normal) {

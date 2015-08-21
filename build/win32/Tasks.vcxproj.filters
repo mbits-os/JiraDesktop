@@ -51,6 +51,9 @@
     <ClCompile Include="..\..\apps\Tasks\src\XHRConstructor.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\apps\Tasks\src\CredentialManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\apps\Tasks\src\resource.h">
@@ -96,6 +99,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\apps\Tasks\inc\XHRConstructor.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\apps\Tasks\inc\CredentialManager.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
