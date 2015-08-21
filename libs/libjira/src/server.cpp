@@ -134,10 +134,35 @@ namespace jira
 
 	class server::credentials_provider : public net::http::client::CredentialProvider {
 		std::shared_ptr<server> m_parent;
+		gui::credential_ui_ptr m_auth_ui;
+
+		class server_credentials : public gui::credential_ui::owner {
+			std::shared_ptr<server> m_parent;
+		public:
+			server_credentials(const std::shared_ptr<server>& parent) : m_parent(parent) {}
+			std::string key() const override { return m_parent->login() + "@" + m_parent->url(); }
+			std::string get_username() const override { return m_parent->login(); }
+			std::string get_password() const override { return m_parent->passwd(); }
+			void set_credentials(const std::string& login, const std::string& password) override
+			{
+				m_parent->setLogin(login);
+				m_parent->setPassword(password);
+			}
+		};
 	public:
-		explicit credentials_provider(const std::shared_ptr<server>& parent) : m_parent(parent) {}
-		std::string getUsername() { return m_parent->login(); }
-		std::string getPassword() { return m_parent->passwd(); }
+		explicit credentials_provider(const std::shared_ptr<server>& parent, const gui::credential_ui_ptr& auth_ui) : m_parent(parent), m_auth_ui(auth_ui) {}
+		std::string getUsername() override { return m_parent->login(); }
+		std::string getPassword() override { return m_parent->passwd(); }
+		std::future<bool> authenticationRequested(const std::string& url, const std::string& realm) override
+		{
+			if (!m_auth_ui) {
+				std::promise<bool> preset;
+				auto future = preset.get_future();
+				preset.set_value(false);
+				return future;
+			}
+			return m_auth_ui->ask_user(std::make_shared<server_credentials>(m_parent), url, realm);
+		}
 	};
 
 	server::server(const std::string& name, const std::string& login, const std::vector<uint8_t>& password, const std::string& url, const std::vector<search_def>& views, from_storage)
@@ -386,7 +411,7 @@ namespace jira
 			xhr->onprogress([xhr, progress](bool calculable, uint64_t content, uint64_t loaded) { progress(xhr.get(), calculable, content, loaded); });
 
 		xhr->open(HTTP_GET, Uri::canonical(uri, url()).string(), async);
-		xhr->setCredentials(std::make_shared<credentials_provider>(shared_from_this()));
+		xhr->setCredentials(std::make_shared<credentials_provider>(shared_from_this(), doc->authUI()));
 		xhr->send();
 	}
 

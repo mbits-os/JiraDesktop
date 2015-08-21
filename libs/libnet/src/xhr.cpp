@@ -154,6 +154,11 @@ namespace net { namespace http {
 				{
 					return m_provider->getPassword();
 				}
+
+				std::future<bool> askUser(const std::string& url, const std::string& realm) override
+				{
+					return m_provider->authenticationRequested(url, realm);
+				}
 			} m_impl;
 			http::HttpCredentials* m_credentials;
 

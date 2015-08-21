@@ -26,6 +26,7 @@
 #define __CURL_HTTP_HPP__
 
 #include <net/xhr_logger.hpp>
+#include <future>
 
 namespace net { namespace http {
 	struct HttpEndpoint;
@@ -49,6 +50,7 @@ namespace net { namespace http {
 		virtual ~HttpCredentials() {}
 		virtual std::string username() = 0;
 		virtual std::string password() = 0;
+		virtual std::future<bool> askUser(const std::string& url, const std::string& realm) = 0;
 	};
 
 	struct HttpCallback

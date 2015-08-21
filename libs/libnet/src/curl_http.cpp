@@ -205,6 +205,7 @@ namespace net { namespace http {
 		std::weak_ptr<HttpCallback> m_callback;
 		bool m_wasRedirected;
 		std::string m_finalLocation;
+		bool m_ignore401 = false;
 		client::LoggingClientPtr m_logger;
 
 		void wasRedirected();
@@ -236,6 +237,9 @@ namespace net { namespace http {
 
 		inline bool isRedirect() const;
 		void sendHeaders() const;
+		inline bool authenticationNeeded() const;
+		std::string getRealm() const;
+		void ignoreAuthProblems(bool ignore = true);
 
 		size_type onData(const char* data, size_type length);
 		size_type onHeader(const char* data, size_type length);
@@ -382,6 +386,22 @@ namespace net { namespace http {
 			ret = m_curl.fetch();
 		}
 
+		if (m_curl.authenticationNeeded()) {
+			if (cred) {
+				while (m_curl.authenticationNeeded()) {
+					std::future<bool> revauth = cred->askUser(http_callback->getUrl(), m_curl.getRealm());
+					if (!revauth.get())
+						break;
+
+					m_curl.setCredentials(cred->username(), cred->password());
+					ret = m_curl.fetch();
+				}
+			}
+
+			m_curl.ignoreAuthProblems();
+			ret = m_curl.fetch();
+		}
+
 		if (m_curl.isRedirect())
 			m_curl.sendHeaders(); // we must have hit max or a circular
 
@@ -486,11 +506,31 @@ namespace net { namespace http {
 		return m_status / 100 == 3 ? ( BIT_POS <= max_redirect ? (BIT & codes) == BIT : false) : false;
 	}
 
+	inline bool Curl::authenticationNeeded() const
+	{
+		return !m_ignore401 && (m_status == 401);
+	}
+
+	std::string Curl::getRealm() const
+	{
+		auto it = m_headers.find("www-authenticate");
+		if (it == m_headers.end())
+			return { };
+
+		return it->second; // TODO: space-split and get realm=quoted-string
+	}
+
+	void Curl::ignoreAuthProblems(bool ignore)
+	{
+		m_ignore401 = ignore;
+	}
+
 	Curl::size_type Curl::onData(const char* data, size_type length)
 	{
 		// Redirects should not have bodies anyway
 		// And if we redirect, there will be a new header soon...
-		if (isRedirect()) return length;
+		// Same for login issues.
+		if (isRedirect() || authenticationNeeded()) return length;
 
 		auto callback = getCallback();
 		if (!callback)
@@ -558,7 +598,7 @@ namespace net { namespace http {
 		if (length == 0 && rn_present)
 		{
 			m_headersLocked = true;
-			if (!isRedirect())
+			if (!isRedirect() && !authenticationNeeded())
 				sendHeaders();
 			return 2;
 		}

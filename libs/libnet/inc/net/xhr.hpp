@@ -29,6 +29,7 @@
 #include <memory>
 #include <map>
 #include <functional>
+#include <future>
 #include <net/xhr_logger.hpp>
 
 namespace net { namespace http { namespace client {
@@ -105,6 +106,7 @@ namespace net { namespace http { namespace client {
 		virtual ~CredentialProvider() {}
 		virtual std::string getUsername() = 0;
 		virtual std::string getPassword() = 0;
+		virtual std::future<bool> authenticationRequested(const std::string& url, const std::string& realm) = 0;
 	};
 
 	XmlHttpRequestPtr create();
