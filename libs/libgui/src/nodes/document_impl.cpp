@@ -41,14 +41,15 @@
 namespace gui {
 	using namespace styles::literals;
 
-	std::shared_ptr<document> document::make_doc(const std::shared_ptr<image_creator>& imageCreator, const std::shared_ptr<xhr_constructor>& xhrCtor)
+	std::shared_ptr<document> document::make_doc(const std::shared_ptr<image_creator>& imageCreator, const std::shared_ptr<xhr_constructor>& xhrCtor, const credential_ui_ptr& cred_ui)
 	{
-		return std::make_shared<document_impl>(imageCreator, xhrCtor);
+		return std::make_shared<document_impl>(imageCreator, xhrCtor, cred_ui);
 	}
 
-	document_impl::document_impl(const std::shared_ptr<image_creator>& imageCreator, const std::shared_ptr<xhr_constructor>& xhrCtor)
+	document_impl::document_impl(const std::shared_ptr<image_creator>& imageCreator, const std::shared_ptr<xhr_constructor>& xhrCtor, const credential_ui_ptr& cred_ui)
 		: m_creator(imageCreator)
 		, m_xhr(xhrCtor)
+		, m_cred_ui(cred_ui)
 	{
 	}
 
@@ -127,5 +128,10 @@ namespace gui {
 	net::http::client::XmlHttpRequestPtr document_impl::createXHR()
 	{
 		return m_xhr->create();
+	}
+
+	credential_ui_ptr document_impl::authUI()
+	{
+		return m_cred_ui;
 	}
 }

@@ -38,8 +38,23 @@ namespace gui {
 		virtual net::http::client::XmlHttpRequestPtr create() = 0;
 	};
 
+	struct credential_ui {
+		struct owner {
+			virtual ~owner() {}
+			virtual std::string key() const = 0;
+			virtual std::string get_username() const = 0;
+			virtual std::string get_password() const = 0;
+			virtual void set_credentials(const std::string& login, const std::string& password) = 0;
+		};
+
+		virtual ~credential_ui() {}
+		virtual std::future<bool> ask_user(const std::shared_ptr<owner>& owner, const std::string& url, const std::string& realm) = 0;
+	};
+
+	using credential_ui_ptr = std::shared_ptr<credential_ui>;
+
 	struct document {
-		static std::shared_ptr<document> make_doc(const std::shared_ptr<image_creator>&, const std::shared_ptr<xhr_constructor>&);
+		static std::shared_ptr<document> make_doc(const std::shared_ptr<image_creator>&, const std::shared_ptr<xhr_constructor>&, const credential_ui_ptr&);
 
 		virtual ~document() {}
 		virtual std::shared_ptr<node> createIcon(const std::string& uri, const std::string& text, const std::string& description) = 0;
@@ -48,5 +63,6 @@ namespace gui {
 		virtual std::shared_ptr<node> createText(const std::string& text) = 0;
 		virtual std::shared_ptr<node> createElement(const elem name) = 0;
 		virtual net::http::client::XmlHttpRequestPtr createXHR() = 0;
+		virtual credential_ui_ptr authUI() = 0;
 	};
 };
