@@ -140,7 +140,7 @@ namespace jira
 			std::shared_ptr<server> m_parent;
 		public:
 			server_credentials(const std::shared_ptr<server>& parent) : m_parent(parent) {}
-			std::string key() const override { return m_parent->login() + "@" + m_parent->url(); }
+			std::string key() const override { return "Server@" + std::to_string(m_parent->sessionId()); }
 			std::string get_username() const override { return m_parent->login(); }
 			std::string get_password() const override { return m_parent->passwd(); }
 			void set_credentials(const std::string& login, const std::string& password) override
@@ -149,6 +149,42 @@ namespace jira
 				m_parent->setPassword(password);
 			}
 		};
+
+		static inline char hex(char c)
+		{
+			switch (c) {
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
+				return c - '0';
+			case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+				return c - 'a' + 10;
+			case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+				return c - 'A' + 10;
+			}
+			return 0;
+		}
+		static inline std::string decode(const char* in, size_t in_len)
+		{
+			std::string out;
+			out.reserve(in_len);
+
+			for (size_t i = 0; i < in_len; ++i) {
+				// go inside only, if there is enough space
+				if (in[i] == '%' && (i < in_len - 2) &&
+					isxdigit(in[i + 1]) && isxdigit(in[i + 2])) {
+					unsigned char c = (hex(in[i + 1]) << 4) | hex(in[i + 2]);
+					out += c;
+					i += 2;
+					continue;
+				}
+				out += in[i];
+			}
+			return out;
+		}
+		static inline std::string decode(const std::string& in)
+		{
+			return decode(in.c_str(), in.length());
+		}
 	public:
 		explicit credentials_provider(const std::shared_ptr<server>& parent, const gui::credential_ui_ptr& auth_ui) : m_parent(parent), m_auth_ui(auth_ui) {}
 		std::string getUsername() override { return m_parent->login(); }
@@ -161,7 +197,8 @@ namespace jira
 				preset.set_value(false);
 				return future;
 			}
-			return m_auth_ui->ask_user(std::make_shared<server_credentials>(m_parent), url, realm);
+			// Jira Seraphim's realm seems to be URL-encoded server address:
+			return m_auth_ui->ask_user(std::make_shared<server_credentials>(m_parent), url, decode(realm));
 		}
 	};
 

@@ -72,6 +72,20 @@ namespace net { namespace http {
 		}
 		explicit operator bool () const { return m_curl != nullptr; }
 
+		std::string recentIP() const
+		{
+			char* ip = "";
+			curl_easy_getinfo(m_curl, CURLINFO_PRIMARY_IP, &ip);
+			return ip;
+		}
+
+		long recentPort() const
+		{
+			long port = 0;
+			curl_easy_getinfo(m_curl, CURLINFO_PRIMARY_PORT, &port);
+			return port;
+		}
+
 		void followLocation()
 		{
 			curl_easy_setopt(m_curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -237,6 +251,7 @@ namespace net { namespace http {
 
 		inline bool isRedirect() const;
 		void sendHeaders() const;
+		void logHeaders() const;
 		inline bool authenticationNeeded() const;
 		std::string getRealm() const;
 		void ignoreAuthProblems(bool ignore = true);
@@ -389,17 +404,17 @@ namespace net { namespace http {
 		if (m_curl.authenticationNeeded()) {
 			if (cred) {
 				while (m_curl.authenticationNeeded()) {
-					std::future<bool> revauth = cred->askUser(http_callback->getUrl(), m_curl.getRealm());
-					if (!revauth.get())
+					std::future<bool> revauth = cred->askUser(m_curl.recentIP() + ":" + std::to_string(m_curl.recentPort()), m_curl.getRealm());
+					if (!revauth.get()) {
+						m_curl.ignoreAuthProblems();
+						ret = m_curl.fetch();
 						break;
+					}
 
 					m_curl.setCredentials(cred->username(), cred->password());
 					ret = m_curl.fetch();
 				}
 			}
-
-			m_curl.ignoreAuthProblems();
-			ret = m_curl.fetch();
 		}
 
 		if (m_curl.isRedirect())
@@ -511,13 +526,101 @@ namespace net { namespace http {
 		return !m_ignore401 && (m_status == 401);
 	}
 
+	struct WWWAuthenticate {
+		std::string challenge;
+		std::map<std::string, std::string> params;
+	};
+
+#define SP while (cur != end && std::isspace((uint8_t)*cur)) ++cur;
+#define NSP while (cur != end && !std::isspace((uint8_t)*cur) && *cur != '=') ++cur;
+
+	bool http_token(std::string::const_iterator& cur, const std::string::const_iterator& end, std::string& token)
+	{
+		auto save = cur;
+		SP;
+		auto start = cur;
+		NSP;
+		token.assign(start, cur);
+		return save != cur;
+	}
+
+	bool http_quoted(std::string::const_iterator& cur, const std::string::const_iterator& end, std::string& str)
+	{
+		SP;
+		if (cur == end || *cur != '"')
+			return false;
+		++cur;
+
+		bool in_esc = false;
+		while (cur != end) {
+			if (in_esc) {
+				in_esc = false;
+				str.push_back(*cur);
+			} else {
+				if (*cur == '"') {
+					++cur;
+					return true;
+				}
+				if (*cur == '\\')
+					in_esc = true;
+				else
+					str.push_back(*cur);
+			}
+			++cur;
+		}
+
+		return false;
+	}
+
+	bool http_param(std::string::const_iterator& cur, const std::string::const_iterator& end, std::pair<std::string, std::string>& param)
+	{
+		if (!http_token(cur, end, param.first))
+			return false;
+
+		SP;
+		if (cur == end || *cur != '=')
+			return false;
+		++cur;
+
+		SP;
+		if (cur != end && *cur == '"') 
+			return http_quoted(cur, end, param.second);
+		else
+			return http_token(cur, end, param.second);
+	}
+
+	WWWAuthenticate parse_auth(const std::string& header)
+	{
+		WWWAuthenticate out;
+		auto cur = std::begin(header);
+		auto end = std::end(header);
+		if (!http_token(cur, end, out.challenge))
+			return { };
+
+		std::pair<std::string, std::string> param;
+		while (http_param(cur, end, param)) {
+			out.params[std::tolower(param.first)] = std::move(param.second);
+
+			SP;
+			if (cur == end || *cur != ',')
+				break;
+		}
+
+		return out;
+	}
+
 	std::string Curl::getRealm() const
 	{
 		auto it = m_headers.find("www-authenticate");
 		if (it == m_headers.end())
 			return { };
 
-		return it->second; // TODO: space-split and get realm=quoted-string
+		auto auth = parse_auth(it->second);
+		it = auth.params.find("realm");
+		if (it == auth.params.end())
+			return { };
+
+		return it->second;
 	}
 
 	void Curl::ignoreAuthProblems(bool ignore)
@@ -600,6 +703,8 @@ namespace net { namespace http {
 			m_headersLocked = true;
 			if (!isRedirect() && !authenticationNeeded())
 				sendHeaders();
+			else
+				logHeaders(); // in case it was a redir or 401, at least show'em in log
 			return 2;
 		}
 
@@ -652,19 +757,17 @@ namespace net { namespace http {
 		}
 		std::string key;
 		Transfer::appendString(key, data, pos - read);
-		std::tolower(key);
+		key = std::tolower(key);
 
 		read = mark + 1;
 		data = ptr + 1;
 		C_WS;
 
 		auto _it = m_headers.find(key);
-		if (_it != m_headers.end())
-		{
+		if (_it != m_headers.end()) {
 			_it->second += ", ";
 			Transfer::appendString(_it->second, data, length - read);
-		}
-		else
+		} else
 			Transfer::appendString(m_headers[key], data, length - read);
 
 		if (rn_present)
@@ -694,11 +797,16 @@ namespace net { namespace http {
 			callback->onFinalLocation(m_finalLocation);
 
 		callback->onHeaders(m_statusText, m_status, m_headers);
-		if (m_logger) {
-			m_logger->onResponse(m_statusText, m_status, m_headers);
-			if (m_wasRedirected)
-				m_logger->onFinalLocation(m_finalLocation);
-		}
+		logHeaders();
+	}
+
+	void Curl::logHeaders() const
+	{
+		if (!m_logger)
+			return;
+		m_logger->onResponse(m_statusText, m_status, m_headers);
+		if (m_wasRedirected)
+			m_logger->onFinalLocation(m_finalLocation);
 	}
 
 	int Curl::onTrace(curl_infotype type, char *data, size_t size)
