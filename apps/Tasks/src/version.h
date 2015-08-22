@@ -8,7 +8,7 @@
 
 #define PROGRAM_VERSION_MAJOR 0
 #define PROGRAM_VERSION_MINOR 4
-#define PROGRAM_VERSION_PATCH 6
+#define PROGRAM_VERSION_PATCH 7
 #define PROGRAM_VERSION_BUILD 57
 #define PROGRAM_VERSION_STABILITY "-alpha" // "-beta", "-rc", and ""
 
