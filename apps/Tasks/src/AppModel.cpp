@@ -174,6 +174,19 @@ void CAppModel::update(const std::shared_ptr<jira::server>& server)
 	}
 }
 
+void CAppModel::saveAll()
+{
+	synchronize(m_guard, [&] {
+		std::vector<std::shared_ptr<jira::server>> list;
+		list.reserve(m_servers.size());
+		for (auto& info : m_servers)
+			list.push_back(info.m_server);
+
+		CAppSettings settings;
+		settings.jiraServers(list);
+	});
+}
+
 void CAppModel::startTimer(uint32_t sessionId)
 {
 	for (auto& server : m_servers) {

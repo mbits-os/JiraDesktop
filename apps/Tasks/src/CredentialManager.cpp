@@ -2,10 +2,11 @@
 #include "resource.h"
 #include "CredentialManager.h"
 #include "LoginDlg.h"
+#include "AppModel.h"
 
 LRESULT CredentialManager::OnSignalMessage(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	CLoginDlg dlg { strs };
+	CLoginDlg dlg { m_strings };
 	{
 		// setting up
 		std::lock_guard<std::mutex> guard { m_mutex };
@@ -42,7 +43,7 @@ LRESULT CredentialManager::OnSignalMessage(UINT /*uMsg*/, WPARAM /*wParam*/, LPA
 	if (retry) {
 		for (auto& conn : task.conns)
 			conn.owner->set_credentials(dlg.userName, dlg.userPassword);
-		// TODO: trigger settings update
+		m_model->saveAll();
 	}
 
 	for (auto& conn : task.conns)

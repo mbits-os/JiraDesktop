@@ -65,7 +65,7 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 {
 	CenterWindow(GetParent());
 
-	m_credUI->setHandle(m_hWnd, _);
+	m_credUI->setHandle(m_hWnd, _, m_model);
 
 	setWindowText(serverName, IDC_NAME);
 	setWindowText(serverUrl, IDC_URL);

@@ -6,11 +6,13 @@
 #include <gui/document.hpp>
 #include "langs.h"
 
+class CAppModel;
 class CredentialManager : public gui::credential_ui {
 
 	HWND m_hWnd = nullptr;
 	DWORD m_boundThread = 0;
-	Strings strs;
+	Strings m_strings;
+	std::shared_ptr<CAppModel> m_model;
 	bool m_showingUI = false;
 
 	std::mutex m_mutex;
@@ -33,11 +35,12 @@ class CredentialManager : public gui::credential_ui {
 
 	std::future<bool> attach(const std::shared_ptr<owner>& owner, const std::string& url, const std::string& realm);
 public:
-	void setHandle(HWND hwnd, const Strings& tr)
+	void setHandle(HWND hwnd, const Strings& tr, const std::shared_ptr<CAppModel>& model)
 	{
 		m_hWnd = hwnd;
 		m_boundThread = GetWindowThreadProcessId(hwnd, nullptr);
-		strs = tr;
+		m_strings = tr;
+		m_model = model;
 	}
 
 	BEGIN_MSG_MAP(CredentialManager)

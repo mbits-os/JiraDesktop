@@ -42,6 +42,7 @@ public:
 	void add(const std::shared_ptr<jira::server>& server);
 	void remove(const std::shared_ptr<jira::server>& server);
 	void update(const std::shared_ptr<jira::server>& server);
+	void saveAll();
 
 	void startTimer(uint32_t sessionId);
 };
