@@ -157,6 +157,7 @@ namespace jira
 		void loadJSON(const std::shared_ptr<gui::document>&, const std::string& uri, const std::function<void (XHR*, const json::value&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 		void search(const std::shared_ptr<gui::document>& doc, const search_def& def, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
 		void search(const std::shared_ptr<gui::document>& doc, uint32_t id, const std::function<void(XHR*, report&&)>& response, const ONPROGRESS& progress = {}, bool async = true);
+		void forceLogin(const std::shared_ptr<gui::document>& doc, const std::function<void()>& then, bool async = true);
 
 		static void find_root(const std::shared_ptr<gui::document>& doc, const std::string& url, const std::function<void(const server_info&)>& cb);
 	};

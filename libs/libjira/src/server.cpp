@@ -227,14 +227,14 @@ namespace jira
 		if (Uri{ url }.relative())
 			m_url = "http://" + url;
 
-		if (!secure::crypt({ password.begin(), password.end() }, m_password))
+		if (!password.empty() && !secure::crypt({ password.begin(), password.end() }, m_password))
 			throw std::bad_alloc();
 	}
 
 	void server::setPassword(const std::string& password)
 	{
 		m_password.clear();
-		if (!secure::crypt({ password.begin(), password.end() }, m_password))
+		if (!password.empty() && !secure::crypt({ password.begin(), password.end() }, m_password))
 			throw std::bad_alloc();
 	}
 
@@ -251,7 +251,7 @@ namespace jira
 	std::string server::passwd() const
 	{
 		std::vector<uint8_t> plain;
-		if (!secure::decrypt(m_password, plain))
+		if (!m_password.empty() && !secure::decrypt(m_password, plain))
 			throw std::bad_alloc();
 
 		return{ plain.begin(), plain.end() };
@@ -534,6 +534,14 @@ namespace jira
 		if (it == m_views.end())
 			return;
 		search(doc, *it, response, progress, async);
+	}
+
+	void server::forceLogin(const std::shared_ptr<gui::document>& doc, const std::function<void()>& then, bool async)
+	{
+		loadJSON(doc, "rest/auth/1/session", [then](net::http::client::XmlHttpRequest* req, const json::value&) {
+			if (req->getStatus() / 100 == 2)
+				then();
+		}, { }, async);
 	}
 
 	class server_locator : public std::enable_shared_from_this<server_locator> {
