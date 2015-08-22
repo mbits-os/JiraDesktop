@@ -435,12 +435,17 @@ void CTasksFrame::showHide()
 	}
 }
 
+
+// defined in AppModel.cpp
+std::shared_ptr<gui::document> make_document(const std::shared_ptr<jira::server>& srvr, const gui::credential_ui_ptr& ui);
+
 void CTasksFrame::newConnection()
 {
 	CConnectionDlg dlg { _.tr, m_model };
 	if (dlg.DoModal(m_hWnd) == IDOK) {
-		auto conn = std::make_shared<jira::server>(dlg.serverName, dlg.userName, dlg.userPassword, dlg.serverUrl, std::vector<jira::search_def>{});
-		m_model->add(conn);
+		auto conn = std::make_shared<jira::server>(dlg.serverName, std::string { }, std::string { }, dlg.serverUrl, std::vector<jira::search_def>{ { } });
+		auto model = m_model;
+		conn->forceLogin(make_document(conn, m_credUI), [conn, model] { model->add(conn); });
 	};
 }
 

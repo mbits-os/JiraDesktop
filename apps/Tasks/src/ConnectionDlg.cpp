@@ -58,7 +58,7 @@ namespace {
 
 void CConnectionDlg::updateExitState()
 {
-	GetDlgItem(IDOK).EnableWindow(hasText(IDC_URL) && hasText(IDC_LOGIN) && hasText(IDC_PASSWORD) && (m_urlTestStage == URL_VALID));
+	GetDlgItem(IDOK).EnableWindow(hasText(IDC_URL) && (m_urlTestStage == URL_VALID));
 }
 
 LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -71,6 +71,8 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 	setWindowText(serverUrl, IDC_URL);
 	setWindowText(userName, IDC_LOGIN);
 	setWindowText(userPassword, IDC_PASSWORD);
+	GetDlgItem(IDC_LOGIN).EnableWindow(FALSE);
+	GetDlgItem(IDC_PASSWORD).EnableWindow(FALSE);
 
 	{
 		LOGFONT lf = { 0 };
