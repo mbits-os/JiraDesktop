@@ -10,6 +10,7 @@
 #define IDR_TASKBAR                     130
 #define IDR_ATTENTION                   131
 #define IDD_CONNECTION                  201
+#define IDD_CREDENTIALS                 202
 #define IDC_NAME                        1000
 #define IDC_URL                         1001
 #define IDC_LOGIN                       1002
