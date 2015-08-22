@@ -438,7 +438,7 @@ void CTasksFrame::showHide()
 void CTasksFrame::newConnection()
 {
 	CConnectionDlg dlg;
-	if (dlg.DoModal() == IDOK) {
+	if (dlg.DoModal(m_hWnd) == IDOK) {
 		auto conn = std::make_shared<jira::server>(dlg.serverName, dlg.userName, dlg.userPassword, dlg.serverUrl, std::vector<jira::search_def>{});
 		m_model->add(conn);
 	};

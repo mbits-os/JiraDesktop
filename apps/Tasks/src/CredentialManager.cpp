@@ -1,9 +1,11 @@
 #include "stdafx.h"
+#include "resource.h"
 #include "CredentialManager.h"
+#include "LoginDlg.h"
 
 LRESULT CredentialManager::OnSignalMessage(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	std::string url, realm, user, password;
+	CLoginDlg dlg;
 	{
 		// setting up
 		std::lock_guard<std::mutex> guard { m_mutex };
@@ -16,14 +18,14 @@ LRESULT CredentialManager::OnSignalMessage(UINT /*uMsg*/, WPARAM /*wParam*/, LPA
 		ATLASSERT(!task.conns.empty());
 		auto& conn = task.conns.front();
 
-		url = task.url;
-		realm = task.realm;
-		user = conn.owner->get_username();
-		password = conn.owner->get_username();
+		dlg.serverUrl = task.url;
+		dlg.serverRealm = task.realm;
+		dlg.userName = conn.owner->get_username();
+		dlg.userPassword = conn.owner->get_username();
 	}
 
 	// show UI
-	bool retry = false; // OK was pressed
+	bool retry = dlg.DoModal(m_hWnd) == IDOK;
 
 	Task task;
 	{
@@ -39,7 +41,8 @@ LRESULT CredentialManager::OnSignalMessage(UINT /*uMsg*/, WPARAM /*wParam*/, LPA
 
 	if (retry) {
 		for (auto& conn : task.conns)
-			conn.owner->set_credentials(user, password);
+			conn.owner->set_credentials(dlg.userName, dlg.userPassword);
+		// TODO: trigger settings update
 	}
 
 	for (auto& conn : task.conns)
