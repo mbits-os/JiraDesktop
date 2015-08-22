@@ -32,11 +32,12 @@ class CConnectionDlg : public CDialogImpl<CConnectionDlg>
 
 	std::shared_ptr<CredentialManager> m_credUI = std::make_shared<CredentialManager>();
 
-	Strings _;
+	locale::Translation<Strings> _;
 	std::shared_ptr<CAppModel> m_model;
 public:
-	CConnectionDlg(const Strings& tr, const std::shared_ptr<CAppModel>& model) : _ { tr }, m_model { model }
+	CConnectionDlg(const Strings& tr, const std::shared_ptr<CAppModel>& model) : m_model { model }
 	{
+		_.tr = tr;
 	}
 
 	enum { IDD = IDD_CONNECTION };

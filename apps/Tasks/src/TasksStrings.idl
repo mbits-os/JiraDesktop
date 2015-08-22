@@ -78,6 +78,18 @@ strings
 	[help("Infotip text for program links.  %1 is LNG_APP_NAME, %2 is version with stability (-beta, -rc1, etc) and %3 is the build number"), id(1041)]
 	LNG_APP_INFOTIP = "%1 v%2, Build %3";
 
+	// Connection dialog ********************************************************************************
+	[help("Title for Connection dialog"), id(-1)]
+	LNG_APP_CONNECTION_TITLE = "Connection";
+	[help("Label for server url edit box"), id(-1)]
+	LNG_APP_CONNECTION_URL = "&URL";
+	[help("Label for server name edit box"), id(-1)]
+	LNG_APP_CONNECTION_SERVER = "&Name";
+	[help("Positive answer from the dialog"), id(-1)]
+	LNG_APP_CONNECTION_OK = "Save";
+	[help("Negative answer from the dialog"), id(-1)]
+	LNG_APP_CONNECTION_CANCEL = "Cancel";
+
 	// Login dialog *************************************************************************************
 	[help("Title for Login dialog"), id(-1)]
 	LNG_APP_LOGIN_TITLE = "Password needed";

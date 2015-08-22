@@ -21,6 +21,8 @@
 #define IDC_STATIC_MESSAGE              1007
 #define IDC_STATIC_LOGIN                1008
 #define IDC_STATIC_PASSWORD             1009
+#define IDC_STATIC_URL                  1010
+#define IDC_STATIC_NAME                 1011
 #define ID_TASKS_REFRESH                32775
 #define ID_CONNECTIONS_EDIT             32776
 #define ID_CONNECTIONS_REFERSH          32777

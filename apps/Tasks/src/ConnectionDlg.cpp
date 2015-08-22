@@ -63,9 +63,18 @@ void CConnectionDlg::updateExitState()
 
 LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	auto updateStrings = [this] {
+		SetWindowText(utf::widen(_.tr(lng::LNG_APP_CONNECTION_TITLE)).c_str());
+		setWindowText(_.tr(lng::LNG_APP_CONNECTION_URL), IDC_STATIC_URL);
+		setWindowText(_.tr(lng::LNG_APP_CONNECTION_SERVER), IDC_STATIC_NAME);
+		setWindowText(_.tr(lng::LNG_APP_CONNECTION_OK), IDOK);
+		setWindowText(_.tr(lng::LNG_APP_CONNECTION_CANCEL), IDCANCEL);
+	};
+	updateStrings();
+	_.onupdate(updateStrings);
 	CenterWindow(GetParent());
 
-	m_credUI->setHandle(m_hWnd, _, m_model);
+	m_credUI->setHandle(m_hWnd, _.tr, m_model);
 
 	setWindowText(serverName, IDC_NAME);
 	setWindowText(serverUrl, IDC_URL);

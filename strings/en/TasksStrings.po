@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Tasks 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-22 16:31+0100\n"
-"PO-Revision-Date: 2015-08-22 17:34+0200\n"
+"POT-Creation-Date: 2015-08-22 20:19+0100\n"
+"PO-Revision-Date: 2015-08-22 21:21+0200\n"
 "Last-Translator: Marcin Zdun <mzdun@midnightbits.com>\n"
 "Language-Team: Translators <translate@midnightbits.com>\n"
 "Language: en\n"
@@ -32,6 +32,31 @@ msgstr ""
 msgctxt "LNG_APP_ABOUT_TITLE"
 msgid "About Tasks"
 msgstr "About Tasks"
+
+#. Negative answer from the dialog
+msgctxt "LNG_APP_CONNECTION_CANCEL"
+msgid "Cancel"
+msgstr "Cancel"
+
+#. Positive answer from the dialog
+msgctxt "LNG_APP_CONNECTION_OK"
+msgid "Save"
+msgstr "Save"
+
+#. Label for server name edit box
+msgctxt "LNG_APP_CONNECTION_SERVER"
+msgid "&Name"
+msgstr "&Name"
+
+#. Title for Connection dialog
+msgctxt "LNG_APP_CONNECTION_TITLE"
+msgid "Connection"
+msgstr "Connection"
+
+#. Label for server url edit box
+msgctxt "LNG_APP_CONNECTION_URL"
+msgid "&URL"
+msgstr "&URL"
 
 #. Application description for VERSIONINFO
 msgctxt "LNG_APP_DESCRIPTION"
