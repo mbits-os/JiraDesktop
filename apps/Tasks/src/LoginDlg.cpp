@@ -9,6 +9,7 @@
 #include <net/utf8.hpp>
 #include <net/uri.hpp>
 #include <atlstr.h>
+#include <format.hpp>
 
 void CLoginDlg::setWindowText(const std::string& value, int id)
 {
@@ -59,10 +60,9 @@ LRESULT CLoginDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 {
 	CenterWindow(GetParent());
 
+	setWindowText(str::format(getWindowText(IDC_STATIC_MESSAGE), serverUrl, serverRealm), IDC_STATIC_MESSAGE);
 	setWindowText(userName, IDC_LOGIN);
 	setWindowText(userPassword, IDC_PASSWORD);
-	//setWindowText(serverRealm, IDC_NAME);
-	//setWindowText(serverUrl, IDC_URL);
 
 	{
 		LOGFONT lf = { 0 };

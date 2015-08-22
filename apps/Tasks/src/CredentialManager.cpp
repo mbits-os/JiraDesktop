@@ -21,7 +21,7 @@ LRESULT CredentialManager::OnSignalMessage(UINT /*uMsg*/, WPARAM /*wParam*/, LPA
 		dlg.serverUrl = task.url;
 		dlg.serverRealm = task.realm;
 		dlg.userName = conn.owner->get_username();
-		dlg.userPassword = conn.owner->get_username();
+		dlg.userPassword = conn.owner->get_password();
 	}
 
 	// show UI

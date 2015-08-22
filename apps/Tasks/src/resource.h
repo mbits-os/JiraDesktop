@@ -18,6 +18,7 @@
 #define IDC_STATIC_SERVER               1004
 #define IDC_STATIC_USER                 1005
 #define IDC_STATIC_VERSION              1006
+#define IDC_STATIC_MESSAGE              1007
 #define ID_TASKS_REFRESH                32775
 #define ID_CONNECTIONS_EDIT             32776
 #define ID_CONNECTIONS_REFERSH          32777
