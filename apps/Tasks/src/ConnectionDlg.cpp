@@ -69,10 +69,6 @@ LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 
 	setWindowText(serverName, IDC_NAME);
 	setWindowText(serverUrl, IDC_URL);
-	setWindowText(userName, IDC_LOGIN);
-	setWindowText(userPassword, IDC_PASSWORD);
-	GetDlgItem(IDC_LOGIN).EnableWindow(FALSE);
-	GetDlgItem(IDC_PASSWORD).EnableWindow(FALSE);
 
 	{
 		LOGFONT lf = { 0 };
@@ -126,13 +122,15 @@ LRESULT CConnectionDlg::OnServerInfo(UINT, WPARAM wParam, LPARAM lParam, BOOL &)
 		valid = true;
 		if (!info->serverTitle.empty())
 			setWindowText(info->serverTitle, IDC_NAME);
-		if (info->baseUrl != getWindowText(IDC_URL))
+		if (info->baseUrl != getWindowText(IDC_URL)) {
+			m_updatingUrl = true;
 			setWindowText(info->baseUrl, IDC_URL);
+			m_updatingUrl = false;
+		}
 	}
 	GetDlgItem(IDC_NAME).EnableWindow();
 	m_urlTestStage = valid ? URL_VALID : URL_INVALID;
-	if (!valid)
-		MessageBeep(MB_ICONERROR);
+	MessageBeep(valid ? MB_ICONINFORMATION : MB_ICONERROR);
 
 	updateExitState();
 
@@ -142,7 +140,7 @@ LRESULT CConnectionDlg::OnServerInfo(UINT, WPARAM wParam, LPARAM lParam, BOOL &)
 LRESULT CConnectionDlg::OnTextChanged(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	updateExitState();
-	if (wID == IDC_URL && hasText(IDC_URL))
+	if (wID == IDC_URL && hasText(IDC_URL) && !m_updatingUrl)
 		testURL(getWindowText(IDC_URL));
 
 	return 0;
@@ -153,8 +151,6 @@ LRESULT CConnectionDlg::OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCt
 	if (wID == IDOK) {
 		serverName = getWindowText(IDC_NAME);
 		serverUrl = getWindowText(IDC_URL);
-		userName = getWindowText(IDC_LOGIN);
-		userPassword = getWindowText(IDC_PASSWORD);
 	}
 
 	EndDialog(wID);

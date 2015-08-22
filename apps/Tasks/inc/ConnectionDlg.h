@@ -8,6 +8,7 @@
 #include <net/post_mortem.hpp>
 #include <CredentialManager.h>
 #include "langs.h"
+#include <atomic>
 
 enum {
 	UM_SERVER_INFO = WM_USER + 0x100
@@ -27,6 +28,7 @@ class CConnectionDlg : public CDialogImpl<CConnectionDlg>
 		URL_VALID,
 		ACTIVE
 	} m_urlTestStage = URL_INVALID;
+	std::atomic<bool> m_updatingUrl { false };
 
 	std::shared_ptr<CredentialManager> m_credUI = std::make_shared<CredentialManager>();
 
@@ -62,6 +64,4 @@ public:
 
 	std::string serverName;
 	std::string serverUrl;
-	std::string userName;
-	std::string userPassword;
 };
