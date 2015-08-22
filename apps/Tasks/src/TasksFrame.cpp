@@ -197,7 +197,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	m_taskIcon.Install(m_hWnd, TRAYICON_MAIN, toolbar_icon, toolbar_menu, createStruct->lpszName);
 #endif
 
-	m_credUI->setHandle(m_hWnd);
+	m_credUI->setHandle(m_hWnd, _.tr);
 	m_model->startup(m_credUI);
 
 #if 0 // startup_info usage example:
@@ -437,7 +437,7 @@ void CTasksFrame::showHide()
 
 void CTasksFrame::newConnection()
 {
-	CConnectionDlg dlg;
+	CConnectionDlg dlg { _.tr };
 	if (dlg.DoModal(m_hWnd) == IDOK) {
 		auto conn = std::make_shared<jira::server>(dlg.serverName, dlg.userName, dlg.userPassword, dlg.serverUrl, std::vector<jira::search_def>{});
 		m_model->add(conn);

@@ -58,9 +58,19 @@ namespace {
 
 LRESULT CLoginDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	auto updateStrings = [this] {
+		SetWindowText(utf::widen(_.tr(lng::LNG_APP_LOGIN_TITLE)).c_str());
+		setWindowText(_.tr(lng::LNG_APP_LOGIN_MESSAGE, serverUrl, serverRealm), IDC_STATIC_MESSAGE);
+		setWindowText(_.tr(lng::LNG_APP_LOGIN_USERNAME), IDC_STATIC_LOGIN);
+		setWindowText(_.tr(lng::LNG_APP_LOGIN_PASSPHRASE), IDC_STATIC_PASSWORD);
+		setWindowText(_.tr(lng::LNG_APP_LOGIN_OK), IDOK);
+		setWindowText(_.tr(lng::LNG_APP_LOGIN_CANCEL), IDCANCEL);
+	};
+	updateStrings();
+	_.onupdate(updateStrings);
+
 	CenterWindow(GetParent());
 
-	setWindowText(str::format(getWindowText(IDC_STATIC_MESSAGE), serverUrl, serverRealm), IDC_STATIC_MESSAGE);
 	setWindowText(userName, IDC_LOGIN);
 	setWindowText(userPassword, IDC_PASSWORD);
 

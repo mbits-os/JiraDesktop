@@ -5,7 +5,7 @@
 
 LRESULT CredentialManager::OnSignalMessage(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	CLoginDlg dlg;
+	CLoginDlg dlg { strs };
 	{
 		// setting up
 		std::lock_guard<std::mutex> guard { m_mutex };

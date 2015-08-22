@@ -6,6 +6,7 @@
 
 #include <string>
 #include <net/post_mortem.hpp>
+#include "langs.h"
 
 class CLoginDlg : public CDialogImpl<CLoginDlg>
 {
@@ -14,7 +15,13 @@ class CLoginDlg : public CDialogImpl<CLoginDlg>
 	bool hasText(int);
 
 	CFont m_symbols;
+	locale::Translation<Strings> _;
 public:
+	CLoginDlg(const Strings& tr)
+	{
+		_.tr = tr;
+	}
+
 	enum { IDD = IDD_CREDENTIALS };
 
 	BEGIN_MSG_MAP_POSTMORTEM(CLoginDlg)

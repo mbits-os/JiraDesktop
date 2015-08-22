@@ -7,6 +7,7 @@
 #include <string>
 #include <net/post_mortem.hpp>
 #include <CredentialManager.h>
+#include "langs.h"
 
 enum {
 	UM_SERVER_INFO = WM_USER + 0x100
@@ -29,7 +30,12 @@ class CConnectionDlg : public CDialogImpl<CConnectionDlg>
 
 	std::shared_ptr<CredentialManager> m_credUI = std::make_shared<CredentialManager>();
 
+	Strings _;
 public:
+	CConnectionDlg(const Strings& tr) : _ { tr }
+	{
+	}
+
 	enum { IDD = IDD_CONNECTION };
 
 	BEGIN_MSG_MAP_POSTMORTEM(CConnectionDlg)

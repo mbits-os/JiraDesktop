@@ -4,11 +4,13 @@
 #include <memory>
 #include <mutex>
 #include <gui/document.hpp>
+#include "langs.h"
 
 class CredentialManager : public gui::credential_ui {
 
 	HWND m_hWnd = nullptr;
 	DWORD m_boundThread = 0;
+	Strings strs;
 	bool m_showingUI = false;
 
 	std::mutex m_mutex;
@@ -31,10 +33,11 @@ class CredentialManager : public gui::credential_ui {
 
 	std::future<bool> attach(const std::shared_ptr<owner>& owner, const std::string& url, const std::string& realm);
 public:
-	void setHandle(HWND hwnd)
+	void setHandle(HWND hwnd, const Strings& tr)
 	{
 		m_hWnd = hwnd;
 		m_boundThread = GetWindowThreadProcessId(hwnd, nullptr);
+		strs = tr;
 	}
 
 	BEGIN_MSG_MAP(CredentialManager)
