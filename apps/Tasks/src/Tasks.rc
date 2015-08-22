@@ -98,14 +98,14 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Password needed"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "&Login",IDC_STATIC,7,61,47,8,0,WS_EX_RIGHT
+    LTEXT           "&Login",IDC_STATIC_LOGIN,7,61,47,8,0,WS_EX_RIGHT
     EDITTEXT        IDC_LOGIN,62,58,194,14,ES_AUTOHSCROLL
-    LTEXT           "&Pass phrase",IDC_STATIC,7,87,47,8,0,WS_EX_RIGHT
+    LTEXT           "&Pass phrase",IDC_STATIC_PASSWORD,7,87,47,8,0,WS_EX_RIGHT
     EDITTEXT        IDC_PASSWORD,62,85,194,14,ES_PASSWORD | ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "Change",IDOK,145,109,50,14
+    DEFPUSHBUTTON   "OK",IDOK,145,109,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,206,109,50,14
     LTEXT           "",IDC_STATIC_USER,7,7,38,39
-    LTEXT           "A user name and pass phrase are being requested by %1. The site says: ""%2"".",IDC_STATIC_MESSAGE,61,7,195,43
+    LTEXT           "Server %1 requests user name and password. The server says: %2.",IDC_STATIC_MESSAGE,61,7,195,43
 END
 
 

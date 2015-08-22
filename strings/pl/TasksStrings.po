@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Tasks 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-15 15:01+0100\n"
-"PO-Revision-Date: 2015-08-15 15:59+0200\n"
+"POT-Creation-Date: 2015-08-22 16:31+0100\n"
+"PO-Revision-Date: 2015-08-22 17:40+0200\n"
 "Last-Translator: Marcin Zdun <mzdun@midnightbits.com>\n"
 "Language-Team: Translators <translate@midnightbits.com>\n"
 "Language: pl\n"
@@ -43,6 +43,36 @@ msgstr "Zadania i problemy"
 msgctxt "LNG_APP_INFOTIP"
 msgid "%1 v%2, Build %3"
 msgstr "%1 v%2, Kompilacja %3"
+
+#. Negative answer from the dialog
+msgctxt "LNG_APP_LOGIN_CANCEL"
+msgid "Cancel"
+msgstr "Anuluj"
+
+#. The message for the user. %1 is the server address, %2 is 'authentication realm' as sent in by server.
+msgctxt "LNG_APP_LOGIN_MESSAGE"
+msgid "Server %1 requests user name and password. The server says: %2."
+msgstr "Serwer %1 żąda nazwy użytkownika i hasła. Komunikat serwera: %2."
+
+#. Positive answer from the dialog
+msgctxt "LNG_APP_LOGIN_OK"
+msgid "Log in"
+msgstr "Zaloguj się"
+
+#. Label for password edit box
+msgctxt "LNG_APP_LOGIN_PASSPHRASE"
+msgid "&Pass phrase"
+msgstr "&Hasło"
+
+#. Title for Login dialog
+msgctxt "LNG_APP_LOGIN_TITLE"
+msgid "Password needed"
+msgstr "Potrzebne hasło"
+
+#. Label for user name edit box
+msgctxt "LNG_APP_LOGIN_USERNAME"
+msgid "&Login"
+msgstr "&Login"
 
 #. Help command. Shows dialog with name, version and copyright info.
 msgctxt "LNG_APP_MENUITEM_ABOUTTASKS"
