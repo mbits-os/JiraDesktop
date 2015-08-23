@@ -87,7 +87,7 @@ class GithubVcs:
 		return '<a href="%s/blob/%s/%s#L%s">%s</a>' % (self.uri, build['tag'], file, line, text)
 
 def public_build(build):
-	return 'public' in build and build['public']
+	return build is not None and 'public' in build and build['public']
 
 def version_json(dir, json):
 	build = {}
@@ -161,12 +161,14 @@ def version_json(dir, json):
 	return build
 
 def version(dir):
-	with open(os.path.join(dir, 'version.json')) as f:
-		doc = json.load(f)
-		return version_json(dir, doc)
+	try:
+		with open(os.path.join(dir, 'version.json')) as f:
+			doc = json.load(f)
+			return version_json(dir, doc)
+	except: return None
 
 def page_commit(build):
-	if "commit" not in build: return ""
+	if build is None or "commit" not in build: return ""
 	commit = build["commit"].split(',')
 	name = commit[0]
 	commit = "".join(commit)
@@ -174,7 +176,7 @@ def page_commit(build):
 	return build["vcs"].commitLink(commit, text)
 
 def page_tag(build):
-	if "tag" not in build: return ""
+	if build is None or "tag" not in build: return ""
 	text = '<span class="icon icon-tag"></span>%s' % build["tag"]
 	return build["vcs"].tagLink(build["tag"], text)
 
@@ -212,6 +214,7 @@ def page_compilation(out, build, title, issues):
 	print >>out, '</ul>'
 
 def page_msbuild(out, dir, build):
+	if build is None: return
 	warnings = []
 	errors = []
 	for pkg in build['files']:
@@ -232,8 +235,10 @@ def page_msbuild(out, dir, build):
 	page_compilation(out, build, 'Errors', errors)
 	page_compilation(out, build, 'Warnings', warnings)
 
-def page_entry(out, link, name, latest, hints = []):
-	out.write('<li class="entry"><a href="%s/">' % urllib.quote(link))
+def page_entry(out, link, name, latest, hints = [], phony = None):
+	phony_class = ""
+	if phony is not None: phony_class = " phony"
+	out.write('<li class="entry%s"><a href="%s/">' % (phony_class, urllib.quote(link)))
 	out.write(name)
 	out.write('</a>')
 	if latest:
@@ -257,6 +262,8 @@ def page_entry(out, link, name, latest, hints = []):
 				print >>out, '</ul>'
 			print >>out, '</li>'
 		print >>out, '</ul>'
+	if phony is not None:
+		print >>out, '<div class="reason"><b>Warning:</b> %s</div>' % phony
 	print >>out, '</li>'
 
 def page_files(link, refs):
@@ -267,6 +274,14 @@ def page_files(link, refs):
 	return files
 
 def page_packages(out, dir, link, build, latest):
+	if build is None:
+		name = "build %s" % link
+		if latest:
+			latest = name
+			name = "latest"
+		page_entry(out, link, name, latest, [], "Release description is missing")
+		return
+
 	name = build["name"]
 	if latest:
 		latest = name
@@ -399,15 +414,14 @@ def page_prev_notes(dir):
 	parent, here = os.path.split(full)
 	try:
 		if here != str(int(here)):
-			print 'u-oh!'
 			return None
 	except:
-		print "uuups!"
 		return None
 	here = int(here)
 	for i in range(1, here):
-		test = os.path.join(parent, str(here - i), 'release-notes.txt')
-		if os.path.exists(test): return test
+		test1 = os.path.join(parent, str(here - i), 'release-notes.txt')
+		test2 = os.path.join(parent, str(here - i), 'version.json')
+		if os.path.exists(test1) and os.path.exists(test2): return test1
 
 def issues_in(lines):
 	issues = {}
@@ -444,37 +458,47 @@ def index_single(out, dir):
 	tag = page_tag(build)
 
 	page_links = []
-	if 'banner' in build:
+	if build is not None and 'banner' in build:
 		banner = build['banner']
 		page_links.append('<span class="%s">%s</span>' % (banner, banner))
 	if commit: page_links.append(commit)
 	if tag: page_links.append(tag)
 
-	page_links += build['vcs'].additionalShortLinks(build)
-	page_header(out, build["name"], True, page_links)
+	if build is not None:
+		page_links += build['vcs'].additionalShortLinks(build)
+		build_name = build["name"]
+	else:
+		build_name = "build %s" % os.path.basename(dir)
+	page_header(out, build_name, True, page_links)
 
-	try:
-		with open(os.path.join(dir, 'release-notes.txt')) as r:
-			lines = r.readlines()
-			prev = page_prev_notes(dir)
-			if prev is not None:
-				lines = apply_diff(lines, prev)
-			else:
-				lines = [line.rstrip() for line in lines]
-			print >>out, '<h2><span id="notes">Release notes</span></h2>'
-			print >>out, markdown.markdown("\n".join(lines))
-	except: pass
+	if build is not None:
+		try:
+			with open(os.path.join(dir, 'release-notes.txt')) as r:
+				lines = r.readlines()
+				prev = page_prev_notes(dir)
+				if prev is not None:
+					lines = apply_diff(lines, prev)
+				else:
+					lines = [line.rstrip() for line in lines]
+				print >>out, '<h2><span id="notes">Release notes</span></h2>'
+				print >>out, markdown.markdown("\n".join(lines))
+		except: pass
 
 	if not public_build(build):
 		page_msbuild(out, dir, build)
 
 	bins = []
 	logs = []
-	for name in build["files"]:
-		pkg = build["files"][name]
-		bins += pkg['binaries'].keys()
-		logs += pkg['logs'].keys()
-	links = page_dls(dir, bins) + page_dls(dir, logs) + build["vcs"].additionalLinks(build)
+	links = []
+	if build is None:
+		print >>out, '<h2 class="phony">Warning</h2>'
+		print >>out, '<p class="phony reason">No downloadable files were found. This build misses package description file. Uploader should probably re-upload the package again.</p>'
+	else:
+		for name in build["files"]:
+			pkg = build["files"][name]
+			bins += pkg['binaries'].keys()
+			logs += pkg['logs'].keys()
+		links = page_dls(dir, bins) + page_dls(dir, logs) + build["vcs"].additionalLinks(build)
 	if len(links):
 		print >>out, '<h2><span id="downloads">Downloads</span></h2>'
 		print >>out, '<ul class="files">'

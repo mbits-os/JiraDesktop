@@ -224,3 +224,19 @@ ins {
 	color: #080;
 	background: #cfc
 }
+
+.phony>a, h2.phony {
+	color: #df3e3e
+}
+
+.phony .reason, .phony.reason {
+	color: #ea7e7e
+}
+
+h2.phony {
+	margin-bottom: 0px;
+}
+
+p.phony.reason {
+	margin-top: 0px;
+}
