@@ -177,6 +177,15 @@ public:
 
 	Uri(const std::string& uri) : m_uri(uri) {}
 
+	struct Authority {
+		std::string userInfo;
+		std::string host;
+		std::string port;
+
+		static Authority fromString(const std::string& authority);
+		std::string toString() const;
+	};
+
 	bool hierarchical() const
 	{
 		if (relative())
@@ -202,7 +211,7 @@ public:
 		if (relative())
 			return std::string();
 
-		return m_uri.substr(m_schema);
+		return m_uri.substr(0, m_schema);
 	}
 	std::string authority() const
 	{
@@ -228,11 +237,35 @@ public:
 		return m_uri.substr(m_part);
 	}
 
+	void scheme(const std::string& value)
+	{
+		if (relative())
+			return;
+
+		m_uri.replace(0, m_schema, value);
+		invalidate_path();
+	}
+
+	void authority(const std::string& value)
+	{
+		if (relative() || opaque())
+			return;
+
+		auto start = m_schema + 3;
+		m_uri.replace(start, m_path - start, value);
+		invalidate_path();
+	}
+
 	void path(const std::string& value)
 	{
 		ensure_query();
+		if (hierarchical() && absolute() && (value.empty() || value[0] != '/')) {
+			m_uri.replace(m_path, m_query - m_path, "/");
+			++m_path;
+			m_query = m_path;
+		}
 		m_uri.replace(m_path, m_query - m_path, value);
-		invalidate_query();
+		invalidate_path(); // query -> path due to having possibly taken the '/' branch and having ++m_path
 	}
 
 	void query(const std::string& value)
@@ -267,44 +300,17 @@ public:
 		return tmp;
 	}
 
-	static Uri canonical(const char* uri, const char* base)
-	{
-		return canonical(Uri { uri }, Uri { base });
-	}
-
-	static Uri canonical(const Uri& uri, const char* base)
-	{
-		return canonical(uri, Uri { base });
-	}
-
 	static Uri canonical(const char* uri, const Uri& base)
 	{
 		return canonical(Uri { uri }, base);
 	}
+	static Uri canonical(const Uri& uri, const Uri& base);
 
-	static Uri canonical(const Uri& uri, const Uri& base)
+	static Uri normal(const char* uri)
 	{
-		if (uri.absolute())
-			return uri;
-
-		auto temp = base;
-		temp.fragment(uri.fragment());
-		temp.query(uri.query());
-
-		if (base.path().empty()) {
-			auto p = uri.path();
-			if (p.empty() || p[0] != '/')
-				p = "/" + p;
-			return temp.path(p), temp;
-		}
-
-		auto path = filesystem::canonical(uri.path(), base.path());
-		if (path.has_root_name())
-			path = path.string().substr(path.root_name().string().length());
-		temp.path(path.string());
-
-		return temp;
+		return normal(Uri { uri });
 	}
+	static Uri normal(Uri uri);
 
 	struct QueryBuilder {
 		std::map<std::string, std::vector<std::string>> m_values;
@@ -317,6 +323,7 @@ public:
 
 		std::string string() const;
 	};
+
 };
 
 #endif //__URI_HPP__
