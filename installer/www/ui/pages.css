@@ -225,6 +225,12 @@ ins {
 	background: #cfc
 }
 
+del {
+	text-decoration: none;
+	color: #800;
+	background: #fcc
+}
+
 .phony>a, h2.phony {
 	color: #df3e3e
 }

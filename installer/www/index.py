@@ -430,25 +430,62 @@ def issues_in(lines):
 		if m: issues[(m.group(1), m.group(2))] = 1
 	return sorted(issues.keys())
 
+def issues_in_groups(lines):
+	group = ""
+	groups = {"": {}}
+	for line in lines:
+		m = re.match('\s*\*\s+\[([A-Z]+)-([0-9]+)\]\s+(.*)', line.rstrip())
+		if m: groups[group][(m.group(1), m.group(2))] = m.group(3)
+		else:
+			m = re.match('\s*#+\s+(.*)', line.rstrip())
+			if m:
+				group = m.group(1)
+				groups[group] = {}
+	return groups
+
 def apply_diff(lines, path):
 	new = issues_in(lines)
 	old = []
-	
+
 	with open(path) as f:
-		old = issues_in(f.readlines())
+		grps = issues_in_groups(f.readlines())
 
 	added = []
 	for issue in new:
-		if issue not in old:
+		found = False
+		for group in grps:
+			if issue in grps[group]:
+				found = True
+		if not found:
 			added.append(issue)
 
+	deleted = {}
+	for group in grps:
+		for issue in grps[group]:
+			if issue not in new:
+				if group not in deleted:
+					deleted[group] = {}
+				deleted[group][issue] = grps[group][issue]
+
 	text = []
+	group_name = ""
 	for line in lines:
 		m = re.match('(\s*\*\s+)(\[([A-Z]+)-([0-9]+)\]\s+.*)', line.rstrip())
 		if m and (m.group(3), m.group(4)) in added:
 			text.append('%s<ins>%s</ins>' % (m.group(1), m.group(2)))
 		else:
+			m = re.match('\s*#+\s+(.*)', line.rstrip())
+			if m:
+				if group_name in deleted:
+					dels = deleted[group_name]
+					for issue in dels:
+						text.append("* <del>[%s-%s] %s</del>" % (issue[0], issue[1], dels[issue]))
+				group_name = m.group(1)
 			text.append(line.rstrip())
+	if group_name in deleted:
+		dels = deleted[group_name]
+		for issue in dels:
+			text.append("* <del>[%s-%s] %s</del>" % (issue[0], issue[1], dels[issue]))
 
 	return text
 
