@@ -30,6 +30,7 @@
 # Directories
 bin
 int
+__pycache__
 
 # Visual Studio files and dirs
 *.sdf
