@@ -1,6 +1,6 @@
-#!/usr/python
+#!/usr/bin/python
 
-import os, sys, subprocess, _winreg
+import os, sys, subprocess, winreg
 
 class pushd:
 	def __init__(self, dir):
@@ -16,8 +16,8 @@ class pushd:
 		return False
 
 def MSBuildPath():
-	with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\14.0") as key:
-		return _winreg.QueryValueEx(key, "MSBuildToolsPath")[0]
+	with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\14.0") as key:
+		return winreg.QueryValueEx(key, "MSBuildToolsPath")[0]
 
 def call(*args):
 	return subprocess.call(args)

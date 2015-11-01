@@ -1,7 +1,7 @@
-#!/usr/python
+#!/usr/bin/python
 
 from libbuild import *
-import os, sys, _winreg, argparse
+import os, sys, winreg, argparse
 
 POLICY_TAG_AND_PUSH = 0
 POLICY_TAG = 1
@@ -45,7 +45,7 @@ else:
 	out = open(LOGFILE, "w+b")
 
 if policy == POLICY_TAG and not args.dry_run:
-	print >>out, "[WARNING]\n>> no push, when possible call 'git push --tags origin master' <<"
+	print("[WARNING]\n>> no push, when possible call 'git push --tags origin master' <<", file=out)
 
 def tag_master(out):
 	global VERSION, TAG
@@ -55,7 +55,7 @@ def tag_master(out):
 	call(out, "python", "build_tag.py")
 
 	TAG = Tag()
-	print >>out, "Tagged as '%s'" % TAG
+	print("Tagged as '%s'" % TAG, file=out)
 
 def build_sln(out):
 	global VERSION

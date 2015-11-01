@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, argparse, urlparse, subprocess, json
+import os, sys, argparse, urllib.parse, subprocess, json
 
 parser = argparse.ArgumentParser(description='version.json generator')
 parser.add_argument('-t', dest='tag', required=True, help='chooses tag to generate version.json for')
@@ -10,15 +10,15 @@ args = parser.parse_args()
 
 def check_output(*args):
 	try: return subprocess.check_output(args).strip()
-	except subprocess.CalledProcessError, e:
-		print e
+	except subprocess.CalledProcessError as e:
+		print(e)
 		exit(e.returncode)
 		
 tag = args.tag
 
-long = check_output("git", "rev-parse", "--verify", "refs/tags/" + tag)
-short = check_output("git", "rev-parse", "--short", "--verify", "refs/tags/" + tag)
-commit = "%s,%s" % (short, long[len(short):])
+long_commit = check_output("git", "rev-parse", "--verify", "refs/tags/" + tag)
+short_commit = check_output("git", "rev-parse", "--short", "--verify", "refs/tags/" + tag)
+commit = "%s,%s" % (short_commit, long_commit[len(short_commit):])
 
 def version(sha):
 	name = "version-%s.h" % sha
@@ -34,7 +34,7 @@ github = None
 if 'git@github.com:' == pull[0:15]:
 	github = pull[15:]
 else:
-	url = urlparse.urlparse(pull)
+	url = urllib.parse.urlparse(pull)
 	if url.netloc == 'github.com':
 		github = url.path[1:]
 if github and github.endswith(".git"):

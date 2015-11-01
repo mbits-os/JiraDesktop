@@ -1,4 +1,4 @@
-#!/usr/python
+#!/usr/bin/python
 
 import os, shutil
 from os import path
@@ -19,7 +19,7 @@ def copyFilesFlat(src, dst, files):
 		s_time = mtime(s)
 		d_time = mtime(d)
 		if s_time > d_time:
-			print d
+			print(d)
 			shutil.copy(s, d)
 
 for root, dirs, files in os.walk(resources):

@@ -1,6 +1,4 @@
-#!/usr/python
-
-import os, shutil, glob, _winreg
+import os, shutil, glob, winreg
 from os import path
 
 def mtime(f):
@@ -38,7 +36,7 @@ def copyFilesFlat(src, dst, files):
 		s_time = mtime(s)
 		d_time = mtime(d)
 		if s_time > d_time:
-			print d
+			print(d)
 			try: os.mkdir(os.path.dirname(d))
 			except: pass
 			shutil.copy(s, d)
@@ -46,14 +44,14 @@ def copyFilesFlat(src, dst, files):
 # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows
 def SDKs():
 	sdks = {}
-	with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows") as key:
+	with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows") as key:
 		index = 0
 		while True:
 			try:
-				subkey = _winreg.EnumKey(key, index)
+				subkey = winreg.EnumKey(key, index)
 				index += 1
-				with _winreg.OpenKey(key, subkey) as sub:
-					sdks[subkey] = _winreg.QueryValueEx(sub, "InstallationFolder")[0]
+				with winreg.OpenKey(key, subkey) as sub:
+					sdks[subkey] = winreg.QueryValueEx(sub, "InstallationFolder")[0]
 			except:
 				break
 	return sdks
@@ -62,7 +60,7 @@ def win_sdk():
 	sdks = SDKs()
 	sdk = None
 
-	sdk_vers = sdks.keys()
+	sdk_vers = list(sdks.keys())
 	sdk_vers.sort()
 	for ver in sdk_vers:
 		signtool = path.join(sdks[ver], "Bin", "signtool.exe")
@@ -104,7 +102,7 @@ class component:
 		self.files.append((file, source))
 
 	def print_out(self, out, links, depth = 1):
-		print >>out, '{}<Component Id="{}" Guid="{}">'.format("  " * depth, self.name, self.guid)
+		print('{}<Component Id="{}" Guid="{}">'.format("  " * depth, self.name, self.guid), file=out)
 		depth += 1
 		prefix = self.dir.replace(os.sep, '_').replace('-', '_')
 		if len(prefix):
@@ -114,23 +112,23 @@ class component:
 			__id = '{}{}'.format(prefix, file[0].replace('.', '_'))
 			out.write('{}<File Id="{}" Name="{}" Source="{}" DiskId="{}"{} '.format("  " * depth, __id, file[0], file[1], self.id, keypath))
 			if file[0] in links:
-				print >>out, '>'
+				print('>', file=out)
 				for link in links[file[0]]:
 					id = '{}_{}.Shortcut'.format(link[1], file[0].replace('.', '_'))
-					print >>out, '{}  <Shortcut Id="{}" Directory="{}" Name="{}"'.format("  " * depth, id, link[1], link[0])
-					print >>out, '{}            WorkingDirectory="{}"'.format("  " * depth, self.dir_name)
-					print >>out, '{}            Icon="{}" IconIndex="{}"'.format("  " * depth, link[2], link[3])
+					print('{}  <Shortcut Id="{}" Directory="{}" Name="{}"'.format("  " * depth, id, link[1], link[0]), file=out)
+					print('{}            WorkingDirectory="{}"'.format("  " * depth, self.dir_name), file=out)
+					print('{}            Icon="{}" IconIndex="{}"'.format("  " * depth, link[2], link[3]), file=out)
 					if len(link) > 4: # Display name
-						print >>out, '{}            DisplayResourceDll="[#{}]" DisplayResourceId="{}"'.format("  " * depth, __id, link[4])
+						print('{}            DisplayResourceDll="[#{}]" DisplayResourceId="{}"'.format("  " * depth, __id, link[4]), file=out)
 					if len(link) > 5: # Infotip
-						print >>out, '{}            DescriptionResourceDll="[#{}]" DescriptionResourceId="{}"'.format("  " * depth, __id, link[5])
-					print >>out, '{}            Advertise="yes" />'.format("  " * depth)
-				print >>out, '{}</File>'.format("  " * depth)
+						print('{}            DescriptionResourceDll="[#{}]" DescriptionResourceId="{}"'.format("  " * depth, __id, link[5]), file=out)
+					print('{}            Advertise="yes" />'.format("  " * depth), file=out)
+				print('{}</File>'.format("  " * depth), file=out)
 			else:
-				print >>out, '/>'
+				print('/>', file=out)
 			keypath = ""
 		depth -= 1
-		print >>out, '{}</Component>'.format("  " * depth)
+		print('{}</Component>'.format("  " * depth), file=out)
 
 class directory:
 	def __init__(self, id, dir, name = None):
@@ -181,9 +179,9 @@ class directory:
 	def print_out(self, out, links, depth = 1):
 		out.write("  " * depth)
 		if self.name is None:
-			print >>out, "<DirectoryRef Id='{}'>".format(self.id)
+			print("<DirectoryRef Id='{}'>".format(self.id), file=out)
 		else:
-			print >>out, "<Directory Id='{}' Name='{}'>".format(self.id, self.name)
+			print("<Directory Id='{}' Name='{}'>".format(self.id, self.name), file=out)
 		depth += 1
 		for comp in self.comps:
 			self.comps[comp].print_out(out, links, depth)
@@ -192,17 +190,17 @@ class directory:
 		depth -= 1
 		out.write("  " * depth)
 		if self.name is None:
-			print >>out, "</DirectoryRef>"
+			print("</DirectoryRef>", file=out)
 		else:
-			print >>out, "</Directory>"
+			print("</Directory>", file=out)
 
 	def print_fragment(self, out, links):
-		print >>out, """<?xml version="1.0" encoding="utf-8"?>
+		print("""<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Fragment>"""
+  <Fragment>""", file=out)
 		self.print_out(out, links, 2)
-		print >>out, """  </Fragment>
-</Wix>"""
+		print("""  </Fragment>
+</Wix>""", file=out)
 
 def dir_cab(cabs, name):
 	for i in range(len(cabs)):

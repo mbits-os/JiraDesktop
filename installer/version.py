@@ -1,4 +1,4 @@
-#!/usr/python
+#!/usr/bin/python
 
 import os, sys, re, argparse
 from os import path
@@ -61,7 +61,7 @@ for i in range(len(lines)):
 if args.macros:
 	out   = []
 	sizes = [0, 0, 0]
-	keys  = macros.keys()
+	keys  = list(macros.keys())
 	keys.sort()
 
 	header = ("NAME", "OUTPUT", "VALUE")
@@ -83,12 +83,12 @@ if args.macros:
 	for i in range(len(sizes)):
 		line += "-" * sizes[i] + "--+"
 
-	print line
-	print fmt.format(*header)
-	print line
+	print(line)
+	print(fmt.format(*header))
+	print(line)
 	for tup in out:
-		print fmt.format(*tup)
-	print line
+		print(fmt.format(*tup))
+	print(line)
 	exit(0)
 
 if save:

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os, sys, json, subprocess, argparse, tempfile
-from StringIO import StringIO
+from io import StringIO
 
 parser = argparse.ArgumentParser(description='Uploads the build to repo', fromfile_prefix_chars='@')
 parser.add_argument("-d", dest="dir", default="~/www", help="root directory")
@@ -23,8 +23,8 @@ def remote(*args):
 
 def check_output(*args):
 	try: return subprocess.check_output(args).strip()
-	except subprocess.CalledProcessError, e:
-		print e
+	except subprocess.CalledProcessError as e:
+		print(e)
 		exit(e.returncode)
 
 def Version():
@@ -89,25 +89,25 @@ links = [
 dirs = ["%s/builds/%s" % (dest, build), "%s/versions/%s" % (dest, version), "%s/ui" % dest]
 cmd = ["mkdir", "-p"] + dirs
 
-print "$", " ".join(cmd)
+print("$", " ".join(cmd))
 remote(*cmd)
 
 scp = ["scp"] + files + ["%s:%s/builds/%s/" % (server, dest, build)]
-print ">", " ".join(scp)
+print(">", " ".join(scp))
 call(*scp)
 
 for dst in rename:
 	if not len(rename[dst]): continue
 	scp = ["scp", rename[dst][0], "%s:%s/builds/%s/%s" % (server, dest, build, dst)]
-	print ">", " ".join(scp)
+	print(">", " ".join(scp))
 	call(*scp)
 
 scp = ["scp", "www/ui/index.html", "www/ui/pages.css", "%s:%s/ui/" % (server, dest)]
-print ">", " ".join(scp)
+print(">", " ".join(scp))
 call(*scp)
 
 scp = ["scp", "www/index.py", "%s:~/" % server]
-print ">", " ".join(scp)
+print(">", " ".join(scp))
 call(*scp)
 
 commands = []
@@ -115,5 +115,5 @@ for link in links:
 	commands.append(["cd", "%s/%s;" % (dest, link[0]), "rm", "-f", "%s;" % link[1], "ln", "-s", link[2], link[1]])
 commands.append(["python", "~/index.py", "-d", dest, "-t", "update", "-#", build])
 for cmd in commands:
-	print "$", " ".join(cmd)
+	print("$", " ".join(cmd))
 	remote(*cmd)

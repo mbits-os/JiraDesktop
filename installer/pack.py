@@ -1,4 +1,4 @@
-#!/usr/python
+#!/usr/bin/python
 
 import os, zipfile, libpack as lib
 from os import path
@@ -86,7 +86,7 @@ if sdk is not None:
 
 contents = lib.file_list(storage)
 
-print ZIPNAME
+print(ZIPNAME)
 
 try:
 	os.unlink(ZIPNAME)

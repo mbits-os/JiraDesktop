@@ -1,7 +1,7 @@
 import sys, langs as lng, strings
 
 with open(sys.argv[1], "rb") as infile:
-	text = "".join(infile.readlines())
+	text = "".join([x.decode('utf-8') for x in infile])
 
 toks = text.split("$(")
 prog = [(None, toks[0])]
@@ -30,5 +30,5 @@ names["LNG_APP_NAME"] = '"%s"' % app_name.replace('"', '""')
 with open(sys.argv[2], "wb") as out:
 	for p in prog:
 		if p[0] is not None:
-			out.write(names[p[0]])
-		out.write(p[1])
+			out.write(names[p[0]].encode('utf-8'))
+		out.write(p[1].encode('utf-8'))

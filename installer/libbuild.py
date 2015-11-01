@@ -1,5 +1,3 @@
-#!/usr/python
-
 import subprocess, tempfile, os
 
 __all__ = ["Next", "call", "call_simple", "call_direct", "call_", "Version", "JiraVersion", "TaggedVersion", "Tag", "Branch", "Steps"]
@@ -19,11 +17,11 @@ def call(out, *args):
 def call_simple(out, *args):
 	__present(out, args)
 	try: out.write(subprocess.check_output(args, stderr=subprocess.STDOUT))
-	except subprocess.CalledProcessError, e:
+	except subprocess.CalledProcessError as e:
 		if e.output is not None:
 			out.write(e.output)
-		print out.content
-		print e
+		print(out.content)
+		print(e)
 		exit(e.returncode)
 
 def call_direct(out, *args):
@@ -61,7 +59,7 @@ def Branch():
 	try:
 		var = subprocess.check_output([ "git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
 		return var
-	except subprocess.CalledProcessError, e: return ""
+	except subprocess.CalledProcessError as e: return ""
 
 class Step:
 	def __init__(self, title, callable, *args):
@@ -70,8 +68,8 @@ class Step:
 		self.args = args
 		self.visible = True
 	def __call__(self, out, pos, max):
-		print "Step %s/%s %s" % (pos, max, self.title)
-		print >>out, "\n[%s]" % self.title
+		print("Step %s/%s %s" % (pos, max, self.title))
+		print("\n[%s]" % self.title, file=out)
 		self.callable(out, *self.args)
 
 class HiddenStep(Step):
@@ -104,9 +102,9 @@ class Steps:
 				if not step.visible: continue
 
 				if len(step.args):
-					print "%s/%s" % (i, max), step.title, "(%s)" % " ".join([str(arg) for arg in step.args])
+					print("%s/%s" % (i, max), step.title, "(%s)" % " ".join([str(arg) for arg in step.args]))
 				else:
-					print "%s/%s" % (i, max), step.title
+					print("%s/%s" % (i, max), step.title)
 				i += 1
 		else:
 			for step in self.steps:
