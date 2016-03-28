@@ -999,8 +999,8 @@ void CTasksView::updateTooltip(bool /*force*/)
 		widen.reserve(tmp.length() * 11 / 10);
 
 		for (auto c : tmp) {
-			if (c == L'\n')
-				widen += L"\r\n";
+			if (c == u'\n')
+				widen += u"\r\n";
 			else widen.push_back(c);
 		}
 
@@ -1418,7 +1418,7 @@ LRESULT CTasksView::OnSetFont(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 		m_fontSize = -lf.lfHeight * 96.0 / dc.GetDeviceCaps(LOGPIXELSY);
 	}
 
-	m_fontFamily = utf::narrowed(lf.lfFaceName);
+	m_fontFamily = utf::narrowed((const char16_t*)lf.lfFaceName);
 	m_body->applyStyles(stylesheet(m_elevated)); // HACK
 
 	return 0;

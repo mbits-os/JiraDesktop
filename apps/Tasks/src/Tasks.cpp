@@ -18,15 +18,24 @@
 #include <net/filesystem.hpp>
 #include <net/xhr.hpp>
 #include <net/post_mortem.hpp>
+#include <net/utf8.hpp>
 
 #include <gdiplus.h>
 
-namespace fs = filesystem;
+namespace fs {
+	path app_directory()
+	{
+		wchar_t buffer[2048];
+		GetModuleFileName(nullptr, buffer, __countof(buffer));
+		return path(buffer).parent_path();
+	}
+}
 
 fs::path exe_dir() {
 	static fs::path dir = fs::app_directory();
 	return dir;
 }
+
 namespace dpi {
 	enum class aware {
 		unaware = 0,
@@ -117,7 +126,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 	pm::PostMortemSupport([&] {
 		_.init();
-		_.path_manager<locale::manager::ExtensionPath>((fs::app_directory() / "locale").string(), "Tasks");
+		_.path_manager<locale::manager::ExtensionPath>((exe_dir() / "locale").string(), "Tasks");
 
 		{
 			CAppSettings settings;
@@ -145,7 +154,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 			wndMain.m_elevated = true;
 		}
 
-		if (wndMain.Create(NULL, NULL, wndMain.buildTitle().c_str()) == NULL)
+		if (wndMain.Create(NULL, NULL, u2w(wndMain.buildTitle().c_str())) == NULL)
 		{
 			ATLTRACE(_T("Main window creation failed!\n"));
 			return;
@@ -190,11 +199,11 @@ class Fonts {
 public:
 	Fonts()
 	{
-		for (auto entry : fs::dir(exe_dir() / "fonts"))
+		for (auto entry : fs::directory_iterator(exe_dir() / "fonts"))
 		{
-			if (entry.status().is_directory())
+			if (fs::is_directory(entry.status()))
 				continue;
-			auto count = AddFontResourceEx(entry.path().wnative().c_str(), FR_PRIVATE, nullptr);
+			auto count = AddFontResourceEx(entry.path().wstring().c_str(), FR_PRIVATE, nullptr);
 			if (count)
 				m_fonts.push_back(entry.path());
 		}
@@ -203,7 +212,7 @@ public:
 	~Fonts()
 	{
 		for (auto& path : m_fonts)
-			RemoveFontResourceExW(path.wnative().c_str(), FR_PRIVATE, nullptr);
+			RemoveFontResourceExW(path.wstring().c_str(), FR_PRIVATE, nullptr);
 	}
 };
 

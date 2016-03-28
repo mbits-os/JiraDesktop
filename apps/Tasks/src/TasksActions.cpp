@@ -85,14 +85,14 @@ HMENU CTasksActionsBase::createMenuBar(const std::initializer_list<menu::item>& 
 			continue;
 
 		CMenu sub = item.createPopup(&m_menubarManager);
-		std::wstring text;
+		std::u16string text;
 		auto action = item.action();
 		if (action)
 			text = utf::widen(action->text());
 		else
-			text = L"?";
+			text = u"?";
 
-		menu.AppendMenu(0, sub.Detach(), text.c_str());
+		menu.AppendMenu(0, sub.Detach(), u2w(text.c_str()));
 	}
 
 	return menu.Detach();

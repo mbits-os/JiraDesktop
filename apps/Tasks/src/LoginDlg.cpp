@@ -9,18 +9,18 @@
 #include <net/utf8.hpp>
 #include <net/uri.hpp>
 #include <atlstr.h>
-#include <format.hpp>
+#include <locale/format.hpp>
 
 void CLoginDlg::setWindowText(const std::string& value, int id)
 {
-	SetDlgItemText(id, utf::widen(value).c_str());
+	SetDlgItemText(id, u2w(utf::widen(value).c_str()));
 }
 
 std::string CLoginDlg::getWindowText(int id)
 {
 	ATL::CString text;
 	GetDlgItemText(id, text);
-	return utf::narrowed({ (LPCWSTR)text, (size_t)text.GetLength() });
+	return utf::narrowed({ (const char16_t*)(LPCWSTR)text, (size_t)text.GetLength() });
 }
 
 bool CLoginDlg::hasText(int id)
@@ -59,7 +59,7 @@ namespace {
 LRESULT CLoginDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	auto updateStrings = [this] {
-		SetWindowText(utf::widen(_.tr(lng::LNG_APP_LOGIN_TITLE)).c_str());
+		SetWindowText(u2w(utf::widen(_.tr(lng::LNG_APP_LOGIN_TITLE)).c_str()));
 		setWindowText(_.tr(lng::LNG_APP_LOGIN_MESSAGE, serverUrl, serverRealm), IDC_STATIC_MESSAGE);
 		setWindowText(_.tr(lng::LNG_APP_LOGIN_USERNAME), IDC_STATIC_LOGIN);
 		setWindowText(_.tr(lng::LNG_APP_LOGIN_PASSPHRASE), IDC_STATIC_PASSWORD);

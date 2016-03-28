@@ -139,7 +139,7 @@ namespace servers {
 #endif
 
 CAppSettings::CAppSettings() 
-	: settings::Section(PROGRAM_COPYRIGHT_HOLDER, PROGRAM_NAME, SETTINGS_VERSION)
+	: settings::Section(Json, PROGRAM_COPYRIGHT_HOLDER, PROGRAM_NAME, SETTINGS_VERSION)
 {
 }
 

@@ -44,7 +44,7 @@ static const GUID UUID_AttentionIcon{ 0x599a2310, 0xca40, 0x43f8, { 0xb8, 0x85, 
 constexpr UINT TRAYICON_MAIN = 1000;
 constexpr UINT TRAYICON_ATTENTION = 1001;
 
-std::wstring CTasksFrame::buildTitle()
+std::u16string CTasksFrame::buildTitle()
 {
 #if BULID_NUMBER_IN_TITLE
 	auto title = utf::widen(
@@ -121,7 +121,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	_.onupdate([this] {
 		createItems(_.tr);
 		SetMenu(createAppMenu(_.tr));
-		SetWindowTextW(buildTitle().c_str());
+		SetWindowTextW(u2w(buildTitle().c_str()));
 	});
 
 	m_model->setTimerHandle(m_hWnd);
@@ -134,7 +134,7 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 
 	m_view.setScroller(this);
 
-	m_view.setNotifier([&](const std::wstring& title, const std::wstring& message) {
+	m_view.setNotifier([&](const std::u16string& title, const std::u16string& message) {
 		if (!m_attentionIcon.IsInstalled()) {
 			auto tray_icon = (HICON)LoadImage(_Module.GetResourceInstance(),
 				MAKEINTRESOURCE(IDR_ATTENTION), IMAGE_ICON,
@@ -144,11 +144,11 @@ LRESULT CTasksFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 #ifdef TRAY_USE_GUID
 			m_attentionIcon.Install(m_hWnd, UUID_AttentionIcon, tray_icon, nullptr, utf::widen(ICON_TITLE).c_str());
 #else
-			m_attentionIcon.Install(m_hWnd, TRAYICON_ATTENTION, tray_icon, nullptr, utf::widen(ICON_TITLE).c_str());
+			m_attentionIcon.Install(m_hWnd, TRAYICON_ATTENTION, tray_icon, nullptr, u2w(utf::widen(ICON_TITLE).c_str()));
 #endif
 		}
 		m_balloonVisible = true;
-		m_attentionIcon.ShowBalloon(title.c_str(), message.c_str());
+		m_attentionIcon.ShowBalloon(u2w(title.c_str()), u2w(message.c_str()));
 	});
 
 	m_view.Create(m_container, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
@@ -363,7 +363,7 @@ LRESULT CTasksFrame::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	return 0;
 }
 
-std::string Wide2ACP(const std::wstring& s) {
+std::string Wide2ACP(const std::u16string& s) {
 	auto size = WideCharToMultiByte(CP_ACP, 0, (wchar_t*)s.c_str(), -1, nullptr, 0, nullptr, nullptr);
 	std::unique_ptr<char[]> out{ new char[size + 1] };
 	WideCharToMultiByte(CP_ACP, 0, (wchar_t*)s.c_str(), -1, out.get(), size + 1, nullptr, nullptr);
@@ -413,7 +413,7 @@ LRESULT CTasksFrame::OnToolTipTextW(int idCtrl, LPNMHDR pnmh, BOOL& /*bHandled*/
 					tool += " (" + key + ")";
 
 				auto ui = utf::widen(tool);
-				SecureHelper::strncpyW_x(pDispInfo->szText, _countof(pDispInfo->szText), ui.c_str(), _TRUNCATE);
+				SecureHelper::strncpyW_x(pDispInfo->szText, _countof(pDispInfo->szText), u2w(ui.c_str()), _TRUNCATE);
 #if (_WIN32_IE >= 0x0300)
 				pDispInfo->uFlags |= TTF_DI_SETITEM;
 #endif // (_WIN32_IE >= 0x0300)

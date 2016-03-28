@@ -147,7 +147,7 @@ private:
 	bool m_tracking = false;
 	gui::pointer m_cursor = gui::pointer::arrow;
 	Scroller* m_scroller = nullptr;
-	std::function<void(const std::wstring&, const std::wstring&)> m_notifier;
+	std::function<void(const std::u16string&, const std::u16string&)> m_notifier;
 	gui::size m_docSize;
 	gui::pixels m_fontSize;
 	std::string m_fontFamily;

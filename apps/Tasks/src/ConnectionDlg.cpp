@@ -13,14 +13,14 @@
 
 void CConnectionDlg::setWindowText(const std::string& value, int id)
 {
-	SetDlgItemText(id, utf::widen(value).c_str());
+	SetDlgItemText(id, u2w(utf::widen(value).c_str()));
 }
 
 std::string CConnectionDlg::getWindowText(int id)
 {
 	ATL::CString text;
 	GetDlgItemText(id, text);
-	return utf::narrowed({ (LPCWSTR)text, (size_t)text.GetLength() });
+	return utf::narrowed({ (const char16_t*)(LPCWSTR)text, (size_t)text.GetLength() });
 }
 
 bool CConnectionDlg::hasText(int id)
@@ -64,7 +64,7 @@ void CConnectionDlg::updateExitState()
 LRESULT CConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	auto updateStrings = [this] {
-		SetWindowText(utf::widen(_.tr(lng::LNG_APP_CONNECTION_TITLE)).c_str());
+		SetWindowText(u2w(utf::widen(_.tr(lng::LNG_APP_CONNECTION_TITLE)).c_str()));
 		setWindowText(_.tr(lng::LNG_APP_CONNECTION_URL), IDC_STATIC_URL);
 		setWindowText(_.tr(lng::LNG_APP_CONNECTION_SERVER), IDC_STATIC_NAME);
 		setWindowText(_.tr(lng::LNG_APP_CONNECTION_OK), IDOK);

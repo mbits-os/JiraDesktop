@@ -1,16 +1,12 @@
 #pragma once
 
+#include "program_version.h"
+
 #define PROGRAM_NAME "Tasks"
 #define PROGRAM_COPYRIGHT_HOLDER "midnightBITS"
 
 #define VERSION_STRINGIFY(n) VERSION_STRINGIFY_HELPER(n)
 #define VERSION_STRINGIFY_HELPER(n) #n
-
-#define PROGRAM_VERSION_MAJOR 0
-#define PROGRAM_VERSION_MINOR 4
-#define PROGRAM_VERSION_PATCH 7
-#define PROGRAM_VERSION_BUILD 59
-#define PROGRAM_VERSION_STABILITY "-alpha" // "-beta", "-rc", and ""
 
 #define PROGRAM_VERSION_STRING \
      VERSION_STRINGIFY(PROGRAM_VERSION_MAJOR) "." \

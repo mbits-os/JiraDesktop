@@ -5,6 +5,15 @@
 
 #pragma once
 
+#include "cmakeconfig.h"
+#include "platform.hpp"
+
+#ifdef CMAKE_HAVE_TS_FILESYSTEM
+#define HAVE_TS_FILESYSTEM 1
+#else
+#define HAVE_TS_FILESYSTEM 0
+#endif
+
 // Change these values to use different versions
 #include <SDKDDKVer.h>
 
