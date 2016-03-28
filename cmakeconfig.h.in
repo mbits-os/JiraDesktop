@@ -1,0 +1,3 @@
+#pragma once
+
+#define CMAKE_HAVE_TS_FILESYSTEM
