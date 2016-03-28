@@ -28,26 +28,15 @@
 #include <sstream>
 #include <iomanip>
 #include <cctype>
+#include <net/utf8.hpp>
+#if defined _WIN32 || defined WIN32
 #include <Windows.h>
+#endif
 
 namespace json
 {
-	std::basic_string<uint16_t> utf8_to_utf16(const std::string& s) {
-		auto size = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
-		std::unique_ptr<uint16_t[]> out{new uint16_t[size + 1]};
-		MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, (wchar_t*)out.get(), size + 1);
-		return out.get();
-	}
-
-	std::string utf16_to_utf8(const std::basic_string<uint16_t>& s) {
-		auto size = WideCharToMultiByte(CP_UTF8, 0, (wchar_t*)s.c_str(), -1, nullptr, 0, nullptr, nullptr);
-		std::unique_ptr<char[]> out{ new char[size + 1] };
-		WideCharToMultiByte(CP_UTF8, 0, (wchar_t*)s.c_str(), -1, out.get(), size + 1, nullptr, nullptr);
-		return out.get();
-	}
-
 	void json_string(std::ostream& o, const std::string& s) {
-		auto w = utf8_to_utf16(s);
+		auto w = utf::widen(s);
 		o << '"';
 		for (auto c : w) {
 			switch (c){
@@ -231,7 +220,9 @@ namespace json
 		token_t pos_t::err(const char* msg) const {
 			std::ostringstream o;
 			o << "(" << line << ',' << column << "): error: " << msg << "\n";
+#if defined _WIN32 || defined WIN32
 			OutputDebugStringA(o.str().c_str());
+#endif
 			std::cerr << o.str() << std::flush;
 			return tok(JSON_ERROR);
 		}
@@ -315,8 +306,8 @@ namespace json
 						}
 
 						{
-							std::basic_string<uint16_t> codepoint{ unicode, 0 };
-							value += utf16_to_utf8(codepoint);
+							std::u16string codepoint{ unicode, 0 };
+							value += utf::narrowed(codepoint);
 						}
 						break;
 					default:
@@ -405,7 +396,7 @@ namespace json
 			case JSON_TRUE: return true;
 			case JSON_FALSE: return false;
 			case JSON_STRING: return tok.second;
-			case JSON_NUMBER: return std::stoll(tok.second);
+			case JSON_NUMBER: return (std::int64_t)std::stoll(tok.second);
 			case JSON_ARRAY_START: return array(cur, end, error);
 			case JSON_OBJECT_START: return dict(cur, end, error);
 			default:
@@ -514,8 +505,8 @@ namespace json
 		if (error)
 			return value{};
 
-		auto begin = tokens.begin();
-		auto ret = parser::parse(begin, tokens.end(), error);
+		auto begin = std::cbegin(tokens);
+		auto ret = parser::parse(begin, std::cend(tokens), error);
 		if (error)
 			return value{};
 
@@ -530,8 +521,8 @@ namespace json
 		if (error)
 			return value{};
 
-		auto begin = tokens.begin();
-		auto ret = parser::parse(begin, tokens.end(), error);
+		auto begin = std::cbegin(tokens);
+		auto ret = parser::parse(begin, std::cend(tokens), error);
 		if (error)
 			return value{};
 

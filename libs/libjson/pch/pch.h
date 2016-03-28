@@ -25,6 +25,6 @@
 #ifndef __LIBJSON_PCH_H__
 #define __LIBJSON_PCH_H__
 
-#include "../../../common-pch.h"
+#include "common-pch.h"
 
 #endif //__LIBJSON_PCH_H__

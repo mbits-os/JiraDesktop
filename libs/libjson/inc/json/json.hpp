@@ -35,22 +35,13 @@
 namespace json
 {
 	class bad_cast : public std::exception {
+		const char* msg = "bad JSON cast";
 	public:
 
-		bad_cast() : std::exception("bad JSON cast", 1)
-		{
-		}
+		bad_cast() = default;
+		bad_cast(char const* const msg) : msg(msg) {}
 
-		bad_cast(char const* const msg) : std::exception(msg, 1)
-		{
-		}
-
-	private:
-
-		bad_cast(char const* const msg, int)
-			: std::exception(msg, 1)
-		{
-		}
+		char const* what() const noexcept override { return msg; }
 	};
 
 	struct value;
@@ -76,7 +67,7 @@ namespace json
 	template <typename T>
 	struct type_to_value;
 
-	template <> struct type_to_value<nullptr_t>: std::integral_constant<type, NULLPTR>{};
+	template <> struct type_to_value<std::nullptr_t>: std::integral_constant<type, NULLPTR>{};
 	template <> struct type_to_value<bool>: std::integral_constant<type, BOOL>{};
 	template <> struct type_to_value<int8_t >: std::integral_constant<type, INTEGER>{};
 	template <> struct type_to_value<int16_t>: std::integral_constant<type, INTEGER>{};
@@ -126,7 +117,10 @@ namespace json
 			template <type value_type>
 			bool is() const { return get_type() == value_type; }
 
-			virtual std::string as_string() const { return{}; }
+			virtual const std::string& as_string() const {
+				static const std::string s;
+				return s;
+			}
 			virtual int64_t as_int() const { return 0; }
 			virtual double as_double() const { return 0.0; }
 			virtual bool as_bool() const { return false; }
@@ -139,7 +133,7 @@ namespace json
 		};
 
 		value() {} // null
-		value(nullptr_t) {} // null
+		value(std::nullptr_t) {} // null
 		value(bool value) { use<logical>(value); }
 		value(int8_t value) { use<integer>(value); }
 		value(int16_t value) { use<integer>(value); }
@@ -165,10 +159,6 @@ namespace json
 				return m_back->is<value_type>();
 			return value_type == NULLPTR;
 		}
-		template <>
-		bool is<NUMBER>() const {
-			return is<INTEGER>() || is<FLOAT>();
-		}
 
 		template <typename T>
 		bool is() const {
@@ -180,10 +170,11 @@ namespace json
 				return m_back->as_bool();
 			return false;
 		}
-		std::string as_string() const {
+		const std::string& as_string() const {
 			if (m_back)
 				return m_back->as_string();
-			return{};
+			static const std::string s;
+			return s;
 		}
 		int64_t as_int() const {
 			if (m_back)
@@ -275,9 +266,15 @@ namespace json
 				json_string(o, value);
 				o << "</span>";
 			}
-			std::string as_string() const override { return value; }
+			const std::string& as_string() const override { return value; }
 		};
 	};
+
+	template <>
+	inline bool value::is<NUMBER>() const {
+		return is<INTEGER>() || is<FLOAT>();
+	}
+
 
 	value from_string(const std::string&);
 	value from_string(const char* data, size_t length);
@@ -353,6 +350,7 @@ namespace json
 		const_iterator end() const { return values().end(); }
 		iterator find(const std::string& key) { return values().find(key); }
 		const_iterator find(const std::string& key) const { return values().find(key); }
+		void erase(const_iterator it) { values().erase(it); }
 
 		template <type value_type>
 		value_t<value_type> as(const std::string& key) const {
@@ -381,7 +379,7 @@ namespace json
 
 	template <>
 	struct value_traits<NULLPTR> {
-		using type = nullptr_t;
+		using type = std::nullptr_t;
 		static inline type __get(const value&)
 		{
 			return nullptr;
@@ -417,7 +415,7 @@ namespace json
 
 	template <>
 	struct value_traits<STRING> {
-		using type = std::string;
+		using type = const std::string&;
 		static inline type __get(const value& v) {
 			return v.as_string();
 		}

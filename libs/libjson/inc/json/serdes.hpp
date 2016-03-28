@@ -32,6 +32,21 @@ namespace json
 	template <typename T>
 	struct translator;
 
+	template <typename T>
+	inline value pack(const T& ctx) {
+		translator<T> p;
+		return p.pack(&ctx);
+	}
+
+	template <typename T>
+	inline T unpack(const value& v) {
+		translator<T> p;
+		T ctx;
+		if (!p.unpack(v, &ctx))
+			return T{};
+		return ctx;
+	}
+
 	struct base_translator {
 		virtual ~base_translator() {}
 		virtual value pack(const void* ctx) const = 0;
@@ -47,7 +62,7 @@ namespace json
 
 	template <typename T>
 	struct simple_translator : base_translator{
-		value pack(const void* ctx) const {
+		value pack(const void* ctx) const override {
 			return *static_cast<const T*>(ctx);
 		}
 		bool unpack(const value& v, void* ctx) const override {
@@ -127,7 +142,7 @@ namespace json
 	template <typename T> \
 	struct translator<C<T>> : container_translator<C<T>>{}
 
-	SIMPLE_TRANSLATOR(nullptr_t);
+	SIMPLE_TRANSLATOR(std::nullptr_t);
 	SIMPLE_TRANSLATOR(bool);
 	SIMPLE_TRANSLATOR(std::string);
 	SIMPLE_TRANSLATOR(int8_t);
@@ -138,21 +153,6 @@ namespace json
 	SIMPLE_TRANSLATOR(double);
 	CONTAINER_TRANSLATOR(std::vector);
 	CONTAINER_TRANSLATOR(std::list);
-
-	template <typename T>
-	value pack(const T& ctx) {
-		translator<T> p;
-		return p.pack(&ctx);
-	}
-
-	template <typename T>
-	T unpack(const value& v) {
-		translator<T> p;
-		T ctx;
-		if (!p.unpack(v, &ctx))
-			return T{};
-		return ctx;
-	}
 
 	template <typename T, typename P>
 	struct member_translator : named_translator
@@ -185,15 +185,17 @@ namespace json
 		member_opt_translator(const std::string& name, P T::* prop) : member_translator<T, P>(name, prop) {}
 
 		bool valid(const void* ctx) const override {
+			auto __prop = member_translator<T, P>::m_prop;
 			auto ptr = static_cast<const T*>(ctx);
-			auto prop = ptr->*m_prop;
+			auto prop = ptr->*__prop;
 			return prop != P();
 		}
 		bool optional() const override { return true; }
 
 		void clean(void* ctx) const override {
+			auto __prop = member_translator<T, P>::m_prop;
 			auto ptr = static_cast<T*>(ctx);
-			ptr->*m_prop = P();
+			ptr->*__prop = P();
 		}
 	};
 
