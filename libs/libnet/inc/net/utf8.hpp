@@ -25,9 +25,24 @@
 #pragma once
 #include <string>
 
+#if OS(WINDOWS)
+typedef const wchar_t* LPCWSTR;
+#endif
+
 namespace utf
 {
-	std::wstring widen(const std::string& src);
-	std::string narrowed(const std::wstring& src);
+#if OS(WINDOWS)
+	inline std::enable_if_t<sizeof(wchar_t) == sizeof(char16_t), LPCWSTR>
+	u2w(const char16_t* s)
+	{
+		return (LPCWSTR)s;
+	}
+#endif
+	std::u16string widen(const std::string& src);
+	std::string narrowed(const std::u16string& src);
 	const char* next_char(const char* src);
 }
+
+#if OS(WINDOWS)
+using utf::u2w;
+#endif

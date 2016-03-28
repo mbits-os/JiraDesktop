@@ -295,7 +295,7 @@ public:
 
 		tmp.fragment(std::string());
 		tmp.query(std::string());
-		tmp.path(filesystem::path{ tmp.path() }.remove_filename().string());
+		tmp.path(fs::path{ tmp.path() }.remove_filename().string());
 		tmp.ensure_query();
 		return tmp;
 	}

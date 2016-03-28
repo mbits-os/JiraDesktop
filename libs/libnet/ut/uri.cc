@@ -1,3 +1,4 @@
+#include "common-pch.h"
 #include <gtest/gtest.h>
 #include <net/uri.hpp>
 

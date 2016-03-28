@@ -29,7 +29,7 @@
 namespace utf
 {
 	using UTF8 = uint8_t;
-	using UTF16 = wchar_t;
+	using UTF16 = uint16_t;
 	using UTF32 = uint32_t;
 
 	/*
@@ -96,7 +96,7 @@ namespace utf
 		case 3: if ((a = ((uint8_t)*--srcptr)) < 0x80 || a > 0xBF) return false;
 		case 2: if ((a = ((uint8_t)*--srcptr)) < 0x80 || a > 0xBF) return false;
 
-			switch (*source) {
+			switch ((uint8_t)*source) {
 				/* no fall-through in this inner switch */
 			case 0xE0: if (a < 0xA0) return false; break;
 			case 0xED: if (a > 0x9F) return false; break;
@@ -111,9 +111,9 @@ namespace utf
 		return true;
 	}
 
-	std::wstring widen(const std::string& src)
+	std::u16string widen(const std::string& src)
 	{
-		std::wstring out;
+		std::u16string out;
 		auto source = src.begin();
 		auto sourceEnd = src.end();
 		auto target = std::back_inserter(out);
@@ -163,7 +163,7 @@ namespace utf
 		return out;
 	}
 
-	std::string narrowed(const std::wstring& src) {
+	std::string narrowed(const std::u16string& src) {
 		std::string out;
 		auto source = src.begin();
 		auto sourceEnd = src.end();

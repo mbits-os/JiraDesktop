@@ -35,7 +35,18 @@
 #include <thread>
 #include <future>
 
+#include "cmakeconfig.h"
+#include "platform.hpp"
+
+#ifdef CMAKE_HAVE_TS_FILESYSTEM
+#define HAVE_TS_FILESYSTEM 1
+#else
+#define HAVE_TS_FILESYSTEM 0
+#endif
+
+#if OS(WINDOWS)
 #define _WIN32_WINNT 0x0501
+#endif
 
 template <typename T, size_t length>
 size_t __countof(T (&)[length]){ return length; }

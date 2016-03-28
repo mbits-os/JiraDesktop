@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 midnightBITS
+ * Copyright (C) 2014 midnightBITS
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,9 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef __LIBNET_PCH_H__
-#define __LIBNET_PCH_H__
+#include "pch.h"
 
-#include "common-pch.h"
-
-#endif //__LIBNET_PCH_H__
+namespace net { namespace http { namespace client {
+	std::string os_client_info()
+	{
+		static const char* platform =  "Linux "
+#if defined (__arm__)
+			"ARM"
+#elif defined (__aarch64__)
+			"ARM64"
+#elif defined (__i386__)
+			"x86"
+#elif defined (__x86_64__)
+			"x86_64"
+#else
+#error Unknown architecture
+#endif
+			;
+		return platform;
+	}
+}}}

@@ -54,21 +54,22 @@ namespace net { namespace http { namespace client {
 			return is_wow64 != FALSE;
 		}
 
-		static bool IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion = (WORD)-1)
+		static inline ULONGLONG setMask(ULONGLONG val, DWORD mask, BYTE condition)
+		{
+			return VerSetConditionMask(val, mask, condition);
+		}
+
+		static bool IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion = 0)
 		{
 			OSVERSIONINFOEX osvi = { sizeof(osvi), 0, 0, 0, 0, { 0 }, 0, 0 };
-			DWORDLONG condition = 0;
-			VER_SET_CONDITION(condition, VER_MAJORVERSION, VER_GREATER_EQUAL);
-			DWORD mask = VER_MAJORVERSION;
-			if (wMinorVersion != (WORD)-1) {
-				VER_SET_CONDITION(condition, VER_MINORVERSION, VER_GREATER_EQUAL);
-				mask |= VER_MINORVERSION;
-			}
+			DWORDLONG condition = setMask(setMask(0,
+				VER_MAJORVERSION, VER_GREATER_EQUAL),
+				VER_MINORVERSION, VER_GREATER_EQUAL);
 
 			osvi.dwMajorVersion = wMajorVersion;
 			osvi.dwMinorVersion = wMinorVersion;
 
-			return VerifyVersionInfo(&osvi, mask, condition) != FALSE;
+			return VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, condition) != FALSE;
 		}
 
 		static bool EqualsProductType(BYTE productType)

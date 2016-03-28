@@ -74,7 +74,7 @@ namespace net { namespace http {
 
 		std::string recentIP() const
 		{
-			char* ip = "";
+			char* ip = nullptr;
 			curl_easy_getinfo(m_curl, CURLINFO_PRIMARY_IP, &ip);
 			return ip;
 		}
@@ -838,6 +838,8 @@ namespace net { namespace http {
 			break;
 		case CURLINFO_SSL_DATA_IN:
 			kind = trace::data_in;
+			break;
+		default:
 			break;
 		}
 
