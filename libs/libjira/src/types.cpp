@@ -39,11 +39,11 @@ namespace jira
 		key::key(const std::string& id, const std::string& title) : type(id, title) {}
 
 		template <json::type type_id>
-		json::value_t<type_id> either_or(const json::map& object, const std::string& key)
+		std::decay_t<json::value_t<type_id>> either_or(const json::map& object, const std::string& key)
 		{
 			auto it = object.find(key);
 			if (it == object.end() || !it->second.is<type_id>())
-				return json::value_t<type_id>{};
+				return std::decay_t<json::value_t<type_id>>{};
 
 			return it->second.as<type_id>();
 		}
@@ -59,11 +59,11 @@ namespace jira
 		}
 
 		template <json::type type_id, typename Arg>
-		json::value_t<type_id> either_or(const json::map& object, const std::string& key, Arg&& arg)
+		std::decay_t<json::value_t<type_id>> either_or(const json::map& object, const std::string& key, Arg&& arg)
 		{
 			auto it = object.find(key);
 			if (it == object.end() || !it->second.is<type_id>())
-				return json::value_t<type_id>{ std::forward<Arg>(arg) };
+				return std::decay_t<json::value_t<type_id>>{ std::forward<Arg>(arg) };
 
 			return it->second.as<type_id>();
 		}
@@ -125,7 +125,7 @@ namespace jira
 		std::shared_ptr<gui::node> resolution::visit(const std::shared_ptr<gui::document>& doc, const record& /*issue*/, const json::map& object) const
 		{
 			auto it = object.find(id());
-			if (it == object.end() || it->second.is<nullptr_t>()) {
+			if (it == object.end() || it->second.is<std::nullptr_t>()) {
 				auto node = doc->createElement(gui::elem::span);
 				node->innerText("Unresolved");
 				node->addClass("none"); // font-style: italic; color: #555

@@ -107,7 +107,7 @@ namespace jira
 		std::string m_url;
 		uint32_t m_id;
 
-		std::atomic<bool> m_isLoadingFields = false;
+		std::atomic<bool> m_isLoadingFields { false };
 		std::map<uint32_t, std::shared_ptr<gui::document>> m_viewsToRefresh;
 
 		std::vector<search_def> m_views;
