@@ -40,8 +40,12 @@ namespace settings {
 	class Section {
 	public:
 		class Impl;
+		enum JsonImplKind {
+			Json
+		};
 
-		Section(const std::string& organization, const std::string& application = {}, const std::string& version = {});
+		Section(const std::string& organization, const std::string& application = { }, const std::string& version = { });
+		Section(JsonImplKind, const std::string& organization, const std::string& application = { }, const std::string& version = { });
 
 		Section() = delete;
 		Section(const Section&) = delete;
@@ -74,6 +78,7 @@ namespace settings {
 	private:
 		std::shared_ptr<Impl> m_impl;
 		static std::shared_ptr<Impl> create(const std::string& organization, const std::string& application, const std::string& version);
+		static std::shared_ptr<Impl> createJson(const std::string& organization, const std::string& application, const std::string& version);
 		Section(const std::shared_ptr<Impl>& impl);
 	};
 }

@@ -339,7 +339,7 @@ namespace gui {
 			disp = ref.get(styles::prop_display);
 
 		if (disp == display::table_cell) {
-			auto align = align::left;
+			auto align = gui::align::left;
 			if (ref.has(styles::prop_text_align))
 				align = ref.get(styles::prop_text_align);
 
@@ -349,10 +349,10 @@ namespace gui {
 			//new vector of the content
 			m_content.origin = { 0, offsetTop() + (inside_padding_h - m_content.size.height) / 2 };
 
-			if (align != align::left) {
+			if (align != gui::align::left) {
 				m_content.origin.x = inside_padding_w - m_content.size.width;
 
-				if (align == align::center)
+				if (align == gui::align::center)
 					m_content.origin.x = m_content.origin.x / 2;
 			}
 			m_content.origin.x += offsetLeft();

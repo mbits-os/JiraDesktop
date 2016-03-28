@@ -15,6 +15,6 @@
 namespace gui {
 	void node_base::openLink(const std::string& url)
 	{
-		ShellExecute(nullptr, nullptr, utf::widen(url).c_str(), nullptr, nullptr, SW_SHOW);
+		ShellExecute(nullptr, nullptr, u2w(utf::widen(url).c_str()), nullptr, nullptr, SW_SHOW);
 	}
 }

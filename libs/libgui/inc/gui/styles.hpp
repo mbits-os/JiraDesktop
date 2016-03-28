@@ -57,7 +57,7 @@ namespace styles {
 	};
 
 	inline namespace literals {
-		inline ems operator""_em(uint64_t v) { return (long double)v; }
+		inline ems operator""_em(unsigned long long int v) { return (long double)v; }
 		inline ems operator""_em(long double v) { return v; }
 	};
 
@@ -347,7 +347,7 @@ namespace styles {
 #define LENGTH_PROP(creator, prop) \
 	inline rule_storage creator(const ems& em) { return rule(prop, em); } \
 	inline rule_storage creator(const gui::pixels& px) { return rule(prop, px); } \
-	template <typename Ratio> inline rule_storage creator(const gui::length<Ratio>& size) { return creator(gui::length_cast<pixels>(size)); }
+	template <typename Ratio> inline rule_storage creator(const gui::length<Ratio>& size) { return creator(gui::length_cast<gui::pixels>(size)); }
 
 	namespace def {
 		template <typename Prop>

@@ -25,6 +25,9 @@
 #include "pch.h"
 #include "win32_settings.hpp"
 #include <net/utf8.hpp>
+#include <net/filesystem.hpp>
+
+#include <shlobj.h>
 
 namespace settings {
 	std::shared_ptr<Section::Impl> Section::create(const std::string& organization, const std::string& application, const std::string& version)
@@ -39,9 +42,41 @@ namespace settings {
 
 		return std::make_shared<win32::Win32Impl>(utf::widen(keyname));
 	}
+
+	fs::path configDir()
+	{
+		WCHAR szPath[MAX_PATH];
+		if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, szPath)))
+			return szPath;
+
+		const WCHAR* drv = L"HOMEDRIVE";
+		const WCHAR* dir = L"HOMEPATH";
+
+		size_t size = 0;
+		DWORD len = GetEnvironmentVariable(drv, 0, 0);
+		if (!len)
+			return { };
+
+		len = GetEnvironmentVariable(dir, 0, 0);
+		if (!len)
+			return { };
+
+		size += len + 1;
+
+		auto path = std::make_unique<WCHAR[]>(size);
+		len = GetEnvironmentVariable(drv, path.get(), size);
+		if (!len)
+			return { };
+
+		len = GetEnvironmentVariable(dir, path.get() + len, size - len);
+		if (!len)
+			return { };
+
+		return path.get();
+	}
 }
 namespace settings { namespace win32 {
-	Win32Impl::Win32Impl(const std::wstring& keyName)
+	Win32Impl::Win32Impl(const std::u16string& keyName)
 		: m_keyName(keyName)
 		, m_key(nullptr)
 		, m_open(mode::closed)
@@ -63,7 +98,7 @@ namespace settings { namespace win32 {
 		m_key = nullptr;
 
 		HKEY key = nullptr;
-		auto ret = RegOpenKeyEx(HKEY_CURRENT_USER, m_keyName.c_str(), 0, KEY_READ, &key);
+		auto ret = RegOpenKeyEx(HKEY_CURRENT_USER, u2w(m_keyName.c_str()), 0, KEY_READ, &key);
 
 		if (ret)
 			return false;
@@ -83,7 +118,7 @@ namespace settings { namespace win32 {
 		m_key = nullptr;
 
 		HKEY key = nullptr;
-		auto ret = RegCreateKeyEx(HKEY_CURRENT_USER, m_keyName.c_str(), 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &key, nullptr);
+		auto ret = RegCreateKeyEx(HKEY_CURRENT_USER, u2w(m_keyName.c_str()), 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &key, nullptr);
 
 		if (ret)
 			return false;
@@ -95,7 +130,7 @@ namespace settings { namespace win32 {
 
 	std::shared_ptr<Section::Impl> Win32Impl::group(const std::string& name) const
 	{
-		return std::make_shared<win32::Win32Impl>(m_keyName + L"\\" + utf::widen(name));
+		return std::make_shared<win32::Win32Impl>(m_keyName + u"\\" + utf::widen(name));
 	}
 
 	type Win32Impl::getType(const std::string& key) const
@@ -104,7 +139,7 @@ namespace settings { namespace win32 {
 			return None;
 
 		DWORD type = 0;
-		if (RegQueryValueEx(m_key, utf::widen(key).c_str(), nullptr, &type, nullptr, nullptr))
+		if (RegQueryValueEx(m_key, u2w(utf::widen(key).c_str()), nullptr, &type, nullptr, nullptr))
 			return None;
 		switch (type) {
 		case REG_SZ: return String;
@@ -119,7 +154,7 @@ namespace settings { namespace win32 {
 
 	bool Win32Impl::hasGroup(const std::string& name) const
 	{
-		Win32Impl test{ m_keyName + L"\\" + utf::widen(name) };
+		Win32Impl test{ m_keyName + u"\\" + utf::widen(name) };
 		return test.ensureReadable();
 	}
 
@@ -131,18 +166,18 @@ namespace settings { namespace win32 {
 		DWORD size = 0;
 		auto wkey = utf::widen(key);
 
-		if (RegQueryValueEx(m_key, wkey.c_str(), nullptr, nullptr, nullptr, &size))
+		if (RegQueryValueEx(m_key, u2w(wkey.c_str()), nullptr, nullptr, nullptr, &size))
 			return{};
 
 		if (size % sizeof(wchar_t))
 			size += sizeof(wchar_t);
 		size /= sizeof(wchar_t);
 
-		std::wstring ws;
+		std::u16string ws;
 		ws.resize(size);
 		size *= sizeof(wchar_t);
 
-		if (RegQueryValueEx(m_key, wkey.c_str(), nullptr, nullptr, (LPBYTE)&ws[0], &size))
+		if (RegQueryValueEx(m_key, u2w(wkey.c_str()), nullptr, nullptr, (LPBYTE)&ws[0], &size))
 			return{};
 
 		size = ws.length();
@@ -161,7 +196,7 @@ namespace settings { namespace win32 {
 
 		uint32_t out = 0;
 		DWORD size = sizeof(out);
-		RegQueryValueEx(m_key, utf::widen(key).c_str(), nullptr, nullptr, (LPBYTE) &out, &size);
+		RegQueryValueEx(m_key, u2w(utf::widen(key).c_str()), nullptr, nullptr, (LPBYTE) &out, &size);
 		return out;
 	}
 
@@ -172,7 +207,7 @@ namespace settings { namespace win32 {
 
 		uint32_t out = 0;
 		DWORD size = sizeof(out);
-		RegQueryValueEx(m_key, utf::widen(key).c_str(), nullptr, nullptr, (LPBYTE) &out, &size);
+		RegQueryValueEx(m_key, u2w(utf::widen(key).c_str()), nullptr, nullptr, (LPBYTE) &out, &size);
 		return out;
 	}
 
@@ -182,12 +217,12 @@ namespace settings { namespace win32 {
 			return{};
 
 		DWORD size = 0;
-		if (RegQueryValueEx(m_key, utf::widen(key).c_str(), nullptr, nullptr, nullptr, &size))
+		if (RegQueryValueEx(m_key, u2w(utf::widen(key).c_str()), nullptr, nullptr, nullptr, &size))
 			return{};
 
 		std::vector<uint8_t> out;
 		out.resize(size);
-		if (RegQueryValueEx(m_key, utf::widen(key).c_str(), nullptr, nullptr, &out[0], &size))
+		if (RegQueryValueEx(m_key, u2w(utf::widen(key).c_str()), nullptr, nullptr, &out[0], &size))
 			return{};
 
 		return out;
@@ -199,7 +234,7 @@ namespace settings { namespace win32 {
 			return;
 
 		auto wvalue = utf::widen(value);
-		RegSetValueEx(m_key, utf::widen(key).c_str(), 0, REG_SZ, (LPBYTE) &wvalue[0], sizeof(wchar_t) * (wvalue.length() + 1));
+		RegSetValueEx(m_key, u2w(utf::widen(key).c_str()), 0, REG_SZ, (LPBYTE) &wvalue[0], sizeof(wchar_t) * (wvalue.length() + 1));
 	}
 
 	void Win32Impl::setUInt32(const std::string& key, uint32_t value)
@@ -207,7 +242,7 @@ namespace settings { namespace win32 {
 		if (!ensureWriteable())
 			return;
 
-		RegSetValueEx(m_key, utf::widen(key).c_str(), 0, REG_DWORD, (LPBYTE) &value, sizeof(value));
+		RegSetValueEx(m_key, u2w(utf::widen(key).c_str()), 0, REG_DWORD, (LPBYTE) &value, sizeof(value));
 	}
 
 	void Win32Impl::setUInt64(const std::string& key, uint64_t value)
@@ -215,7 +250,7 @@ namespace settings { namespace win32 {
 		if (!ensureWriteable())
 			return;
 
-		RegSetValueEx(m_key, utf::widen(key).c_str(), 0, REG_QWORD, (LPBYTE) &value, sizeof(value));
+		RegSetValueEx(m_key, u2w(utf::widen(key).c_str()), 0, REG_QWORD, (LPBYTE) &value, sizeof(value));
 	}
 
 	void Win32Impl::setBinary(const std::string& key, const std::vector<uint8_t>& value)
@@ -228,7 +263,7 @@ namespace settings { namespace win32 {
 		if (!ensureWriteable())
 			return;
 
-		RegSetValueEx(m_key, utf::widen(key).c_str(), 0, REG_BINARY, (LPBYTE) value, size);
+		RegSetValueEx(m_key, u2w(utf::widen(key).c_str()), 0, REG_BINARY, (LPBYTE) value, size);
 	}
 
 	void Win32Impl::unset(const std::string& key)
@@ -236,7 +271,7 @@ namespace settings { namespace win32 {
 		if (!ensureWriteable())
 			return;
 
-		RegDeleteValue(m_key, utf::widen(key).c_str());
+		RegDeleteValue(m_key, u2w(utf::widen(key).c_str()));
 	}
 
 	void Win32Impl::unsetGroup(const std::string& key)
@@ -244,6 +279,6 @@ namespace settings { namespace win32 {
 		if (!ensureWriteable())
 			return;
 
-		RegDeleteKey(m_key, utf::widen(key).c_str());
+		RegDeleteKey(m_key, u2w(utf::widen(key).c_str()));
 	}
 }}

@@ -10,6 +10,9 @@ class glyph:
 		self.name_id = name.replace('-', '_')
 		if self.name_id == "try":
 			self.name_id = "try_";
+		elif self.name_id = "linux";
+			self.name_id = "linux_";
+
 
 glyphs = []
 

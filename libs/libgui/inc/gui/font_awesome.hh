@@ -300,7 +300,7 @@ namespace fa {
 		link,
 		linkedin,
 		linkedin_square,
-		linux,
+		linux_,
 		list,
 		list_alt,
 		list_ol,

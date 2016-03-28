@@ -127,14 +127,14 @@ namespace gui { namespace gdi {
 			return;
 
 		auto widen = utf::widen(text);
-		::TextOut(m_dc, zoom().scaleL(origin().x), zoom().scaleL(origin().y), widen.c_str(), widen.length());
+		::TextOut(m_dc, zoom().scaleL(origin().x), zoom().scaleL(origin().y), u2w(widen.c_str()), widen.length());
 	}
 
 	size painter::measureString(const std::string& text)
 	{
 		auto line = utf::widen(text);
 		SIZE s = {};
-		if (::GetTextExtentPoint32(m_dc, line.c_str(), line.length(), &s))
+		if (::GetTextExtentPoint32(m_dc, u2w(line.c_str()), line.length(), &s))
 			return{ zoom().invert(s.cx), zoom().invert(s.cy) };
 		return{};
 	}
@@ -445,6 +445,6 @@ namespace gui { namespace gdi {
 	{
 		m_font.select(m_dc, ::CreateFont(-zoom().scaleI(fontSize), 0, 0, 0, weight, italic, underline,
 			FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-			CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, utf::widen(fontFamily).c_str()));
+			CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, u2w(utf::widen(fontFamily).c_str())));
 	}
 }};

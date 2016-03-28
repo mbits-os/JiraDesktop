@@ -68,9 +68,9 @@ namespace gui {
 	{
 		auto elem = node->getNodeName();
 		switch (elem) {
-		case elem::table_caption:
-		case elem::table_row:
-		case elem::table_head:
+		case gui::elem::table_caption:
+		case gui::elem::table_row:
+		case gui::elem::table_head:
 			return true;
 		default:
 			break;

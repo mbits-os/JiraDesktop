@@ -25,26 +25,27 @@
 #pragma once
 
 #include <gui/settings.hpp>
-#include "../settings_impl.hpp"
-#include <windows.h>
+#include "settings_impl.hpp"
+#include "net/filesystem.hpp"
+#include <json/json.hpp>
 
-namespace settings { namespace win32 {
-	class Win32Impl : public Section::Impl {
-		enum class mode {
-			closed,
-			readonly,
-			writeable
-		};
-
-		std::u16string m_keyName;
-		mutable HKEY m_key;
-		mutable mode m_open;
-
-		bool ensureReadable() const;
-		bool ensureWriteable() const;
+namespace settings {
+	class JsonManager {
+		fs::path m_path;
+		json::value m_root;
 	public:
-		Win32Impl(const std::u16string& keyName);
-		~Win32Impl();
+		JsonManager(const fs::path& path);
+		json::map getRoot();
+		void update();
+	};
+
+	class JsonImpl : public Section::Impl {
+		std::shared_ptr<JsonManager> m_mgr;
+		json::map m_section;
+	public:
+		JsonImpl(const fs::path& path);
+		JsonImpl(std::shared_ptr<JsonManager> mgr, const json::map& section = { });
+		~JsonImpl();
 
 		std::shared_ptr<Section::Impl> group(const std::string& name) const override;
 		type getType(const std::string& key) const override;
@@ -63,4 +64,4 @@ namespace settings { namespace win32 {
 		void unset(const std::string& key) override;
 		void unsetGroup(const std::string& key) override;
 	};
-}}
+}

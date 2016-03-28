@@ -22,8 +22,6 @@
  * SOFTWARE.
  */
 
-#pragma once
-
 #include "pch.h"
 #include <gui/styles.hpp>
 #include <gui/node.hpp>

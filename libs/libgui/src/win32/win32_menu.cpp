@@ -43,7 +43,7 @@ HMENU menu::item::createPopup(ui_manager* manager) const
 	//UINT pos = 0;
 	for (auto item : m_items) {
 		CBitmap bmp;
-		std::wstring text;
+		std::u16string text;
 
 		if (item.type() == itemtype::separator) {
 			menu.AppendMenu(MF_SEPARATOR);
@@ -61,15 +61,15 @@ HMENU menu::item::createPopup(ui_manager* manager) const
 
 		if (item.type() == itemtype::submenu) {
 			CMenu sub = item.createPopup(manager);
-			menu.AppendMenu(MF_STRING, sub, text.c_str());
+			menu.AppendMenu(MF_STRING, sub, u2w(text.c_str()));
 			//sub.Detach();
 		} else {
 			auto id = action->id();
 			auto copy = manager->find(id);
 			if (copy && action == copy)
-				menu.AppendMenu(MF_STRING, id, text.c_str());
+				menu.AppendMenu(MF_STRING, id, u2w(text.c_str()));
 			else
-				menu.AppendMenu(MF_STRING, manager->append(action), text.c_str());
+				menu.AppendMenu(MF_STRING, manager->append(action), u2w(text.c_str()));
 		}
 
 		auto icon = action->icon();

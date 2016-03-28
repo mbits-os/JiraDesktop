@@ -303,7 +303,7 @@ namespace fa {
 		case glyph::link: return 0xf0c1;
 		case glyph::linkedin: return 0xf0e1;
 		case glyph::linkedin_square: return 0xf08c;
-		case glyph::linux: return 0xf17c;
+		case glyph::linux_: return 0xf17c;
 		case glyph::list: return 0xf03a;
 		case glyph::list_alt: return 0xf022;
 		case glyph::list_ol: return 0xf0cb;
@@ -860,7 +860,7 @@ namespace fa {
 		case glyph::link: return "link";
 		case glyph::linkedin: return "linkedin";
 		case glyph::linkedin_square: return "linkedin-square";
-		case glyph::linux: return "linux";
+		case glyph::linux_: return "linux";
 		case glyph::list: return "list";
 		case glyph::list_alt: return "list-alt";
 		case glyph::list_ol: return "list-ol";

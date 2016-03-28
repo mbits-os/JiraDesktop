@@ -214,13 +214,13 @@ namespace gui {
 		if (_CF::num == 1 && _CF::den != 1)
 			return size.value() / _CF::den;
 
-		return return size.value() * _CF::num / _CF::den;
+		return size.value() * _CF::num / _CF::den;
 	}
 
 	inline namespace literals {
-		inline pixels operator""_px(uint64_t v) { return (long double)v; }
-		inline points operator""_pt(uint64_t v) { return (long double)v; }
-		inline inches operator""_in(uint64_t v) { return (long double)v; }
+		inline pixels operator""_px(unsigned long long v) { return (long double)v; }
+		inline points operator""_pt(unsigned long long v) { return (long double)v; }
+		inline inches operator""_in(unsigned long long v) { return (long double)v; }
 
 		inline pixels operator""_px(long double v) { return v; }
 		inline points operator""_pt(long double v) { return v; }

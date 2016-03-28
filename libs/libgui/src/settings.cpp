@@ -37,6 +37,11 @@ namespace settings {
 	{
 	};
 
+	Section::Section(JsonImplKind, const std::string& organization, const std::string& application, const std::string& version)
+		: m_impl { createJson(organization, application, version) }
+	{
+	};
+
 	Section::~Section()
 	{
 	}
